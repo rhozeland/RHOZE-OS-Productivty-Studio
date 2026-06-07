@@ -29,9 +29,15 @@ type Row = {
   milestonesDone: number;
 };
 
-const ActiveProjectsLane = () => {
+interface ActiveProjectsLaneProps {
+  limit?: number;
+  title?: string;
+  eyebrow?: string;
+}
+
+const ActiveProjectsLane = ({ limit = 12, title = "Building Now", eyebrow = "Live progress" }: ActiveProjectsLaneProps) => {
   const { data = [], isLoading } = useQuery({
-    queryKey: ["discover-active-projects"],
+    queryKey: ["discover-active-projects", limit],
     staleTime: 60_000,
     queryFn: async (): Promise<Row[]> => {
       const { data, error } = await supabase
@@ -43,7 +49,7 @@ const ActiveProjectsLane = () => {
         .not("public_slug", "is", null)
         .order("cheer_count", { ascending: false, nullsFirst: false })
         .order("created_at", { ascending: false })
-        .limit(12);
+        .limit(limit);
       if (error) throw error;
       const rows = data ?? [];
       const userIds = Array.from(new Set(rows.map((r: any) => r.user_id)));
@@ -100,10 +106,10 @@ const ActiveProjectsLane = () => {
       <div className="flex items-end justify-between gap-3">
         <div>
           <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70 font-semibold mb-0.5">
-            Live progress
+            {eyebrow}
           </p>
           <h2 className="font-display text-lg sm:text-xl font-semibold text-foreground">
-            Building Now
+            {title}
           </h2>
         </div>
         <Link

@@ -15,7 +15,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Loader2, Sparkles, MapPin } from "lucide-react";
+import { ArrowRight, Loader2, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import CoinsInMotionLane from "@/components/discover/CoinsInMotionLane";
@@ -265,11 +265,11 @@ const SpacesGrid = ({ rows }: { rows: ConnectRow[] }) => {
 const DiscoverPage = () => {
   const [filter, setFilter] = useState<FilterKey>("all");
 
-  const showCoins = filter === "all" || filter === "coins";
+  const showCoins = filter === "coins";
+  const showProjects = filter === "projects";
   const showArtists = filter === "all" || filter === "artists";
   const showOpps = filter === "all" || filter === "opportunities";
   const showSpaces = filter === "all" || filter === "spaces";
-  const showProjectsExtra = filter === "projects"; // projects already render above; this is for explicit filter
 
   const artists = useArtistProfiles(showArtists);
   const call = useCallRows(showOpps);
@@ -338,10 +338,11 @@ const DiscoverPage = () => {
         </div>
       </motion.section>
 
-      {/* Building Now — always visible grid */}
-      {(filter === "all" || filter === "projects") && <ActiveProjectsLane />}
+      {/* Pinned top — always visible regardless of filter */}
+      <CoinsInMotionLane />
+      <ActiveProjectsLane limit={12} />
 
-      {/* Sticky filter bar — sits below the Projects section */}
+      {/* Sticky filter bar */}
       <div className="sticky top-0 z-20 -mx-1 px-1 py-2 bg-background/85 backdrop-blur-md border-y border-border/60">
         <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
           {FILTERS.map((f) => {
@@ -365,8 +366,16 @@ const DiscoverPage = () => {
         </div>
       </div>
 
-      {/* Feed */}
+      {/* Filtered feed below */}
       <div className="space-y-10">
+        {showProjects && (
+          <ActiveProjectsLane
+            limit={500}
+            eyebrow="All public releases"
+            title="Every project"
+          />
+        )}
+
         {showCoins && <CoinsInMotionLane />}
 
         {showArtists && (
@@ -421,13 +430,6 @@ const DiscoverPage = () => {
             </div>
             <SpacesGrid rows={spacesRows} />
           </section>
-        )}
-
-        {showProjectsExtra && (
-          <p className="text-center text-xs text-muted-foreground py-4">
-            <Sparkles className="inline h-3 w-3 mr-1" />
-            All public projects are shown above.
-          </p>
         )}
 
         {isLoading && (
