@@ -362,7 +362,7 @@ const AppLayout = () => {
             if (hoverCloseTimer.id) window.clearTimeout(hoverCloseTimer.id);
             hoverCloseTimer.id = window.setTimeout(() => setSidebarOpen(false), 150);
           }}
-          className="contents"
+          className="flex"
         >
           <AppSidebar />
         </div>
