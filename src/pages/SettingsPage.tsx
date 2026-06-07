@@ -379,8 +379,14 @@ const SettingsPage = () => {
 
   const handleDeleteAccount = async () => {
     if (deleteConfirm !== "DELETE") { toast.error("Type DELETE to confirm"); return; }
-    toast.success("Account deactivated. Signing out...");
-    setTimeout(() => signOut(), 1500);
+    try {
+      const { error } = await supabase.functions.invoke("delete-account");
+      if (error) throw error;
+      toast.success("Account deleted. Signing out…");
+      setTimeout(() => signOut(), 1200);
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to delete account");
+    }
   };
 
   const handleExportData = async () => {
