@@ -26,6 +26,7 @@ import TokenDiscoveryChip from "@/components/profile/TokenDiscoveryChip";
 import { useUserNote } from "@/hooks/useNotes";
 import { EmptyState } from "@/components/ui/empty-state";
 import ShareCardModal from "@/components/share/ShareCardModal";
+import ProfileProjectCard from "@/components/profile/ProfileProjectCard";
 
 type TabKey = "projects" | "works" | "coin";
 
