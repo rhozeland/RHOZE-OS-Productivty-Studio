@@ -228,10 +228,9 @@ const ReleasePage = () => {
               </ol>
             </section>
           )}
-          </section>
-          )}
 
           <ReleaseComments ref={commentsRef} projectId={project.id} />
+
         </div>
 
         {/* Rail */}
