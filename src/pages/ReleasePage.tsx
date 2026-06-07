@@ -27,7 +27,7 @@ import ReleaseComments from "@/components/release/ReleaseComments";
 const ReleasePage = () => {
   const { slug } = useParams<{ slug: string }>();
   const { user } = useAuth();
-  const qc = useQueryClient();
+  
 
   const { data: project, isLoading } = useQuery({
     queryKey: ["release", slug],
@@ -228,24 +228,28 @@ const ReleasePage = () => {
               </ol>
             </section>
           )}
+          </section>
+          )}
+
+          <ReleaseComments ref={commentsRef} projectId={project.id} />
         </div>
 
         {/* Rail */}
         <aside className="space-y-4 lg:sticky lg:top-6 self-start">
-          <div className="rounded-xl border border-border bg-card/60 p-4 text-center">
-            <Heart className="h-6 w-6 mx-auto text-rose-500 fill-rose-500/20" />
-            <div className="text-3xl font-display font-bold mt-1">{project.cheer_count ?? 0}</div>
-            <div className="text-xs text-muted-foreground">cheers</div>
-            <Button
-              className="w-full mt-3 gap-1.5"
-              variant={myCheer ? "outline" : "default"}
-              onClick={() => cheer.mutate()}
-              disabled={cheer.isPending}
-            >
-              <Heart className={"h-3.5 w-3.5 " + (myCheer ? "fill-current" : "")} />
-              {myCheer ? "Cheered" : user ? "Cheer this release" : "Sign in to cheer"}
-            </Button>
-          </div>
+          <SupportPanel
+            projectId={project.id}
+            projectTitle={project.title}
+            cheerCount={project.cheer_count ?? 0}
+            iSupport={!!myCheer}
+            releaseUrl={typeof window !== "undefined" ? window.location.href : `/release/${slug}`}
+            ownerName={owner?.display_name ?? owner?.username ?? null}
+            coverColor={project.cover_color}
+            coverImageUrl={(project as any).cover_image_url ?? null}
+            linkedTokenTicker={linkedToken?.ticker ?? null}
+            linkedTokenMint={linkedToken?.mint_address ?? null}
+            onScrollToComments={scrollToComments}
+          />
+
 
           {project.tokenize_ready && (
             <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 space-y-3">
