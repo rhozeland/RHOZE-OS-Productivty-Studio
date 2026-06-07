@@ -550,7 +550,6 @@ const ProjectDetailPage = () => {
               />
             </div>
             <div className="space-y-4">
-              <Timeline goals={goals} />
               {isPaid && (
                 <RoadmapLockFlow
                   projectId={id!}
