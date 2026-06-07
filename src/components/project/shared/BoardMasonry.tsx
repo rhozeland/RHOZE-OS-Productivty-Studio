@@ -28,6 +28,10 @@ interface Props {
   onSeeMore?: () => void;
   canManage?: boolean;
   onAdd?: () => void;
+  /** When true and there is no content, render nothing (public surfaces). */
+  hideWhenEmpty?: boolean;
+  /** Large dashed empty-state variant (editor Board tab). */
+  emptyStateVariant?: "default" | "large";
 }
 
 type Cat = "all" | "images" | "references" | "files" | "links";
@@ -44,12 +48,12 @@ const kindOf = (d: Deliverable): Cat => {
 const filterChips: { id: Cat; label: string }[] = [
   { id: "all", label: "All" },
   { id: "images", label: "Images" },
-  { id: "references", label: "References" },
+  { id: "references", label: "Moodboard" },
   { id: "files", label: "Files" },
   { id: "links", label: "Links" },
 ];
 
-const BoardMasonry = ({ deliverables, limit, showFilters, onSeeMore, canManage, onAdd }: Props) => {
+const BoardMasonry = ({ deliverables, limit, showFilters, onSeeMore, canManage, onAdd, hideWhenEmpty, emptyStateVariant = "default" }: Props) => {
   const [cat, setCat] = useState<Cat>("all");
   const all = (deliverables ?? []).filter((d) => d.file_url || d.title);
   const filtered = useMemo(() => {
@@ -57,7 +61,25 @@ const BoardMasonry = ({ deliverables, limit, showFilters, onSeeMore, canManage, 
     return limit ? base.slice(0, limit) : base;
   }, [all, cat, limit]);
 
+  if (!all.length && hideWhenEmpty) return null;
+
   if (!all.length) {
+    if (emptyStateVariant === "large") {
+      return (
+        <button
+          type="button"
+          onClick={onAdd}
+          disabled={!canManage}
+          className="w-full rounded-3xl border-2 border-dashed border-border bg-card/20 px-6 py-20 text-center hover:border-primary/40 hover:bg-card/40 transition-colors group"
+        >
+          <div className="mx-auto h-14 w-14 rounded-full border-2 border-dashed border-border grid place-items-center mb-4 group-hover:border-primary/50 transition-colors">
+            <FolderOpen className="h-6 w-6 text-muted-foreground/60" />
+          </div>
+          <p className="text-base font-medium">Add your first asset</p>
+          <p className="text-sm text-muted-foreground mt-1">Images, links, references, files — anything that shapes the work.</p>
+        </button>
+      );
+    }
     return (
       <div className="rounded-2xl border border-dashed border-border bg-card/30 p-8 text-center">
         <FolderOpen className="h-8 w-8 mx-auto text-muted-foreground/50 mb-2" />

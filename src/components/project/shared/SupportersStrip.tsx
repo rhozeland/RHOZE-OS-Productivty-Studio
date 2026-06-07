@@ -14,11 +14,13 @@ interface Props {
   projectId: string;
   ownerId: string;
   owner: { display_name?: string | null; username?: string | null; avatar_url?: string | null } | null;
-  team: Array<{ user_id: string; project_role?: string | null; profile?: any }> | null | undefined;
+  team: Array<{ user_id: string; project_role?: string | null; profile?: any; created_at?: string | null }> | null | undefined;
   milestones?: Array<{ id: string; title: string; status?: string | null; updated_at?: string | null }> | null;
+  /** When true, hide the Supporters section entirely if there are none (public). */
+  hideSupportersWhenEmpty?: boolean;
 }
 
-const SupportersStrip = ({ projectId, ownerId, owner, team, milestones }: Props) => {
+const SupportersStrip = ({ projectId, ownerId, owner, team, milestones, hideSupportersWhenEmpty }: Props) => {
   const { data: cheers } = useQuery({
     queryKey: ["project-cheerers", projectId],
     queryFn: async () => {
@@ -89,32 +91,34 @@ const SupportersStrip = ({ projectId, ownerId, owner, team, milestones }: Props)
         </ul>
       </section>
 
-      <section>
-        <h3 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
-          <Heart className="h-3 w-3" /> Supporters
-        </h3>
-        {!cheers?.length ? (
-          <p className="text-[11px] text-muted-foreground">No supporters yet.</p>
-        ) : (
-          <ul className="space-y-1.5">
-            {cheers.map((c: any) => (
-              <li key={c.user_id} className="flex items-center gap-2 rounded-lg p-1.5 -mx-1.5 hover:bg-card">
-                {c.profile?.avatar_url ? (
-                  <img src={c.profile.avatar_url} alt="" className="h-6 w-6 rounded-full object-cover" />
-                ) : (
-                  <div className="h-6 w-6 rounded-full bg-muted" />
-                )}
-                <span className="text-[11px] font-medium truncate flex-1">
-                  {c.profile?.display_name ?? c.profile?.username ?? "Fan"}
-                </span>
-                <span className="text-[10px] text-muted-foreground">
-                  {c.created_at && new Date(c.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      {!(hideSupportersWhenEmpty && !cheers?.length) && (
+        <section>
+          <h3 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+            <Heart className="h-3 w-3" /> Supporters
+          </h3>
+          {!cheers?.length ? (
+            <p className="text-[11px] text-muted-foreground">No supporters yet.</p>
+          ) : (
+            <ul className="space-y-1.5">
+              {cheers.map((c: any) => (
+                <li key={c.user_id} className="flex items-center gap-2 rounded-lg p-1.5 -mx-1.5 hover:bg-card">
+                  {c.profile?.avatar_url ? (
+                    <img src={c.profile.avatar_url} alt="" className="h-6 w-6 rounded-full object-cover" />
+                  ) : (
+                    <div className="h-6 w-6 rounded-full bg-muted" />
+                  )}
+                  <span className="text-[11px] font-medium truncate flex-1">
+                    {c.profile?.display_name ?? c.profile?.username ?? "Fan"}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">
+                    {c.created_at && new Date(c.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
 
       {recentMs.length > 0 && (
         <section>
