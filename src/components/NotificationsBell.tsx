@@ -113,33 +113,33 @@ const NotificationsBell = () => {
   const { data: milestones } = useQuery({
     queryKey: ["nb-milestones", user?.id, backedProjectIds.length],
     queryFn: async () => {
-      // Get contracts for backed projects + projects user owns
-      const { data: ownedProjects } = await supabase
+      const sb = supabase as any;
+      const { data: ownedProjects } = await sb
         .from("projects")
         .select("id, name, public_slug")
         .eq("owner_id", user!.id)
         .limit(50);
-      const ownedIds = ((ownedProjects as any[]) ?? []).map((p) => p.id);
+      const ownedIds = ((ownedProjects as any[]) ?? []).map((p: any) => p.id);
       const allProjectIds = Array.from(new Set([...backedProjectIds, ...ownedIds]));
       if (allProjectIds.length === 0) return [];
 
-      const { data: contracts } = await supabase
+      const { data: contracts } = await sb
         .from("project_contracts")
         .select("id, project_id")
         .in("project_id", allProjectIds);
       const contractRows = (contracts as any[]) ?? [];
-      const contractIds = contractRows.map((c) => c.id);
+      const contractIds = contractRows.map((c: any) => c.id);
       if (contractIds.length === 0) return [];
 
-      const { data: projectRows } = await supabase
+      const { data: projectRows } = await sb
         .from("projects")
         .select("id, name, public_slug")
         .in("id", allProjectIds);
       const projectMap = new Map(
-        ((projectRows as any[]) ?? []).map((p) => [p.id, p]),
+        ((projectRows as any[]) ?? []).map((p: any) => [p.id, p]),
       );
 
-      const { data: ms } = await supabase
+      const { data: ms } = await sb
         .from("project_milestones")
         .select("id, title, status, contract_id, updated_at, approved_at")
         .in("contract_id", contractIds)
@@ -147,10 +147,11 @@ const NotificationsBell = () => {
         .order("updated_at", { ascending: false })
         .limit(15);
 
-      return ((ms as any[]) ?? []).map((m) => {
-        const c = contractRows.find((x) => x.id === m.contract_id);
+      return ((ms as any[]) ?? []).map((m: any) => {
+        const c = contractRows.find((x: any) => x.id === m.contract_id);
         return { ...m, project: c ? projectMap.get(c.project_id) : null };
       });
+
 
     },
     enabled: !!user,

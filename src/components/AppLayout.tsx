@@ -13,6 +13,8 @@ import WelcomeModal from "@/components/onboarding/WelcomeModal";
 import RoomsBottomNav from "@/components/RoomsBottomNav";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import InboxDrawer from "@/components/InboxDrawer";
+import NotificationsBell from "@/components/NotificationsBell";
+
 // FlowLauncher (floating FAB) retired — Flow is now reachable via the Hub view toggle + HubFlowWidget.
 // DockBar retired in v7 (post phase-2) — navigation happens via the left side nav + global ⌘K search.
 // v10.4: top-bar Inbox restored as a slide-out drawer sibling to NotificationBell (with unread ticker).
