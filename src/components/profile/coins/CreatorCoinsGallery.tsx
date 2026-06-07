@@ -61,7 +61,7 @@ const CreatorCoinsGallery = ({ userId, creatorName, isOwner, fallbackWallet }: P
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3">
         {tokens.map((t) => (
           <CoinGalleryTile
             key={t.id}
