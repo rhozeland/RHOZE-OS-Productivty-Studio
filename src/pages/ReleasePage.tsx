@@ -10,8 +10,8 @@
  * What it hides: budget, deliverables, files, contracts, collaborators' DMs.
  */
 import { useParams, Link } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Heart, Sparkles, ArrowLeft, Music4, Check, Copy } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Sparkles, ArrowLeft, Music4, Check, Copy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,10 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { pumpFunCreateUrl, pumpFunDetailsJson } from "@/lib/pump-fun";
-import { useState } from "react";
+import { useRef } from "react";
+import SupportPanel from "@/components/release/SupportPanel";
+import ReleaseComments from "@/components/release/ReleaseComments";
+
 
 const ReleasePage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -112,29 +115,10 @@ const ReleasePage = () => {
     enabled: !!project?.id && !!user?.id,
   });
 
-  const cheer = useMutation({
-    mutationFn: async () => {
-      if (!user) throw new Error("Sign in to cheer");
-      if (myCheer) {
-        const { error } = await supabase
-          .from("project_cheers")
-          .delete()
-          .eq("project_id", project!.id)
-          .eq("user_id", user.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("project_cheers")
-          .insert({ project_id: project!.id, user_id: user.id });
-        if (error) throw error;
-      }
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["release", slug] });
-      qc.invalidateQueries({ queryKey: ["release-mycheer", project?.id, user?.id] });
-    },
-    onError: (e: any) => toast.error(e?.message ?? "Could not cheer"),
-  });
+  const commentsRef = useRef<HTMLDivElement>(null);
+  const scrollToComments = () => {
+    commentsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   if (isLoading) {
     return <div className="container mx-auto py-20 text-center text-muted-foreground">Loading release…</div>;
@@ -147,6 +131,7 @@ const ReleasePage = () => {
       </div>
     );
   }
+
 
   const cover = project.cover_color ?? "hsl(var(--primary))";
 
