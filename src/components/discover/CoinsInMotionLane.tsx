@@ -90,7 +90,7 @@ const CoinCard = ({ profile }: { profile: TokenProfile }) => {
       tabIndex={0}
       onClick={openProfile}
       onKeyDown={handleKeyDown}
-      className="snap-start shrink-0 w-[260px] rounded-2xl border border-border/60 bg-card/70 backdrop-blur-sm p-3.5 hover:border-foreground/30 transition-colors block"
+      className="rounded-2xl border border-border/60 bg-card/70 backdrop-blur-sm p-3.5 hover:border-foreground/30 transition-colors block w-full"
     >
       <div className="flex items-center gap-2.5">
         <div className="shrink-0">
