@@ -216,8 +216,8 @@ const ProfileDetailPage = () => {
   };
 
   const TABS: { key: TabKey; label: string; Icon: any }[] = [
-    { key: "projects", label: "Projects", Icon: FolderKanban },
     { key: "works", label: "Works", Icon: ImageIcon },
+    { key: "projects", label: "Projects", Icon: FolderKanban },
     { key: "coin", label: "Token / Coin", Icon: Coins },
   ];
 
@@ -242,26 +242,25 @@ const ProfileDetailPage = () => {
           reviewStats={reviewStats}
         />
 
-        {/* ─── Sticky tabs ─── */}
-        <div className="sticky top-14 z-30 -mx-4 md:-mx-8 px-4 md:px-8 bg-background/85 backdrop-blur-md border-b border-border/50">
-          <div className="max-w-6xl mx-auto flex items-center gap-1">
-            {TABS.map(({ key, label, Icon }) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => handleTabChange(key)}
-                className={cn(
-                  "relative inline-flex items-center gap-1.5 px-4 py-3 text-sm font-medium transition-colors",
-                  tab === key ? "text-foreground" : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                <Icon className="h-3.5 w-3.5" /> {label}
-                {tab === key && (
-                  <span className="absolute left-2 right-2 -bottom-px h-0.5 bg-foreground rounded-full" />
-                )}
-              </button>
-            ))}
-          </div>
+        {/* ─── Floating icon tabs (no bar, free-flowing) ─── */}
+        <div className="flex items-center justify-center gap-2">
+          {TABS.map(({ key, label, Icon }) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => handleTabChange(key)}
+              aria-label={label}
+              title={label}
+              className={cn(
+                "inline-flex items-center justify-center h-10 w-10 rounded-full transition-all",
+                tab === key
+                  ? "bg-foreground text-background shadow-md scale-105"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/60",
+              )}
+            >
+              <Icon className="h-4 w-4" />
+            </button>
+          ))}
         </div>
 
         {/* ─── 65/35 grid ─── */}
