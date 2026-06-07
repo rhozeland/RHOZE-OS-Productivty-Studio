@@ -276,7 +276,7 @@ const ReleasePage = () => {
               </div>
             </TabsContent>
 
-            {/* ROADMAP — vision + scope + milestones */}
+            {/* ROADMAP — vision + scope + AI-drafted milestones (project_goals) */}
             <TabsContent value="roadmap" className="space-y-6">
               {(project.vision || project.scope_of_work) && (
                 <div className="grid gap-4 md:grid-cols-2">
@@ -294,33 +294,52 @@ const ReleasePage = () => {
                   )}
                 </div>
               )}
-              {hasMilestones ? (
-                <>
-                  <MilestoneTrack milestones={milestones as any} contractId={contract?.id} />
-                  <ol className="mt-2 space-y-2">
-                    {milestones!.map((m: any, i: number) => {
-                      const done = m.status === "approved" || m.status === "released";
-                      return (
-                        <li key={m.id} className="flex items-start gap-3 rounded-xl border border-border bg-card/40 p-4">
-                          <div className={["h-6 w-6 rounded-full grid place-items-center text-[10px] font-semibold shrink-0", done ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-muted text-muted-foreground"].join(" ")}>
-                            {done ? <Check className="h-3 w-3" /> : i + 1}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium">{m.title}</div>
-                            {m.description && (
-                              <p className="text-xs text-muted-foreground mt-1 whitespace-pre-wrap">{m.description}</p>
-                            )}
-                            {m.due_date && (
-                              <div className="text-[10px] text-muted-foreground mt-1">
-                                Due {new Date(m.due_date).toLocaleDateString()}
-                              </div>
-                            )}
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ol>
-                </>
+
+              {hasMilestones && (
+                <MilestoneTrack milestones={milestones as any} contractId={contract?.id} />
+              )}
+
+              {storyItems.length > 0 ? (
+                <ol className="space-y-3">
+                  {storyItems.map((g: any, i: number) => (
+                    <li key={g.id} className="rounded-2xl border border-border bg-card/40 p-5">
+                      <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground mb-2">
+                        <span className="h-5 w-5 rounded-full grid place-items-center bg-muted text-[10px] font-semibold text-foreground">{i + 1}</span>
+                        {g.created_at && new Date(g.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                      </div>
+                      <h3 className="text-base font-semibold leading-snug">{g.title}</h3>
+                      {g.description && (
+                        <p className="mt-2 text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                          {g.description}
+                        </p>
+                      )}
+                    </li>
+                  ))}
+                </ol>
+              ) : hasMilestones ? (
+                <ol className="space-y-2">
+                  {milestones!.map((m: any, i: number) => {
+                    const done = m.status === "approved" || m.status === "released";
+                    return (
+                      <li key={m.id} className="flex items-start gap-3 rounded-xl border border-border bg-card/40 p-4">
+                        <div className={["h-6 w-6 rounded-full grid place-items-center text-[10px] font-semibold shrink-0", done ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-muted text-muted-foreground"].join(" ")}>
+                          {done ? <Check className="h-3 w-3" /> : i + 1}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium">{m.title}</div>
+                          {m.description && (
+                            <p className="text-xs text-muted-foreground mt-1 whitespace-pre-wrap">{m.description}</p>
+                          )}
+                          {m.due_date && (
+                            <div className="text-[10px] text-muted-foreground mt-1">
+                              Due {new Date(m.due_date).toLocaleDateString()}
+                            </div>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ol>
               ) : !(project.vision || project.scope_of_work) ? (
                 <p className="text-sm text-muted-foreground text-center py-8">Roadmap coming soon.</p>
               ) : null}
@@ -352,28 +371,31 @@ const ReleasePage = () => {
               )}
             </TabsContent>
 
-            {/* STORY — description + background then chronological feed */}
+            {/* STORY — description + background only (roadmap milestones live in Roadmap) */}
             <TabsContent value="story" className="space-y-6">
               <div className="max-w-3xl space-y-6">
-                {project.description && (
+                {project.description ? (
                   <section>
                     <h3 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">About this release</h3>
                     <p className="text-base text-foreground whitespace-pre-wrap leading-relaxed">
                       {project.description}
                     </p>
                   </section>
-                )}
-                {project.vision && (
+                ) : null}
+                {project.vision ? (
                   <section>
                     <h3 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Background</h3>
                     <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
                       {project.vision}
                     </p>
                   </section>
+                ) : null}
+                {!project.description && !project.vision && (
+                  <p className="text-sm text-muted-foreground text-center py-8">No story yet.</p>
                 )}
-                <StoryFeed items={storyItems} publicOnly hideWhenEmpty />
               </div>
             </TabsContent>
+
 
             {/* TEAM */}
             <TabsContent value="team" className="space-y-6">
