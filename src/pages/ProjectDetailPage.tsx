@@ -497,7 +497,9 @@ const ProjectDetailPage = () => {
         <TabsContent value="roadmap" className="space-y-6">
           {canManageProject && (
             <TokenizeProjectCta
+              projectId={project.id}
               projectTitle={project.title}
+              projectDescription={(project as any).description ?? null}
               linkedTokenId={(project as any).linked_token_id ?? null}
             />
           )}
