@@ -122,13 +122,13 @@ const FanOnboardingPage = () => {
     }
     let cancelled = false;
     setCheckingUsername(true);
-    supabase.rpc("check_username_available", { _username: u })
-      .then(({ data, error }) => {
-        if (cancelled) return;
-        if (error) setUsernameAvailable(null);
-        else setUsernameAvailable(Boolean(data));
-      })
-      .finally(() => { if (!cancelled) setCheckingUsername(false); });
+    (async () => {
+      const { data, error } = await supabase.rpc("check_username_available", { _username: u });
+      if (cancelled) return;
+      if (error) setUsernameAvailable(null);
+      else setUsernameAvailable(Boolean(data));
+      setCheckingUsername(false);
+    })();
     return () => { cancelled = true; };
   }, [debouncedUsername]);
 
