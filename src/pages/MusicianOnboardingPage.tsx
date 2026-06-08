@@ -76,6 +76,54 @@ const SOCIAL_FIELDS = [
 const DRAFT_KEY = "rhozeland.musician-onboarding.draft";
 const TOTAL_SCREENS = 5;
 
+const POPULAR_CITIES = [
+  "Toronto, Canada", "Montreal, Canada", "Vancouver, Canada",
+  "New York, NY", "Los Angeles, CA", "Atlanta, GA", "Miami, FL", "Chicago, IL",
+  "Nashville, TN", "Houston, TX", "Austin, TX", "Detroit, MI", "Philadelphia, PA",
+  "Brooklyn, NY", "Oakland, CA", "Seattle, WA", "Portland, OR", "Boston, MA",
+  "London, UK", "Manchester, UK", "Berlin, Germany", "Paris, France", "Amsterdam, Netherlands",
+  "Madrid, Spain", "Barcelona, Spain", "Lisbon, Portugal", "Stockholm, Sweden", "Dublin, Ireland",
+  "Lagos, Nigeria", "Accra, Ghana", "Johannesburg, South Africa", "Cape Town, South Africa",
+  "Nairobi, Kenya", "Cairo, Egypt", "Casablanca, Morocco",
+  "Mexico City, Mexico", "São Paulo, Brazil", "Rio de Janeiro, Brazil", "Buenos Aires, Argentina",
+  "Bogotá, Colombia", "Medellín, Colombia", "Santiago, Chile", "Lima, Peru",
+  "Tokyo, Japan", "Seoul, South Korea", "Shanghai, China", "Hong Kong", "Singapore",
+  "Bangkok, Thailand", "Manila, Philippines", "Jakarta, Indonesia",
+  "Mumbai, India", "Delhi, India", "Bangalore, India",
+  "Sydney, Australia", "Melbourne, Australia", "Auckland, New Zealand",
+  "Dubai, UAE", "Tel Aviv, Israel", "Istanbul, Turkey",
+];
+
+const PhantomLogo = () => (
+  <span className="w-8 h-8 rounded-lg bg-[#AB9FF2] flex items-center justify-center shrink-0">
+    <svg viewBox="0 0 128 128" className="w-5 h-5" aria-hidden>
+      <path
+        fill="#fff"
+        d="M110.6 64.9c0-25.7-20.8-46.5-46.6-46.5S17.5 39.2 17.5 64.9v44.7c0 1.4 1.1 2.5 2.5 2.5h22.6c1.4 0 2.5-1.1 2.5-2.5V94.4c0-1.7 2.1-2.5 3.3-1.3 7.4 7.4 17.7 12.1 29 12.1 1.7 0 3.3-.1 4.9-.3.9-.1 1.6.6 1.6 1.5v3.2c0 1.4 1.1 2.5 2.5 2.5h21.5c1.4 0 2.5-1.1 2.5-2.5V64.9zM52.8 76.1c-4.1 0-7.5-5-7.5-11.2s3.4-11.2 7.5-11.2 7.5 5 7.5 11.2-3.3 11.2-7.5 11.2zm26.8 0c-4.1 0-7.5-5-7.5-11.2s3.4-11.2 7.5-11.2 7.5 5 7.5 11.2-3.3 11.2-7.5 11.2z"
+      />
+    </svg>
+  </span>
+);
+
+const SolflareLogo = () => (
+  <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#FFC10B] to-[#FC7227] flex items-center justify-center shrink-0">
+    <svg viewBox="0 0 64 64" className="w-5 h-5" aria-hidden>
+      <circle cx="32" cy="32" r="11" fill="#fff" />
+      <g fill="#fff">
+        <rect x="30" y="4" width="4" height="10" rx="2" />
+        <rect x="30" y="50" width="4" height="10" rx="2" />
+        <rect x="4" y="30" width="10" height="4" rx="2" />
+        <rect x="50" y="30" width="10" height="4" rx="2" />
+        <rect x="11" y="11" width="4" height="10" rx="2" transform="rotate(-45 13 16)" />
+        <rect x="49" y="11" width="4" height="10" rx="2" transform="rotate(45 51 16)" />
+        <rect x="11" y="43" width="4" height="10" rx="2" transform="rotate(45 13 48)" />
+        <rect x="49" y="43" width="4" height="10" rx="2" transform="rotate(-45 51 48)" />
+      </g>
+    </svg>
+  </span>
+);
+
+
 type Draft = {
   step?: number;
   displayName?: string;
@@ -417,7 +465,14 @@ const MusicianOnboardingPage = () => {
                       onChange={(e) => setCity(e.target.value)}
                       placeholder="Where are you based?"
                       className="rounded-xl h-11"
+                      list="musician-onboarding-cities"
+                      autoComplete="off"
                     />
+                    <datalist id="musician-onboarding-cities">
+                      {POPULAR_CITIES.map((c) => (
+                        <option key={c} value={c} />
+                      ))}
+                    </datalist>
                   </div>
                 </div>
 
@@ -581,7 +636,7 @@ const MusicianOnboardingPage = () => {
                           onClick={() => connectWallet("Phantom")}
                           className="w-full inline-flex items-center gap-3 rounded-xl border border-border bg-background/60 hover:bg-background transition-colors px-4 py-3 text-left"
                         >
-                          <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-fuchsia-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">P</span>
+                          <PhantomLogo />
                           <span className="text-sm font-medium text-foreground flex-1">Connect Phantom</span>
                           <ArrowRight className="w-3.5 h-3.5 text-muted-foreground" />
                         </button>
@@ -590,7 +645,7 @@ const MusicianOnboardingPage = () => {
                           onClick={() => connectWallet("Solflare")}
                           className="w-full inline-flex items-center gap-3 rounded-xl border border-border bg-background/60 hover:bg-background transition-colors px-4 py-3 text-left"
                         >
-                          <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white text-xs font-bold">S</span>
+                          <SolflareLogo />
                           <span className="text-sm font-medium text-foreground flex-1">Connect Solflare</span>
                           <ArrowRight className="w-3.5 h-3.5 text-muted-foreground" />
                         </button>
