@@ -67,6 +67,7 @@ import { cn } from "@/lib/utils";
 import { fetchCreatorContext } from "@/lib/creator-context";
 import { composeMilestoneDescription, type DraftedMilestone, type AssetRef, type MilestonePhase, PHASE_ORDER, PHASE_LABELS } from "@/hooks/useAiRoadmapDraft";
 import StartProjectPicker from "@/components/project/StartProjectPicker";
+import LaunchCoinFlowModal from "@/components/launchpad/LaunchCoinFlowModal";
 
 interface ProjectRow {
   id: string;
