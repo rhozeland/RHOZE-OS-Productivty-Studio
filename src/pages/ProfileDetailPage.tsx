@@ -29,7 +29,7 @@ import ShareCardModal from "@/components/share/ShareCardModal";
 import ProfileProjectCard from "@/components/profile/ProfileProjectCard";
 import LaunchCoinFlowModal from "@/components/launchpad/LaunchCoinFlowModal";
 
-type TabKey = "projects" | "works";
+type TabKey = "projects" | "works" | "reposts";
 
 const ProfileDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -48,7 +48,7 @@ const ProfileDetailPage = () => {
 
   const initialTab = (searchParams.get("tab") as TabKey) || "projects";
   const [tab, setTab] = useState<TabKey>(
-    ["projects", "works"].includes(initialTab) ? initialTab : "projects",
+    ["projects", "works", "reposts"].includes(initialTab) ? initialTab : "projects",
   );
 
   const [subscribeOpen, setSubscribeOpen] = useState(
