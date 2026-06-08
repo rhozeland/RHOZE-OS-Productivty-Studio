@@ -408,7 +408,7 @@ const ProfileDetailPage = () => {
                 {/* Start a project */}
                 <button
                   type="button"
-                  onClick={() => navigate("/projects/new")}
+                  onClick={() => navigate("/messages?tab=projects&new=1")}
                   className="w-full text-left rounded-2xl p-5 bg-gradient-to-br from-primary via-fuchsia-500 to-amber-500 text-primary-foreground shadow-lg hover:opacity-95 transition-opacity"
                 >
                   <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] opacity-90">
@@ -419,25 +419,6 @@ const ProfileDetailPage = () => {
                 </button>
 
                 {/* Start a coin — rendered via <StartCoinCta /> elsewhere on this page */}
-
-                {/* Pending inbox */}
-                <button
-                  type="button"
-                  onClick={() => navigate("/messages")}
-                  className="w-full text-left rounded-2xl border border-border/50 bg-card/70 hover:bg-card p-4 transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Inbox className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm font-medium text-foreground">Inbox</span>
-                    </div>
-                    {(inboxCount ?? 0) > 0 ? (
-                      <Badge className="text-[10px]">{inboxCount} new</Badge>
-                    ) : (
-                      <span className="text-[11px] text-muted-foreground">All caught up</span>
-                    )}
-                  </div>
-                </button>
               </>
             ) : (
               <>
