@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import {
   EyeOff, Loader2, Sparkles, Image as ImageIcon, Play, Music, FileText,
   Calendar as CalendarIcon, FolderKanban, ExternalLink, Coins, Heart,
-  Rocket, Inbox, Users, ArrowRight,
+  Rocket, Inbox, Users, ArrowRight, Repeat2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -29,7 +29,7 @@ import ShareCardModal from "@/components/share/ShareCardModal";
 import ProfileProjectCard from "@/components/profile/ProfileProjectCard";
 import LaunchCoinFlowModal from "@/components/launchpad/LaunchCoinFlowModal";
 
-type TabKey = "projects" | "works";
+type TabKey = "projects" | "works" | "reposts";
 
 const ProfileDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -48,7 +48,7 @@ const ProfileDetailPage = () => {
 
   const initialTab = (searchParams.get("tab") as TabKey) || "projects";
   const [tab, setTab] = useState<TabKey>(
-    ["projects", "works"].includes(initialTab) ? initialTab : "projects",
+    ["projects", "works", "reposts"].includes(initialTab) ? initialTab : "projects",
   );
 
   const [subscribeOpen, setSubscribeOpen] = useState(
@@ -106,6 +106,32 @@ const ProfileDetailPage = () => {
         .select("id, title, file_url, link_url, category, content_type, description, solana_signature, anchored_at, archived_at, created_at")
         .eq("user_id", id!).order("created_at", { ascending: false }).limit(24);
       return data ?? [];
+    },
+    enabled: !!id,
+  });
+
+  // Reposts surfaced on this profile — posts THIS user has reposted from Flow.
+  // The flow_reposts row tracks the action; we expand into the original
+  // flow_items so the existing PostsGrid renderer works unchanged.
+  const { data: repostedPosts } = useQuery({
+    queryKey: ["profile-reposts", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("flow_reposts")
+        .select(`
+          created_at,
+          flow_items:flow_item_id (
+            id, title, file_url, link_url, category, content_type, description,
+            solana_signature, anchored_at, archived_at, created_at, user_id
+          )
+        `)
+        .eq("user_id", id!)
+        .order("created_at", { ascending: false })
+        .limit(48);
+      if (error) throw error;
+      return (data ?? [])
+        .map((r: any) => r.flow_items)
+        .filter(Boolean);
     },
     enabled: !!id,
   });
@@ -252,9 +278,15 @@ const ProfileDetailPage = () => {
     setSearchParams(sp, { replace: true });
   };
 
+  const hasReposts = (repostedPosts?.length ?? 0) > 0;
   const TABS: { key: TabKey; label: string; Icon: any }[] = [
     { key: "works", label: "Works", Icon: ImageIcon },
     { key: "projects", label: "Projects", Icon: FolderKanban },
+    // Reposts tab only appears once this user has actually reposted something
+    // (or always for the profile owner so they can find the surface).
+    ...(hasReposts || isOwnProfile
+      ? [{ key: "reposts" as TabKey, label: "Reposts", Icon: Repeat2 }]
+      : []),
   ];
 
   return (
@@ -352,6 +384,18 @@ const ProfileDetailPage = () => {
             {tab === "works" && (
               <section className="space-y-3">
                 <PostsGrid posts={flowPosts ?? []} isOwnProfile={isOwnProfile} navigate={navigate} />
+              </section>
+            )}
+
+            {tab === "reposts" && (
+              <section className="space-y-3">
+                <PostsGrid
+                  posts={repostedPosts ?? []}
+                  isOwnProfile={isOwnProfile}
+                  navigate={navigate}
+                  emptyTitle="No reposts yet"
+                  emptyDescription="Hit the repost button on any Flow card and it'll land here."
+                />
               </section>
             )}
 
