@@ -703,50 +703,23 @@ const StudioPage = () => {
         onOpenChange={setStartProjectOpen}
       />
 
-      {/* Eligibility sheet */}
-      <Sheet open={coinSheetOpen} onOpenChange={setCoinSheetOpen}>
-        <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle className="font-display text-xl">
-              Before you can launch a coin
-            </SheetTitle>
-            <SheetDescription>
-              Here's what you need before going live on pump.fun.
-            </SheetDescription>
-          </SheetHeader>
-
-          {!eligibility ? (
-            <div className="py-10 flex justify-center">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            </div>
-          ) : (
-            <EligibilityChecklist
-              data={eligibility}
-              onAction={(href) => {
-                setCoinSheetOpen(false);
-                navigate(href);
-              }}
-            />
-          )}
-
-          <div className="mt-6 space-y-2 border-t border-border pt-4">
-            <Link
-              to="/why-coin"
-              onClick={() => setCoinSheetOpen(false)}
-              className="block text-xs text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Or start a project first — build in public and earn your coin →
-            </Link>
-            <Link
-              to="/label-services"
-              onClick={() => setCoinSheetOpen(false)}
-              className="block text-xs text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Apply for A&R — Rhozeland handles everything →
-            </Link>
-          </div>
-        </SheetContent>
-      </Sheet>
+      {/* Launch a Coin — 3-screen flow modal */}
+      <LaunchCoinFlowModal
+        open={coinSheetOpen}
+        onOpenChange={setCoinSheetOpen}
+        project={
+          (projects ?? [])[0]
+            ? {
+                id: (projects ?? [])[0].id,
+                title: (projects ?? [])[0].title,
+                description: ((projects ?? [])[0] as any).description ?? null,
+              }
+            : null
+        }
+        backHref={
+          (projects ?? [])[0] ? `/projects/${(projects ?? [])[0].id}` : "/my-projects"
+        }
+      />
     </div>
   );
 };
