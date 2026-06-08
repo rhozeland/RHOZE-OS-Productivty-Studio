@@ -438,6 +438,43 @@ const DiscoverPage = () => {
           </div>
         )}
       </div>
+
+      {/* Floating Flow Mode launcher */}
+      <Link
+        to="/flow"
+        aria-label="Open Flow mode"
+        className="fixed bottom-6 right-6 z-40 group"
+      >
+        <motion.div
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.3, type: "spring", stiffness: 220, damping: 18 }}
+          whileHover={{ scale: 1.06 }}
+          whileTap={{ scale: 0.94 }}
+          className="relative h-14 w-14 rounded-full shadow-[0_18px_45px_-12px_hsl(330_85%_60%/0.65)] flex items-center justify-center text-white overflow-hidden"
+          style={{
+            backgroundImage:
+              "linear-gradient(135deg, hsl(330 85% 60%) 0%, hsl(292 84% 61%) 50%, hsl(38 92% 55%) 100%)",
+          }}
+        >
+          <motion.span
+            aria-hidden
+            className="absolute inset-0 rounded-full"
+            style={{
+              boxShadow: "0 0 0 0 hsl(330 85% 60% / 0.55)",
+            }}
+            animate={{ boxShadow: [
+              "0 0 0 0 hsl(330 85% 60% / 0.55)",
+              "0 0 0 14px hsl(330 85% 60% / 0)",
+            ]}}
+            transition={{ duration: 1.8, repeat: Infinity, ease: "easeOut" }}
+          />
+          <Play className="h-5 w-5 fill-white ml-0.5 relative" strokeWidth={0} />
+        </motion.div>
+        <span className="pointer-events-none absolute right-16 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-full bg-foreground text-background text-[11px] font-semibold px-2.5 py-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-md">
+          Flow
+        </span>
+      </Link>
     </div>
   );
 };
