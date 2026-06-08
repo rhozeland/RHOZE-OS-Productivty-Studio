@@ -10,11 +10,11 @@
  * is the musician-first invitation. Once a token is approved, ProjectTokenCard
  * takes over this slot.
  */
+import { useState } from "react";
 import { Coins, ArrowUpRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-
-const PUMP_FUN_CREATE_URL = "https://pump.fun/create";
+import LaunchCoinFlowModal from "@/components/launchpad/LaunchCoinFlowModal";
 
 interface Props {
   /** Display name used in the headline copy. */
@@ -24,6 +24,7 @@ interface Props {
 
 export default function StartCoinCta({ creatorName, className }: Props) {
   const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
 
   return (
     <section
@@ -61,18 +62,12 @@ export default function StartCoinCta({ creatorName, className }: Props) {
 
         <div className="grid grid-cols-1 gap-2">
           <Button
-            asChild
             size="lg"
             className="w-full rounded-full gap-2"
+            onClick={() => setOpen(true)}
           >
-            <a
-              href={PUMP_FUN_CREATE_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Launch on pump.fun
-              <ArrowUpRight className="h-4 w-4" />
-            </a>
+            Launch on pump.fun
+            <ArrowUpRight className="h-4 w-4" />
           </Button>
           <div className="flex flex-col gap-1.5">
             <button
@@ -97,6 +92,8 @@ export default function StartCoinCta({ creatorName, className }: Props) {
           fans can see price, volume, and trade on pump.fun in one tap.
         </p>
       </div>
+
+      <LaunchCoinFlowModal open={open} onOpenChange={setOpen} project={null} />
     </section>
   );
 }

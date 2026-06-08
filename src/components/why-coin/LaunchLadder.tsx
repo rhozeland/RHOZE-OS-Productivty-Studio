@@ -11,11 +11,11 @@ import { useState } from "react";
 import { ArrowUpRight, Coins, Sparkles, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConciergeIntakeSheet } from "@/components/concierge/ConciergeIntakeSheet";
-
-const PUMP_FUN_CREATE_URL = "https://pump.fun/create";
+import LaunchCoinFlowModal from "@/components/launchpad/LaunchCoinFlowModal";
 
 const LaunchLadder = () => {
   const [tier, setTier] = useState<"curated" | "roster" | null>(null);
+  const [launchOpen, setLaunchOpen] = useState(false);
 
   return (
     <section className="space-y-5">
@@ -44,11 +44,9 @@ const LaunchLadder = () => {
             in 30 seconds. Link it here when you're done — admin approves
             same-day.
           </p>
-          <Button asChild variant="outline" className="w-full mt-4 gap-2 rounded-full">
-            <a href={PUMP_FUN_CREATE_URL} target="_blank" rel="noopener noreferrer">
-              Launch on pump.fun
-              <ArrowUpRight className="h-3.5 w-3.5" />
-            </a>
+          <Button variant="outline" className="w-full mt-4 gap-2 rounded-full" onClick={() => setLaunchOpen(true)}>
+            Launch on pump.fun
+            <ArrowUpRight className="h-3.5 w-3.5" />
           </Button>
           <p className="text-[10px] text-muted-foreground/70 text-center mt-2">
             ~$2 SOL deploy fee · Rhozeland charges nothing
@@ -107,6 +105,7 @@ const LaunchLadder = () => {
         onOpenChange={(o) => !o && setTier(null)}
         initialTier={tier ?? undefined}
       />
+      <LaunchCoinFlowModal open={launchOpen} onOpenChange={setLaunchOpen} project={null} />
     </section>
   );
 };

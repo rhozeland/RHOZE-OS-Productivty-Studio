@@ -15,7 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { pumpFunCreateUrl } from "@/lib/pump-fun";
+import LaunchCoinFlowModal from "@/components/launchpad/LaunchCoinFlowModal";
 
 interface Props {
   projectId: string;
@@ -39,6 +39,7 @@ const PublishReleaseCard = ({
 }: Props) => {
   const qc = useQueryClient();
   const [copied, setCopied] = useState(false);
+  const [launchOpen, setLaunchOpen] = useState(false);
 
   const toggle = useMutation({
     mutationFn: async (next: boolean) => {
@@ -108,20 +109,26 @@ const PublishReleaseCard = ({
         <div className="flex items-center justify-between text-xs text-muted-foreground pt-1 border-t border-border/60">
           <span>{cheerCount} cheer{cheerCount === 1 ? "" : "s"}</span>
           {tokenizeReady ? (
-            <a
-              href={pumpFunCreateUrl({ name: title, description })}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              type="button"
+              onClick={() => setLaunchOpen(true)}
               className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium hover:underline"
             >
               <Sparkles className="h-3 w-3" />
               Tokenize this release →
-            </a>
+            </button>
           ) : (
             <span className="italic">A&R may flag this release for tokenization</span>
           )}
         </div>
       )}
+
+      <LaunchCoinFlowModal
+        open={launchOpen}
+        onOpenChange={setLaunchOpen}
+        project={{ id: projectId, title: title ?? "Untitled Release", description }}
+        backHref={`/projects/${projectId}`}
+      />
     </div>
   );
 };

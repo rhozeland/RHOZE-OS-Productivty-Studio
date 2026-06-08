@@ -27,6 +27,7 @@ import { useUserNote } from "@/hooks/useNotes";
 import { EmptyState } from "@/components/ui/empty-state";
 import ShareCardModal from "@/components/share/ShareCardModal";
 import ProfileProjectCard from "@/components/profile/ProfileProjectCard";
+import LaunchCoinFlowModal from "@/components/launchpad/LaunchCoinFlowModal";
 
 type TabKey = "projects" | "works";
 
@@ -43,6 +44,7 @@ const ProfileDetailPage = () => {
   const [bookingOpen, setBookingOpen] = useState(false);
   const [boostOpen, setBoostOpen] = useState(false);
   const [shareCardOpen, setShareCardOpen] = useState(false);
+  const [launchCoinOpen, setLaunchCoinOpen] = useState(false);
 
   const initialTab = (searchParams.get("tab") as TabKey) || "projects";
   const [tab, setTab] = useState<TabKey>(
@@ -374,18 +376,17 @@ const ProfileDetailPage = () => {
 
                 {/* Start a coin */}
                 {!p.token_mint_address && (
-                  <a
-                    href="https://pump.fun/create"
-                    target="_blank"
-                    rel="noopener"
-                    className="block rounded-2xl p-5 bg-zinc-950 text-white shadow-lg hover:bg-zinc-900 transition-colors"
+                  <button
+                    type="button"
+                    onClick={() => setLaunchCoinOpen(true)}
+                    className="text-left block rounded-2xl p-5 bg-zinc-950 text-white shadow-lg hover:bg-zinc-900 transition-colors"
                   >
                     <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] opacity-75">
                       <Rocket className="h-3.5 w-3.5" /> Monetize
                     </div>
                     <p className="font-display text-lg font-bold mt-2">Launch on pump.fun</p>
                     <p className="text-xs opacity-75 mt-1">Start a coin and earn 5bps on every trade.</p>
-                  </a>
+                  </button>
                 )}
 
                 {/* Pending inbox */}
@@ -447,6 +448,7 @@ const ProfileDetailPage = () => {
           <ShareCardModal open={shareCardOpen} onOpenChange={setShareCardOpen} creatorId={id} />
         )}
         {isOwnProfile && <BoostProfileSheet open={boostOpen} onOpenChange={setBoostOpen} />}
+        <LaunchCoinFlowModal open={launchCoinOpen} onOpenChange={setLaunchCoinOpen} project={null} />
         <Dialog open={bookingOpen} onOpenChange={setBookingOpen}>
           <DialogContent className="max-w-6xl w-[95vw] max-h-[92vh] overflow-y-auto p-0">
             <DialogHeader className="px-6 pt-6 pb-3 border-b border-border/40">
