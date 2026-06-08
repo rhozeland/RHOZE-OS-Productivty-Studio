@@ -11,6 +11,7 @@
  *
  * Linked from StartCoinCta and CreatorRewardsCard.
  */
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Coins,
@@ -25,8 +26,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import LaunchLadder from "@/components/why-coin/LaunchLadder";
-
-const PUMP_FUN_CREATE_URL = "https://pump.fun/create";
+import LaunchCoinFlowModal from "@/components/launchpad/LaunchCoinFlowModal";
 
 const WHY_REASONS = [
   {
