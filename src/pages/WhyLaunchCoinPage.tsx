@@ -240,6 +240,7 @@ export default function WhyLaunchCoinPage() {
         {/* Three-tier launch ladder (DIY · Curated · Roster) */}
         <LaunchLadder />
       </div>
+      <LaunchCoinFlowModal open={launchOpen} onOpenChange={setLaunchOpen} project={null} />
     </div>
   );
 }
