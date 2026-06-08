@@ -245,7 +245,7 @@ const App = () => (
             <Routes>
               {/* Auth page — redirect to dashboard if already logged in */}
               <Route path="/auth" element={<PublicRoute><AuthPage /></PublicRoute>} />
-              <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
+              <Route path="/onboarding" element={<Navigate to="/welcome" replace />} />
               <Route path="/onboarding/fan" element={<ProtectedRoute><FanOnboardingPage /></ProtectedRoute>} />
               <Route path="/onboarding/musician" element={<ProtectedRoute><MusicianOnboardingPage /></ProtectedRoute>} />
               <Route path="/welcome" element={<ProtectedRoute><RoleSelectPage /></ProtectedRoute>} />
