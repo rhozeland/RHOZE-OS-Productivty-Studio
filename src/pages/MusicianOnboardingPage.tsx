@@ -417,7 +417,14 @@ const MusicianOnboardingPage = () => {
                       onChange={(e) => setCity(e.target.value)}
                       placeholder="Where are you based?"
                       className="rounded-xl h-11"
+                      list="musician-onboarding-cities"
+                      autoComplete="off"
                     />
+                    <datalist id="musician-onboarding-cities">
+                      {POPULAR_CITIES.map((c) => (
+                        <option key={c} value={c} />
+                      ))}
+                    </datalist>
                   </div>
                 </div>
 
