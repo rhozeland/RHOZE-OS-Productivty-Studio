@@ -94,7 +94,7 @@ export function ConciergeIntakeSheet({ open, onOpenChange, initialTier }: Props)
       return;
     }
     setSubmitting(true);
-    const { error } = await supabase.from("concierge_requests").insert({
+    const payload = {
       client_id: user.id,
       summary: summary.trim(),
       outcome: outcome.trim() || null,
@@ -104,12 +104,42 @@ export function ConciergeIntakeSheet({ open, onOpenChange, initialTier }: Props)
       contact_email: contactEmail.trim() || user.email || null,
       tier,
       splitter_address: splitterAddress.trim() || null,
-    });
+    };
+    const { data: inserted, error } = await supabase
+      .from("concierge_requests")
+      .insert(payload)
+      .select("id")
+      .single();
     setSubmitting(false);
     if (error) {
       toast.error(error.message);
       return;
     }
+
+    // Fire-and-forget internal ops alert to collab@rhozeland.com
+    supabase.functions
+      .invoke("send-transactional-email", {
+        body: {
+          templateName: "concierge-request-internal",
+          recipientEmail: "collab@rhozeland.com",
+          idempotencyKey: `concierge-internal-${inserted?.id ?? user.id}-${Date.now()}`,
+          templateData: {
+            category: category ?? "concierge",
+            tier,
+            submitterName: user.user_metadata?.full_name ?? null,
+            submitterEmail: payload.contact_email,
+            submitterId: user.id,
+            summary: payload.summary,
+            outcome: payload.outcome,
+            budgetRange: payload.budget_range,
+            deadline: payload.deadline,
+            requestId: inserted?.id ?? null,
+            source: "ConciergeIntakeSheet",
+          },
+        },
+      })
+      .catch((e) => console.warn("[concierge alert] email failed:", e));
+
     setSubmitted(true);
     toast.success("Request received — we'll be in touch.");
   };
