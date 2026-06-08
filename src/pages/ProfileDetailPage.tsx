@@ -110,6 +110,32 @@ const ProfileDetailPage = () => {
     enabled: !!id,
   });
 
+  // Reposts surfaced on this profile — posts THIS user has reposted from Flow.
+  // The flow_reposts row tracks the action; we expand into the original
+  // flow_items so the existing PostsGrid renderer works unchanged.
+  const { data: repostedPosts } = useQuery({
+    queryKey: ["profile-reposts", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("flow_reposts")
+        .select(`
+          created_at,
+          flow_items:flow_item_id (
+            id, title, file_url, link_url, category, content_type, description,
+            solana_signature, anchored_at, archived_at, created_at, user_id
+          )
+        `)
+        .eq("user_id", id!)
+        .order("created_at", { ascending: false })
+        .limit(48);
+      if (error) throw error;
+      return (data ?? [])
+        .map((r: any) => r.flow_items)
+        .filter(Boolean);
+    },
+    enabled: !!id,
+  });
+
   const { data: buildingProjects } = useQuery({
     queryKey: ["profile-building-projects", id],
     queryFn: async () => {
