@@ -1,19 +1,6 @@
 /**
- * FanOnboardingPage — 3-screen fan onboarding flow.
- *
- * Triggered after a user selects "Fan" on the role selection screen.
- * Uses only existing visual tokens — Button, ambient gradient, semantic
- * colors, glassmorphic card surfaces. Every screen is a full-screen modal
- * overlay with a thin progress line at the very top that fills as the user
- * advances.
- *
- * Screens:
- *   1. Hook            — headline + single CTA
- *   2. Wallet          — Phantom / Solflare connect (optional, skippable)
- *   3. Personalization — genre chips (≥1) + artist search → /discover
- *
- * Wallet connection persists via the SolanaWalletAdapter autoConnect storage.
- * Genre picks persist to localStorage AND to profiles.flow_preferred_categories.
+ * FanOnboardingPage — final 3-screen fan onboarding flow.
+ * Only the new modal flow runs after choosing Fan.
  */
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -39,6 +26,7 @@ const DRAFT_KEY = "rhozeland.fan-onboarding.draft";
 type Draft = {
   step?: number;
   genres?: string[];
+  artistSearch?: string;
 };
 
 const loadDraft = (): Draft => {
@@ -50,6 +38,35 @@ const loadDraft = (): Draft => {
   }
 };
 
+const PhantomLogo = () => (
+  <span className="w-10 h-10 rounded-xl bg-[#AB9FF2] flex items-center justify-center shrink-0">
+    <svg viewBox="0 0 128 128" className="w-7 h-7" aria-hidden>
+      <path
+        fill="#fff"
+        d="M110.6 64.9c0-25.7-20.8-46.5-46.6-46.5S17.5 39.2 17.5 64.9v44.7c0 1.4 1.1 2.5 2.5 2.5h22.6c1.4 0 2.5-1.1 2.5-2.5V94.4c0-1.7 2.1-2.5 3.3-1.3 7.4 7.4 17.7 12.1 29 12.1 1.7 0 3.3-.1 4.9-.3.9-.1 1.6.6 1.6 1.5v3.2c0 1.4 1.1 2.5 2.5 2.5h21.5c1.4 0 2.5-1.1 2.5-2.5V64.9zM52.8 76.1c-4.1 0-7.5-5-7.5-11.2s3.4-11.2 7.5-11.2 7.5 5 7.5 11.2-3.3 11.2-7.5 11.2zm26.8 0c-4.1 0-7.5-5-7.5-11.2s3.4-11.2 7.5-11.2 7.5 5 7.5 11.2-3.3 11.2-7.5 11.2z"
+      />
+    </svg>
+  </span>
+);
+
+const SolflareLogo = () => (
+  <span className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FFC10B] to-[#FC7227] flex items-center justify-center shrink-0">
+    <svg viewBox="0 0 64 64" className="w-7 h-7" aria-hidden>
+      <circle cx="32" cy="32" r="11" fill="#fff" />
+      <g fill="#fff">
+        <rect x="30" y="4" width="4" height="10" rx="2" />
+        <rect x="30" y="50" width="4" height="10" rx="2" />
+        <rect x="4" y="30" width="10" height="4" rx="2" />
+        <rect x="50" y="30" width="10" height="4" rx="2" />
+        <rect x="11" y="11" width="4" height="10" rx="2" transform="rotate(-45 13 16)" />
+        <rect x="49" y="11" width="4" height="10" rx="2" transform="rotate(45 51 16)" />
+        <rect x="11" y="43" width="4" height="10" rx="2" transform="rotate(45 13 48)" />
+        <rect x="49" y="43" width="4" height="10" rx="2" transform="rotate(-45 51 48)" />
+      </g>
+    </svg>
+  </span>
+);
+
 const FanOnboardingPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -59,21 +76,20 @@ const FanOnboardingPage = () => {
 
   const [step, setStep] = useState<number>(draft.step ?? 0);
   const [genres, setGenres] = useState<string[]>(draft.genres ?? []);
-  const [artistSearch, setArtistSearch] = useState("");
+  const [artistSearch, setArtistSearch] = useState(draft.artistSearch ?? "");
   const [finishing, setFinishing] = useState(false);
 
-  // Persist draft
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
       window.localStorage.setItem(
         DRAFT_KEY,
-        JSON.stringify({ step, genres } satisfies Draft),
+        JSON.stringify({ step, genres, artistSearch } satisfies Draft),
       );
     } catch {
       // ignore
     }
-  }, [step, genres]);
+  }, [step, genres, artistSearch]);
 
   const progressPct = ((step + 1) / TOTAL_SCREENS) * 100;
 
@@ -81,29 +97,27 @@ const FanOnboardingPage = () => {
   const goBack = () => setStep((s) => Math.max(0, s - 1));
 
   const handleClose = () => {
-    navigate("/discover", { replace: true });
+    navigate("/market", { replace: true });
   };
 
-  const toggleGenre = (g: string) => {
+  const toggleGenre = (genre: string) => {
     setGenres((prev) => {
-      if (prev.includes(g)) return prev.filter((x) => x !== g);
+      if (prev.includes(genre)) return prev.filter((value) => value !== genre);
       if (prev.length >= MAX_GENRES) {
         toast.message(`Pick up to ${MAX_GENRES} genres`);
         return prev;
       }
-      return [...prev, g];
+      return [...prev, genre];
     });
   };
 
   const connectWallet = (name: "Phantom" | "Solflare") => {
-    const found = wallets.find(
-      (w) => w.adapter.name.toLowerCase() === name.toLowerCase(),
-    );
+    const found = wallets.find((wallet) => wallet.adapter.name.toLowerCase() === name.toLowerCase());
     if (found) select(found.adapter.name);
     walletModal.setVisible(true);
   };
 
-  const persistAndExit = async (target: string) => {
+  const persistAndExit = async () => {
     if (finishing) return;
     setFinishing(true);
     try {
@@ -118,58 +132,17 @@ const FanOnboardingPage = () => {
       if (typeof window !== "undefined") {
         window.localStorage.removeItem(DRAFT_KEY);
       }
-      navigate(target, { replace: true });
-    } catch (err) {
-      console.error(err);
-      navigate("/discover", { replace: true });
+      navigate("/market", { replace: true });
+    } catch (error) {
+      console.error(error);
+      navigate("/market", { replace: true });
     } finally {
       setFinishing(false);
     }
   };
 
-  const finish = async () => {
-    const params = new URLSearchParams();
-    if (genres.length) params.set("genres", genres.join(","));
-    if (artistSearch.trim()) params.set("q", artistSearch.trim());
-    const qs = params.toString();
-    await persistAndExit(qs ? `/discover?${qs}` : "/discover");
-  };
-
-  // Phantom official ghost mark (simplified, brand-accurate purple).
-  const PhantomLogo = () => (
-    <span className="w-10 h-10 rounded-xl bg-[#AB9FF2] flex items-center justify-center shrink-0">
-      <svg viewBox="0 0 128 128" className="w-7 h-7" aria-hidden>
-        <path
-          fill="#fff"
-          d="M110.6 64.9c0-25.7-20.8-46.5-46.6-46.5S17.5 39.2 17.5 64.9v44.7c0 1.4 1.1 2.5 2.5 2.5h22.6c1.4 0 2.5-1.1 2.5-2.5V94.4c0-1.7 2.1-2.5 3.3-1.3 7.4 7.4 17.7 12.1 29 12.1 1.7 0 3.3-.1 4.9-.3.9-.1 1.6.6 1.6 1.5v3.2c0 1.4 1.1 2.5 2.5 2.5h21.5c1.4 0 2.5-1.1 2.5-2.5V64.9zM52.8 76.1c-4.1 0-7.5-5-7.5-11.2s3.4-11.2 7.5-11.2 7.5 5 7.5 11.2-3.3 11.2-7.5 11.2zm26.8 0c-4.1 0-7.5-5-7.5-11.2s3.4-11.2 7.5-11.2 7.5 5 7.5 11.2-3.3 11.2-7.5 11.2z"
-        />
-      </svg>
-    </span>
-  );
-
-  // Solflare official sun mark (simplified, brand-accurate orange→yellow gradient).
-  const SolflareLogo = () => (
-    <span className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FFC10B] to-[#FC7227] flex items-center justify-center shrink-0">
-      <svg viewBox="0 0 64 64" className="w-7 h-7" aria-hidden>
-        <circle cx="32" cy="32" r="11" fill="#fff" />
-        <g fill="#fff">
-          <rect x="30" y="4" width="4" height="10" rx="2" />
-          <rect x="30" y="50" width="4" height="10" rx="2" />
-          <rect x="4" y="30" width="10" height="4" rx="2" />
-          <rect x="50" y="30" width="10" height="4" rx="2" />
-          <rect x="11" y="11" width="4" height="10" rx="2" transform="rotate(-45 13 16)" />
-          <rect x="49" y="11" width="4" height="10" rx="2" transform="rotate(45 51 16)" />
-          <rect x="11" y="43" width="4" height="10" rx="2" transform="rotate(45 13 48)" />
-          <rect x="49" y="43" width="4" height="10" rx="2" transform="rotate(-45 51 48)" />
-        </g>
-      </svg>
-    </span>
-  );
-
-
   return (
     <div className="fixed inset-0 z-50 bg-background overflow-y-auto">
-      {/* Ambient gradient — same tokens as role-select / musician onboarding */}
       <div
         className="pointer-events-none fixed inset-0 animated-gradient"
         style={{
@@ -178,7 +151,6 @@ const FanOnboardingPage = () => {
         }}
       />
 
-      {/* Thin progress line — fills as user advances */}
       <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-muted/40">
         <motion.div
           className="h-full bg-gradient-to-r from-primary via-fuchsia-500 to-amber-500"
@@ -188,7 +160,6 @@ const FanOnboardingPage = () => {
         />
       </div>
 
-      {/* Back (screens 2–3) */}
       {step > 0 && (
         <button
           onClick={goBack}
@@ -199,7 +170,6 @@ const FanOnboardingPage = () => {
         </button>
       )}
 
-      {/* Close — every screen */}
       <button
         onClick={handleClose}
         aria-label="Close"
@@ -211,10 +181,9 @@ const FanOnboardingPage = () => {
       <div className="relative z-10 min-h-screen flex items-center justify-center px-4 py-16">
         <div className="w-full max-w-xl">
           <AnimatePresence mode="wait">
-            {/* ─────────────────────── SCREEN 1 — Hook ─────────────────────── */}
             {step === 0 && (
               <motion.div
-                key="s1"
+                key="fan-hook"
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -16 }}
@@ -230,78 +199,16 @@ const FanOnboardingPage = () => {
                 <p className="text-base sm:text-lg text-muted-foreground max-w-md mx-auto mb-10 leading-relaxed">
                   Join the inner circle. Discover unreleased tracks, behind-the-scenes content, and connect directly with artists.
                 </p>
-                <Button
-                  onClick={goNext}
-                  className="rounded-xl h-12 w-full font-semibold gap-1.5 text-base"
-                >
+                <Button onClick={goNext} className="rounded-xl h-12 w-full font-semibold gap-1.5 text-base">
                   Let's go
                   <ArrowRight className="w-4 h-4" />
                 </Button>
               </motion.div>
             )}
 
-            {/* ─────────────────────── SCREEN 2 — Personalization ─────────────────────── */}
             {step === 1 && (
               <motion.div
-                key="s2"
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -16 }}
-                transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-                className="rounded-3xl border border-border/60 bg-card/80 backdrop-blur-xl shadow-xl p-6 sm:p-8"
-              >
-                <h2 className="text-center font-display text-2xl sm:text-3xl font-bold text-foreground mb-2">
-                  What are you into?
-                </h2>
-                <p className="text-center text-sm text-muted-foreground mb-6">
-                  Pick up to {MAX_GENRES} genres to build your feed.
-                </p>
-
-                <div className="flex flex-wrap gap-2 justify-center mb-6">
-                  {GENRES.map((g) => {
-                    const active = genres.includes(g);
-                    return (
-                      <button
-                        key={g}
-                        type="button"
-                        onClick={() => toggleGenre(g)}
-                        className={`rounded-full px-4 py-2 text-sm font-medium border transition-all ${
-                          active
-                            ? "bg-foreground text-background border-foreground shadow-sm"
-                            : "bg-background/60 text-foreground border-border hover:bg-background"
-                        }`}
-                      >
-                        {g}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="relative mb-6">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    value={artistSearch}
-                    onChange={(e) => setArtistSearch(e.target.value)}
-                    placeholder="Or search for a specific artist..."
-                    className="rounded-xl h-11 pl-9"
-                  />
-                </div>
-
-                <Button
-                  onClick={goNext}
-                  disabled={genres.length === 0}
-                  className="rounded-xl h-12 w-full font-semibold gap-1.5 text-base"
-                >
-                  Continue
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
-              </motion.div>
-            )}
-
-            {/* ─────────────────────── SCREEN 3 — Wallet (final) ─────────────────────── */}
-            {step === 2 && (
-              <motion.div
-                key="s3"
+                key="fan-wallet"
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -16 }}
@@ -309,7 +216,7 @@ const FanOnboardingPage = () => {
                 className="rounded-3xl border border-border/60 bg-card/80 backdrop-blur-xl shadow-xl p-6 sm:p-8 text-center"
               >
                 <p className="text-[11px] font-medium uppercase tracking-[0.25em] text-muted-foreground mb-3">
-                  Connect your wallet
+                  CONNECT YOUR WALLET
                 </p>
                 <h2 className="font-display text-2xl sm:text-3xl font-bold text-foreground mb-2 leading-tight">
                   Back artists. Hold their coins. Earn as they grow.
@@ -324,15 +231,8 @@ const FanOnboardingPage = () => {
                       <Check className="w-4 h-4" strokeWidth={3} />
                       Wallet connected
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      {publicKey.toBase58().slice(0, 6)}…{publicKey.toBase58().slice(-6)}
-                    </p>
-                    <Button
-                      onClick={finish}
-                      disabled={finishing}
-                      className="rounded-xl h-12 w-full font-semibold gap-1.5 text-base"
-                    >
-                      Enter Rhozeland
+                    <Button onClick={goNext} className="rounded-xl h-12 w-full font-semibold gap-1.5 text-base">
+                      Continue
                       <ArrowRight className="w-4 h-4" />
                     </Button>
                   </div>
@@ -345,7 +245,6 @@ const FanOnboardingPage = () => {
                     >
                       <PhantomLogo />
                       <span className="text-base font-bold text-foreground flex-1">Connect Phantom</span>
-                      <ArrowRight className="w-4 h-4 text-muted-foreground" />
                     </button>
                     <button
                       type="button"
@@ -354,21 +253,76 @@ const FanOnboardingPage = () => {
                     >
                       <SolflareLogo />
                       <span className="text-base font-bold text-foreground flex-1">Connect Solflare</span>
-                      <ArrowRight className="w-4 h-4 text-muted-foreground" />
                     </button>
                     <p className="text-[11px] text-muted-foreground pt-1">
                       Your wallet is never shared and stays fully in your control.
                     </p>
                     <button
                       type="button"
-                      onClick={finish}
-                      disabled={finishing}
+                      onClick={goNext}
                       className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors pt-3"
                     >
                       Skip for now — I'll connect later
                     </button>
                   </div>
                 )}
+              </motion.div>
+            )}
+
+            {step === 2 && (
+              <motion.div
+                key="fan-personalization"
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -16 }}
+                transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                className="rounded-3xl border border-border/60 bg-card/80 backdrop-blur-xl shadow-xl p-6 sm:p-8"
+              >
+                <h2 className="text-center font-display text-2xl sm:text-3xl font-bold text-foreground mb-2">
+                  What are you into?
+                </h2>
+                <p className="text-center text-sm text-muted-foreground mb-6">
+                  Pick up to {MAX_GENRES} genres to build your feed.
+                </p>
+
+                <div className="flex flex-wrap gap-2 justify-center mb-6">
+                  {GENRES.map((genre) => {
+                    const active = genres.includes(genre);
+                    return (
+                      <button
+                        key={genre}
+                        type="button"
+                        onClick={() => toggleGenre(genre)}
+                        className={`rounded-full px-4 py-2 text-sm font-medium border transition-all ${
+                          active
+                            ? "bg-foreground text-background border-foreground shadow-sm"
+                            : "bg-background/60 text-foreground border-border hover:bg-background"
+                        }`}
+                      >
+                        {genre}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="relative mb-6">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    value={artistSearch}
+                    onChange={(event) => setArtistSearch(event.target.value)}
+                    placeholder="Or search for a specific artist..."
+                    className="rounded-xl h-11 pl-9"
+                  />
+                </div>
+
+                <Button
+                  onClick={persistAndExit}
+                  disabled={genres.length === 0 || finishing}
+                  className="rounded-xl h-12 w-full font-semibold gap-1.5 text-base"
+                >
+                  Build my feed
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
               </motion.div>
             )}
           </AnimatePresence>
