@@ -89,6 +89,7 @@ const FAQ = [
 
 export default function WhyLaunchCoinPage() {
   const navigate = useNavigate();
+  const [launchOpen, setLaunchOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-background">
@@ -122,16 +123,10 @@ export default function WhyLaunchCoinPage() {
             discovery flywheels itself.
           </p>
           <div className="flex flex-wrap items-center gap-3 pt-2">
-            <Button asChild size="lg" className="rounded-full gap-2">
-              <a
-                href={PUMP_FUN_CREATE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Coins className="h-4 w-4" />
-                Launch on pump.fun
-                <ArrowUpRight className="h-4 w-4" />
-              </a>
+            <Button size="lg" className="rounded-full gap-2" onClick={() => setLaunchOpen(true)}>
+              <Coins className="h-4 w-4" />
+              Launch on pump.fun
+              <ArrowUpRight className="h-4 w-4" />
             </Button>
             <Button
               asChild
