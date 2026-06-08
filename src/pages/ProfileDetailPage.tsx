@@ -282,9 +282,8 @@ const ProfileDetailPage = () => {
   const TABS: { key: TabKey; label: string; Icon: any }[] = [
     { key: "works", label: "Works", Icon: ImageIcon },
     { key: "projects", label: "Projects", Icon: FolderKanban },
-    // Reposts tab only appears once this user has actually reposted something
-    // (or always for the profile owner so they can find the surface).
-    ...(hasReposts || isOwnProfile
+    // Reposts tab only appears once this user has actually reposted something.
+    ...(hasReposts
       ? [{ key: "reposts" as TabKey, label: "Reposts", Icon: Repeat2 }]
       : []),
   ];
