@@ -118,19 +118,47 @@ const LaunchCoinFlowModal = ({
       .filter(Boolean)
       .join("\n");
 
-    const { error } = await (supabase as any).from("concierge_requests").insert({
-      client_id: user.id,
-      summary,
-      category: "coin-launch",
-      outcome: `Launch $${ticker} on pump.fun with Rhozeland A&R support`,
-      tier: "curated",
-    });
+    const { data: inserted, error } = await (supabase as any)
+      .from("concierge_requests")
+      .insert({
+        client_id: user.id,
+        summary,
+        category: "coin-launch",
+        outcome: `Launch $${ticker} on pump.fun with Rhozeland A&R support`,
+        tier: "curated",
+      })
+      .select("id")
+      .single();
 
-    setSubmitting(false);
     if (error) {
+      setSubmitting(false);
       toast.error(error.message || "Could not submit. Try again.");
       return;
     }
+
+    // Fire-and-forget internal ops alert to collab@rhozeland.com
+    supabase.functions
+      .invoke("send-transactional-email", {
+        body: {
+          templateName: "concierge-request-internal",
+          recipientEmail: "collab@rhozeland.com",
+          idempotencyKey: `concierge-internal-${inserted?.id ?? user.id}-${Date.now()}`,
+          templateData: {
+            category: "coin-launch",
+            tier: "curated",
+            submitterName: displayName,
+            submitterEmail: user.email ?? null,
+            submitterId: user.id,
+            summary,
+            outcome: `Launch $${ticker} on pump.fun with Rhozeland A&R support`,
+            requestId: inserted?.id ?? null,
+            source: "LaunchCoinFlowModal",
+          },
+        },
+      })
+      .catch((e) => console.warn("[concierge alert] email failed:", e));
+
+    setSubmitting(false);
     setStep(3);
   };
 
