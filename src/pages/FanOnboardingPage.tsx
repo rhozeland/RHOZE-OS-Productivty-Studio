@@ -103,8 +103,8 @@ const FanOnboardingPage = () => {
     walletModal.setVisible(true);
   };
 
-  const finish = async () => {
-    if (finishing || genres.length === 0) return;
+  const persistAndExit = async (target: string) => {
+    if (finishing) return;
     setFinishing(true);
     try {
       if (user) {
@@ -118,10 +118,7 @@ const FanOnboardingPage = () => {
       if (typeof window !== "undefined") {
         window.localStorage.removeItem(DRAFT_KEY);
       }
-      const params = new URLSearchParams();
-      params.set("genres", genres.join(","));
-      if (artistSearch.trim()) params.set("q", artistSearch.trim());
-      navigate(`/discover?${params.toString()}`, { replace: true });
+      navigate(target, { replace: true });
     } catch (err) {
       console.error(err);
       navigate("/discover", { replace: true });
@@ -129,6 +126,46 @@ const FanOnboardingPage = () => {
       setFinishing(false);
     }
   };
+
+  const finish = async () => {
+    const params = new URLSearchParams();
+    if (genres.length) params.set("genres", genres.join(","));
+    if (artistSearch.trim()) params.set("q", artistSearch.trim());
+    const qs = params.toString();
+    await persistAndExit(qs ? `/discover?${qs}` : "/discover");
+  };
+
+  // Phantom official ghost mark (simplified, brand-accurate purple).
+  const PhantomLogo = () => (
+    <span className="w-10 h-10 rounded-xl bg-[#AB9FF2] flex items-center justify-center shrink-0">
+      <svg viewBox="0 0 128 128" className="w-7 h-7" aria-hidden>
+        <path
+          fill="#fff"
+          d="M110.6 64.9c0-25.7-20.8-46.5-46.6-46.5S17.5 39.2 17.5 64.9v44.7c0 1.4 1.1 2.5 2.5 2.5h22.6c1.4 0 2.5-1.1 2.5-2.5V94.4c0-1.7 2.1-2.5 3.3-1.3 7.4 7.4 17.7 12.1 29 12.1 1.7 0 3.3-.1 4.9-.3.9-.1 1.6.6 1.6 1.5v3.2c0 1.4 1.1 2.5 2.5 2.5h21.5c1.4 0 2.5-1.1 2.5-2.5V64.9zM52.8 76.1c-4.1 0-7.5-5-7.5-11.2s3.4-11.2 7.5-11.2 7.5 5 7.5 11.2-3.3 11.2-7.5 11.2zm26.8 0c-4.1 0-7.5-5-7.5-11.2s3.4-11.2 7.5-11.2 7.5 5 7.5 11.2-3.3 11.2-7.5 11.2z"
+        />
+      </svg>
+    </span>
+  );
+
+  // Solflare official sun mark (simplified, brand-accurate orange→yellow gradient).
+  const SolflareLogo = () => (
+    <span className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FFC10B] to-[#FC7227] flex items-center justify-center shrink-0">
+      <svg viewBox="0 0 64 64" className="w-7 h-7" aria-hidden>
+        <circle cx="32" cy="32" r="11" fill="#fff" />
+        <g fill="#fff">
+          <rect x="30" y="4" width="4" height="10" rx="2" />
+          <rect x="30" y="50" width="4" height="10" rx="2" />
+          <rect x="4" y="30" width="10" height="4" rx="2" />
+          <rect x="50" y="30" width="10" height="4" rx="2" />
+          <rect x="11" y="11" width="4" height="10" rx="2" transform="rotate(-45 13 16)" />
+          <rect x="49" y="11" width="4" height="10" rx="2" transform="rotate(45 51 16)" />
+          <rect x="11" y="43" width="4" height="10" rx="2" transform="rotate(45 13 48)" />
+          <rect x="49" y="43" width="4" height="10" rx="2" transform="rotate(-45 51 48)" />
+        </g>
+      </svg>
+    </span>
+  );
+
 
   return (
     <div className="fixed inset-0 z-50 bg-background overflow-y-auto">
