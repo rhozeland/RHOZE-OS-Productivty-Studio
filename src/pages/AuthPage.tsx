@@ -66,16 +66,16 @@ const AuthPage = () => {
           password,
           options: {
             data: { full_name: fullName },
-            // Email-confirmed signups land on onboarding so they always
-            // see the tour, not the Discover page in mid-state.
-            emailRedirectTo: `${window.location.origin}/onboarding`,
+            // Send fresh signups to the role picker → role-specific
+            // onboarding flow (musician or fan).
+            emailRedirectTo: `${window.location.origin}/welcome`,
           },
         });
         if (error) throw error;
 
         if (data.session) {
           toast.success("Account created — let's set things up!");
-          navigate("/onboarding", { replace: true });
+          navigate("/welcome", { replace: true });
           return;
         }
 
