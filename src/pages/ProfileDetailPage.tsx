@@ -418,20 +418,7 @@ const ProfileDetailPage = () => {
                   <p className="text-xs opacity-90 mt-1">Spin up a release with milestones, scope and collaborators.</p>
                 </button>
 
-                {/* Start a coin */}
-                {!p.token_mint_address && (
-                  <button
-                    type="button"
-                    onClick={() => setLaunchCoinOpen(true)}
-                    className="text-left block rounded-2xl p-5 bg-zinc-950 text-white shadow-lg hover:bg-zinc-900 transition-colors"
-                  >
-                    <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] opacity-75">
-                      <Rocket className="h-3.5 w-3.5" /> Monetize
-                    </div>
-                    <p className="font-display text-lg font-bold mt-2">Launch on pump.fun</p>
-                    <p className="text-xs opacity-75 mt-1">Start a coin and earn 5bps on every trade.</p>
-                  </button>
-                )}
+                {/* Start a coin — rendered via <StartCoinCta /> elsewhere on this page */}
 
                 {/* Pending inbox */}
                 <button

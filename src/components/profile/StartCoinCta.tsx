@@ -48,14 +48,13 @@ export default function StartCoinCta({ creatorName, className }: Props) {
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-muted-foreground mb-1">
               <Sparkles className="h-3 w-3" />
-              Artist coin · v11
+              Monetize
             </div>
             <h3 className="font-display text-lg font-semibold text-foreground leading-tight">
-              Start {creatorName ? `${creatorName}'s` : "your"} artist coin
+              Start {creatorName ? `${creatorName}'s` : "your"} coin
             </h3>
             <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
-              Launch a $TICKER on pump.fun. Fans discover and trade it from
-              your profile — every release adds fuel to the curve.
+              Launch a $TICKER on pump.fun and earn 5bps on every trade.
             </p>
           </div>
         </div>
@@ -87,10 +86,6 @@ export default function StartCoinCta({ creatorName, className }: Props) {
           </div>
         </div>
 
-        <p className="text-[10px] text-muted-foreground/70 leading-relaxed pt-1">
-          Rhozeland never custodies your token. We embed a read-only chip so
-          fans can see price, volume, and trade on pump.fun in one tap.
-        </p>
       </div>
 
       <LaunchCoinFlowModal open={open} onOpenChange={setOpen} project={null} />
