@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import {
   EyeOff, Loader2, Sparkles, Image as ImageIcon, Play, Music, FileText,
   Calendar as CalendarIcon, FolderKanban, ExternalLink, Coins, Heart,
-  Rocket, Inbox, Users, ArrowRight,
+  Rocket, Inbox, Users, ArrowRight, Repeat2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
