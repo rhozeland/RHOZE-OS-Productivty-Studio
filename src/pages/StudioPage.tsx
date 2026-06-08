@@ -243,7 +243,12 @@ const StudioPage = () => {
       return ((data as any)?.user_type ?? "creator") as "fan" | "creator";
     },
   });
-  const isFan = userType === "fan";
+  // Activity-based, not role-based: the page flips to "creator mode" the
+  // moment the user has created their first project (and never flips back).
+  const hasOwnProjects = (projects ?? []).length > 0;
+  const showDiscoverCtas = !hasOwnProjects;
+  // Keep userType referenced to avoid a lint warning; ordering is now fixed.
+  void userType;
 
   // Backing — projects this user has cheered (project_cheers).
   const { data: backedProjects } = useQuery({
@@ -551,7 +556,7 @@ const StudioPage = () => {
 
       {/* Primary actions — role-adaptive */}
       <section className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {isFan ? (
+        {showDiscoverCtas ? (
           <GradientCtaButton
             onClick={() => navigate("/discover")}
             Icon={Compass}
@@ -570,7 +575,7 @@ const StudioPage = () => {
             gradient="linear-gradient(120deg, hsl(330 85% 60%) 0%, hsl(292 84% 61%) 25%, hsl(38 92% 55%) 50%, hsl(292 84% 61%) 75%, hsl(330 85% 60%) 100%)"
           />
         )}
-        {isFan ? (
+        {showDiscoverCtas ? (
           <GradientCtaButton
             onClick={() => navigate("/discover?filter=projects")}
             Icon={Heart}
@@ -641,7 +646,7 @@ const StudioPage = () => {
       {hasAnyActivity && (
         <div className="space-y-10">
           {(() => {
-            const sectionBuilding = (projects ?? []).length > 0 ? (
+            const sectionBuilding = hasOwnProjects ? (
               <BuildingSection
                 key="building"
                 activeProjects={activeProjects}
@@ -652,9 +657,7 @@ const StudioPage = () => {
                 milestonesDueThisWeek={milestonesDueThisWeek}
                 onStart={() => setStartProjectOpen(true)}
               />
-            ) : (
-              <BuildingEmpty key="building" onStart={() => setStartProjectOpen(true)} />
-            );
+            ) : null;
 
             const sectionBacking = (backedProjects ?? []).length > 0 ? (
               <BackingSection
@@ -668,10 +671,7 @@ const StudioPage = () => {
               <HoldingSection key="holding" holdings={holdings ?? []} />
             ) : null;
 
-            const ordered = isFan
-              ? [sectionBacking, sectionBuilding, sectionHolding]
-              : [sectionBuilding, sectionBacking, sectionHolding];
-            return ordered.filter(Boolean);
+            return [sectionBuilding, sectionBacking, sectionHolding].filter(Boolean);
           })()}
         </div>
       )}
