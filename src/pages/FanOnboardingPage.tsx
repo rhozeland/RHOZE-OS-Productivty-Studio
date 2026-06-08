@@ -240,86 +240,10 @@ const FanOnboardingPage = () => {
               </motion.div>
             )}
 
-            {/* ─────────────────────── SCREEN 2 — Wallet ─────────────────────── */}
+            {/* ─────────────────────── SCREEN 2 — Personalization ─────────────────────── */}
             {step === 1 && (
               <motion.div
                 key="s2"
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -16 }}
-                transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-                className="rounded-3xl border border-border/60 bg-card/80 backdrop-blur-xl shadow-xl p-6 sm:p-8 text-center"
-              >
-                <p className="text-[11px] font-medium uppercase tracking-[0.25em] text-muted-foreground mb-3">
-                  Connect your wallet
-                </p>
-                <h2 className="font-display text-2xl sm:text-3xl font-bold text-foreground mb-2 leading-tight">
-                  Back artists. Hold their coins. Earn as they grow.
-                </h2>
-                <p className="text-sm text-muted-foreground mb-7 max-w-sm mx-auto">
-                  Connect your wallet to get the full Rhozeland experience.
-                </p>
-
-                {connected && publicKey ? (
-                  <div className="space-y-4">
-                    <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-500">
-                      <Check className="w-4 h-4" strokeWidth={3} />
-                      Wallet connected
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {publicKey.toBase58().slice(0, 6)}…{publicKey.toBase58().slice(-6)}
-                    </p>
-                    <Button
-                      onClick={goNext}
-                      className="rounded-xl h-12 w-full font-semibold gap-1.5 text-base"
-                    >
-                      Continue
-                      <ArrowRight className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <button
-                      type="button"
-                      onClick={() => connectWallet("Phantom")}
-                      className="w-full inline-flex items-center gap-3 rounded-xl border border-border bg-background/60 hover:bg-background transition-colors px-4 py-3.5 text-left"
-                    >
-                      <span className="w-10 h-10 rounded-xl bg-gradient-to-br from-fuchsia-500 to-purple-600 flex items-center justify-center text-white text-base font-bold shrink-0">
-                        P
-                      </span>
-                      <span className="text-base font-bold text-foreground flex-1">Connect Phantom</span>
-                      <ArrowRight className="w-4 h-4 text-muted-foreground" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => connectWallet("Solflare")}
-                      className="w-full inline-flex items-center gap-3 rounded-xl border border-border bg-background/60 hover:bg-background transition-colors px-4 py-3.5 text-left"
-                    >
-                      <span className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white text-base font-bold shrink-0">
-                        S
-                      </span>
-                      <span className="text-base font-bold text-foreground flex-1">Connect Solflare</span>
-                      <ArrowRight className="w-4 h-4 text-muted-foreground" />
-                    </button>
-                    <p className="text-[11px] text-muted-foreground pt-1">
-                      Your wallet is never shared and stays fully in your control.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={goNext}
-                      className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors pt-3"
-                    >
-                      Skip for now — I'll connect later
-                    </button>
-                  </div>
-                )}
-              </motion.div>
-            )}
-
-            {/* ─────────────────────── SCREEN 3 — Personalization ─────────────────────── */}
-            {step === 2 && (
-              <motion.div
-                key="s3"
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -16 }}
@@ -364,13 +288,87 @@ const FanOnboardingPage = () => {
                 </div>
 
                 <Button
-                  onClick={finish}
-                  disabled={genres.length === 0 || finishing}
+                  onClick={goNext}
+                  disabled={genres.length === 0}
                   className="rounded-xl h-12 w-full font-semibold gap-1.5 text-base"
                 >
-                  Build my feed
+                  Continue
                   <ArrowRight className="w-4 h-4" />
                 </Button>
+              </motion.div>
+            )}
+
+            {/* ─────────────────────── SCREEN 3 — Wallet (final) ─────────────────────── */}
+            {step === 2 && (
+              <motion.div
+                key="s3"
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -16 }}
+                transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                className="rounded-3xl border border-border/60 bg-card/80 backdrop-blur-xl shadow-xl p-6 sm:p-8 text-center"
+              >
+                <p className="text-[11px] font-medium uppercase tracking-[0.25em] text-muted-foreground mb-3">
+                  Connect your wallet
+                </p>
+                <h2 className="font-display text-2xl sm:text-3xl font-bold text-foreground mb-2 leading-tight">
+                  Back artists. Hold their coins. Earn as they grow.
+                </h2>
+                <p className="text-sm text-muted-foreground mb-7 max-w-sm mx-auto">
+                  Connect your wallet to get the full Rhozeland experience.
+                </p>
+
+                {connected && publicKey ? (
+                  <div className="space-y-4">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-500">
+                      <Check className="w-4 h-4" strokeWidth={3} />
+                      Wallet connected
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {publicKey.toBase58().slice(0, 6)}…{publicKey.toBase58().slice(-6)}
+                    </p>
+                    <Button
+                      onClick={finish}
+                      disabled={finishing}
+                      className="rounded-xl h-12 w-full font-semibold gap-1.5 text-base"
+                    >
+                      Enter Rhozeland
+                      <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <button
+                      type="button"
+                      onClick={() => connectWallet("Phantom")}
+                      className="w-full inline-flex items-center gap-3 rounded-xl border border-border bg-background/60 hover:bg-background transition-colors px-4 py-3.5 text-left"
+                    >
+                      <PhantomLogo />
+                      <span className="text-base font-bold text-foreground flex-1">Connect Phantom</span>
+                      <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => connectWallet("Solflare")}
+                      className="w-full inline-flex items-center gap-3 rounded-xl border border-border bg-background/60 hover:bg-background transition-colors px-4 py-3.5 text-left"
+                    >
+                      <SolflareLogo />
+                      <span className="text-base font-bold text-foreground flex-1">Connect Solflare</span>
+                      <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                    <p className="text-[11px] text-muted-foreground pt-1">
+                      Your wallet is never shared and stays fully in your control.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={finish}
+                      disabled={finishing}
+                      className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors pt-3"
+                    >
+                      Skip for now — I'll connect later
+                    </button>
+                  </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
