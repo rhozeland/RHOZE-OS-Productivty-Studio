@@ -1282,6 +1282,14 @@ const FlowModePage = () => {
     lockedDeepLinkItemRef.current = null;
     appliedDeepLinkRef.current = null;
     suppressSwipeRestoreRef.current = false;
+    // Strip any stale ?item= deep-link param so it can't re-pin the deck
+    // back to the original card on the next render (previously caused the
+    // feed to feel "stuck" on 1–2 items after entering Flow via a share link).
+    if (searchParams.get("item")) {
+      const next = new URLSearchParams(searchParams);
+      next.delete("item");
+      setSearchParams(next, { replace: true });
+    }
     setIsAdvancing(true);
     if (advancingTimerRef.current) clearTimeout(advancingTimerRef.current);
     advancingTimerRef.current = setTimeout(() => {
@@ -1289,7 +1297,7 @@ const FlowModePage = () => {
       setExpandedCard(false);
       setIsAdvancing(false);
     }, 200);
-  }, []);
+  }, [searchParams, setSearchParams]);
 
   // Clean up the advancing timer on unmount so it can't fire after the
   // component is gone.

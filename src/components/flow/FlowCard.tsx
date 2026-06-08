@@ -251,22 +251,28 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
         {/* ═══ PHOTO / DESIGN — Full image with click to enlarge ═══ */}
         {isImage && item.file_url && (
           <div className="relative group">
-            <div className="aspect-[4/5] overflow-hidden bg-muted/20 flex items-center justify-center">
-              <img
-                src={item.file_url}
-                alt={item.title}
-                className="h-full w-full object-cover"
-                draggable={false}
-                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-              />
-            </div>
             <button
+              type="button"
               onClick={(e) => { e.stopPropagation(); setImageEnlarged(true); }}
-              className="absolute top-3 right-3 z-10 h-8 w-8 rounded-full bg-card/70 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity border border-border/30"
-              title="Enlarge"
+              className="block w-full text-left cursor-zoom-in"
+              aria-label="Enlarge image"
+            >
+              <div className="aspect-[4/5] overflow-hidden bg-muted/20 flex items-center justify-center">
+                <img
+                  src={item.file_url}
+                  alt={item.title}
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                  draggable={false}
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                />
+              </div>
+            </button>
+            <div
+              className="pointer-events-none absolute top-3 right-3 z-10 h-8 w-8 rounded-full bg-card/70 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity border border-border/30"
+              title="Tap to enlarge"
             >
               <Maximize2 className="h-3.5 w-3.5 text-foreground" />
-            </button>
+            </div>
           </div>
         )}
 
