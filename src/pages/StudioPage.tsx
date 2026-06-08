@@ -556,7 +556,7 @@ const StudioPage = () => {
 
       {/* Primary actions — role-adaptive */}
       <section className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {isFan ? (
+        {showDiscoverCtas ? (
           <GradientCtaButton
             onClick={() => navigate("/discover")}
             Icon={Compass}
@@ -575,7 +575,7 @@ const StudioPage = () => {
             gradient="linear-gradient(120deg, hsl(330 85% 60%) 0%, hsl(292 84% 61%) 25%, hsl(38 92% 55%) 50%, hsl(292 84% 61%) 75%, hsl(330 85% 60%) 100%)"
           />
         )}
-        {isFan ? (
+        {showDiscoverCtas ? (
           <GradientCtaButton
             onClick={() => navigate("/discover?filter=projects")}
             Icon={Heart}
