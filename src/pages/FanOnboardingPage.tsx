@@ -97,7 +97,7 @@ const FanOnboardingPage = () => {
   const goBack = () => setStep((s) => Math.max(0, s - 1));
 
   const handleClose = () => {
-    navigate("/market", { replace: true });
+    navigate("/home", { replace: true });
   };
 
   const toggleGenre = (genre: string) => {
@@ -132,10 +132,10 @@ const FanOnboardingPage = () => {
       if (typeof window !== "undefined") {
         window.localStorage.removeItem(DRAFT_KEY);
       }
-      navigate("/market", { replace: true });
+      navigate("/home", { replace: true });
     } catch (error) {
       console.error(error);
-      navigate("/market", { replace: true });
+      navigate("/home", { replace: true });
     } finally {
       setFinishing(false);
     }
