@@ -2336,6 +2336,35 @@ export type Database = {
           },
         ]
       }
+      flow_reposts: {
+        Row: {
+          created_at: string
+          flow_item_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          flow_item_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          flow_item_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flow_reposts_flow_item_id_fkey"
+            columns: ["flow_item_id"]
+            isOneToOne: false
+            referencedRelation: "flow_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       host_payout_requests: {
         Row: {
           admin_note: string | null
