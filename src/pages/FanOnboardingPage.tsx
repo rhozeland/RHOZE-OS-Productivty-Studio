@@ -1,93 +1,138 @@
-import { useEffect, useState } from "react";
+/**
+ * FanOnboardingPage — 3-screen fan onboarding flow.
+ *
+ * Triggered after a user selects "Fan" on the role selection screen.
+ * Uses only existing visual tokens — Button, ambient gradient, semantic
+ * colors, glassmorphic card surfaces. Every screen is a full-screen modal
+ * overlay with a thin progress line at the very top that fills as the user
+ * advances.
+ *
+ * Screens:
+ *   1. Hook            — headline + single CTA
+ *   2. Wallet          — Phantom / Solflare connect (optional, skippable)
+ *   3. Personalization — genre chips (≥1) + artist search → /discover
+ *
+ * Wallet connection persists via the SolanaWalletAdapter autoConnect storage.
+ * Genre picks persist to localStorage AND to profiles.flow_preferred_categories.
+ */
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, ArrowLeft, Check, MapPin, Sparkles } from "lucide-react";
+import { ArrowRight, ArrowLeft, X, Check, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { useWallet } from "@solana/wallet-adapter-react";
 import { toast } from "sonner";
 
 const GENRES = [
-  { id: "rnb", emoji: "🎤", label: "R&B" },
-  { id: "hiphop", emoji: "🎧", label: "Hip-Hop" },
-  { id: "electronic", emoji: "🔊", label: "Electronic" },
-  { id: "indie", emoji: "🪕", label: "Indie/Folk" },
-  { id: "soul", emoji: "✨", label: "Soul" },
-  { id: "visual", emoji: "🎨", label: "Visual Art" },
-  { id: "jazz", emoji: "🎷", label: "Jazz" },
-  { id: "afrobeats", emoji: "🥁", label: "Afrobeats" },
-  { id: "photography", emoji: "📷", label: "Photography" },
-  { id: "fashion", emoji: "👗", label: "Fashion" },
-  { id: "3d", emoji: "🧊", label: "3D" },
-  { id: "spoken", emoji: "🎙️", label: "Spoken Word" },
+  "Hip Hop", "R&B", "Pop", "Electronic", "Afrobeats", "Jazz", "Rock",
+  "Indie", "Latin", "Gospel", "Dancehall", "Classical", "Soul", "Trap", "House",
 ];
 
-const POPULAR_CITIES = [
-  "Toronto", "New York", "London", "Los Angeles", "Lagos", "Montreal", "Vancouver",
-];
+const MAX_GENRES = 3;
+const TOTAL_SCREENS = 3;
+const DRAFT_KEY = "rhozeland.fan-onboarding.draft";
 
-const MIN_GENRES = 3;
+type Draft = {
+  step?: number;
+  genres?: string[];
+};
+
+const loadDraft = (): Draft => {
+  if (typeof window === "undefined") return {};
+  try {
+    return JSON.parse(window.localStorage.getItem(DRAFT_KEY) || "{}") as Draft;
+  } catch {
+    return {};
+  }
+};
 
 const FanOnboardingPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [step, setStep] = useState(0);
-  const [genres, setGenres] = useState<string[]>([]);
-  const [city, setCity] = useState("");
-  const [cityQuery, setCityQuery] = useState("");
-  const [saving, setSaving] = useState(false);
+  const draft = useMemo(loadDraft, []);
+  const walletModal = useWalletModal();
+  const { connected, publicKey, select, wallets } = useWallet();
 
-  const toggleGenre = (id: string) => {
-    setGenres((prev) =>
-      prev.includes(id) ? prev.filter((g) => g !== id) : [...prev, id]
-    );
-  };
+  const [step, setStep] = useState<number>(draft.step ?? 0);
+  const [genres, setGenres] = useState<string[]>(draft.genres ?? []);
+  const [artistSearch, setArtistSearch] = useState("");
+  const [finishing, setFinishing] = useState(false);
 
-  const filteredCities = cityQuery
-    ? POPULAR_CITIES.filter((c) => c.toLowerCase().includes(cityQuery.toLowerCase()))
-    : POPULAR_CITIES;
-
-  const persist = async (extra: Record<string, any> = {}) => {
-    if (!user) return;
-    await supabase
-      .from("profiles")
-      .update({
-        flow_preferred_categories: genres,
-        ...(city ? { location: city } : {}),
-        ...extra,
-      } as any)
-      .eq("user_id", user.id);
-  };
-
-  const finish = async (mode: "create" | "browse") => {
-    if (!user) return;
-    setSaving(true);
+  // Persist draft
+  useEffect(() => {
+    if (typeof window === "undefined") return;
     try {
-      await persist({ onboarding_completed_at: new Date().toISOString() });
-      toast.success("Your feed is ready 🎉");
-      navigate(mode === "browse" ? "/discover" : "/discover", { replace: true });
-    } catch (err: any) {
+      window.localStorage.setItem(
+        DRAFT_KEY,
+        JSON.stringify({ step, genres } satisfies Draft),
+      );
+    } catch {
+      // ignore
+    }
+  }, [step, genres]);
+
+  const progressPct = ((step + 1) / TOTAL_SCREENS) * 100;
+
+  const goNext = () => setStep((s) => Math.min(TOTAL_SCREENS - 1, s + 1));
+  const goBack = () => setStep((s) => Math.max(0, s - 1));
+
+  const handleClose = () => {
+    navigate("/discover", { replace: true });
+  };
+
+  const toggleGenre = (g: string) => {
+    setGenres((prev) => {
+      if (prev.includes(g)) return prev.filter((x) => x !== g);
+      if (prev.length >= MAX_GENRES) {
+        toast.message(`Pick up to ${MAX_GENRES} genres`);
+        return prev;
+      }
+      return [...prev, g];
+    });
+  };
+
+  const connectWallet = (name: "Phantom" | "Solflare") => {
+    const found = wallets.find(
+      (w) => w.adapter.name.toLowerCase() === name.toLowerCase(),
+    );
+    if (found) select(found.adapter.name);
+    walletModal.setVisible(true);
+  };
+
+  const finish = async () => {
+    if (finishing || genres.length === 0) return;
+    setFinishing(true);
+    try {
+      if (user) {
+        const patch: Record<string, any> = {
+          user_type: "fan",
+          flow_preferred_categories: genres,
+          onboarding_completed_at: new Date().toISOString(),
+        };
+        await supabase.from("profiles").update(patch as any).eq("user_id", user.id);
+      }
+      if (typeof window !== "undefined") {
+        window.localStorage.removeItem(DRAFT_KEY);
+      }
+      const params = new URLSearchParams();
+      params.set("genres", genres.join(","));
+      if (artistSearch.trim()) params.set("q", artistSearch.trim());
+      navigate(`/discover?${params.toString()}`, { replace: true });
+    } catch (err) {
       console.error(err);
       navigate("/discover", { replace: true });
     } finally {
-      setSaving(false);
+      setFinishing(false);
     }
   };
 
-  // Persist genres as user picks (best-effort, silent).
-  useEffect(() => {
-    if (!user || step !== 1) return;
-    (async () => {
-      await supabase
-        .from("profiles")
-        .update({ flow_preferred_categories: genres } as any)
-        .eq("user_id", user.id);
-    })();
-  }, [step, user]); // intentionally not depending on genres
-
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-background overflow-hidden px-4 py-10">
+    <div className="fixed inset-0 z-50 bg-background overflow-y-auto">
+      {/* Ambient gradient — same tokens as role-select / musician onboarding */}
       <div
         className="pointer-events-none fixed inset-0 animated-gradient"
         style={{
@@ -96,217 +141,203 @@ const FanOnboardingPage = () => {
         }}
       />
 
-      {/* 3 dots progress */}
-      <div className="fixed top-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
-        {[0, 1, 2].map((i) => (
-          <div
-            key={i}
-            className={`h-1.5 rounded-full transition-all duration-500 ${
-              i <= step ? "bg-foreground w-8" : "bg-border w-4"
-            }`}
-          />
-        ))}
+      {/* Thin progress line — fills as user advances */}
+      <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-muted/40">
+        <motion.div
+          className="h-full bg-gradient-to-r from-primary via-fuchsia-500 to-amber-500"
+          initial={false}
+          animate={{ width: `${progressPct}%` }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        />
       </div>
 
-      <div className="relative z-10 w-full max-w-xl">
-        <AnimatePresence mode="wait">
-          {step === 0 && (
-            <motion.div
-              key="genres"
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -16 }}
-              transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-              className="rounded-3xl border border-border/60 bg-card/80 backdrop-blur-xl shadow-xl p-8 sm:p-10"
-            >
-              <div className="text-center mb-6">
-                <h2 className="font-display text-2xl font-bold text-foreground mb-2">
-                  What do you vibe with?
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  Pick at least {MIN_GENRES} so we can tune your feed.
+      {/* Back (screens 2–3) */}
+      {step > 0 && (
+        <button
+          onClick={goBack}
+          aria-label="Back"
+          className="fixed top-4 left-4 z-50 rounded-full p-2 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+      )}
+
+      {/* Close — every screen */}
+      <button
+        onClick={handleClose}
+        aria-label="Close"
+        className="fixed top-4 right-4 z-50 rounded-full p-2 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+      >
+        <X className="w-5 h-5" />
+      </button>
+
+      <div className="relative z-10 min-h-screen flex items-center justify-center px-4 py-16">
+        <div className="w-full max-w-xl">
+          <AnimatePresence mode="wait">
+            {/* ─────────────────────── SCREEN 1 — Hook ─────────────────────── */}
+            {step === 0 && (
+              <motion.div
+                key="s1"
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -16 }}
+                transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                className="text-center"
+              >
+                <h1 className="font-display text-3xl sm:text-5xl font-bold text-foreground leading-tight mb-5">
+                  Get a closer look at{" "}
+                  <span className="bg-gradient-to-r from-primary via-fuchsia-500 to-amber-500 bg-clip-text text-transparent">
+                    the music
+                  </span>
+                </h1>
+                <p className="text-base sm:text-lg text-muted-foreground max-w-md mx-auto mb-10 leading-relaxed">
+                  Join the inner circle. Discover unreleased tracks, behind-the-scenes content, and connect directly with artists.
                 </p>
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                {GENRES.map((g) => {
-                  const active = genres.includes(g.id);
-                  return (
-                    <button
-                      key={g.id}
-                      type="button"
-                      onClick={() => toggleGenre(g.id)}
-                      className={`flex flex-col items-center justify-center gap-1.5 rounded-2xl border px-3 py-4 text-sm font-medium transition-all ${
-                        active
-                          ? "border-foreground bg-foreground text-background"
-                          : "border-border bg-background/60 text-foreground hover:bg-background"
-                      }`}
-                    >
-                      <span className="text-xl leading-none">{g.emoji}</span>
-                      <span>{g.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="mt-8 flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">
-                  {genres.length}/{MIN_GENRES} selected
-                </span>
                 <Button
-                  onClick={() => setStep(1)}
-                  disabled={genres.length < MIN_GENRES}
-                  className="rounded-xl gap-1.5"
+                  onClick={goNext}
+                  className="rounded-xl h-12 w-full font-semibold gap-1.5 text-base"
                 >
-                  Next
+                  Let's go
                   <ArrowRight className="w-4 h-4" />
                 </Button>
-              </div>
-            </motion.div>
-          )}
+              </motion.div>
+            )}
 
-          {step === 1 && (
-            <motion.div
-              key="city"
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -16 }}
-              transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-              className="rounded-3xl border border-border/60 bg-card/80 backdrop-blur-xl shadow-xl p-8 sm:p-10"
-            >
-              <div className="text-center mb-6">
-                <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-primary/5 border border-border/50 mb-3">
-                  <MapPin className="h-5 w-5 text-foreground/70" />
-                </div>
-                <h2 className="font-display text-2xl font-bold text-foreground mb-2">
-                  Where are you discovering from?
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  We'll surface scenes nearby first.
+            {/* ─────────────────────── SCREEN 2 — Wallet ─────────────────────── */}
+            {step === 1 && (
+              <motion.div
+                key="s2"
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -16 }}
+                transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                className="rounded-3xl border border-border/60 bg-card/80 backdrop-blur-xl shadow-xl p-6 sm:p-8 text-center"
+              >
+                <p className="text-[11px] font-medium uppercase tracking-[0.25em] text-muted-foreground mb-3">
+                  Connect your wallet
                 </p>
-              </div>
+                <h2 className="font-display text-2xl sm:text-3xl font-bold text-foreground mb-2 leading-tight">
+                  Back artists. Hold their coins. Earn as they grow.
+                </h2>
+                <p className="text-sm text-muted-foreground mb-7 max-w-sm mx-auto">
+                  Connect your wallet to get the full Rhozeland experience.
+                </p>
 
-              <Input
-                value={cityQuery}
-                onChange={(e) => setCityQuery(e.target.value)}
-                placeholder="Search a city…"
-                className="rounded-xl h-11"
-              />
-
-              <div className="mt-4 flex flex-wrap gap-2">
-                {filteredCities.map((c) => {
-                  const active = city === c;
-                  return (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => setCity(c)}
-                      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${
-                        active
-                          ? "border-foreground bg-foreground text-background"
-                          : "border-border bg-background/60 text-foreground hover:bg-background"
-                      }`}
-                    >
-                      {active && <Check className="w-3 h-3" />}
-                      {c}
-                    </button>
-                  );
-                })}
-                {cityQuery && !filteredCities.includes(cityQuery) && (
-                  <button
-                    type="button"
-                    onClick={() => setCity(cityQuery)}
-                    className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${
-                      city === cityQuery
-                        ? "border-foreground bg-foreground text-background"
-                        : "border-dashed border-border bg-background/60 text-foreground hover:bg-background"
-                    }`}
-                  >
-                    Use "{cityQuery}"
-                  </button>
-                )}
-              </div>
-
-              <div className="mt-8 flex items-center justify-between">
-                <Button variant="ghost" onClick={() => setStep(0)} className="rounded-xl gap-1.5">
-                  <ArrowLeft className="w-4 h-4" /> Back
-                </Button>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setStep(2)}
-                    className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
-                  >
-                    Skip
-                  </button>
-                  <Button onClick={() => setStep(2)} className="rounded-xl gap-1.5">
-                    Next
-                    <ArrowRight className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {step === 2 && (
-            <motion.div
-              key="ready"
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -16 }}
-              transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-              className="rounded-3xl border border-border/60 bg-card/80 backdrop-blur-xl shadow-xl p-8 sm:p-10 text-center"
-            >
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-primary/5 border border-border/50 mb-4">
-                <Sparkles className="h-5 w-5 text-foreground/70" />
-              </div>
-              <h2 className="font-display text-2xl font-bold text-foreground mb-2">
-                Your feed is ready
-              </h2>
-              <p className="text-sm text-muted-foreground max-w-sm mx-auto mb-6">
-                Save your picks and start backing musicians before they blow up.
-              </p>
-
-              {/* Blurred preview cards */}
-              <div className="grid grid-cols-3 gap-2.5 mb-8">
-                {[0, 1, 2].map((i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 + i * 0.1 }}
-                    className="aspect-[3/4] rounded-2xl border border-border/60 overflow-hidden relative"
-                    style={{
-                      background: `linear-gradient(135deg, hsl(${280 + i * 30} 60% 70% / 0.45), hsl(${30 + i * 20} 70% 65% / 0.35))`,
-                    }}
-                  >
-                    <div className="absolute inset-0 backdrop-blur-md" />
-                    <div className="absolute bottom-2 left-2 right-2">
-                      <div className="h-2 rounded-full bg-foreground/30 mb-1.5 w-3/4" />
-                      <div className="h-1.5 rounded-full bg-foreground/20 w-1/2" />
+                {connected && publicKey ? (
+                  <div className="space-y-4">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-500">
+                      <Check className="w-4 h-4" strokeWidth={3} />
+                      Wallet connected
                     </div>
-                  </motion.div>
-                ))}
-              </div>
+                    <p className="text-xs text-muted-foreground">
+                      {publicKey.toBase58().slice(0, 6)}…{publicKey.toBase58().slice(-6)}
+                    </p>
+                    <Button
+                      onClick={goNext}
+                      className="rounded-xl h-12 w-full font-semibold gap-1.5 text-base"
+                    >
+                      Continue
+                      <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <button
+                      type="button"
+                      onClick={() => connectWallet("Phantom")}
+                      className="w-full inline-flex items-center gap-3 rounded-xl border border-border bg-background/60 hover:bg-background transition-colors px-4 py-3.5 text-left"
+                    >
+                      <span className="w-10 h-10 rounded-xl bg-gradient-to-br from-fuchsia-500 to-purple-600 flex items-center justify-center text-white text-base font-bold shrink-0">
+                        P
+                      </span>
+                      <span className="text-base font-bold text-foreground flex-1">Connect Phantom</span>
+                      <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => connectWallet("Solflare")}
+                      className="w-full inline-flex items-center gap-3 rounded-xl border border-border bg-background/60 hover:bg-background transition-colors px-4 py-3.5 text-left"
+                    >
+                      <span className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white text-base font-bold shrink-0">
+                        S
+                      </span>
+                      <span className="text-base font-bold text-foreground flex-1">Connect Solflare</span>
+                      <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                    <p className="text-[11px] text-muted-foreground pt-1">
+                      Your wallet is never shared and stays fully in your control.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={goNext}
+                      className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors pt-3"
+                    >
+                      Skip for now — I'll connect later
+                    </button>
+                  </div>
+                )}
+              </motion.div>
+            )}
 
-              <Button
-                onClick={() => finish("create")}
-                disabled={saving}
-                className="rounded-xl h-11 w-full font-semibold"
+            {/* ─────────────────────── SCREEN 3 — Personalization ─────────────────────── */}
+            {step === 2 && (
+              <motion.div
+                key="s3"
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -16 }}
+                transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                className="rounded-3xl border border-border/60 bg-card/80 backdrop-blur-xl shadow-xl p-6 sm:p-8"
               >
-                {saving ? "Setting up…" : "Enter Rhozeland"}
-              </Button>
-              <button
-                type="button"
-                onClick={() => finish("browse")}
-                disabled={saving}
-                className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors mt-4"
-              >
-                Just browse first →
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                <h2 className="text-center font-display text-2xl sm:text-3xl font-bold text-foreground mb-2">
+                  What are you into?
+                </h2>
+                <p className="text-center text-sm text-muted-foreground mb-6">
+                  Pick up to {MAX_GENRES} genres to build your feed.
+                </p>
+
+                <div className="flex flex-wrap gap-2 justify-center mb-6">
+                  {GENRES.map((g) => {
+                    const active = genres.includes(g);
+                    return (
+                      <button
+                        key={g}
+                        type="button"
+                        onClick={() => toggleGenre(g)}
+                        className={`rounded-full px-4 py-2 text-sm font-medium border transition-all ${
+                          active
+                            ? "bg-foreground text-background border-foreground shadow-sm"
+                            : "bg-background/60 text-foreground border-border hover:bg-background"
+                        }`}
+                      >
+                        {g}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="relative mb-6">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    value={artistSearch}
+                    onChange={(e) => setArtistSearch(e.target.value)}
+                    placeholder="Or search for a specific artist..."
+                    className="rounded-xl h-11 pl-9"
+                  />
+                </div>
+
+                <Button
+                  onClick={finish}
+                  disabled={genres.length === 0 || finishing}
+                  className="rounded-xl h-12 w-full font-semibold gap-1.5 text-base"
+                >
+                  Build my feed
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   );
