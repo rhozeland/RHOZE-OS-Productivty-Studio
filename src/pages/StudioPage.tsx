@@ -251,7 +251,10 @@ const StudioPage = () => {
   // Keep userType referenced to avoid a lint warning; ordering is now fixed.
   void userType;
 
-  // Backing — projects this user has cheered (project_cheers).
+  // Backing — projects this user has cheered (project_cheers). PostgREST
+  // cannot embed `profiles` directly off `projects` (the FK on projects.user_id
+  // points to auth.users, not public.profiles), so we fetch profiles in a
+  // second round-trip and merge.
   const { data: backedProjects } = useQuery({
     queryKey: ["studio-backed", user?.id],
     enabled: !!user,
@@ -259,15 +262,23 @@ const StudioPage = () => {
       const { data, error } = await (supabase as any)
         .from("project_cheers")
         .select(
-          "created_at, project:projects(id,title,is_public,public_slug,user_id,status,profiles:profiles!projects_user_id_fkey(display_name,avatar_url,username))",
+          "created_at, project:projects(id,title,is_public,public_slug,user_id,status)",
         )
         .eq("user_id", user!.id)
         .order("created_at", { ascending: false })
         .limit(24);
       if (error) return [];
-      return ((data ?? []) as any[])
+      const rows = ((data ?? []) as any[])
         .map((r) => ({ cheered_at: r.created_at, ...(r.project ?? {}) }))
         .filter((p) => p && p.id);
+      const ownerIds = Array.from(new Set(rows.map((p: any) => p.user_id).filter(Boolean)));
+      if (ownerIds.length === 0) return rows;
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, avatar_url, username")
+        .in("user_id", ownerIds);
+      const byId = new Map((profs ?? []).map((p: any) => [p.user_id, p]));
+      return rows.map((p: any) => ({ ...p, profiles: byId.get(p.user_id) ?? null }));
     },
   });
   const backedIds = useMemo(
