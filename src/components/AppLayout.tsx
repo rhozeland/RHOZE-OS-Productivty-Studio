@@ -9,7 +9,6 @@ import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import PostMenuButton from "@/components/PostMenuButton";
 import WalletButton from "@/components/WalletButton";
 
-import WelcomeModal from "@/components/onboarding/WelcomeModal";
 import RoomsBottomNav from "@/components/RoomsBottomNav";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import InboxDrawer from "@/components/InboxDrawer";
@@ -635,7 +634,6 @@ const AppLayout = () => {
         </CommandList>
       </CommandDialog>
       
-      {user && <WelcomeModal />}
       {/* v9.9: RoomsBottomNav retired — sidebar is the only primary nav. */}
       {false && user && <RoomsBottomNav />}
       </CelebrationProvider>
