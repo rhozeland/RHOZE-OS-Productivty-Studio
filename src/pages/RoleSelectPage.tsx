@@ -33,7 +33,7 @@ const RoleSelectPage = () => {
     try {
       const { error } = await supabase
         .from("profiles")
-        .update({ user_type: role } as any)
+        .update({ user_type: role === "musician" ? "creator" : "fan" } as any)
         .eq("user_id", user.id);
       if (error) throw error;
       // Route into the role-specific onboarding wizard.
