@@ -1300,62 +1300,84 @@ function BackingSection({
 }) {
   return (
     <section>
-      <SectionHeader icon={Heart} label="Backing" />
+      <div className="flex items-center gap-2.5 mb-4">
+        <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-rose-500 via-fuchsia-500 to-amber-500 text-white shadow-sm">
+          <Heart className="h-3.5 w-3.5" fill="currentColor" />
+        </span>
+        <h2 className="font-display text-lg font-semibold tracking-tight text-foreground">
+          Backing
+        </h2>
+        <span className="text-[11px] text-muted-foreground tabular-nums">
+          {projects.length}
+        </span>
+      </div>
       <div className="-mx-1 px-1 overflow-x-auto">
-        <div className="flex gap-3 pb-2 min-w-min">
+        <div className="flex gap-4 pb-2 min-w-min">
           {projects.map((p) => {
             const goals = goalsByProject.get(p.id) ?? [];
             const total = goals.length;
             const done = goals.filter((g) => g.status === "completed" || g.completed_at).length;
             const pct = total > 0 ? Math.round((done / total) * 100) : 0;
             const artist = p.profiles ?? {};
+            const initial = (artist.display_name || artist.username || "A").charAt(0).toUpperCase();
             return (
               <Link
                 key={p.id}
                 to={p.public_slug ? `/release/${p.public_slug}` : `/projects/${p.id}`}
-                className="shrink-0 w-[260px] rounded-2xl border border-border/60 bg-card/70 backdrop-blur-sm p-4 hover:-translate-y-0.5 hover:shadow-lg hover:border-foreground/30 transition-all"
+                className="group relative shrink-0 w-[280px] rounded-3xl overflow-hidden border border-border/60 bg-card hover:-translate-y-1 hover:shadow-2xl hover:border-foreground/40 transition-all duration-300"
               >
-                <div className="flex items-center gap-2 mb-3 min-w-0">
-                  <span className="h-7 w-7 rounded-full overflow-hidden bg-muted shrink-0">
-                    {artist.avatar_url && (
+                {/* gradient hero strip */}
+                <div className="relative h-20 bg-gradient-to-br from-rose-500 via-fuchsia-500 to-amber-500">
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.35),transparent_60%)]" />
+                  <span className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-black/30 backdrop-blur-md px-2 py-0.5 text-[10px] font-medium text-white">
+                    <Heart className="h-2.5 w-2.5" fill="currentColor" /> Backing
+                  </span>
+                  {/* avatar overlapping */}
+                  <span className="absolute -bottom-5 left-4 h-12 w-12 rounded-full overflow-hidden bg-muted ring-4 ring-card flex items-center justify-center text-sm font-semibold text-muted-foreground">
+                    {artist.avatar_url ? (
                       <img src={artist.avatar_url} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      initial
                     )}
                   </span>
-                  <span className="text-xs text-muted-foreground truncate">
-                    {artist.display_name || artist.username || "Artist"}
-                  </span>
                 </div>
-                <h3 className="font-display text-sm font-semibold text-foreground line-clamp-2 min-h-[2.5rem]">
-                  {p.title}
-                </h3>
-                {total > 0 && (
-                  <div className="mt-2.5">
-                    <div className="flex items-center justify-between text-[10px] mb-1">
-                      <span className="text-muted-foreground tabular-nums">{done}/{total}</span>
-                      <span className="text-foreground tabular-nums font-medium">{pct}%</span>
+
+                <div className="pt-7 px-4 pb-4">
+                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
+                    {artist.display_name || artist.username || "Artist"}
+                  </p>
+                  <h3 className="font-display text-[15px] font-semibold text-foreground line-clamp-2 leading-snug mt-1 min-h-[2.5rem]">
+                    {p.title}
+                  </h3>
+
+                  {total > 0 && (
+                    <div className="mt-3">
+                      <div className="flex items-center justify-between text-[10px] mb-1.5">
+                        <span className="text-muted-foreground tabular-nums">
+                          {done}/{total} milestones
+                        </span>
+                        <span className="text-foreground tabular-nums font-semibold">{pct}%</span>
+                      </div>
+                      <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-rose-500 via-fuchsia-500 to-amber-500 transition-all"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
                     </div>
-                    <Progress value={pct} className="h-1" />
+                  )}
+
+                  <div className="flex items-center justify-end pt-3 mt-3 border-t border-border/40">
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-foreground group-hover:gap-2 transition-all">
+                      View release <ArrowRight className="h-3 w-3" />
+                    </span>
                   </div>
-                )}
-                <div className="flex items-center justify-between pt-3">
-                  <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
-                    <Heart className="h-3 w-3" /> Backer
-                  </span>
-                  <span className="inline-flex items-center gap-0.5 text-[11px] font-medium text-foreground">
-                    View project <ArrowRight className="h-3 w-3" />
-                  </span>
                 </div>
               </Link>
             );
           })}
         </div>
       </div>
-      <Link
-        to="/discover?filter=projects"
-        className="inline-flex items-center gap-1 mt-3 text-xs text-muted-foreground hover:text-foreground transition-colors"
-      >
-        See all backed projects <ArrowRight className="h-3 w-3" />
-      </Link>
     </section>
   );
 }
