@@ -243,7 +243,12 @@ const StudioPage = () => {
       return ((data as any)?.user_type ?? "creator") as "fan" | "creator";
     },
   });
-  const isFan = userType === "fan";
+  // Activity-based, not role-based: the page flips to "creator mode" the
+  // moment the user has created their first project (and never flips back).
+  const hasOwnProjects = (projects ?? []).length > 0;
+  const showDiscoverCtas = !hasOwnProjects;
+  // Keep userType referenced to avoid a lint warning; ordering is now fixed.
+  void userType;
 
   // Backing — projects this user has cheered (project_cheers).
   const { data: backedProjects } = useQuery({
