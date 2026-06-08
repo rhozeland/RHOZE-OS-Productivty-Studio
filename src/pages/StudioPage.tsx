@@ -646,7 +646,7 @@ const StudioPage = () => {
       {hasAnyActivity && (
         <div className="space-y-10">
           {(() => {
-            const sectionBuilding = (projects ?? []).length > 0 ? (
+            const sectionBuilding = hasOwnProjects ? (
               <BuildingSection
                 key="building"
                 activeProjects={activeProjects}
@@ -657,9 +657,7 @@ const StudioPage = () => {
                 milestonesDueThisWeek={milestonesDueThisWeek}
                 onStart={() => setStartProjectOpen(true)}
               />
-            ) : (
-              <BuildingEmpty key="building" onStart={() => setStartProjectOpen(true)} />
-            );
+            ) : null;
 
             const sectionBacking = (backedProjects ?? []).length > 0 ? (
               <BackingSection
@@ -673,10 +671,7 @@ const StudioPage = () => {
               <HoldingSection key="holding" holdings={holdings ?? []} />
             ) : null;
 
-            const ordered = isFan
-              ? [sectionBacking, sectionBuilding, sectionHolding]
-              : [sectionBuilding, sectionBacking, sectionHolding];
-            return ordered.filter(Boolean);
+            return [sectionBuilding, sectionBacking, sectionHolding].filter(Boolean);
           })()}
         </div>
       )}
