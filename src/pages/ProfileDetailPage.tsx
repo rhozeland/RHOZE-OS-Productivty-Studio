@@ -387,6 +387,18 @@ const ProfileDetailPage = () => {
               </section>
             )}
 
+            {tab === "reposts" && (
+              <section className="space-y-3">
+                <PostsGrid
+                  posts={repostedPosts ?? []}
+                  isOwnProfile={isOwnProfile}
+                  navigate={navigate}
+                  emptyTitle="No reposts yet"
+                  emptyDescription="Hit the repost button on any Flow card and it'll land here."
+                />
+              </section>
+            )}
+
           </div>
 
           {/* RIGHT — Action & Utility Hub */}
