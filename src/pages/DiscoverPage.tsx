@@ -15,7 +15,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Loader2, MapPin, Play } from "lucide-react";
+import { ArrowRight, Loader2, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import CoinsInMotionLane from "@/components/discover/CoinsInMotionLane";
@@ -439,39 +439,88 @@ const DiscoverPage = () => {
         )}
       </div>
 
-      {/* Floating Flow Mode launcher */}
+      {/* Floating Flow Mode launcher — vertical swipe-feed icon */}
       <Link
         to="/flow"
         aria-label="Open Flow mode"
         className="fixed bottom-6 right-6 z-40 group"
+        style={{ perspective: 600 }}
       >
+        {/* Outer pulse rings */}
+        <motion.span
+          aria-hidden
+          className="absolute inset-0 rounded-[22px]"
+          animate={{ boxShadow: [
+            "0 0 0 0 hsl(180 95% 55% / 0.55)",
+            "0 0 0 18px hsl(180 95% 55% / 0)",
+          ]}}
+          transition={{ duration: 1.8, repeat: Infinity, ease: "easeOut" }}
+        />
         <motion.div
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.3, type: "spring", stiffness: 220, damping: 18 }}
-          whileHover={{ scale: 1.06 }}
-          whileTap={{ scale: 0.94 }}
-          className="relative h-14 w-14 rounded-full shadow-[0_18px_45px_-12px_hsl(330_85%_60%/0.65)] flex items-center justify-center text-white overflow-hidden"
+          initial={{ scale: 0, opacity: 0, rotateX: -30 }}
+          animate={{
+            scale: 1,
+            opacity: 1,
+            rotateX: 0,
+            y: [0, -4, 0],
+          }}
+          transition={{
+            scale: { delay: 0.3, type: "spring", stiffness: 240, damping: 16 },
+            opacity: { delay: 0.3, duration: 0.3 },
+            rotateX: { delay: 0.3, duration: 0.4 },
+            y: { duration: 2.6, repeat: Infinity, ease: "easeInOut", delay: 0.8 },
+          }}
+          whileHover={{ scale: 1.1, rotateZ: -4 }}
+          whileTap={{ scale: 0.92, rotateZ: 0 }}
+          className="relative h-16 w-16 rounded-[22px] flex items-center justify-center text-white overflow-hidden"
           style={{
             backgroundImage:
-              "linear-gradient(135deg, hsl(330 85% 60%) 0%, hsl(292 84% 61%) 50%, hsl(38 92% 55%) 100%)",
+              "linear-gradient(140deg, hsl(180 95% 55%) 0%, hsl(220 95% 60%) 45%, hsl(265 90% 62%) 100%)",
+            boxShadow:
+              "0 22px 40px -10px hsl(220 95% 50% / 0.6), 0 4px 12px -2px hsl(265 90% 50% / 0.5), inset 0 1px 0 hsl(0 0% 100% / 0.4), inset 0 -3px 8px hsl(265 90% 30% / 0.5)",
+            transformStyle: "preserve-3d",
           }}
         >
+          {/* Glossy top highlight */}
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-x-1 top-1 h-1/2 rounded-[18px]"
+            style={{
+              backgroundImage: "linear-gradient(180deg, hsl(0 0% 100% / 0.35), hsl(0 0% 100% / 0))",
+            }}
+          />
+          {/* Animated swipe-feed cards icon */}
+          <div className="relative h-7 w-6 flex flex-col items-center justify-center gap-[3px]">
+            <motion.span
+              className="block h-[7px] w-5 rounded-[3px] bg-white/55"
+              animate={{ y: [0, 14, 14], opacity: [1, 0, 0] }}
+              transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut", times: [0, 0.7, 1] }}
+            />
+            <motion.span
+              className="block h-[10px] w-5 rounded-[4px] bg-white"
+              animate={{ scale: [1, 1.06, 1] }}
+              transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+              style={{ boxShadow: "0 2px 6px hsl(220 95% 30% / 0.4)" }}
+            />
+            <motion.span
+              className="block h-[7px] w-5 rounded-[3px] bg-white/35"
+              animate={{ y: [0, -3, 0], opacity: [0.35, 0.55, 0.35] }}
+              transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+            />
+          </div>
+          {/* Shimmer sweep */}
           <motion.span
             aria-hidden
-            className="absolute inset-0 rounded-full"
+            className="pointer-events-none absolute inset-0"
             style={{
-              boxShadow: "0 0 0 0 hsl(330 85% 60% / 0.55)",
+              backgroundImage:
+                "linear-gradient(115deg, transparent 35%, hsl(0 0% 100% / 0.35) 50%, transparent 65%)",
             }}
-            animate={{ boxShadow: [
-              "0 0 0 0 hsl(330 85% 60% / 0.55)",
-              "0 0 0 14px hsl(330 85% 60% / 0)",
-            ]}}
-            transition={{ duration: 1.8, repeat: Infinity, ease: "easeOut" }}
+            animate={{ x: ["-120%", "120%"] }}
+            transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut", repeatDelay: 1.4 }}
           />
-          <Play className="h-5 w-5 fill-white ml-0.5 relative" strokeWidth={0} />
         </motion.div>
-        <span className="pointer-events-none absolute right-16 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-full bg-foreground text-background text-[11px] font-semibold px-2.5 py-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-md">
+        <span className="pointer-events-none absolute right-[72px] top-1/2 -translate-y-1/2 whitespace-nowrap rounded-full bg-foreground text-background text-[11px] font-semibold px-2.5 py-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-md">
           Flow
         </span>
       </Link>
