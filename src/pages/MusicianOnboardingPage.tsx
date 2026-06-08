@@ -581,7 +581,7 @@ const MusicianOnboardingPage = () => {
                           onClick={() => connectWallet("Phantom")}
                           className="w-full inline-flex items-center gap-3 rounded-xl border border-border bg-background/60 hover:bg-background transition-colors px-4 py-3 text-left"
                         >
-                          <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-fuchsia-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">P</span>
+                          <PhantomLogo />
                           <span className="text-sm font-medium text-foreground flex-1">Connect Phantom</span>
                           <ArrowRight className="w-3.5 h-3.5 text-muted-foreground" />
                         </button>
@@ -590,7 +590,7 @@ const MusicianOnboardingPage = () => {
                           onClick={() => connectWallet("Solflare")}
                           className="w-full inline-flex items-center gap-3 rounded-xl border border-border bg-background/60 hover:bg-background transition-colors px-4 py-3 text-left"
                         >
-                          <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white text-xs font-bold">S</span>
+                          <SolflareLogo />
                           <span className="text-sm font-medium text-foreground flex-1">Connect Solflare</span>
                           <ArrowRight className="w-3.5 h-3.5 text-muted-foreground" />
                         </button>
