@@ -1,18 +1,20 @@
 /**
- * FanOnboardingPage — final 3-screen fan onboarding flow.
- * Only the new modal flow runs after choosing Fan.
+ * FanOnboardingPage — 4-screen fan onboarding flow.
+ * Screens: Hook → Profile Setup → Wallet → Personalization → /discover
  */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, ArrowLeft, X, Check, Search } from "lucide-react";
+import { ArrowRight, ArrowLeft, X, Check, Search, Camera, Loader2, X as XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 const GENRES = [
   "Hip Hop", "R&B", "Pop", "Electronic", "Afrobeats", "Jazz", "Rock",
@@ -20,11 +22,15 @@ const GENRES = [
 ];
 
 const MAX_GENRES = 3;
-const TOTAL_SCREENS = 3;
+const TOTAL_SCREENS = 4;
 const DRAFT_KEY = "rhozeland.fan-onboarding.draft";
 
 type Draft = {
   step?: number;
+  displayName?: string;
+  username?: string;
+  city?: string;
+  avatarUrl?: string;
   genres?: string[];
   artistSearch?: string;
 };
@@ -75,29 +81,127 @@ const FanOnboardingPage = () => {
   const { connected, publicKey, select, wallets } = useWallet();
 
   const [step, setStep] = useState<number>(draft.step ?? 0);
+  const [displayName, setDisplayName] = useState(draft.displayName ?? "");
+  const [username, setUsername] = useState(draft.username ?? "");
+  const [city, setCity] = useState(draft.city ?? "");
+  const [avatarUrl, setAvatarUrl] = useState<string>(draft.avatarUrl ?? "");
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [genres, setGenres] = useState<string[]>(draft.genres ?? []);
   const [artistSearch, setArtistSearch] = useState(draft.artistSearch ?? "");
   const [finishing, setFinishing] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // username availability
+  const [debouncedUsername, setDebouncedUsername] = useState(username);
+  const [checkingUsername, setCheckingUsername] = useState(false);
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
       window.localStorage.setItem(
         DRAFT_KEY,
-        JSON.stringify({ step, genres, artistSearch } satisfies Draft),
+        JSON.stringify({
+          step, displayName, username, city, avatarUrl, genres, artistSearch,
+        } satisfies Draft),
       );
-    } catch {
-      // ignore
-    }
-  }, [step, genres, artistSearch]);
+    } catch {}
+  }, [step, displayName, username, city, avatarUrl, genres, artistSearch]);
 
-  const progressPct = ((step + 1) / TOTAL_SCREENS) * 100;
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedUsername(username), 350);
+    return () => clearTimeout(t);
+  }, [username]);
+
+  useEffect(() => {
+    const u = debouncedUsername.trim().toLowerCase();
+    if (u.length < 3 || !/^[a-zA-Z0-9_]+$/.test(u)) {
+      setUsernameAvailable(null);
+      return;
+    }
+    let cancelled = false;
+    setCheckingUsername(true);
+    supabase.rpc("check_username_available", { _username: u })
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error) setUsernameAvailable(null);
+        else setUsernameAvailable(Boolean(data));
+      })
+      .finally(() => { if (!cancelled) setCheckingUsername(false); });
+    return () => { cancelled = true; };
+  }, [debouncedUsername]);
+
+  const usernameClean = username.trim().toLowerCase();
+  const usernameValid = usernameClean.length >= 3 && usernameClean.length <= 20 && /^[a-zA-Z0-9_]+$/.test(usernameClean);
+  const profileCanSave = displayName.trim().length > 0 && usernameValid && usernameAvailable === true && !checkingUsername;
+
+  const progressPct = (step / TOTAL_SCREENS) * 100;
 
   const goNext = () => setStep((s) => Math.min(TOTAL_SCREENS - 1, s + 1));
   const goBack = () => setStep((s) => Math.max(0, s - 1));
 
   const handleClose = () => {
-    navigate("/home", { replace: true });
+    navigate("/discover", { replace: true });
+  };
+
+  const handleUsernameChange = (raw: string) => {
+    // strip leading @ if user typed it, restrict chars
+    const cleaned = raw.replace(/^@+/, "").replace(/[^a-zA-Z0-9_]/g, "");
+    setUsername(cleaned);
+  };
+
+  const handleAvatarFile = async (file: File) => {
+    if (!user) {
+      toast.error("Sign in to upload a photo");
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please pick an image");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be under 5 MB");
+      return;
+    }
+    setUploadingAvatar(true);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "png";
+      const path = `${user.id}/onboarding-avatar.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("avatars")
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (upErr) throw upErr;
+      const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
+      setAvatarUrl(`${urlData.publicUrl}?t=${Date.now()}`);
+    } catch (e: any) {
+      toast.error(e?.message || "Could not upload photo");
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const saveProfileAndAdvance = async (opts?: { skip?: boolean }) => {
+    if (savingProfile) return;
+    if (!opts?.skip && !profileCanSave) return;
+    setSavingProfile(true);
+    try {
+      if (user && !opts?.skip) {
+        const patch: Record<string, any> = {
+          display_name: displayName.trim(),
+          username: usernameClean,
+        };
+        if (city.trim()) patch.location = city.trim();
+        if (avatarUrl) patch.avatar_url = avatarUrl;
+        const { error } = await supabase.from("profiles").update(patch as any).eq("user_id", user.id);
+        if (error) throw error;
+      }
+      goNext();
+    } catch (e: any) {
+      toast.error(e?.message || "Could not save profile");
+    } finally {
+      setSavingProfile(false);
+    }
   };
 
   const toggleGenre = (genre: string) => {
@@ -132,10 +236,12 @@ const FanOnboardingPage = () => {
       if (typeof window !== "undefined") {
         window.localStorage.removeItem(DRAFT_KEY);
       }
-      navigate("/home", { replace: true });
+      const params = new URLSearchParams();
+      if (genres.length) params.set("genres", genres.join(","));
+      navigate(`/discover${params.toString() ? `?${params}` : ""}`, { replace: true });
     } catch (error) {
       console.error(error);
-      navigate("/home", { replace: true });
+      navigate("/discover", { replace: true });
     } finally {
       setFinishing(false);
     }
@@ -208,6 +314,147 @@ const FanOnboardingPage = () => {
 
             {step === 1 && (
               <motion.div
+                key="fan-profile"
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -16 }}
+                transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                className="rounded-3xl border border-border/60 bg-card/80 backdrop-blur-xl shadow-xl p-6 sm:p-8"
+              >
+                <p className="text-center text-[11px] font-medium uppercase tracking-[0.25em] text-muted-foreground mb-3">
+                  CREATE YOUR PROFILE
+                </p>
+                <h2 className="text-center font-display text-2xl sm:text-3xl font-bold text-foreground mb-6 leading-tight">
+                  How should artists know you?
+                </h2>
+
+                <div className="space-y-5">
+                  {/* Avatar */}
+                  <div className="flex flex-col items-center">
+                    <Label className="text-xs text-muted-foreground mb-2">Profile photo</Label>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="relative w-24 h-24 rounded-full border-2 border-dashed border-border hover:border-primary/60 bg-muted/40 overflow-hidden flex items-center justify-center transition-colors group"
+                      aria-label="Upload profile photo"
+                    >
+                      {avatarUrl ? (
+                        <>
+                          <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+                          <span className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <Camera className="w-5 h-5 text-white" />
+                          </span>
+                        </>
+                      ) : uploadingAvatar ? (
+                        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                      ) : (
+                        <Camera className="w-7 h-7 text-muted-foreground" />
+                      )}
+                    </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) handleAvatarFile(f);
+                        e.target.value = "";
+                      }}
+                    />
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {avatarUrl ? "Tap to change" : "Add a photo"}
+                    </p>
+                    {avatarUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setAvatarUrl("")}
+                        className="text-[11px] text-muted-foreground hover:text-foreground mt-1 inline-flex items-center gap-1"
+                      >
+                        <XIcon className="w-3 h-3" /> Remove
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Display name */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="display-name">Display name</Label>
+                    <Input
+                      id="display-name"
+                      value={displayName}
+                      onChange={(e) => setDisplayName(e.target.value)}
+                      placeholder="Your name or username"
+                      maxLength={60}
+                      className="rounded-xl h-11"
+                    />
+                  </div>
+
+                  {/* Username */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="username">Username</Label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm pointer-events-none">@</span>
+                      <Input
+                        id="username"
+                        value={username}
+                        onChange={(e) => handleUsernameChange(e.target.value)}
+                        placeholder="handle"
+                        maxLength={20}
+                        className="rounded-xl h-11 pl-7 pr-10"
+                      />
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        {checkingUsername && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+                        {!checkingUsername && usernameValid && usernameAvailable === true && (
+                          <Check className="w-4 h-4 text-emerald-500" />
+                        )}
+                        {!checkingUsername && usernameValid && usernameAvailable === false && (
+                          <XIcon className="w-4 h-4 text-rose-500" />
+                        )}
+                      </div>
+                    </div>
+                    {username.length > 0 && !usernameValid && (
+                      <p className="text-[11px] text-muted-foreground">3–20 letters, numbers, or underscores.</p>
+                    )}
+                    {usernameValid && usernameAvailable === false && (
+                      <p className="text-[11px] text-rose-500 font-medium">That handle's taken.</p>
+                    )}
+                  </div>
+
+                  {/* City */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="city">Your city <span className="text-muted-foreground font-normal">(optional)</span></Label>
+                    <Input
+                      id="city"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      placeholder="Toronto, New York, Lagos..."
+                      maxLength={80}
+                      className="rounded-xl h-11"
+                    />
+                  </div>
+                </div>
+
+                <Button
+                  onClick={() => saveProfileAndAdvance()}
+                  disabled={!profileCanSave || savingProfile}
+                  className="mt-6 rounded-xl h-12 w-full font-semibold gap-1.5 text-base"
+                >
+                  {savingProfile ? <Loader2 className="w-4 h-4 animate-spin" /> : (<>Set up my profile <ArrowRight className="w-4 h-4" /></>)}
+                </Button>
+                <button
+                  type="button"
+                  onClick={() => saveProfileAndAdvance({ skip: true })}
+                  className={cn(
+                    "block mx-auto text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors pt-3",
+                  )}
+                >
+                  Skip for now →
+                </button>
+              </motion.div>
+            )}
+
+            {step === 2 && (
+              <motion.div
                 key="fan-wallet"
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -269,7 +516,7 @@ const FanOnboardingPage = () => {
               </motion.div>
             )}
 
-            {step === 2 && (
+            {step === 3 && (
               <motion.div
                 key="fan-personalization"
                 initial={{ opacity: 0, y: 24 }}
@@ -320,8 +567,7 @@ const FanOnboardingPage = () => {
                   disabled={genres.length === 0 || finishing}
                   className="rounded-xl h-12 w-full font-semibold gap-1.5 text-base"
                 >
-                  Build my feed
-                  <ArrowRight className="w-4 h-4" />
+                  {finishing ? <Loader2 className="w-4 h-4 animate-spin" /> : (<>Build my feed <ArrowRight className="w-4 h-4" /></>)}
                 </Button>
               </motion.div>
             )}
