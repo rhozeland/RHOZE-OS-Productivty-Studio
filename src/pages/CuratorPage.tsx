@@ -30,7 +30,7 @@ export default function CuratorPage() {
   }
 
   if (!isCurator) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/home" replace />;
   }
 
   return (

@@ -9,7 +9,7 @@ export const ROLE_STORAGE_KEY = "rhz_active_role";
 export const ROLE_CHANGE_EVENT = "rhz:role-change";
 export const ROLE_HOME: Record<ActiveRole, string> = {
   fan: "/discover",
-  creator: "/dashboard",
+  creator: "/home",
 };
 
 const readStored = (): ActiveRole => {

@@ -12,7 +12,7 @@ import AppLayout from "@/components/AppLayout";
 import FlowAuthGuard from "@/components/FlowAuthGuard";
 import AuthPage from "@/pages/AuthPage";
 import LandingPage from "@/pages/LandingPage";
-import DashboardPage from "@/pages/DashboardPage";
+
 import ProjectsPage from "@/pages/ProjectsPage";
 import StudioPage from "@/pages/StudioPage";
 import ProjectDetailPage from "@/pages/ProjectDetailPage";
@@ -48,7 +48,7 @@ import FanOnboardingPage from "@/pages/FanOnboardingPage";
 import MusicianOnboardingPage from "@/pages/MusicianOnboardingPage";
 import PortfolioPage from "@/pages/PortfolioPage"; // v10.4: restored as a top-level sidebar destination.
 import MarketplacePage from "@/pages/MarketplacePage";
-import CreatorsPage from "@/pages/CreatorsPage";
+
 import HomePage from "@/pages/HomePage";
 import HomeFeedPage from "@/pages/HomeFeedPage";
 import DiscoverPage from "@/pages/DiscoverPage";
@@ -201,7 +201,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
   if (loading) return null;
-  if (user) return <Navigate to="/dashboard" replace />;
+  if (user) return <Navigate to="/home" replace />;
   return <>{children}</>;
 };
 
@@ -276,8 +276,8 @@ const App = () => (
 
               {/* Main app — browsable by everyone, auth-gated actions inside */}
               <Route element={<AppLayout />}>
-                {/* v9.9: Home = personalized fan feed (DashboardPage). */}
-                <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+                {/* v11: /dashboard removed — Home is the authed feed. */}
+                <Route path="/dashboard" element={<Navigate to="/home" replace />} />
                 <Route path="/home" element={<HomeFeedPage />} />
                 {/* Three-Room front doors (Scene · Market · Vault) — additive,
                     organize existing routes without removing any. */}
@@ -354,8 +354,8 @@ const App = () => (
                 <Route path="/smartboards/:id" element={<SmartboardDetailPage />} />
                 <Route path="/drop-rooms" element={<Navigate to="/projects" replace />} />
                 <Route path="/drop-rooms/:id" element={<DropRoomDetailPage />} />
-                {/* Legacy Creators Hub → Discover */}
-                <Route path="/creators" element={<CreatorsPage />} />
+                {/* /creators index removed — redirect to Discover. Detail still resolves listings. */}
+                <Route path="/creators" element={<Navigate to="/discover" replace />} />
                 <Route path="/creators/:id" element={<ListingDetailPage />} />
                 {/* Marketplace — unified mosaic with a Flow shortcut */}
                 <Route path="/marketplace" element={<MarketplacePage />} />
