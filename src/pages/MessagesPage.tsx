@@ -82,6 +82,8 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inquiryHandled = useRef(false);
   const [activeInquiryId, setActiveInquiryId] = useState<string | null>(null);
+  const [inboxFilter, setInboxFilter] = useState<"all" | "unread" | "subscribers" | "subscribed">("all");
+
 
   // Get conversations (users we've messaged with)
   const { data: conversations } = useQuery({
