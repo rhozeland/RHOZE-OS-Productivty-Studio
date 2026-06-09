@@ -95,6 +95,19 @@ export default function ProfileProjectCard({ project, collaborators = [], onOpen
             )}
           </div>
         )}
+
+        {canDelete && onDelete && (
+          <span
+            role="button"
+            tabIndex={0}
+            aria-label="Delete project"
+            onClick={(e) => { e.stopPropagation(); e.preventDefault(); onDelete(); }}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); e.preventDefault(); onDelete(); } }}
+            className="absolute bottom-3 right-3 z-10 inline-flex h-8 w-8 items-center justify-center rounded-full bg-black/70 text-white opacity-0 group-hover:opacity-100 hover:bg-red-600 transition-all cursor-pointer"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </span>
+        )}
       </div>
 
       {/* Footer card */}
