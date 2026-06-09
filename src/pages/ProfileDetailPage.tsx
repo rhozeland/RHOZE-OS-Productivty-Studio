@@ -464,16 +464,6 @@ const ProfileDetailPage = () => {
         </div>
 
         {/* Sheets / dialogs */}
-        {!isOwnProfile && id && (
-          <SupportFlowSheet
-            open={subscribeOpen}
-            onOpenChange={setSubscribeOpen}
-            creatorId={id}
-            creatorName={p.display_name || p.username || "this artist"}
-            creatorAvatar={p.avatar_url}
-            creatorUsername={p.username}
-          />
-        )}
         {id && (
           <ShareCardModal open={shareCardOpen} onOpenChange={setShareCardOpen} creatorId={id} />
         )}
