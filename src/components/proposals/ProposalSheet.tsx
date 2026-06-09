@@ -777,4 +777,42 @@ const SignatureRow = ({ label, signedAt, hash, tx }: SignatureRowProps) => {
   );
 };
 
+const MetaRow = ({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) => (
+  <div className="flex items-center gap-3 min-h-[24px]">
+    <div className="flex items-center gap-1.5 w-28 shrink-0 text-muted-foreground">
+      {icon}
+      <span>{label}</span>
+    </div>
+    <div className="flex-1 min-w-0 flex items-center gap-1.5 flex-wrap">{children}</div>
+  </div>
+);
+
+const TeamCard = ({
+  name, initial, avatar, role, signedAt, isYou,
+}: {
+  name: string; initial: string; avatar: string | null;
+  role: string; signedAt: string | null; isYou?: boolean;
+}) => (
+  <div className="flex items-center gap-3 rounded-lg border border-border bg-card p-3">
+    <Avatar className="h-9 w-9">
+      {avatar ? <AvatarImage src={avatar} alt={name} /> : <AvatarFallback>{initial}</AvatarFallback>}
+    </Avatar>
+    <div className="flex-1 min-w-0">
+      <div className="flex items-center gap-2">
+        <p className="text-sm font-medium truncate">{name}</p>
+        {isYou && <Badge variant="outline" className="text-[9px] h-4">You</Badge>}
+      </div>
+      <p className="text-[11px] text-muted-foreground">{role}</p>
+    </div>
+    {signedAt ? (
+      <Badge variant="outline" className="gap-1 text-[10px] border-emerald-500/30 bg-emerald-500/10 text-emerald-700">
+        <CheckCircle2 className="h-3 w-3" /> Signed
+      </Badge>
+    ) : (
+      <Badge variant="outline" className="text-[10px] text-muted-foreground">Pending</Badge>
+    )}
+  </div>
+);
+
+
 export default ProposalSheet;
