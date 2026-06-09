@@ -28,6 +28,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import ShareCardModal from "@/components/share/ShareCardModal";
 import ProfileProjectCard from "@/components/profile/ProfileProjectCard";
 import LaunchCoinFlowModal from "@/components/launchpad/LaunchCoinFlowModal";
+import StartProjectPicker from "@/components/project/StartProjectPicker";
 
 type TabKey = "projects" | "works" | "reposts";
 
@@ -45,6 +46,7 @@ const ProfileDetailPage = () => {
   const [boostOpen, setBoostOpen] = useState(false);
   const [shareCardOpen, setShareCardOpen] = useState(false);
   const [launchCoinOpen, setLaunchCoinOpen] = useState(false);
+  const [startProjectOpen, setStartProjectOpen] = useState(false);
 
   const initialTab = (searchParams.get("tab") as TabKey) || "projects";
   const [tab, setTab] = useState<TabKey>(
@@ -407,7 +409,7 @@ const ProfileDetailPage = () => {
                 {/* Start a project */}
                 <button
                   type="button"
-                  onClick={() => navigate("/messages?tab=projects&new=1")}
+                  onClick={() => setStartProjectOpen(true)}
                   className="w-full text-left rounded-2xl p-5 bg-gradient-to-br from-primary via-fuchsia-500 to-amber-500 text-primary-foreground shadow-lg hover:opacity-95 transition-opacity"
                 >
                   <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] opacity-90">
@@ -462,6 +464,7 @@ const ProfileDetailPage = () => {
         )}
         {isOwnProfile && <BoostProfileSheet open={boostOpen} onOpenChange={setBoostOpen} />}
         <LaunchCoinFlowModal open={launchCoinOpen} onOpenChange={setLaunchCoinOpen} project={null} />
+        <StartProjectPicker open={startProjectOpen} onOpenChange={setStartProjectOpen} />
         <Dialog open={bookingOpen} onOpenChange={setBookingOpen}>
           <DialogContent className="max-w-6xl w-[95vw] max-h-[92vh] overflow-y-auto p-0">
             <DialogHeader className="px-6 pt-6 pb-3 border-b border-border/40">
