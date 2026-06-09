@@ -15,7 +15,7 @@
  * remain fully editable.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -476,6 +476,15 @@ const LaunchCoinFlowModal = ({
                   <p className="mx-auto max-w-md text-sm text-muted-foreground">
                     Pick one of your existing releases — or pitch us a new idea and we'll build it with you.
                   </p>
+                  <div className="pt-1.5">
+                    <Link
+                      to="/label-services"
+                      onClick={() => onOpenChange(false)}
+                      className="inline-flex items-center gap-1 rounded-full border border-border bg-background/60 px-2.5 py-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors"
+                    >
+                      How it works →
+                    </Link>
+                  </div>
                 </div>
 
                 <div className="-mx-1 max-h-[min(44vh,24rem)] space-y-2 overflow-y-auto overflow-x-hidden px-1">
