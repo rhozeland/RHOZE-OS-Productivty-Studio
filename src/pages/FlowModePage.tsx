@@ -1835,6 +1835,7 @@ const FlowModePage = () => {
                     <FlowCard
                       item={currentItem}
                       expanded={expandedCard}
+                      disableMediaInteractions
                       onToggleExpand={() => setExpandedCard(!expandedCard)}
                       onLike={() => performAction("like")}
                       onComment={() => performAction("comment")}
