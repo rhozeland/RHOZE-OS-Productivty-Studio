@@ -79,7 +79,7 @@ import SwapHistoryPage from "@/pages/SwapHistoryPage";
 import UnsubscribePage from "@/pages/UnsubscribePage";
 import VerificationPage from "@/pages/VerificationPage";
 import SceneRoomPage from "@/pages/SceneRoomPage";
-import MarketRoomPage from "@/pages/MarketRoomPage";
+
 import VaultRoomPage from "@/pages/VaultRoomPage";
 // v11 — ConnectMatchPage retired; /connect/match now redirects to /market.
 import NotFound from "./pages/NotFound";
