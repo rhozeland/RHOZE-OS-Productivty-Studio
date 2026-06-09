@@ -568,6 +568,7 @@ const LaunchCoinFlowModal = ({
         )}
       </DialogContent>
     </Dialog>
+    </>
   );
 };
 
