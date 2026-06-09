@@ -1279,7 +1279,7 @@ const FlowModePage = () => {
   // — long enough for the exit animation to finish, short enough that the
   // next card feels immediately interactive.
   const advanceCard = useCallback(() => {
-    console.log("[FlowAdvance] called", { currentIndex, allItemsLen: allItems.length, baseItemsLen: baseItems.length, swipeLocked, isAdvancing, currentItemId: currentItem?.id });
+    console.log("[FlowAdvance] called", { currentIndex, allItemsLen: allItems.length, baseItemsLen: baseItems.length, isAdvancing, currentItemId: currentItem?.id });
     lockedDeepLinkItemRef.current = null;
     appliedDeepLinkRef.current = null;
     suppressSwipeRestoreRef.current = false;
