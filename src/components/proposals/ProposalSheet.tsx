@@ -404,6 +404,14 @@ const ProposalEditor = ({ proposalId, onClose, onConverted }: EditorProps) => {
 
   const milestoneTotal = (milestones ?? []).reduce((s, m) => s + Number(m.credit_amount ?? 0), 0);
 
+  if (isLoading || !proposal) {
+    return (
+      <div className="p-10 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" /> Loading proposal…
+      </div>
+    );
+  }
+
   const signedCount = (proposal.client_signed_at ? 1 : 0) + (proposal.specialist_signed_at ? 1 : 0);
   const signedPct = Math.round((signedCount / 2) * 100);
   const priorityTone =
@@ -411,12 +419,11 @@ const ProposalEditor = ({ proposalId, onClose, onConverted }: EditorProps) => {
     : proposal.status === "declined" ? "bg-muted text-muted-foreground border-border"
     : proposal.status === "draft" ? "bg-amber-500/15 text-amber-700 border-amber-500/30"
     : "bg-primary/15 text-primary border-primary/30";
-  const counterpartyName =
-    counterpartyProfile?.display_name || counterpartyProfile?.username || "Counterparty";
   const counterpartyInitial = counterpartyName.slice(0, 1).toUpperCase();
   const myInitial = (myName ?? "Y").slice(0, 1).toUpperCase();
   const fmtUsd = (n: number) =>
     n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+
 
   return (
     <>
