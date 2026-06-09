@@ -462,20 +462,22 @@ const ProjectDetailPage = () => {
                 <StoryFeed items={storyItems} canManage={canManageProject} preview />
               </section>
 
-              {/* Board preview */}
-              <section className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Board</h3>
-                  <button onClick={() => setTab("board")} className="text-[11px] text-muted-foreground hover:text-foreground">
-                    All →
-                  </button>
-                </div>
-                <BoardMasonry
-                  deliverables={deliverables as any}
-                  limit={6}
-                  onSeeMore={() => setTab("board")}
-                />
-              </section>
+              {/* Board preview — hidden entirely when no assets attached */}
+              {((deliverables ?? []).some((d: any) => d.file_url)) && (
+                <section className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Board</h3>
+                    <button onClick={() => setTab("board")} className="text-[11px] text-muted-foreground hover:text-foreground">
+                      All →
+                    </button>
+                  </div>
+                  <BoardMasonry
+                    deliverables={((deliverables ?? []) as any[]).filter((d) => d.file_url)}
+                    limit={4}
+                    onSeeMore={() => setTab("board")}
+                  />
+                </section>
+              )}
 
               {/* Team + Supporters */}
               <section>
