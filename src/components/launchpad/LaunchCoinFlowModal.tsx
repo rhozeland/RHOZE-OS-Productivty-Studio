@@ -767,7 +767,7 @@ const LaunchCoinFlowModal = ({
                             ? "border-transparent text-white shadow-sm"
                             : "border-border bg-foreground/[0.04] text-muted-foreground hover:text-foreground hover:bg-foreground/[0.07]",
                         )}
-                        style={selected ? { background: GRADIENT } : undefined}
+                        style={selected ? { background: COOL_GRADIENT } : undefined}
                       >
                         {showAi && <Sparkles className="h-3 w-3" />}
                         {t.label}
