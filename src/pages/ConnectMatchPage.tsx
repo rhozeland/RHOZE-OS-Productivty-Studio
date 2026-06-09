@@ -94,7 +94,7 @@ const ConnectMatchPage = () => {
               You've reviewed every collaborator, space, call, and event we have for you today.
               New matches drop daily.
             </p>
-            <Button onClick={() => navigate("/market")} className="rounded-full">
+            <Button onClick={() => navigate("/discover")} className="rounded-full">
               Back to Connect
             </Button>
           </div>

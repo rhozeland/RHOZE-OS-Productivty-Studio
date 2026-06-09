@@ -149,8 +149,8 @@ const FOOTER_COLS = [
     head: "Discover",
     links: [
       ["Featured artists", "/discover"],
-      ["Marketplace", "/market"],
-      ["Live events", "/market?kind=live"],
+      ["Marketplace", "/discover"],
+      ["Live events", "/discover"],
       ["Releases", "/discover"],
     ],
   },
@@ -235,7 +235,7 @@ const LandingPage = () => {
         </Link>
         <nav className="hidden md:flex items-center gap-1 rounded-full border border-border/50 bg-card/50 backdrop-blur-md px-2 py-1.5 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.3)]">
           <Link to="/discover" className="px-3.5 py-1.5 text-sm rounded-full hover:bg-foreground/5 transition">Discover</Link>
-          <Link to="/market" className="px-3.5 py-1.5 text-sm rounded-full hover:bg-foreground/5 transition">Marketplace</Link>
+          <Link to="/discover" className="px-3.5 py-1.5 text-sm rounded-full hover:bg-foreground/5 transition">Marketplace</Link>
           <Link to="/why-coin" className="px-3.5 py-1.5 text-sm rounded-full hover:bg-foreground/5 transition">Why a coin</Link>
           <Link to="/credits" className="px-3.5 py-1.5 text-sm rounded-full hover:bg-foreground/5 transition">Creator Pass</Link>
         </nav>

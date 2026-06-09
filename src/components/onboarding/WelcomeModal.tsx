@@ -167,7 +167,7 @@ const WelcomeModal = () => {
     // Role-based landing — only redirect on first-time completion (when a
     // role was just chosen this session). Returning users won't be yanked.
     if (chosenRole) {
-      navigate(chosenRole === "creator" ? "/market" : "/scene");
+      navigate(chosenRole === "creator" ? "/discover" : "/scene");
     }
   };
 
