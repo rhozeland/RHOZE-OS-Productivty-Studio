@@ -47,6 +47,20 @@ const ProfileDetailPage = () => {
   const [shareCardOpen, setShareCardOpen] = useState(false);
   const [launchCoinOpen, setLaunchCoinOpen] = useState(false);
   const [startProjectOpen, setStartProjectOpen] = useState(false);
+  const [deleteProjectTarget, setDeleteProjectTarget] = useState<{ id: string; title: string } | null>(null);
+
+  const deleteProjectMutation = useMutation({
+    mutationFn: async (projectId: string) => {
+      const { error } = await supabase.from("projects").delete().eq("id", projectId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["profile-building-projects", id] });
+      setDeleteProjectTarget(null);
+      toast.success("Project deleted");
+    },
+    onError: (e: any) => toast.error(e.message || "Failed to delete project"),
+  });
 
   const initialTab = (searchParams.get("tab") as TabKey) || "projects";
   const [tab, setTab] = useState<TabKey>(
