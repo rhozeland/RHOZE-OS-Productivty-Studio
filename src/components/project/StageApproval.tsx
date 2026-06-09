@@ -390,8 +390,8 @@ const MiniSignature = ({
       className={cn(
         "rounded-lg border p-3 transition-all",
         hasSigned
-          ? "border-green-500/30 bg-green-500/5"
-          : "border-dashed border-border bg-muted/5"
+          ? "border-green-500/30 bg-gradient-to-br from-green-500/10 to-emerald-500/[0.03]"
+          : "border-dashed border-primary/25 bg-gradient-to-br from-primary/[0.06] via-transparent to-primary/[0.02]"
       )}
     >
       <div className="flex items-center justify-between mb-1">
