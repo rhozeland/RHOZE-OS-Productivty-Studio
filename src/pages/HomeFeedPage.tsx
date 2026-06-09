@@ -116,7 +116,7 @@ const HomeFeedPage = () => {
               />
 
               {/* Content */}
-              <div className="relative h-full w-full p-5 sm:p-8 flex flex-col justify-between text-white">
+              <div className="relative h-full w-full p-5 sm:p-8 pb-10 sm:pb-12 flex flex-col justify-between gap-4 sm:gap-6 text-white">
                 <div className="flex items-center justify-between">
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-md px-3 py-1 text-[10px] uppercase tracking-[0.2em] font-semibold">
                     <slide.Icon className="h-3 w-3" />
