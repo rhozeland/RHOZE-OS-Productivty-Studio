@@ -421,7 +421,7 @@ const LaunchCoinFlowModal = ({
     <>
       <PitchNewIdeaDialog open={pitchOpen} onOpenChange={setPitchOpen} />
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-xl w-[95vw] max-h-[90vh] overflow-y-auto p-0 border-border bg-background gap-0 [&>button]:hidden">
+        <DialogContent className="w-[min(95vw,42rem)] max-w-[42rem] max-h-[90vh] overflow-hidden p-0 border-border bg-background gap-0 [&>button]:hidden">
           <VisuallyHidden>
             <DialogTitle>Launch a Coin</DialogTitle>
             <DialogDescription>
@@ -453,7 +453,7 @@ const LaunchCoinFlowModal = ({
 
           {/* ── Step 0 — picker (unchanged) ── */}
           {step === 0 && (
-            <div className="relative px-6 pt-12 pb-6 sm:px-10 sm:pt-14 sm:pb-8">
+            <div className="relative max-h-[90vh] overflow-y-auto overflow-x-hidden px-4 pt-12 pb-5 sm:px-8 sm:pt-14 sm:pb-8">
               <div
                 aria-hidden
                 className="pointer-events-none absolute inset-0 opacity-60"
@@ -463,16 +463,19 @@ const LaunchCoinFlowModal = ({
                 }}
               />
               <div className="relative">
-                <div className="text-center space-y-1.5 mb-6">
-                  <h2 className="font-display text-xl sm:text-2xl md:text-3xl font-bold tracking-tight break-words">
+                <div className="mx-auto mb-6 max-w-[32rem] text-center space-y-1.5">
+                  <h2
+                    className="mx-auto max-w-[14ch] font-display text-xl font-bold leading-[0.96] tracking-tight sm:text-2xl md:text-3xl"
+                    style={{ overflowWrap: "anywhere" }}
+                  >
                     Which release are you coining?
                   </h2>
-                  <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                  <p className="mx-auto max-w-md text-sm text-muted-foreground">
                     Pick one of your existing releases — or pitch us a new idea and we'll build it with you.
                   </p>
                 </div>
 
-                <div className="space-y-2 max-h-[44vh] overflow-y-auto -mx-1 px-1">
+                <div className="-mx-1 max-h-[min(44vh,24rem)] space-y-2 overflow-y-auto overflow-x-hidden px-1">
                   {projectsLoading && (
                     <div className="flex items-center justify-center py-10 text-sm text-muted-foreground gap-2">
                       <Loader2 className="h-4 w-4 animate-spin" /> Loading your releases…
@@ -499,7 +502,7 @@ const LaunchCoinFlowModal = ({
                             });
                             setStep(1);
                           }}
-                          className="group w-full text-left flex items-center gap-3 rounded-xl border border-border bg-card/60 hover:bg-card hover:border-fuchsia-500/40 transition px-3 py-3 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-card/60 disabled:hover:border-border"
+                          className="group flex w-full min-w-0 items-center gap-3 overflow-hidden rounded-xl border border-border bg-card/60 px-3 py-3 text-left transition hover:border-fuchsia-500/40 hover:bg-card disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-border disabled:hover:bg-card/60"
                         >
                           <div className="h-9 w-9 shrink-0 rounded-lg bg-foreground/5 flex items-center justify-center">
                             <FolderOpen className="h-4 w-4 text-muted-foreground" />
@@ -507,7 +510,7 @@ const LaunchCoinFlowModal = ({
                           <div className="min-w-0 flex-1">
                             <p className="font-medium text-sm truncate">{p.title}</p>
                             {p.description && (
-                              <p className="text-xs text-muted-foreground truncate">
+                              <p className="overflow-hidden text-ellipsis whitespace-nowrap text-xs text-muted-foreground">
                                 {p.description}
                               </p>
                             )}
@@ -536,14 +539,14 @@ const LaunchCoinFlowModal = ({
                     onOpenChange(false);
                     setTimeout(() => setPitchOpen(true), 150);
                   }}
-                  className="w-full flex items-center gap-3 rounded-xl border border-border bg-card/60 hover:bg-card hover:border-amber-500/40 transition px-3 py-3 text-left"
+                  className="flex w-full min-w-0 items-center gap-3 overflow-hidden rounded-xl border border-border bg-card/60 px-3 py-3 text-left transition hover:border-amber-500/40 hover:bg-card"
                 >
                   <div className="h-9 w-9 shrink-0 rounded-lg bg-amber-500/10 flex items-center justify-center">
                     <Lightbulb className="h-4 w-4 text-amber-500" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="font-medium text-sm">Pitch us a new idea</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground" style={{ overflowWrap: "anywhere" }}>
                       Send our A&R team a proposal — we'll plan the release and the coin together.
                     </p>
                   </div>
