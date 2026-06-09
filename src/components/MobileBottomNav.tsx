@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Compass, TrendingUp, Users, Gem, Layers } from "lucide-react";
+import { Home, Compass, TrendingUp, Gem, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useActiveRole } from "@/hooks/useActiveRole";
 
@@ -7,7 +7,6 @@ const FAN_TABS = [
   { label: "Home", icon: Home, path: "/home" },
   { label: "Discover", icon: Compass, path: "/discover" },
   { label: "Charts", icon: TrendingUp, path: "/charts" },
-  { label: "Network", icon: Users, path: "/market" },
   { label: "Pass", icon: Gem, path: "/credits" },
 ];
 
