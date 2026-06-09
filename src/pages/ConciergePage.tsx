@@ -281,11 +281,8 @@ export default function ConciergePage() {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="group relative inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-[0_12px_30px_-10px_hsl(200_90%_55%/0.6)] hover:scale-[1.03] active:scale-[0.98] transition-transform overflow-hidden"
-          style={{
-            backgroundImage:
-              "linear-gradient(135deg, hsl(200 90% 55%) 0%, hsl(260 80% 60%) 50%, hsl(170 80% 50%) 100%)",
-          }}
+          className={heroCtaClass}
+          style={heroCtaStyle}
         >
           <span
             aria-hidden
@@ -295,9 +292,14 @@ export default function ConciergePage() {
                 "radial-gradient(circle at 20% 30%, hsl(0 0% 100% / 0.35), transparent 40%), radial-gradient(circle at 80% 70%, hsl(0 0% 100% / 0.22), transparent 45%)",
             }}
           />
-          <Sparkles className="h-4 w-4 relative" />
-          <span className="relative">Hand us your release</span>
-          <ArrowRight className="h-4 w-4 relative transition-transform group-hover:translate-x-0.5" />
+          <span
+            aria-hidden
+            className="absolute top-0 left-0 h-full w-1/3 bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none"
+            style={{ animation: "concierge-shimmer 2.8s ease-in-out infinite" }}
+          />
+          <Headphones className="h-4 w-4 relative" />
+          <span className="relative">Start my release</span>
+          <ArrowRight className="h-4 w-4 relative transition-transform group-hover:translate-x-1" />
         </button>
       </section>
 
