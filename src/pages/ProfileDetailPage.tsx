@@ -389,7 +389,7 @@ const ProfileDetailPage = () => {
                         project={pr}
                         collaborators={projectCollaborators?.[pr.id] ?? []}
                         onOpen={() => navigate(`/projects/${pr.id}`)}
-                        canDelete={isOwnProfile && pr.owner_id === user?.id}
+                        canDelete={isOwnProfile}
                         onDelete={() => setDeleteProjectTarget({ id: pr.id, title: pr.title })}
                       />
                     ))}
