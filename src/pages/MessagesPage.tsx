@@ -542,14 +542,20 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
 
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="messages" className="gap-1.5">
+        <TabsList className="bg-transparent p-0 h-auto gap-6 border-b border-border/60 rounded-none w-full justify-start">
+          <TabsTrigger
+            value="messages"
+            className="relative gap-1.5 rounded-none border-0 bg-transparent px-1 pb-3 pt-2 text-sm font-medium text-muted-foreground shadow-none data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:font-semibold data-[state=active]:shadow-none after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:bg-primary after:scale-x-0 data-[state=active]:after:scale-x-100 after:transition-transform"
+          >
             <MessageSquare className="h-3.5 w-3.5" /> Messages
           </TabsTrigger>
-          <TabsTrigger value="projects" className="gap-1.5">
-            <FolderKanban className="h-3.5 w-3.5" /> Projects
+          <TabsTrigger
+            value="projects"
+            className="relative gap-1.5 rounded-none border-0 bg-transparent px-1 pb-3 pt-2 text-sm font-medium text-muted-foreground shadow-none data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:font-semibold data-[state=active]:shadow-none after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:bg-primary after:scale-x-0 data-[state=active]:after:scale-x-100 after:transition-transform"
+          >
+            <FolderKanban className="h-3.5 w-3.5" /> Collabs
             {pendingCount > 0 && (
-              <span className="ml-1 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center">
+              <span className="ml-1 h-5 min-w-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center px-1.5">
                 {pendingCount}
               </span>
             )}
