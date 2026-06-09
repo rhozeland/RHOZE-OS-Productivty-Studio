@@ -63,7 +63,7 @@ const TokenizeProjectCta = ({
 
           <div className="flex flex-col sm:flex-row gap-2 md:shrink-0">
             <Button size="sm" className="gap-2" onClick={() => setOpen(true)}>
-              Get help launching <ArrowRight className="h-3.5 w-3.5" />
+              Launch with Rhozeland <ArrowRight className="h-3.5 w-3.5" />
             </Button>
             <Button asChild size="sm" variant="outline">
               <Link to="/why-coin">Why a coin?</Link>
