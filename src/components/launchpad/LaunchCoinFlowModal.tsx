@@ -561,7 +561,7 @@ const LaunchCoinFlowModal = ({
 
           {/* ── Step 1 — Combined preview + form ── */}
           {step === 1 && (
-            <div className="relative px-6 pt-12 pb-6 sm:px-8 sm:pt-14 sm:pb-8 space-y-6">
+            <div className="relative max-h-[90vh] overflow-y-auto overflow-x-hidden px-6 pt-12 pb-6 sm:px-8 sm:pt-14 sm:pb-8 space-y-6">
               {/* Coin preview card */}
               <div className="relative mx-auto max-w-xs">
                 <div
