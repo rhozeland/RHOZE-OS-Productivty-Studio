@@ -38,6 +38,7 @@ import { useQuery } from "@tanstack/react-query";
 import { deriveTicker } from "@/lib/pump-fun";
 import { toast } from "sonner";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import PitchNewIdeaDialog from "./PitchNewIdeaDialog";
 
 type PickerProject = { id: string; title: string; description?: string | null };
 
@@ -81,6 +82,8 @@ const LaunchCoinFlowModal = ({
   const [step, setStep] = useState<0 | 1 | 2 | 3>(startStep);
   const [submitting, setSubmitting] = useState(false);
   const [selectedProject, setSelectedProject] = useState<PickerProject | null>(project);
+  const [pitchOpen, setPitchOpen] = useState(false);
+
 
   const activeProject = selectedProject ?? project;
 
@@ -214,9 +217,11 @@ const LaunchCoinFlowModal = ({
     backHref ?? (activeProject ? `/projects/${activeProject.id}` : "/my-projects");
 
   return (
+    <>
+    <PitchNewIdeaDialog open={pitchOpen} onOpenChange={setPitchOpen} />
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-xl w-[95vw] p-0 overflow-hidden border-border bg-background gap-0 [&>button]:hidden"
+        className="max-w-xl w-[95vw] max-h-[90vh] overflow-y-auto p-0 border-border bg-background gap-0 [&>button]:hidden"
       >
         <VisuallyHidden>
           <DialogTitle>Launch a Coin</DialogTitle>
@@ -264,7 +269,7 @@ const LaunchCoinFlowModal = ({
             />
             <div className="relative">
               <div className="text-center space-y-1.5 mb-6">
-                <h2 className="font-display text-2xl sm:text-3xl font-bold tracking-tight">
+                <h2 className="font-display text-xl sm:text-2xl md:text-3xl font-bold tracking-tight break-words">
                   Which release are you coining?
                 </h2>
                 <p className="text-sm text-muted-foreground max-w-md mx-auto">
@@ -338,8 +343,8 @@ const LaunchCoinFlowModal = ({
               <button
                 type="button"
                 onClick={() => {
-                  close();
-                  navigate("/label-services");
+                  onOpenChange(false);
+                  setTimeout(() => setPitchOpen(true), 150);
                 }}
                 className="w-full flex items-center gap-3 rounded-xl border border-border bg-card/60 hover:bg-card hover:border-amber-500/40 transition px-3 py-3 text-left"
               >
@@ -563,6 +568,7 @@ const LaunchCoinFlowModal = ({
         )}
       </DialogContent>
     </Dialog>
+    </>
   );
 };
 
