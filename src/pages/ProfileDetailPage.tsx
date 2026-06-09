@@ -7,6 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   EyeOff, Loader2, Sparkles, Image as ImageIcon, Play, Music, FileText,
   Calendar as CalendarIcon, FolderKanban, ExternalLink, Coins, Heart,
   Rocket, Inbox, Users, ArrowRight, Repeat2,
