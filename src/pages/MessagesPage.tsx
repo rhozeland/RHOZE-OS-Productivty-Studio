@@ -17,7 +17,7 @@ import {
   Search, Send, User, MessageSquare, ArrowLeft,
   Inbox, FolderKanban, CheckCircle, XCircle, Clock, ArrowRight, Loader2,
   DollarSign, Video, Phone, Plus, Users, Store, Flame, CalendarDays,
-  UserPlus, Compass,
+  UserPlus, Compass, Briefcase,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
@@ -505,28 +505,57 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
     <div className="w-full">
       <div className="w-full min-w-0 space-y-5">
       <div className="flex items-end justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="font-display text-3xl font-bold text-foreground tracking-tight">Inbox</h1>
-          <p className="text-xs text-muted-foreground mt-1">
-            {unreadConvoCount} unread {unreadConvoCount === 1 ? "message" : "messages"}
-            {" · "}
-            {pendingCount} pending {pendingCount === 1 ? "request" : "requests"}
-            {" · "}
-            {contactsList.length} {contactsList.length === 1 ? "conversation" : "conversations"}
-          </p>
+        <div className="space-y-2">
+          <h1 className="font-display text-4xl font-bold text-foreground tracking-tight">Inbox</h1>
+          {(unreadConvoCount > 0 || pendingCount > 0) && (
+            <div className="flex flex-wrap items-center gap-2">
+              {unreadConvoCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => { setActiveTab("messages"); setInboxFilter("all"); }}
+                  className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold text-white shadow-sm transition-transform hover:scale-[1.03]"
+                  style={{ background: "linear-gradient(90deg, hsl(330 90% 60%), hsl(20 95% 60%))" }}
+                >
+                  <span className="h-1.5 w-1.5 rounded-full bg-white/90" />
+                  {unreadConvoCount} unread
+                </button>
+              )}
+              {pendingCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab("projects");
+                    requestAnimationFrame(() => {
+                      document.getElementById("backing-requests-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    });
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1 text-[11px] font-semibold text-foreground border border-primary/60 hover:border-primary transition-colors"
+                >
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                  {pendingCount} pending
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="messages" className="gap-1.5">
+        <TabsList className="bg-transparent p-0 h-auto gap-6 border-b border-border/60 rounded-none w-full justify-start">
+          <TabsTrigger
+            value="messages"
+            className="relative gap-1.5 rounded-none border-0 bg-transparent px-1 pb-3 pt-2 text-sm font-medium text-muted-foreground shadow-none data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:font-semibold data-[state=active]:shadow-none after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:bg-primary after:scale-x-0 data-[state=active]:after:scale-x-100 after:transition-transform"
+          >
             <MessageSquare className="h-3.5 w-3.5" /> Messages
           </TabsTrigger>
-          <TabsTrigger value="projects" className="gap-1.5">
-            <FolderKanban className="h-3.5 w-3.5" /> Projects
+          <TabsTrigger
+            value="projects"
+            className="relative gap-1.5 rounded-none border-0 bg-transparent px-1 pb-3 pt-2 text-sm font-medium text-muted-foreground shadow-none data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:font-semibold data-[state=active]:shadow-none after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:bg-primary after:scale-x-0 data-[state=active]:after:scale-x-100 after:transition-transform"
+          >
+            <FolderKanban className="h-3.5 w-3.5" /> Collabs
             {pendingCount > 0 && (
-              <span className="ml-1 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center">
+              <span className="ml-1 h-5 min-w-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center px-1.5">
                 {pendingCount}
               </span>
             )}
@@ -545,86 +574,31 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
               "flex flex-col border-r border-border/60 bg-background/40",
               selectedUser ? "hidden md:flex md:w-[340px]" : "w-full md:w-[340px]"
             )}>
-              {/* Title strip */}
-              <div className="px-5 pt-5 pb-3">
-                <div className="flex items-baseline justify-between">
-                  <h2 className="font-display text-lg font-semibold text-foreground tracking-tight">All inbox</h2>
-                  <button
-                    onClick={() => setNewConvoOpen(true)}
-                    className="text-[11px] text-primary hover:text-primary/80 font-medium inline-flex items-center gap-1"
-                  >
-                    <Plus className="h-3 w-3" /> New
-                  </button>
-                </div>
-                <p className="text-[11px] text-muted-foreground mt-0.5">
-                  {unreadConvoCount > 0
-                    ? `${unreadConvoCount} unread · ${contactsList.length} total`
-                    : `${contactsList.length} ${contactsList.length === 1 ? "thread" : "threads"}`}
-                </p>
-              </div>
-
               {/* Search */}
-              <div className="px-4 pb-2">
+              <div className="px-4 pt-4 pb-2">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search inbox..."
-                    className="pl-9 h-9 rounded-full bg-muted/40 border-border/50 text-xs"
+                    placeholder="Search messages..."
+                    className="pl-9 h-10 rounded-full bg-muted/40 border-border/50 text-xs"
                   />
                 </div>
               </div>
 
-              {/* Partner-id sets derived from inquiry data, used by filter pills */}
-              {(() => { return null; })()}
-
-              {/* Filter pills */}
-              <div className="flex gap-1.5 px-4 pb-3 overflow-x-auto scrollbar-none">
-                {(() => {
-                  const requestIds = new Set<string>();
-                  const collabIds = new Set<string>();
-                  const projectIds = new Set<string>();
-                  (allInquiries ?? []).forEach((i: any) => {
-                    const partner = i.sender_id === user?.id ? i.receiver_id : i.sender_id;
-                    if (i.project_id) projectIds.add(partner);
-                    else if (i.status === "accepted") collabIds.add(partner);
-                    else if (i.status === "pending" && i.receiver_id === user?.id) requestIds.add(partner);
-                  });
-                  const pills = [
-                    { id: "all", label: "All" },
-                    { id: "requests", label: "Requests", badge: requestIds.size || undefined },
-                    { id: "collabs", label: "Collabs", badge: collabIds.size || undefined },
-                    { id: "messages", label: "Messages" },
-                    { id: "projects", label: "Projects", badge: projectIds.size || undefined },
-                  ];
-                  return pills.map((f) => {
-                    const active = inboxFilter === (f.id as any);
-                    return (
-                      <button
-                        key={f.id}
-                        onClick={() => setInboxFilter(f.id as any)}
-                        className={cn(
-                          "shrink-0 inline-flex items-center gap-1 text-[11px] font-medium px-3 py-1 rounded-full border transition-colors whitespace-nowrap",
-                          active
-                            ? "bg-primary text-primary-foreground border-primary"
-                            : "bg-background text-muted-foreground border-border/60 hover:bg-muted/60 hover:text-foreground"
-                        )}
-                      >
-                        {f.label}
-                        {f.badge ? (
-                          <span className={cn(
-                            "ml-0.5 text-[9px] font-bold px-1 rounded-full",
-                            active ? "bg-primary-foreground/20 text-primary-foreground" : "bg-foreground/10 text-foreground"
-                          )}>{f.badge}</span>
-                        ) : null}
-                      </button>
-                    );
-                  });
-                })()}
+              {/* New message CTA */}
+              <div className="px-4 pb-3">
+                <Button
+                  type="button"
+                  onClick={() => setNewConvoOpen(true)}
+                  className="w-full h-10 rounded-full gap-1.5"
+                >
+                  <Plus className="h-4 w-4" /> New message
+                </Button>
               </div>
 
-              <BuddyNotesRow onSelectBuddy={setSelectedUser} />
+
 
               <ScrollArea className="flex-1">
                 {(() => {
@@ -781,54 +755,55 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
             {/* Chat Area */}
             <div className={cn("flex flex-1 flex-col bg-background", !selectedUser ? "hidden md:flex" : "flex")}>
               {!selectedUser ? (
-                <div className="flex flex-1 flex-col items-center justify-center px-6 py-8">
-                  <p className="font-display text-base font-semibold text-foreground mb-1">
-                    Nothing open yet
-                  </p>
-                  <p className="text-xs text-muted-foreground mb-6">
-                    Start a conversation, or try one of these:
-                  </p>
-                  <div className="w-full max-w-sm space-y-2">
+                <div className="flex flex-1 flex-col items-center justify-center px-6 py-10">
+                  <div className="w-full max-w-sm space-y-3">
                     {[
                       {
-                        icon: UserPlus,
-                        title: "Message someone you follow",
-                        desc: "Pick from people you follow",
-                        onClick: () => setFollowingOpen(true),
+                        show: true,
+                        icon: User,
+                        title: "Message someone",
+                        desc: "Reach out to an artist, producer, or fan you follow.",
+                        cta: "Find someone",
+                        onClick: () => navigate("/discover"),
                       },
                       {
+                        show: pendingCount > 0,
                         icon: Inbox,
-                        title: "Respond to a request",
-                        desc: allInquiries?.length
-                          ? `${allInquiries.length} waiting`
-                          : "Check pending requests",
-                        onClick: () => setActiveTab("projects"),
+                        title: `You have ${pendingCount} pending ${pendingCount === 1 ? "inquiry" : "inquiries"}`,
+                        desc: "Someone is interested in working with you.",
+                        cta: "Review now",
+                        onClick: () => {
+                          setActiveTab("projects");
+                          requestAnimationFrame(() => {
+                            document.getElementById("backing-requests-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                          });
+                        },
                       },
                       {
-                        icon: Compass,
-                        title: "Browse listings to find collabs",
-                        desc: "Open Discover · Offerings",
+                        show: true,
+                        icon: Briefcase,
+                        title: "Find a collab",
+                        desc: "Browse gigs from artists who need your skills.",
+                        cta: "Browse gigs",
                         onClick: () => navigate("/discover?view=offerings"),
                       },
-                    ].map((s) => (
+                    ].filter((s) => s.show).map((s) => (
                       <button
                         key={s.title}
                         type="button"
                         onClick={s.onClick}
-                        className="group w-full flex items-center gap-3 rounded-xl border border-border/60 bg-card hover:border-foreground/30 hover:bg-muted/40 transition-all px-4 py-3 text-left"
+                        className="group w-full flex items-start gap-3 rounded-2xl border border-border/60 bg-card hover:border-foreground/30 hover:bg-muted/40 transition-all p-4 text-left"
                       >
-                        <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                          <s.icon className="h-4 w-4 text-primary" />
+                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                          <s.icon className="h-5 w-5 text-primary" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-foreground truncate">
-                            {s.title}
-                          </p>
-                          <p className="text-[11px] text-muted-foreground truncate">
-                            {s.desc}
+                          <p className="text-sm font-semibold text-foreground">{s.title}</p>
+                          <p className="text-[12px] text-muted-foreground mt-0.5">{s.desc}</p>
+                          <p className="text-[12px] font-semibold text-primary mt-2 inline-flex items-center gap-1 group-hover:gap-1.5 transition-all">
+                            {s.cta} <ArrowRight className="h-3.5 w-3.5" />
                           </p>
                         </div>
-                        <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all shrink-0" />
                       </button>
                     ))}
                   </div>
@@ -972,56 +947,42 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
         </TabsContent>
 
 
-        <TabsContent value="projects" className="mt-4 space-y-6">
-          <section className="surface-card p-4 sm:p-5 space-y-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                  <Store className="h-4 w-4 text-primary" /> Interest inbox
-                  {pendingCount > 0 && (
-                    <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-medium text-primary-foreground">
-                      {pendingCount}
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Keep this simple: interest comes in here, then you turn the right fit into a project roadmap.
-                </p>
+        <TabsContent value="projects" className="mt-6 space-y-8">
+          {!!allInquiries?.length && (
+            <section id="backing-requests-section" className="space-y-3 scroll-mt-24">
+              <div className="flex items-center gap-2 px-1">
+                <h2 className="text-[11px] font-bold uppercase tracking-[0.14em] text-primary">
+                  Backing requests
+                </h2>
+                {pendingCount > 0 && (
+                  <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
+                    {pendingCount}
+                  </span>
+                )}
               </div>
-              <div className="shrink-0">
-                <PostMenuButton
-                  trigger={
-                    <Button size="sm" className="rounded-full gap-1.5">
-                      <Plus className="h-3.5 w-3.5" /> Post
-                    </Button>
-                  }
-                />
-              </div>
-            </div>
-
-            {!!allInquiries?.length ? (
-              <div id="inquiries-section" className="space-y-3 scroll-mt-24">
+              <div className="space-y-3">
                 {allInquiries.map((i) => renderInquiry(i))}
               </div>
-            ) : (
-              <div className="rounded-2xl border border-dashed border-border bg-muted/20 px-4 py-8 text-center">
-                <p className="text-sm font-medium text-foreground">No interest yet</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Post a listing, event, or space from Connect and the replies will land here.
-                </p>
-              </div>
-            )}
-          </section>
+            </section>
+          )}
 
-          {/* Active project threads — chat, roadmap, vault, splits. */}
-          <div>
-            <div className="flex items-center gap-2 mb-3 px-1">
-              <FolderKanban className="h-4 w-4 text-primary" />
-              <h2 className="text-sm font-semibold text-foreground">Active projects</h2>
+          <section className="space-y-3">
+            <div className="flex items-center justify-between gap-2 px-1">
+              <h2 className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                Active collabs
+              </h2>
+              <PostMenuButton
+                trigger={
+                  <Button size="sm" variant="outline" className="rounded-full gap-1.5 h-8">
+                    <Plus className="h-3.5 w-3.5" /> New collab
+                  </Button>
+                }
+              />
             </div>
             <ProjectsInbox userId={user.id} />
-          </div>
+          </section>
         </TabsContent>
+
 
         {/* Events + Flow live on Discover now (toggles on the mosaic). */}
 
