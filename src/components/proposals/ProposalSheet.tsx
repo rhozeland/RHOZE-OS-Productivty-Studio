@@ -404,228 +404,307 @@ const ProposalEditor = ({ proposalId, onClose, onConverted }: EditorProps) => {
 
   const milestoneTotal = (milestones ?? []).reduce((s, m) => s + Number(m.credit_amount ?? 0), 0);
 
-  if (isLoading || !proposal) {
-    return (
-      <div className="p-10 flex items-center justify-center gap-2 text-sm text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin" /> Loading proposal…
-      </div>
-    );
-  }
+  const signedCount = (proposal.client_signed_at ? 1 : 0) + (proposal.specialist_signed_at ? 1 : 0);
+  const signedPct = Math.round((signedCount / 2) * 100);
+  const priorityTone =
+    proposal.status === "signed" ? "bg-emerald-500/15 text-emerald-700 border-emerald-500/30"
+    : proposal.status === "declined" ? "bg-muted text-muted-foreground border-border"
+    : proposal.status === "draft" ? "bg-amber-500/15 text-amber-700 border-amber-500/30"
+    : "bg-primary/15 text-primary border-primary/30";
+  const counterpartyName =
+    counterpartyProfile?.display_name || counterpartyProfile?.username || "Counterparty";
+  const counterpartyInitial = counterpartyName.slice(0, 1).toUpperCase();
+  const myInitial = (myName ?? "Y").slice(0, 1).toUpperCase();
+  const fmtUsd = (n: number) =>
+    n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 
   return (
     <>
-      <DialogHeader className="px-6 pt-6 pb-3 shrink-0">
-        <DialogTitle className="font-display text-xl flex items-center gap-2">
-          <PenLine className="h-4 w-4 text-primary" />
-          Project proposal
-        </DialogTitle>
-        <DialogDescription className="text-xs flex items-center justify-between gap-2">
-          <span>
-            with <span className="text-foreground font-medium">
-              {counterpartyProfile?.display_name || counterpartyProfile?.username || "creator"}
-            </span>
-          </span>
-          <Badge variant={proposal.status === "signed" ? "default" : "outline"} className="text-[10px]">
+      <DialogHeader className="px-6 pt-5 pb-3 shrink-0 border-b border-border/60">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <DialogTitle className="font-display text-lg flex items-center gap-2 truncate">
+              <PenLine className="h-4 w-4 text-primary shrink-0" />
+              <span className="truncate">{localTitle || "Untitled project"}</span>
+            </DialogTitle>
+            <DialogDescription className="text-xs mt-1">
+              Proposal with <span className="text-foreground font-medium">{counterpartyName}</span>
+            </DialogDescription>
+          </div>
+          <Badge className={`text-[10px] border ${priorityTone}`} variant="outline">
             {turnLabel}
           </Badge>
-        </DialogDescription>
+        </div>
+
+        {/* Meta strip — Notion-style key/value rows */}
+        <div className="mt-4 space-y-1.5 text-xs">
+          <MetaRow icon={<Flag className="h-3.5 w-3.5" />} label="Priority">
+            <Badge variant="outline" className={`text-[10px] border ${priorityTone}`}>
+              {proposal.status === "signed" ? "Locked" : proposal.status === "declined" ? "Declined" : "Open"}
+            </Badge>
+          </MetaRow>
+          <MetaRow icon={<DollarSign className="h-3.5 w-3.5" />} label="Budget">
+            <span className="font-medium text-foreground">{fmtUsd(Number(localBudget || 0))}</span>
+            {milestones && milestones.length > 0 && (
+              <span className="text-muted-foreground"> · {milestones.length} milestone{milestones.length === 1 ? "" : "s"}</span>
+            )}
+          </MetaRow>
+          <MetaRow icon={<Users className="h-3.5 w-3.5" />} label="Team">
+            <div className="flex items-center gap-1.5">
+              <Avatar className="h-5 w-5"><AvatarFallback className="text-[9px]">{myInitial}</AvatarFallback></Avatar>
+              <Avatar className="h-5 w-5">
+                {counterpartyProfile?.avatar_url
+                  ? <AvatarImage src={counterpartyProfile.avatar_url} alt={counterpartyName} />
+                  : <AvatarFallback className="text-[9px]">{counterpartyInitial}</AvatarFallback>}
+              </Avatar>
+              <span className="text-muted-foreground">You & {counterpartyName}</span>
+            </div>
+          </MetaRow>
+          <MetaRow icon={<AlignLeft className="h-3.5 w-3.5" />} label="Description">
+            <span className="text-muted-foreground line-clamp-1">
+              {localSummary?.trim() || <span className="italic">Add a brief…</span>}
+            </span>
+          </MetaRow>
+        </div>
+
+        {/* Signature progress */}
+        <div className="mt-4 flex items-center gap-3">
+          <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+            <div className="h-full bg-emerald-500 transition-all" style={{ width: `${signedPct}%` }} />
+          </div>
+          <span className="text-[11px] text-muted-foreground tabular-nums shrink-0">
+            Signed {signedCount}/2 · {signedPct}%
+          </span>
+        </div>
       </DialogHeader>
 
-      <div className="flex-1 overflow-y-auto px-6 pb-2 space-y-4">
-        <div className="space-y-2">
-          <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Title</label>
-          <Input
-            value={localTitle}
-            disabled={!editable}
-            onChange={(e) => setLocalTitle(e.target.value)}
-            placeholder="What are you building together?"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <div className="flex items-center justify-between gap-2">
-            <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Summary</label>
-            {editable && (
-              <VoiceDictateButton
-                label="Speak the brief"
-                onTranscript={(t) => setLocalSummary(t)}
-              />
-            )}
-          </div>
-          <Textarea
-            value={localSummary}
-            disabled={!editable}
-            onChange={(e) => setLocalSummary(e.target.value)}
-            placeholder="Scope, goals, deliverables… or tap the mic to dictate."
-            rows={4}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
-            Total budget (USD)
-          </label>
-          <div className="relative">
-            <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="number"
-              min={0}
-              step="any"
-              disabled={!editable}
-              value={localBudget || ""}
-              onChange={(e) => setLocalBudget(Number(e.target.value || 0))}
-              placeholder="e.g. 2500"
-              className="pl-9 text-lg font-medium"
-            />
-          </div>
-          <BudgetSplitViz budget={localBudget} />
-          {milestoneTotal > 0 && Math.abs(milestoneTotal - localBudget) > 0.5 && (
-            <p className="text-[11px] text-amber-600">
-              Milestones add up to {milestoneTotal.toLocaleString("en-US", { style: "currency", currency: "USD" })} — doesn't match budget.
-            </p>
-          )}
-        </div>
-
-        <Separator />
-
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <h4 className="text-sm font-semibold">Milestones</h4>
-            {editable && (
-              <Button size="sm" variant="outline" className="h-7 gap-1 text-xs" onClick={() => addMilestone.mutate()}>
-                <Plus className="h-3 w-3" /> Add
-              </Button>
-            )}
+      <div className="flex-1 overflow-y-auto">
+        <Tabs defaultValue="overview" className="w-full">
+          <div className="px-6 pt-3 sticky top-0 bg-background z-10 border-b border-border/40">
+            <TabsList className="h-9 bg-muted/40">
+              <TabsTrigger value="overview" className="text-xs gap-1.5"><AlignLeft className="h-3 w-3" />Overview</TabsTrigger>
+              <TabsTrigger value="roadmap" className="text-xs gap-1.5"><ListChecks className="h-3 w-3" />Roadmap</TabsTrigger>
+              <TabsTrigger value="timeline" className="text-xs gap-1.5"><CalendarDays className="h-3 w-3" />Timeline</TabsTrigger>
+              <TabsTrigger value="team" className="text-xs gap-1.5"><Users className="h-3 w-3" />Team</TabsTrigger>
+              <TabsTrigger value="agreement" className="text-xs gap-1.5"><FileText className="h-3 w-3" />Agreement</TabsTrigger>
+            </TabsList>
           </div>
 
-          {(milestones ?? []).length === 0 ? (
-            <p className="text-xs text-muted-foreground italic">No milestones yet. Add at least one to lock budget per stage.</p>
-          ) : (
+          {/* OVERVIEW */}
+          <TabsContent value="overview" className="px-6 py-4 space-y-4 mt-0">
             <div className="space-y-2">
-              {milestones!.map((m: any) => (
-                <div key={m.id} className="flex items-center gap-2 rounded-lg border border-border p-2 bg-card">
-                  <Input
-                    className="flex-1 h-8 text-sm"
-                    value={m.title}
-                    disabled={!editable}
-                    onChange={(e) => updateMilestone.mutate({ id: m.id, title: e.target.value })}
-                  />
-                  <div className="relative w-28 shrink-0">
-                    <DollarSign className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                    <Input
-                      type="number"
-                      min={0}
-                      className="h-8 text-sm pl-7 pr-2 font-mono"
-                      value={Number(m.credit_amount ?? 0)}
-                      disabled={!editable}
-                      onChange={(e) => updateMilestone.mutate({ id: m.id, credit_amount: Number(e.target.value || 0) })}
-                    />
-                  </div>
-                  {editable && (
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                      onClick={() => removeMilestone.mutate(m.id)}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  )}
-                </div>
-              ))}
+              <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Title</label>
+              <Input
+                value={localTitle}
+                disabled={!editable}
+                onChange={(e) => setLocalTitle(e.target.value)}
+                placeholder="What are you building together?"
+              />
             </div>
-          )}
-        </div>
 
-        <Separator />
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Description</label>
+                {editable && (
+                  <VoiceDictateButton label="Speak the brief" onTranscript={(t) => setLocalSummary(t)} />
+                )}
+              </div>
+              <Textarea
+                value={localSummary}
+                disabled={!editable}
+                onChange={(e) => setLocalSummary(e.target.value)}
+                placeholder="Scope, goals, deliverables… or tap the mic to dictate."
+                rows={5}
+              />
+            </div>
 
-        {/* Agreement — collapsible. Shows the standard Rhozeland terms by
-            default; editable by either party until both sides have signed. */}
-        <Collapsible open={termsOpen} onOpenChange={setTermsOpen}>
-          <div className="flex items-center justify-between">
-            <h4 className="text-sm font-semibold flex items-center gap-1.5">
-              <FileText className="h-3.5 w-3.5 text-primary" />
-              Agreement
-              <Badge variant="outline" className="ml-1 text-[9px] font-mono uppercase">
-                {TERMS_VERSION}
-              </Badge>
-            </h4>
-            <div className="flex items-center gap-2">
-              {editable && termsEdited && (
-                <Button
-                  size="sm" variant="ghost" className="h-7 text-[11px]"
-                  onClick={() => { setLocalTerms(""); setTermsEdited(false); }}
+            <div className="space-y-2">
+              <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+                Total budget (USD)
+              </label>
+              <div className="relative">
+                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="number" min={0} step="any" disabled={!editable}
+                  value={localBudget || ""}
+                  onChange={(e) => setLocalBudget(Number(e.target.value || 0))}
+                  placeholder="e.g. 2500"
+                  className="pl-9 text-lg font-medium"
+                />
+              </div>
+              <BudgetSplitViz budget={localBudget} />
+              {milestoneTotal > 0 && Math.abs(milestoneTotal - localBudget) > 0.5 && (
+                <p className="text-[11px] text-amber-600">
+                  Milestones add up to {fmtUsd(milestoneTotal)} — doesn't match budget.
+                </p>
+              )}
+            </div>
+
+            {/* Attachments — source listing if any */}
+            <div className="space-y-2">
+              <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                <Paperclip className="h-3 w-3" /> Attachments
+              </label>
+              {proposal.source_listing_id ? (
+                <a
+                  href={`/listings/${proposal.source_listing_id}`}
+                  target="_blank" rel="noreferrer"
+                  className="flex items-center gap-2 rounded-lg border border-border bg-card p-2.5 hover:bg-accent transition-colors text-xs"
                 >
+                  <FileText className="h-4 w-4 text-primary" />
+                  <span className="flex-1 font-medium truncate">Source listing</span>
+                  <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                </a>
+              ) : (
+                <p className="text-[11px] text-muted-foreground italic">No attachments yet.</p>
+              )}
+            </div>
+          </TabsContent>
+
+          {/* ROADMAP — milestones */}
+          <TabsContent value="roadmap" className="px-6 py-4 space-y-3 mt-0">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="text-sm font-semibold">Milestones</h4>
+                <p className="text-[11px] text-muted-foreground">Lock budget per stage so payment ships as work ships.</p>
+              </div>
+              {editable && (
+                <Button size="sm" variant="outline" className="h-7 gap-1 text-xs" onClick={() => addMilestone.mutate()}>
+                  <Plus className="h-3 w-3" /> Add
+                </Button>
+              )}
+            </div>
+
+            {(milestones ?? []).length === 0 ? (
+              <p className="text-xs text-muted-foreground italic">No milestones yet.</p>
+            ) : (
+              <div className="space-y-2">
+                {milestones!.map((m: any, i: number) => (
+                  <div key={m.id} className="flex items-center gap-2 rounded-lg border border-border p-2 bg-card">
+                    <span className="text-[10px] font-mono text-muted-foreground w-5 text-center shrink-0">{i + 1}</span>
+                    <Input
+                      className="flex-1 h-8 text-sm"
+                      value={m.title}
+                      disabled={!editable}
+                      onChange={(e) => updateMilestone.mutate({ id: m.id, title: e.target.value })}
+                    />
+                    <div className="relative w-28 shrink-0">
+                      <DollarSign className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                      <Input
+                        type="number" min={0}
+                        className="h-8 text-sm pl-7 pr-2 font-mono"
+                        value={Number(m.credit_amount ?? 0)}
+                        disabled={!editable}
+                        onChange={(e) => updateMilestone.mutate({ id: m.id, credit_amount: Number(e.target.value || 0) })}
+                      />
+                    </div>
+                    {editable && (
+                      <Button
+                        size="icon" variant="ghost"
+                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                        onClick={() => removeMilestone.mutate(m.id)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                <div className="flex items-center justify-between pt-1 text-[11px] text-muted-foreground">
+                  <span>{milestones!.length} stage{milestones!.length === 1 ? "" : "s"}</span>
+                  <span className="font-mono">Total: {fmtUsd(milestoneTotal)}</span>
+                </div>
+              </div>
+            )}
+          </TabsContent>
+
+          {/* TIMELINE — derived from milestones */}
+          <TabsContent value="timeline" className="px-6 py-4 mt-0">
+            {(milestones ?? []).length === 0 ? (
+              <p className="text-xs text-muted-foreground italic">Add milestones in Roadmap to see the timeline.</p>
+            ) : (
+              <ol className="relative border-l border-border/60 ml-2 space-y-4">
+                {milestones!.map((m: any, i: number) => (
+                  <li key={m.id} className="ml-4">
+                    <span className="absolute -left-[7px] flex h-3 w-3 rounded-full bg-primary/20 border-2 border-background ring-1 ring-border" />
+                    <div className="flex items-baseline justify-between gap-3">
+                      <p className="text-sm font-medium">{m.title || `Stage ${i + 1}`}</p>
+                      <span className="text-[11px] font-mono text-muted-foreground">{fmtUsd(Number(m.credit_amount ?? 0))}</span>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">Stage {i + 1} of {milestones!.length}</p>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </TabsContent>
+
+          {/* TEAM */}
+          <TabsContent value="team" className="px-6 py-4 space-y-2 mt-0">
+            <TeamCard
+              name={myName} initial={myInitial} avatar={null}
+              role={myRole === "client" ? "Client" : "Creator"}
+              signedAt={myRole === "client" ? proposal.client_signed_at : proposal.specialist_signed_at}
+              isYou
+            />
+            <TeamCard
+              name={counterpartyName} initial={counterpartyInitial} avatar={counterpartyProfile?.avatar_url ?? null}
+              role={myRole === "client" ? "Creator" : "Client"}
+              signedAt={myRole === "client" ? proposal.specialist_signed_at : proposal.client_signed_at}
+            />
+          </TabsContent>
+
+          {/* AGREEMENT */}
+          <TabsContent value="agreement" className="px-6 py-4 space-y-3 mt-0">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-semibold flex items-center gap-1.5">
+                <FileText className="h-3.5 w-3.5 text-primary" />
+                Standard Rhozeland agreement
+                <Badge variant="outline" className="ml-1 text-[9px] font-mono uppercase">{TERMS_VERSION}</Badge>
+              </h4>
+              {editable && termsEdited && (
+                <Button size="sm" variant="ghost" className="h-7 text-[11px]"
+                  onClick={() => { setLocalTerms(""); setTermsEdited(false); }}>
                   Reset to standard
                 </Button>
               )}
-              <CollapsibleTrigger asChild>
-                <Button size="sm" variant="outline" className="h-7 gap-1 text-xs">
-                  {termsOpen ? "Hide" : "Read & sign"}
-                  <ChevronDown className={`h-3 w-3 transition-transform ${termsOpen ? "rotate-180" : ""}`} />
-                </Button>
-              </CollapsibleTrigger>
             </div>
-          </div>
-          <p className="mt-1 text-[11px] text-muted-foreground">
-            Both parties sign these exact terms. The full document + milestones
-            are hashed (SHA-256) and anchored on Solana on sign.
-          </p>
-
-          <CollapsibleContent className="mt-2">
+            <p className="text-[11px] text-muted-foreground">
+              Both parties sign these exact terms. Full document + milestones are hashed (SHA-256) and anchored on Solana on sign.
+            </p>
             <Textarea
               value={renderedTerms}
               disabled={!editable}
-              rows={14}
+              rows={12}
               spellCheck={false}
               onChange={(e) => { setLocalTerms(e.target.value); setTermsEdited(true); }}
               className="font-mono text-[11px] leading-relaxed"
             />
-            {editable && (
-              <p className="mt-1 text-[10px] text-muted-foreground">
-                {termsEdited
-                  ? "Custom terms — saved with this proposal."
-                  : "Using the standard Rhozeland agreement template."}
-              </p>
-            )}
-          </CollapsibleContent>
-        </Collapsible>
 
-        {/* Signature + on-chain anchor summary */}
-        <div className="rounded-lg border border-border bg-muted/30 p-3 text-xs space-y-2">
-          <SignatureRow
-            label="Client"
-            signedAt={proposal.client_signed_at}
-            hash={proposal.client_signature_hash}
-            tx={proposal.client_signature_tx}
-          />
-          <SignatureRow
-            label="Creator"
-            signedAt={proposal.specialist_signed_at}
-            hash={proposal.specialist_signature_hash}
-            tx={proposal.specialist_signature_tx}
-          />
-          {proposal.terms_hash && (
-            <div className="pt-1 mt-1 border-t border-border/40 flex items-center gap-1.5 text-[10px] text-muted-foreground">
-              <ShieldCheck className="h-3 w-3" />
-              <span className="font-mono truncate">hash: {proposal.terms_hash.slice(0, 24)}…</span>
+            {/* Signatures */}
+            <div className="rounded-lg border border-border bg-muted/30 p-3 text-xs space-y-2">
+              <SignatureRow label="Client" signedAt={proposal.client_signed_at}
+                hash={proposal.client_signature_hash} tx={proposal.client_signature_tx} />
+              <SignatureRow label="Creator" signedAt={proposal.specialist_signed_at}
+                hash={proposal.specialist_signature_hash} tx={proposal.specialist_signature_tx} />
+              {proposal.terms_hash && (
+                <div className="pt-1 mt-1 border-t border-border/40 flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                  <ShieldCheck className="h-3 w-3" />
+                  <span className="font-mono truncate">hash: {proposal.terms_hash.slice(0, 24)}…</span>
+                </div>
+              )}
+              {mySigned && !(myRole === "client" ? proposal.client_signature_tx : proposal.specialist_signature_tx) && (
+                <Button size="sm" variant="outline" className="h-7 gap-1.5 text-[11px] w-full"
+                  onClick={() => anchorSignature.mutate()} disabled={anchorSignature.isPending}>
+                  {anchorSignature.isPending
+                    ? <Loader2 className="h-3 w-3 animate-spin" />
+                    : <Anchor className="h-3 w-3" />}
+                  Anchor my signature on Solana
+                </Button>
+              )}
             </div>
-          )}
-          {/* Manual re-anchor when sign succeeded off-chain but tx failed */}
-          {mySigned && !(myRole === "client" ? proposal.client_signature_tx : proposal.specialist_signature_tx) && (
-            <Button
-              size="sm" variant="outline" className="h-7 gap-1.5 text-[11px] w-full"
-              onClick={() => anchorSignature.mutate()}
-              disabled={anchorSignature.isPending}
-            >
-              {anchorSignature.isPending
-                ? <Loader2 className="h-3 w-3 animate-spin" />
-                : <Anchor className="h-3 w-3" />}
-              Anchor my signature on Solana
-            </Button>
-          )}
-        </div>
+          </TabsContent>
+        </Tabs>
       </div>
+
 
       <div className="border-t border-border/60 p-4 flex flex-wrap items-center justify-end gap-2 shrink-0">
         {editable && (
