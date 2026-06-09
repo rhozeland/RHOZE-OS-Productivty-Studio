@@ -31,9 +31,6 @@ interface Props {
   creatorId: string;
   creatorName: string;
   creatorAvatar?: string | null;
-  tokenMintAddress?: string | null;
-  tokenTicker?: string | null;
-  tokenStatus?: string | null; // 'approved' | 'pending' | etc
   isFollowing: boolean;
   followPending: boolean;
   onFollow: () => void;
