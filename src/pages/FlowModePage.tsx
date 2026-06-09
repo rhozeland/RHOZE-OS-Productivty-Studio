@@ -1279,7 +1279,7 @@ const FlowModePage = () => {
   // — long enough for the exit animation to finish, short enough that the
   // next card feels immediately interactive.
   const advanceCard = useCallback(() => {
-    console.log("[FlowAdvance] called", { currentIndex, allItemsLen: allItems.length, baseItemsLen: baseItems.length, isAdvancing, currentItemId: currentItem?.id });
+    console.log("[FlowAdvance]", { currentIndex, allItemsLen: allItems.length, baseItemsLen: baseItems.length, isAdvancing, currentItemId: currentItem?.id, feedScope, selectedCategories });
     lockedDeepLinkItemRef.current = null;
     appliedDeepLinkRef.current = null;
     suppressSwipeRestoreRef.current = false;
@@ -1294,11 +1294,11 @@ const FlowModePage = () => {
     setIsAdvancing(true);
     if (advancingTimerRef.current) clearTimeout(advancingTimerRef.current);
     advancingTimerRef.current = setTimeout(() => {
-      setCurrentIndex((i) => { console.log("[FlowAdvance] setCurrentIndex", i, "->", i + 1); return i + 1; }); // No cap — modulo handles looping
+      setCurrentIndex((i) => i + 1); // No cap — modulo handles looping
       setExpandedCard(false);
       setIsAdvancing(false);
     }, 200);
-  }, [searchParams, setSearchParams, currentIndex, allItems.length, baseItems.length, isAdvancing, currentItem?.id]);
+  }, [searchParams, setSearchParams, currentIndex, allItems.length, baseItems.length, isAdvancing, currentItem?.id, feedScope, selectedCategories]);
 
   // Clean up the advancing timer on unmount so it can't fire after the
   // component is gone.
