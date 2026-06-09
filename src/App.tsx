@@ -276,8 +276,8 @@ const App = () => (
 
               {/* Main app — browsable by everyone, auth-gated actions inside */}
               <Route element={<AppLayout />}>
-                {/* v9.9: Home = personalized fan feed (DashboardPage). */}
-                <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+                {/* v11: /dashboard removed — Home is the authed feed. */}
+                <Route path="/dashboard" element={<Navigate to="/home" replace />} />
                 <Route path="/home" element={<HomeFeedPage />} />
                 {/* Three-Room front doors (Scene · Market · Vault) — additive,
                     organize existing routes without removing any. */}
