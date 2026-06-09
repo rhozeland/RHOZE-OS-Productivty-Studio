@@ -271,7 +271,7 @@ export default function ConciergePage() {
         </button>
       </section>
 
-      <ConciergeIntakeSheet open={open} onOpenChange={setOpen} />
+      <StartProjectPicker open={open} onOpenChange={setOpen} />
     </main>
   );
 }
