@@ -64,8 +64,8 @@ export const TIERS: TierRow[] = [
   {
     id: "bloom",
     label: "Bloom",
-    hold: 1_000_000,
-    holdLabel: "1M–24M",
+    hold: 1_000,
+    holdLabel: "1k–9.9k",
     activity: { posts: 5, projects: 1, listings: 1, events: 1, interactions: 5 },
     benefits: [
       "1.25× reward multiplier",
@@ -80,8 +80,8 @@ export const TIERS: TierRow[] = [
   {
     id: "glow",
     label: "Glow",
-    hold: 25_000_000,
-    holdLabel: "25M–49M",
+    hold: 10_000,
+    holdLabel: "10k–99.9k",
     activity: { posts: 25, projects: 3, listings: 5, events: 3, interactions: 25 },
     benefits: [
       "1.5× reward multiplier",
@@ -97,8 +97,8 @@ export const TIERS: TierRow[] = [
   {
     id: "play",
     label: "Play",
-    hold: 50_000_000,
-    holdLabel: "50M+",
+    hold: 100_000,
+    holdLabel: "100k+",
     activity: { posts: 100, projects: 10, listings: 20, events: 10, interactions: 100 },
     benefits: [
       "2× reward multiplier",

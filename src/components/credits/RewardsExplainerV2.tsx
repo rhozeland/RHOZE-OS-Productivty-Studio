@@ -188,10 +188,11 @@ const RewardsExplainerV2 = () => {
             <AccordionItem value="claim" className="border-border/40">
               <AccordionTrigger className="text-sm font-medium">How do I claim what I've earned?</AccordionTrigger>
               <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-                Earnings sit as credits until an admin approves them — keeps the
-                reward pool honest. Once approved, bind a Solana wallet in{" "}
+                Earnings are automatically credited when you complete qualifying
+                actions. Our system verifies activity to keep rewards fair for
+                everyone. To take $RHOZE on-chain, bind a Solana wallet in{" "}
                 <Link to="/settings" className="underline underline-offset-2 hover:text-foreground">Settings</Link>{" "}
-                and claim on-chain from <strong>My Pass</strong>.
+                and claim from <strong>My Pass</strong>.
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="splits" className="border-border/40">

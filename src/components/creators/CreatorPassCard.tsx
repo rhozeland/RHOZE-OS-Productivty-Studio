@@ -61,7 +61,7 @@ export function getTokenTier(balance: number): string {
   return getHoldTier(balance);
 }
 
-const CreatorPassCard = () => {
+const CreatorPassCard = ({ hideBalanceClaim = false }: { hideBalanceClaim?: boolean } = {}) => {
   const { user } = useAuth();
   const [claimAmount, setClaimAmount] = useState(0);
   const [worksOpen, setWorksOpen] = useState(false);
@@ -415,17 +415,19 @@ const CreatorPassCard = () => {
 
 
       {/* ── In-app $RHOZE Balance + Claim ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* In-app balance — bank-statement style, drives tier eligibility */}
-        <BalanceCard balance={Number(credits?.balance ?? 0)} holdTier={holdTier} />
+      {!hideBalanceClaim && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* In-app balance — bank-statement style, drives tier eligibility */}
+          <BalanceCard balance={Number(credits?.balance ?? 0)} holdTier={holdTier} />
 
-        {/* Claim to wallet */}
-        <ClaimToWalletCard
-          balance={Number(credits?.balance ?? 0)}
-          claimAmount={claimAmount}
-          setClaimAmount={setClaimAmount}
-        />
-      </div>
+          {/* Claim to wallet */}
+          <ClaimToWalletCard
+            balance={Number(credits?.balance ?? 0)}
+            claimAmount={claimAmount}
+            setClaimAmount={setClaimAmount}
+          />
+        </div>
+      )}
 
       <WorksLightbox open={worksOpen} onOpenChange={setWorksOpen} userId={user.id} />
     </div>
