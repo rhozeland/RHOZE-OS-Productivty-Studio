@@ -403,27 +403,59 @@ const WaysToEarnSection = ({ open, onOpenChange }: { open: boolean; onOpenChange
 /* ═══════════════════ Section 6 — Streak ═══════════════════ */
 const StreakSection = () => {
   const { user } = useAuth();
-  const [streak, setStreak] = useState<{ current: number; longest: number }>({ current: 0, longest: 0 });
+  const [streak, setStreak] = useState<{
+    current: number;
+    longest: number;
+    lastActiveAt: string | null;
+  }>({ current: 0, longest: 0, lastActiveAt: null });
 
   useEffect(() => {
     if (!user) return;
     (async () => {
       const { data } = await supabase
         .from("user_streaks")
-        .select("current_streak, longest_streak")
+        .select("current_streak, longest_streak, last_active_at")
         .eq("user_id", user.id)
         .maybeSingle();
       setStreak({
         current: data?.current_streak ?? 0,
         longest: data?.longest_streak ?? 0,
+        lastActiveAt: data?.last_active_at ?? null,
       });
     })();
   }, [user]);
 
-  const current = streak.current;
-  const longest = streak.longest;
-  const dayInCycle = current === 0 ? 0 : ((current - 1) % 7) + 1;
-  const toNext = current === 0 ? 7 : 7 - (current % 7 || 7);
+  // ── Real-calendar week (Mon→Sun) with actual activity fill ──────────
+  // Build the 7 dates representing today + the prior 6 days, then bucket
+  // them onto the Mon..Sun row so the column labels match real weekdays.
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const lastActive = streak.lastActiveAt ? new Date(streak.lastActiveAt) : null;
+  if (lastActive) lastActive.setHours(0, 0, 0, 0);
+  const dayMs = 24 * 60 * 60 * 1000;
+
+  // JS getDay(): 0=Sun..6=Sat. Convert to Mon=0..Sun=6.
+  const toMonIdx = (d: Date) => (d.getDay() + 6) % 7;
+  const todayMonIdx = toMonIdx(today);
+  // Monday of this week
+  const monday = new Date(today.getTime() - todayMonIdx * dayMs);
+
+  const cells = Array.from({ length: 7 }, (_, i) => {
+    const date = new Date(monday.getTime() + i * dayMs);
+    // A day is "filled" when it falls within the active streak window:
+    //   [lastActive - (current-1) … lastActive], capped at today.
+    let filled = false;
+    if (lastActive && streak.current > 0) {
+      const streakStart = new Date(lastActive.getTime() - (streak.current - 1) * dayMs);
+      filled = date >= streakStart && date <= lastActive && date <= today;
+    }
+    const isToday = date.getTime() === today.getTime();
+    const isFuture = date.getTime() > today.getTime();
+    return { date, filled, isToday, isFuture };
+  });
+
+  // Days until the next 7-day milestone — based on what the worker actually rewards.
+  const toNext = streak.current === 0 ? 7 : 7 - (streak.current % 7 || 7);
 
   return (
     <section className="surface-card p-5 sm:p-6">
@@ -434,10 +466,10 @@ const StreakSection = () => {
           </div>
           <div>
             <p className="font-display text-3xl font-bold text-foreground tabular-nums leading-none">
-              {current}
+              {streak.current}
             </p>
             <p className="text-sm text-muted-foreground mt-1">
-              day streak <span className="text-xs opacity-70">· longest {longest}</span>
+              day streak <span className="text-xs opacity-70">· longest {streak.longest}</span>
             </p>
           </div>
         </div>
@@ -452,31 +484,40 @@ const StreakSection = () => {
       </div>
 
       <div className="flex items-center justify-between gap-1.5 mt-5">
-        {Array.from({ length: 7 }).map((_, i) => {
-          const filled = i < dayInCycle;
-          return (
-            <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
-              <div
-                className={cn(
-                  "h-4 w-4 rounded-full transition",
-                  filled
-                    ? "bg-amber-500 shadow-[0_0_10px_-2px] shadow-amber-500/60"
-                    : "border-2 border-border bg-transparent",
-                )}
-              />
-              <span className="text-[9px] text-muted-foreground uppercase tracking-wider">
-                {["M","T","W","T","F","S","S"][i]}
-              </span>
-            </div>
-          );
-        })}
+        {cells.map((cell, i) => (
+          <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
+            <div
+              className={cn(
+                "h-4 w-4 rounded-full transition",
+                cell.filled
+                  ? "bg-amber-500 shadow-[0_0_10px_-2px] shadow-amber-500/60"
+                  : cell.isToday
+                    ? "border-2 border-amber-500/60 bg-transparent"
+                    : cell.isFuture
+                      ? "border-2 border-dashed border-border bg-transparent opacity-50"
+                      : "border-2 border-border bg-transparent",
+              )}
+              title={cell.date.toDateString()}
+            />
+            <span
+              className={cn(
+                "text-[9px] uppercase tracking-wider",
+                cell.isToday ? "text-amber-500 font-semibold" : "text-muted-foreground",
+              )}
+            >
+              {["M", "T", "W", "T", "F", "S", "S"][i]}
+            </span>
+          </div>
+        ))}
       </div>
       <p className="text-[11px] text-muted-foreground text-center mt-3">
-        Sign in every 7 days to earn $RHOZE
+        Sign in every day — every 7-day streak drops 5 $RHOZE.
       </p>
     </section>
   );
 };
+
+
 
 /* ═══════════════════ Section 7 — Quick FAQ ═══════════════════ */
 const FaqSection = () => (
