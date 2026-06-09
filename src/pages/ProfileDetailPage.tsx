@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import VerifiedIPBadge from "@/components/works/VerifiedIPBadge";
 import CreatorAvailabilityCalendar from "@/components/profile/CreatorAvailabilityCalendar";
 import SupportFlowSheet from "@/components/profile/SupportFlowSheet";
+import ContextualSupportButton from "@/components/profile/ContextualSupportButton";
 import CreatorCoinsGallery from "@/components/profile/coins/CreatorCoinsGallery";
 import ProfileGemHeader from "@/components/profile/ProfileGemHeader";
 import { BoostProfileSheet } from "@/components/profile/BoostProfileSheet";
