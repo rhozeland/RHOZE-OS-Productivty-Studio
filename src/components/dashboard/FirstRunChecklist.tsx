@@ -99,7 +99,7 @@ const FirstRunChecklist = () => {
         helper: isFan
           ? "Find someone rising early before everyone else does"
           : "Post a track, image, or work-in-progress to the Flow feed.",
-        href: isFan ? "/creators" : "/flow",
+        href: isFan ? "/discover" : "/flow",
         icon: isFan ? Sparkles : Flame,
       },
 
