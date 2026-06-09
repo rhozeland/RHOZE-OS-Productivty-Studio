@@ -618,7 +618,7 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
                     const rel = subRelMap?.get(p.user_id);
                     if (inboxFilter === "unread") return unread;
                     if (inboxFilter === "subscribers") return rel === "subscriber";
-                    if (inboxFilter === "subscribed") return rel === "subscribed";
+                    if (inboxFilter === "subscribed-to") return rel === "subscribed-to";
                     return true;
                   });
 
@@ -835,7 +835,7 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
                           {(() => {
                             const rel = subRelMap?.get(selectedUser.user_id);
                             if (rel === "subscriber") return <><Sparkles className="h-2.5 w-2.5 text-emerald-500" /> One of your subscribers</>;
-                            if (rel === "subscribed") return <><Sparkles className="h-2.5 w-2.5 text-fuchsia-500" /> You're subscribed</>;
+                            if (rel === "subscribed-to") return <><Sparkles className="h-2.5 w-2.5 text-fuchsia-500" /> You're subscribed</>;
                             return <>Direct message · tap to view profile</>;
                           })()}
                         </div>
