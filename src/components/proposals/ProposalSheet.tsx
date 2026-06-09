@@ -43,7 +43,10 @@ import {
 import {
   Loader2, PenLine, Plus, Trash2, CheckCircle2, X, DollarSign,
   FileText, ChevronDown, ShieldCheck, ExternalLink, Anchor,
+  Flag, AlignLeft, Paperclip, Users, ListChecks, CalendarDays,
 } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import BudgetSplitViz from "@/components/project/BudgetSplitViz";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
