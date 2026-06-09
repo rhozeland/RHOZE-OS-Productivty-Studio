@@ -34,6 +34,8 @@ import TokenizeBottomCta from "@/components/project/shared/TokenizeBottomCta";
 import { computeProjectStatus } from "@/components/project/shared/projectStatus";
 
 import ProjectVision from "@/components/project/ProjectVision";
+import InlineProjectDescription from "@/components/project/InlineProjectDescription";
+import StoryUpdates from "@/components/project/StoryUpdates";
 import RoadmapCalendarView from "@/components/project/RoadmapCalendarView";
 import StageRoadmap from "@/components/project/StageRoadmap";
 import ProjectBudget from "@/components/project/ProjectBudget";
