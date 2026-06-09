@@ -503,15 +503,20 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
 
   return (
     <div className="w-full">
-      <div className="w-full min-w-0 space-y-6">
-      <div>
-        <h1 className="font-display text-3xl font-bold text-foreground">Conversations</h1>
-        <p className="text-muted-foreground">
-          {unreadConvoCount} unread {unreadConvoCount === 1 ? "message" : "messages"}
-          {" · "}
-          {pendingCount} pending {pendingCount === 1 ? "inquiry" : "inquiries"}
-        </p>
+      <div className="w-full min-w-0 space-y-5">
+      <div className="flex items-end justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="font-display text-3xl font-bold text-foreground tracking-tight">Inbox</h1>
+          <p className="text-xs text-muted-foreground mt-1">
+            {unreadConvoCount} unread {unreadConvoCount === 1 ? "message" : "messages"}
+            {" · "}
+            {pendingCount} pending {pendingCount === 1 ? "request" : "requests"}
+            {" · "}
+            {contactsList.length} {contactsList.length === 1 ? "conversation" : "conversations"}
+          </p>
+        </div>
       </div>
+
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
