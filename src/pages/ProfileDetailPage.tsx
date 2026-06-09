@@ -7,6 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   EyeOff, Loader2, Sparkles, Image as ImageIcon, Play, Music, FileText,
   Calendar as CalendarIcon, FolderKanban, ExternalLink, Coins, Heart,
   Rocket, Inbox, Users, ArrowRight, Repeat2,
@@ -47,6 +51,20 @@ const ProfileDetailPage = () => {
   const [shareCardOpen, setShareCardOpen] = useState(false);
   const [launchCoinOpen, setLaunchCoinOpen] = useState(false);
   const [startProjectOpen, setStartProjectOpen] = useState(false);
+  const [deleteProjectTarget, setDeleteProjectTarget] = useState<{ id: string; title: string } | null>(null);
+
+  const deleteProjectMutation = useMutation({
+    mutationFn: async (projectId: string) => {
+      const { error } = await supabase.from("projects").delete().eq("id", projectId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["profile-building-projects", id] });
+      setDeleteProjectTarget(null);
+      toast.success("Project deleted");
+    },
+    onError: (e: any) => toast.error(e.message || "Failed to delete project"),
+  });
 
   const initialTab = (searchParams.get("tab") as TabKey) || "projects";
   const [tab, setTab] = useState<TabKey>(
@@ -375,6 +393,8 @@ const ProfileDetailPage = () => {
                         project={pr}
                         collaborators={projectCollaborators?.[pr.id] ?? []}
                         onOpen={() => navigate(`/projects/${pr.id}`)}
+                        canDelete={isOwnProfile}
+                        onDelete={() => setDeleteProjectTarget({ id: pr.id, title: pr.title })}
                       />
                     ))}
                   </div>
@@ -465,6 +485,25 @@ const ProfileDetailPage = () => {
         {isOwnProfile && <BoostProfileSheet open={boostOpen} onOpenChange={setBoostOpen} />}
         <LaunchCoinFlowModal open={launchCoinOpen} onOpenChange={setLaunchCoinOpen} project={null} />
         <StartProjectPicker open={startProjectOpen} onOpenChange={setStartProjectOpen} />
+        <AlertDialog open={!!deleteProjectTarget} onOpenChange={(o) => !o && setDeleteProjectTarget(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete "{deleteProjectTarget?.title}"?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This permanently deletes the project and all its associated data. This cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={() => deleteProjectTarget && deleteProjectMutation.mutate(deleteProjectTarget.id)}
+              >
+                {deleteProjectMutation.isPending ? "Deleting…" : "Delete"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
         <Dialog open={bookingOpen} onOpenChange={setBookingOpen}>
           <DialogContent className="max-w-6xl w-[95vw] max-h-[92vh] overflow-y-auto p-0">
             <DialogHeader className="px-6 pt-6 pb-3 border-b border-border/40">

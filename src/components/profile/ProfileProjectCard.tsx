@@ -4,7 +4,7 @@
  * status pill in the top-left, then a white footer block carrying title,
  * description, partnership chips, and an arrow CTA button.
  */
-import { ArrowUpRight, Sparkles, Users } from "lucide-react";
+import { ArrowUpRight, Sparkles, Users, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Collaborator {
@@ -26,6 +26,8 @@ interface Props {
   };
   collaborators?: Collaborator[];
   onOpen: () => void;
+  canDelete?: boolean;
+  onDelete?: () => void;
 }
 
 const statusLabel = (s?: string | null) => {
@@ -33,7 +35,7 @@ const statusLabel = (s?: string | null) => {
   return s.charAt(0).toUpperCase() + s.slice(1).replace(/_/g, " ");
 };
 
-export default function ProfileProjectCard({ project, collaborators = [], onOpen }: Props) {
+export default function ProfileProjectCard({ project, collaborators = [], onOpen, canDelete, onDelete }: Props) {
   const accent = project.cover_color || "#7c3aed";
   const bg = `radial-gradient(120% 80% at 20% 0%, ${accent}cc 0%, ${accent}55 45%, #0a0a0a 100%)`;
   const isBacked = project.intake_tier === "concierge";
@@ -92,6 +94,19 @@ export default function ProfileProjectCard({ project, collaborators = [], onOpen
               </div>
             )}
           </div>
+        )}
+
+        {canDelete && onDelete && (
+          <span
+            role="button"
+            tabIndex={0}
+            aria-label="Delete project"
+            onClick={(e) => { e.stopPropagation(); e.preventDefault(); onDelete(); }}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); e.preventDefault(); onDelete(); } }}
+            className="absolute bottom-3 right-3 z-10 inline-flex h-8 w-8 items-center justify-center rounded-full bg-black/70 text-white opacity-0 group-hover:opacity-100 hover:bg-red-600 transition-all cursor-pointer"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </span>
         )}
       </div>
 
