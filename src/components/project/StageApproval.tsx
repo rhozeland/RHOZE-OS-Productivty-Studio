@@ -187,12 +187,12 @@ const StageApproval = ({
   };
 
   return (
-    <div className="border-t border-border bg-muted/10 px-4 py-3 space-y-3">
+    <div className="border-t border-border border-l-2 border-l-primary bg-gradient-to-r from-primary/[0.04] to-transparent px-4 py-3 space-y-3">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <ShieldCheck className="h-4 w-4 text-primary" />
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <span className="text-xs font-semibold uppercase tracking-wider text-primary">
             Stage Approval
           </span>
         </div>
@@ -390,8 +390,8 @@ const MiniSignature = ({
       className={cn(
         "rounded-lg border p-3 transition-all",
         hasSigned
-          ? "border-green-500/30 bg-green-500/5"
-          : "border-dashed border-border bg-muted/5"
+          ? "border-green-500/30 bg-gradient-to-br from-green-500/10 to-emerald-500/[0.03]"
+          : "border-dashed border-primary/25 bg-gradient-to-br from-primary/[0.06] via-transparent to-primary/[0.02]"
       )}
     >
       <div className="flex items-center justify-between mb-1">

@@ -98,10 +98,10 @@ interface StageRoadmapProps {
 type StatusKey = "planned" | "in_progress" | "in_review" | "shipped" | "archived";
 
 const STATUS_OPTIONS: Record<StatusKey, { label: string; dot: string; chip: string; group: "todo" | "in_progress" | "complete" }> = {
-  planned:     { label: "Planned",     dot: "bg-muted-foreground/60", chip: "bg-muted text-muted-foreground border-border", group: "todo" },
-  in_progress: { label: "In Progress", dot: "bg-blue-500",            chip: "bg-blue-500/15 text-blue-400 border-blue-500/30", group: "in_progress" },
-  in_review:   { label: "In Review",   dot: "bg-amber-500",           chip: "bg-amber-500/15 text-amber-400 border-amber-500/30", group: "in_progress" },
-  shipped:     { label: "Shipped",     dot: "bg-emerald-500",         chip: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30", group: "complete" },
+  planned:     { label: "Planned",     dot: "bg-muted-foreground/50", chip: "bg-muted/60 text-muted-foreground border-border", group: "todo" },
+  in_progress: { label: "In Progress", dot: "bg-primary",             chip: "bg-primary/15 text-primary border-primary/30", group: "in_progress" },
+  in_review:   { label: "In Review",   dot: "bg-amber-500",           chip: "bg-amber-500/15 text-amber-500 border-amber-500/30", group: "in_progress" },
+  shipped:     { label: "Shipped",     dot: "bg-emerald-500",         chip: "bg-emerald-500/15 text-emerald-500 border-emerald-500/30", group: "complete" },
   archived:    { label: "Archived",    dot: "bg-muted-foreground/40", chip: "bg-muted/60 text-muted-foreground/80 border-border", group: "complete" },
 };
 
@@ -633,7 +633,7 @@ const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, co
                   // ---- ROW VIEW ----
                   <div
                     className={cn(
-                      "group grid grid-cols-[28px_minmax(0,1fr)_auto] md:grid-cols-[28px_minmax(0,1fr)_120px_100px_180px_100px_60px] items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-muted/30 transition-colors",
+                      "group grid grid-cols-[28px_minmax(0,1fr)_auto] md:grid-cols-[28px_minmax(0,1fr)_120px_100px_180px_100px_60px] items-center gap-3 px-3 py-4 cursor-pointer hover:bg-muted/30 transition-colors",
                       status === "shipped" && "bg-emerald-500/[0.03]"
                     )}
                     onClick={() => toggleExpand(stage.id)}
