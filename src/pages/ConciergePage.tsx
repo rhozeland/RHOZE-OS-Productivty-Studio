@@ -10,7 +10,7 @@
  */
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import StartProjectPicker from "@/components/project/StartProjectPicker";
+import LaunchCoinFlowModal from "@/components/launchpad/LaunchCoinFlowModal";
 import {
   Sparkles,
   ArrowRight,
@@ -140,10 +140,10 @@ export default function ConciergePage() {
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="group relative inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-[0_12px_30px_-10px_hsl(330_85%_60%/0.6)] hover:scale-[1.03] active:scale-[0.98] transition-transform overflow-hidden"
+            className="group relative inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-[0_12px_30px_-10px_hsl(200_90%_55%/0.6)] hover:scale-[1.03] active:scale-[0.98] transition-transform overflow-hidden"
             style={{
               backgroundImage:
-                "linear-gradient(135deg, hsl(330 85% 60%) 0%, hsl(292 84% 61%) 50%, hsl(38 92% 55%) 100%)",
+                "linear-gradient(135deg, hsl(200 90% 55%) 0%, hsl(260 80% 60%) 50%, hsl(170 80% 50%) 100%)",
             }}
           >
             <span
@@ -251,10 +251,10 @@ export default function ConciergePage() {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="group relative inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-[0_12px_30px_-10px_hsl(330_85%_60%/0.6)] hover:scale-[1.03] active:scale-[0.98] transition-transform overflow-hidden"
+          className="group relative inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-[0_12px_30px_-10px_hsl(200_90%_55%/0.6)] hover:scale-[1.03] active:scale-[0.98] transition-transform overflow-hidden"
           style={{
             backgroundImage:
-              "linear-gradient(135deg, hsl(330 85% 60%) 0%, hsl(292 84% 61%) 50%, hsl(38 92% 55%) 100%)",
+              "linear-gradient(135deg, hsl(200 90% 55%) 0%, hsl(260 80% 60%) 50%, hsl(170 80% 50%) 100%)",
           }}
         >
           <span
@@ -271,7 +271,7 @@ export default function ConciergePage() {
         </button>
       </section>
 
-      <StartProjectPicker open={open} onOpenChange={setOpen} />
+      <LaunchCoinFlowModal open={open} onOpenChange={setOpen} project={null} />
     </main>
   );
 }
