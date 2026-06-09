@@ -187,12 +187,12 @@ const StageApproval = ({
   };
 
   return (
-    <div className="border-t border-border bg-muted/10 px-4 py-3 space-y-3">
+    <div className="border-t border-border border-l-2 border-l-primary bg-gradient-to-r from-primary/[0.04] to-transparent px-4 py-3 space-y-3">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <ShieldCheck className="h-4 w-4 text-primary" />
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <span className="text-xs font-semibold uppercase tracking-wider text-primary">
             Stage Approval
           </span>
         </div>
