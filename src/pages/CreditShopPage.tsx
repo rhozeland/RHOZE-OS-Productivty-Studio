@@ -28,6 +28,7 @@ import {
 import RewardsExplainerV2 from "@/components/credits/RewardsExplainerV2";
 import VerifiedIPHub from "@/components/credits/VerifiedIPHub";
 import BuyRhozeSection from "@/components/credits/BuyRhozeSection";
+import MyPassRedesign from "@/components/credits/MyPassRedesign";
 
 import { format, formatDistanceToNow } from "date-fns";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
@@ -131,33 +132,13 @@ const AuthenticatedCreditShopPage = ({ user }: { user: NonNullable<ReturnType<ty
         </TabsList>
 
 
-        {/* ═══════ My Pass — now also surfaces the full tier matrix ═══════ */}
-        <TabsContent value="pass" className="mt-4 space-y-4">
-          <NextStepCard />
-          <CreatorPassCard />
-          <TierProgressCard />
-          <div className="space-y-2 pt-2">
-            <div className="flex items-center gap-2">
-              <Star className="h-4 w-4 text-primary" />
-              <h3 className="font-display text-base font-semibold text-foreground">All tiers</h3>
-              <span className="text-[10px] text-muted-foreground/70 ml-1">Hover for perks</span>
-            </div>
-          </div>
-          <TierStripCompact activeTier={currentTier as any} />
-          <ActivityPreview userId={user.id} onSeeAll={() => setTab("activity")} />
-
-          {/* Subtle "How rewards work" footer — collapsible */}
-          <details className="group rounded-2xl border border-border/50 bg-card/40 mt-4">
-            <summary className="flex items-center gap-2 px-4 py-3 cursor-pointer list-none text-sm text-muted-foreground hover:text-foreground transition-colors">
-              <HelpCircle className="h-3.5 w-3.5" />
-              <span>How rewards work</span>
-              <span className="ml-auto text-[10px] uppercase tracking-wider opacity-60 group-open:hidden">Open</span>
-              <span className="ml-auto text-[10px] uppercase tracking-wider opacity-60 hidden group-open:inline">Close</span>
-            </summary>
-            <div className="px-4 pb-5 pt-1">
-              <RewardsExplainerV2 />
-            </div>
-          </details>
+        {/* ═══════ My Pass — v11 redesign (sections 1-7 below blue card) ═══════ */}
+        <TabsContent value="pass" className="mt-4 space-y-6">
+          <CreatorPassCard hideBalanceClaim />
+          <MyPassRedesign
+            currentTier={currentTier as any}
+            activityPreview={<ActivityPreview userId={user.id} onSeeAll={() => setTab("activity")} />}
+          />
         </TabsContent>
 
         {/* Earnings / Portfolio / Passport / Verified IP moved to /portfolio (v10.4). */}
