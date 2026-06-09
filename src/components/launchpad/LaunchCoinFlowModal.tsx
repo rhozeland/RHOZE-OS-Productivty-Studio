@@ -874,7 +874,7 @@ const LaunchCoinFlowModal = ({
 
               <div className="text-center space-y-1">
                 <p className="text-[11px] text-muted-foreground">
-                  Our A&R team reviews every submission within 24 hours and reaches out in your Inbox.
+                  Our A&R team reviews every submission within 48 hours and reaches out in your Inbox.
                 </p>
                 <p className="text-[11px] text-muted-foreground">
                   Platform fee 7–15% based on your tier. Everything else is yours.
@@ -915,7 +915,7 @@ const LaunchCoinFlowModal = ({
                     You're on the launchpad
                   </h2>
                   <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                    Our A&R team will be in touch within 24 hours. Keep building in public while you wait — every update you post strengthens your launch.
+                    Our A&R team will be in touch within 48 hours. Keep building in public while you wait — every update you post strengthens your launch.
                   </p>
                 </div>
 
