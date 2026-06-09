@@ -82,7 +82,7 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inquiryHandled = useRef(false);
   const [activeInquiryId, setActiveInquiryId] = useState<string | null>(null);
-  const [inboxFilter, setInboxFilter] = useState<"all" | "unread" | "subscribers" | "subscribed">("all");
+  const [inboxFilter, setInboxFilter] = useState<"all" | "requests" | "collabs" | "messages" | "projects">("all");
 
 
   // Get conversations (users we've messaged with)
@@ -576,51 +576,79 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
                 </div>
               </div>
 
+              {/* Partner-id sets derived from inquiry data, used by filter pills */}
+              {(() => { return null; })()}
+
               {/* Filter pills */}
               <div className="flex gap-1.5 px-4 pb-3 overflow-x-auto scrollbar-none">
-                {[
-                  { id: "all", label: "All" },
-                  { id: "unread", label: "Unread", badge: unreadConvoCount || undefined },
-                  { id: "subscribers", label: "Subscribers" },
-                  { id: "subscribed", label: "Subscribed" },
-                ].map((f) => {
-                  const active = inboxFilter === (f.id as any);
-                  return (
-                    <button
-                      key={f.id}
-                      onClick={() => setInboxFilter(f.id as any)}
-                      className={cn(
-                        "shrink-0 inline-flex items-center gap-1 text-[11px] font-medium px-3 py-1 rounded-full border transition-colors whitespace-nowrap",
-                        active
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "bg-background text-muted-foreground border-border/60 hover:bg-muted/60 hover:text-foreground"
-                      )}
-                    >
-                      {f.label}
-                      {f.badge ? (
-                        <span className={cn(
-                          "ml-0.5 text-[9px] font-bold px-1 rounded-full",
-                          active ? "bg-primary-foreground/20 text-primary-foreground" : "bg-foreground/10 text-foreground"
-                        )}>{f.badge}</span>
-                      ) : null}
-                    </button>
-                  );
-                })}
+                {(() => {
+                  const requestIds = new Set<string>();
+                  const collabIds = new Set<string>();
+                  const projectIds = new Set<string>();
+                  (allInquiries ?? []).forEach((i: any) => {
+                    const partner = i.sender_id === user?.id ? i.receiver_id : i.sender_id;
+                    if (i.project_id) projectIds.add(partner);
+                    else if (i.status === "accepted") collabIds.add(partner);
+                    else if (i.status === "pending" && i.receiver_id === user?.id) requestIds.add(partner);
+                  });
+                  const pills = [
+                    { id: "all", label: "All" },
+                    { id: "requests", label: "Requests", badge: requestIds.size || undefined },
+                    { id: "collabs", label: "Collabs", badge: collabIds.size || undefined },
+                    { id: "messages", label: "Messages" },
+                    { id: "projects", label: "Projects", badge: projectIds.size || undefined },
+                  ];
+                  return pills.map((f) => {
+                    const active = inboxFilter === (f.id as any);
+                    return (
+                      <button
+                        key={f.id}
+                        onClick={() => setInboxFilter(f.id as any)}
+                        className={cn(
+                          "shrink-0 inline-flex items-center gap-1 text-[11px] font-medium px-3 py-1 rounded-full border transition-colors whitespace-nowrap",
+                          active
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-background text-muted-foreground border-border/60 hover:bg-muted/60 hover:text-foreground"
+                        )}
+                      >
+                        {f.label}
+                        {f.badge ? (
+                          <span className={cn(
+                            "ml-0.5 text-[9px] font-bold px-1 rounded-full",
+                            active ? "bg-primary-foreground/20 text-primary-foreground" : "bg-foreground/10 text-foreground"
+                          )}>{f.badge}</span>
+                        ) : null}
+                      </button>
+                    );
+                  });
+                })()}
               </div>
 
               <BuddyNotesRow onSelectBuddy={setSelectedUser} />
 
               <ScrollArea className="flex-1">
                 {(() => {
+                  // Build partner-id classification sets from inquiry data
+                  const requestIds = new Set<string>();
+                  const collabIds = new Set<string>();
+                  const projectIds = new Set<string>();
+                  (allInquiries ?? []).forEach((i: any) => {
+                    const partner = i.sender_id === user?.id ? i.receiver_id : i.sender_id;
+                    if (i.project_id) projectIds.add(partner);
+                    else if (i.status === "accepted") collabIds.add(partner);
+                    else if (i.status === "pending" && i.receiver_id === user?.id) requestIds.add(partner);
+                  });
+
                   // Apply filter
                   const filtered = contactsList.filter((p) => {
-                    const unread = getUnreadCount(p.user_id) > 0;
-                    const rel = subRelMap?.get(p.user_id);
-                    if (inboxFilter === "unread") return unread;
-                    if (inboxFilter === "subscribers") return rel === "subscriber";
-                    if (inboxFilter === "subscribed") return rel === "subscribed-to";
+                    if (inboxFilter === "requests") return requestIds.has(p.user_id);
+                    if (inboxFilter === "collabs") return collabIds.has(p.user_id);
+                    if (inboxFilter === "projects") return projectIds.has(p.user_id);
+                    if (inboxFilter === "messages")
+                      return !requestIds.has(p.user_id) && !collabIds.has(p.user_id) && !projectIds.has(p.user_id);
                     return true;
                   });
+
 
                   if (filtered.length === 0) {
                     return (
