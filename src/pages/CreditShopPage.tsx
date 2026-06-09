@@ -21,7 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Coins, Sparkles, Wallet, ShoppingBag, Download, Music, Shield,
-  Award, Palette, Camera, Video, PenTool, Star, HelpCircle, ArrowRight,
+  Award, Palette, Camera, Video, PenTool, ArrowRight,
   Activity as ActivityIcon, Briefcase, TrendingUp, ArrowUpRight, ArrowDownRight,
   Ticket as TicketIcon,
 } from "lucide-react";
@@ -34,10 +34,7 @@ import { format, formatDistanceToNow } from "date-fns";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import CreatorPassCard from "@/components/creators/CreatorPassCard";
-import NextStepCard from "@/components/creators/NextStepCard";
 import TierMatrix from "@/components/creators/TierMatrix";
-import TierStripCompact from "@/components/creators/TierStripCompact";
-import TierProgressCard from "@/components/creators/TierProgressCard";
 import CoinPortfolio from "@/components/creators/CoinPortfolio";
 import TicketsTab from "@/components/credits/TicketsTab";
 import TicketCollection from "@/components/credits/TicketCollection";
