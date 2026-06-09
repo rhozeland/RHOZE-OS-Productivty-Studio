@@ -82,6 +82,8 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inquiryHandled = useRef(false);
   const [activeInquiryId, setActiveInquiryId] = useState<string | null>(null);
+  const [inboxFilter, setInboxFilter] = useState<"all" | "unread" | "subscribers" | "subscribed">("all");
+
 
   // Get conversations (users we've messaged with)
   const { data: conversations } = useQuery({
@@ -501,15 +503,20 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
 
   return (
     <div className="w-full">
-      <div className="w-full min-w-0 space-y-6">
-      <div>
-        <h1 className="font-display text-3xl font-bold text-foreground">Conversations</h1>
-        <p className="text-muted-foreground">
-          {unreadConvoCount} unread {unreadConvoCount === 1 ? "message" : "messages"}
-          {" · "}
-          {pendingCount} pending {pendingCount === 1 ? "inquiry" : "inquiries"}
-        </p>
+      <div className="w-full min-w-0 space-y-5">
+      <div className="flex items-end justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="font-display text-3xl font-bold text-foreground tracking-tight">Inbox</h1>
+          <p className="text-xs text-muted-foreground mt-1">
+            {unreadConvoCount} unread {unreadConvoCount === 1 ? "message" : "messages"}
+            {" · "}
+            {pendingCount} pending {pendingCount === 1 ? "request" : "requests"}
+            {" · "}
+            {contactsList.length} {contactsList.length === 1 ? "conversation" : "conversations"}
+          </p>
+        </div>
       </div>
+
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
@@ -532,51 +539,119 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
         </TabsList>
 
         <TabsContent value="messages" className="mt-4 space-y-4">
-          <div className="surface-card flex h-[calc(100vh-22rem)] min-h-[480px] overflow-hidden">
-            {/* Sidebar - Conversations only */}
+          <div className="flex h-[calc(100vh-22rem)] min-h-[520px] overflow-hidden rounded-3xl border border-border/60 bg-card shadow-[0_24px_60px_-32px_hsl(var(--foreground)/0.18)]">
+            {/* Conversation list */}
             <div className={cn(
-              "flex flex-col border-r border-border",
-              selectedUser ? "hidden md:flex md:w-80" : "w-full md:w-80"
+              "flex flex-col border-r border-border/60 bg-background/40",
+              selectedUser ? "hidden md:flex md:w-[340px]" : "w-full md:w-[340px]"
             )}>
-              {/* Search first (highest-priority action), then quick-share row. */}
-              <div className="p-3 space-y-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search conversations..." className="pl-9" />
+              {/* Title strip */}
+              <div className="px-5 pt-5 pb-3">
+                <div className="flex items-baseline justify-between">
+                  <h2 className="font-display text-lg font-semibold text-foreground tracking-tight">All inbox</h2>
+                  <button
+                    onClick={() => setNewConvoOpen(true)}
+                    className="text-[11px] text-primary hover:text-primary/80 font-medium inline-flex items-center gap-1"
+                  >
+                    <Plus className="h-3 w-3" /> New
+                  </button>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full rounded-full gap-1.5 text-xs"
-                  onClick={() => setNewConvoOpen(true)}
-                >
-                  <Plus className="h-3.5 w-3.5" /> Start a Conversation
-                </Button>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  {unreadConvoCount > 0
+                    ? `${unreadConvoCount} unread · ${contactsList.length} total`
+                    : `${contactsList.length} ${contactsList.length === 1 ? "thread" : "threads"}`}
+                </p>
               </div>
+
+              {/* Search */}
+              <div className="px-4 pb-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search inbox..."
+                    className="pl-9 h-9 rounded-full bg-muted/40 border-border/50 text-xs"
+                  />
+                </div>
+              </div>
+
+              {/* Filter pills */}
+              <div className="flex gap-1.5 px-4 pb-3 overflow-x-auto scrollbar-none">
+                {[
+                  { id: "all", label: "All" },
+                  { id: "unread", label: "Unread", badge: unreadConvoCount || undefined },
+                  { id: "subscribers", label: "Subscribers" },
+                  { id: "subscribed", label: "Subscribed" },
+                ].map((f) => {
+                  const active = inboxFilter === (f.id as any);
+                  return (
+                    <button
+                      key={f.id}
+                      onClick={() => setInboxFilter(f.id as any)}
+                      className={cn(
+                        "shrink-0 inline-flex items-center gap-1 text-[11px] font-medium px-3 py-1 rounded-full border transition-colors whitespace-nowrap",
+                        active
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-background text-muted-foreground border-border/60 hover:bg-muted/60 hover:text-foreground"
+                      )}
+                    >
+                      {f.label}
+                      {f.badge ? (
+                        <span className={cn(
+                          "ml-0.5 text-[9px] font-bold px-1 rounded-full",
+                          active ? "bg-primary-foreground/20 text-primary-foreground" : "bg-foreground/10 text-foreground"
+                        )}>{f.badge}</span>
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
+
               <BuddyNotesRow onSelectBuddy={setSelectedUser} />
+
               <ScrollArea className="flex-1">
-                {contactsList.length === 0 ? (
-                  <div className="p-6 text-center space-y-2">
-                    <MessageSquare className="h-8 w-8 mx-auto text-muted-foreground/30" />
-                    <p className="text-sm text-muted-foreground">
-                      {search ? "No conversations match your search" : "No conversations yet"}
-                    </p>
-                    {!search && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="rounded-full gap-1.5 text-xs"
-                        onClick={() => setNewConvoOpen(true)}
-                      >
-                        <Plus className="h-3.5 w-3.5" /> Start a Conversation
-                      </Button>
-                    )}
-                  </div>
-                ) : (
-                  contactsList.map((profile) => {
+                {(() => {
+                  // Apply filter
+                  const filtered = contactsList.filter((p) => {
+                    const unread = getUnreadCount(p.user_id) > 0;
+                    const rel = subRelMap?.get(p.user_id);
+                    if (inboxFilter === "unread") return unread;
+                    if (inboxFilter === "subscribers") return rel === "subscriber";
+                    if (inboxFilter === "subscribed") return rel === "subscribed-to";
+                    return true;
+                  });
+
+                  if (filtered.length === 0) {
+                    return (
+                      <div className="p-8 text-center space-y-2">
+                        <MessageSquare className="h-7 w-7 mx-auto text-muted-foreground/30" />
+                        <p className="text-xs text-muted-foreground">
+                          {search || inboxFilter !== "all" ? "Nothing matches that filter" : "No conversations yet"}
+                        </p>
+                        {!search && inboxFilter === "all" && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="rounded-full gap-1.5 text-xs"
+                            onClick={() => setNewConvoOpen(true)}
+                          >
+                            <Plus className="h-3.5 w-3.5" /> Start a Conversation
+                          </Button>
+                        )}
+                      </div>
+                    );
+                  }
+
+                  // Group: Needs action (unread) vs Conversations
+                  const needsAction = filtered.filter((p) => getUnreadCount(p.user_id) > 0);
+                  const others = filtered.filter((p) => getUnreadCount(p.user_id) === 0);
+
+                  const renderRow = (profile: Profile) => {
                     const lastMsg = getLastMessage(profile.user_id);
                     const unread = getUnreadCount(profile.user_id);
                     const name = profile.display_name || "Creator";
+                    const rel = subRelMap?.get(profile.user_id);
                     const richLabel = (c: string): string | null => {
                       if (!c) return null;
                       if (c.startsWith("[FILE:")) return "📎 Attachment";
@@ -593,22 +668,18 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
                     const rawPreview = lastMsg
                       ? `${lastMsg.sender_id === user?.id ? "You: " : ""}${friendly}`
                       : "";
-                    const preview = rawPreview.length > 48 ? `${rawPreview.slice(0, 45).trimEnd()}...` : rawPreview;
+                    const isActive = selectedUser?.user_id === profile.user_id;
                     return (
                       <button
                         key={profile.user_id}
                         onClick={() => setSelectedUser(profile)}
                         className={cn(
-                          "relative flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50",
-                          selectedUser?.user_id === profile.user_id && "bg-muted/70"
+                          "relative flex w-full items-start gap-3 px-4 py-3 text-left border-b border-border/40 transition-colors hover:bg-muted/40",
+                          isActive && "bg-muted/60"
                         )}
                       >
-                        {/* Unread accent rail */}
-                        {unread > 0 && (
-                          <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 rounded-r-full bg-primary" aria-hidden />
-                        )}
                         <div
-                          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full overflow-hidden text-white text-sm font-semibold"
+                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full overflow-hidden text-white text-[11px] font-semibold"
                           style={{ backgroundColor: profile.avatar_url ? undefined : colorFromName(name) }}
                         >
                           {profile.avatar_url ? (
@@ -618,69 +689,69 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-1.5 min-w-0">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className={cn(
+                              "text-[13px] text-foreground truncate",
+                              unread > 0 ? "font-semibold" : "font-medium"
+                            )}>{name}</span>
+                            {rel && (
                               <span
                                 className={cn(
-                                  "text-sm text-foreground truncate",
-                                  unread > 0 ? "font-semibold" : "font-medium",
+                                  "shrink-0 rounded-md px-1.5 py-px text-[9px] font-semibold uppercase tracking-wide",
+                                  rel === "subscriber"
+                                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                                    : "bg-fuchsia-500/15 text-fuchsia-600 dark:text-fuchsia-400",
                                 )}
                               >
-                                {name}
+                                {rel === "subscriber" ? "Sub" : "Subbed"}
                               </span>
-                              {(() => {
-                                const rel = subRelMap?.get(profile.user_id);
-                                if (!rel) return null;
-                                const isSubscriber = rel === "subscriber";
-                                return (
-                                  <span
-                                    title={
-                                      isSubscriber
-                                        ? `${name} is one of your subscribers`
-                                        : `You're subscribed to ${name}`
-                                    }
-                                    className={cn(
-                                      "inline-flex items-center gap-0.5 shrink-0 rounded-full px-1.5 py-px text-[9px] font-semibold uppercase tracking-wide",
-                                      isSubscriber
-                                        ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-                                        : "bg-fuchsia-500/15 text-fuchsia-600 dark:text-fuchsia-400",
-                                    )}
-                                  >
-                                    <Sparkles className="h-2.5 w-2.5" />
-                                    {isSubscriber ? "Subscriber" : "Subscribed"}
-                                  </span>
-                                );
-                              })()}
-                            </div>
-                            {lastMsg && <span className="text-[10px] text-muted-foreground shrink-0">{formatTime(lastMsg.created_at)}</span>}
+                            )}
                           </div>
-                          {lastMsg && (
-                            <div className="flex items-center gap-2">
-                              <p
-                                className={cn(
-                                  "text-xs truncate flex-1",
-                                  unread > 0 ? "text-foreground" : "text-muted-foreground",
-                                )}
-                                title={rawPreview}
-                              >
-                                {preview}
-                              </p>
-                              {unread > 0 && (
-                                <span className="h-2 w-2 shrink-0 rounded-full bg-primary" aria-label="unread" />
-                              )}
-                            </div>
+                          {rawPreview && (
+                            <p className={cn(
+                              "text-[11px] truncate mt-0.5",
+                              unread > 0 ? "text-foreground/80" : "text-muted-foreground"
+                            )} title={rawPreview}>
+                              {rawPreview}
+                            </p>
                           )}
+                        </div>
+                        <div className="flex flex-col items-end gap-1 shrink-0">
+                          {lastMsg && (
+                            <span className="text-[10px] text-muted-foreground/80">{formatTime(lastMsg.created_at)}</span>
+                          )}
+                          {unread > 0 && <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-label="unread" />}
                         </div>
                       </button>
                     );
-                  })
-                )}
+                  };
+
+                  return (
+                    <>
+                      {needsAction.length > 0 && (
+                        <>
+                          <div className="px-4 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                            Needs action
+                          </div>
+                          {needsAction.map(renderRow)}
+                        </>
+                      )}
+                      {others.length > 0 && (
+                        <>
+                          <div className="px-4 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                            Conversations
+                          </div>
+                          {others.map(renderRow)}
+                        </>
+                      )}
+                    </>
+                  );
+                })()}
               </ScrollArea>
-              
             </div>
 
             {/* Chat Area */}
-            <div className={cn("flex flex-1 flex-col", !selectedUser ? "hidden md:flex" : "flex")}>
+            <div className={cn("flex flex-1 flex-col bg-background", !selectedUser ? "hidden md:flex" : "flex")}>
               {!selectedUser ? (
                 <div className="flex flex-1 flex-col items-center justify-center px-6 py-8">
                   <p className="font-display text-base font-semibold text-foreground mb-1">
@@ -699,19 +770,11 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
                       },
                       {
                         icon: Inbox,
-                        title: "Respond to an inquiry",
+                        title: "Respond to a request",
                         desc: allInquiries?.length
                           ? `${allInquiries.length} waiting`
-                          : "Check pending inquiries",
-                        onClick: () => {
-                          const el = document.getElementById("inquiries-section");
-                          if (el) {
-                            (el as HTMLDetailsElement).open = true;
-                            el.scrollIntoView({ behavior: "smooth", block: "start" });
-                          } else {
-                            toast.info("No inquiries yet");
-                          }
-                        },
+                          : "Check pending requests",
+                        onClick: () => setActiveTab("projects"),
                       },
                       {
                         icon: Compass,
@@ -724,7 +787,7 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
                         key={s.title}
                         type="button"
                         onClick={s.onClick}
-                        className="group w-full flex items-center gap-3 rounded-xl border border-border bg-card hover:border-foreground/30 hover:bg-muted/40 transition-all px-4 py-3 text-left"
+                        className="group w-full flex items-center gap-3 rounded-xl border border-border/60 bg-card hover:border-foreground/30 hover:bg-muted/40 transition-all px-4 py-3 text-left"
                       >
                         <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                           <s.icon className="h-4 w-4 text-primary" />
@@ -744,39 +807,54 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
                 </div>
               ) : (
                 <>
-                  <div className="flex items-center gap-3 border-b border-border px-4 md:px-6 py-4">
-                    <Button variant="ghost" size="icon" className="md:hidden shrink-0" onClick={() => setSelectedUser(null)}>
+                  <div className="flex items-start gap-3 border-b border-border/60 px-5 md:px-6 py-4">
+                    <Button variant="ghost" size="icon" className="md:hidden shrink-0 -ml-2" onClick={() => setSelectedUser(null)}>
                       <ArrowLeft className="h-5 w-5" />
                     </Button>
                     <button
                       type="button"
                       onClick={() => navigate(`/profiles/${selectedUser.user_id}`)}
-                      className="flex items-center gap-3 group min-w-0 hover:opacity-80 transition-opacity"
+                      className="flex items-center gap-3 group min-w-0 hover:opacity-90 transition-opacity"
                       title="View profile"
                     >
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 shrink-0">
+                      <div
+                        className="flex h-10 w-10 items-center justify-center rounded-full overflow-hidden shrink-0 text-white text-sm font-semibold"
+                        style={{ backgroundColor: selectedUser.avatar_url ? undefined : colorFromName(selectedUser.display_name || "Creator") }}
+                      >
                         {selectedUser.avatar_url ? (
                           <img src={selectedUser.avatar_url} alt="" className="h-full w-full rounded-full object-cover" />
                         ) : (
-                          <User className="h-4 w-4 text-primary" />
+                          <span>{initialOf(selectedUser.display_name || "Creator")}</span>
                         )}
                       </div>
-                      <span className="font-display font-semibold text-foreground truncate group-hover:underline underline-offset-4">{selectedUser.display_name || "Creator"}</span>
+                      <div className="min-w-0">
+                        <div className="font-display text-[15px] font-semibold text-foreground truncate group-hover:underline underline-offset-4">
+                          {selectedUser.display_name || "Creator"}
+                        </div>
+                        <div className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1.5">
+                          {(() => {
+                            const rel = subRelMap?.get(selectedUser.user_id);
+                            if (rel === "subscriber") return <><Sparkles className="h-2.5 w-2.5 text-emerald-500" /> One of your subscribers</>;
+                            if (rel === "subscribed-to") return <><Sparkles className="h-2.5 w-2.5 text-fuchsia-500" /> You're subscribed</>;
+                            return <>Direct message · tap to view profile</>;
+                          })()}
+                        </div>
+                      </div>
                     </button>
                     <div className="ml-auto flex items-center gap-1">
                       <Button
                         variant="ghost" size="icon"
-                        className="h-9 w-9 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                        className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 border border-border/50"
                         onClick={() => toast.info("Voice calls coming soon — tied to your Creator Pass tier")}
                       >
-                        <Phone className="h-4 w-4" />
+                        <Phone className="h-3.5 w-3.5" />
                       </Button>
                       <Button
                         variant="ghost" size="icon"
-                        className="h-9 w-9 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                        className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 border border-border/50"
                         onClick={() => toast.info("Video calls coming soon — tied to your Creator Pass tier")}
                       >
-                        <Video className="h-4 w-4" />
+                        <Video className="h-3.5 w-3.5" />
                       </Button>
                     </div>
                   </div>
@@ -818,7 +896,7 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
 
                   <form
                     onSubmit={(e) => { e.preventDefault(); if (messageText.trim()) sendMessage.mutate(); }}
-                    className="flex items-center gap-2 border-t border-border px-4 md:px-6 py-3"
+                    className="flex items-center gap-2 border-t border-border/60 px-4 md:px-6 py-3"
                   >
                     <ChatAttachmentMenu
                       onSendMessage={(content) => {
@@ -835,8 +913,18 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
                       onSendQuote={() => setQuoteOpen(true)}
                       disabled={!selectedUser}
                     />
-                    <Input value={messageText} onChange={(e) => setMessageText(e.target.value)} placeholder="Type a message..." className="flex-1" />
-                    <Button type="submit" size="icon" disabled={!messageText.trim() || sendMessage.isPending}>
+                    <Input
+                      value={messageText}
+                      onChange={(e) => setMessageText(e.target.value)}
+                      placeholder={`Reply to ${selectedUser.display_name || "Creator"}…`}
+                      className="flex-1 h-10 rounded-full bg-muted/40 border-border/50 text-sm px-4"
+                    />
+                    <Button
+                      type="submit"
+                      size="icon"
+                      disabled={!messageText.trim() || sendMessage.isPending}
+                      className="h-10 w-10 rounded-full shrink-0"
+                    >
                       <Send className="h-4 w-4" />
                     </Button>
                   </form>
@@ -854,6 +942,7 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
             />
           )}
         </TabsContent>
+
 
         <TabsContent value="projects" className="mt-4 space-y-6">
           <section className="surface-card p-4 sm:p-5 space-y-4">
