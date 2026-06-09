@@ -76,13 +76,6 @@ export default function StartCoinCta({ creatorName, className }: Props) {
             >
               Why launch a coin? See the full pitch &rarr;
             </button>
-            <button
-              type="button"
-              onClick={() => setOpen(true)}
-              className="text-[11px] text-muted-foreground hover:text-foreground underline-offset-4 hover:underline text-center"
-            >
-              Already have a coin? Link it &rarr;
-            </button>
           </div>
         </div>
 
