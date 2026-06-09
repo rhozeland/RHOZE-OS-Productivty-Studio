@@ -115,6 +115,8 @@ interface FlowCardProps {
   /** Cached counts for like/comment buttons. */
   likeCount?: number;
   commentCount?: number;
+  /** In swipe mode, let the parent deck own pointer gestures across media. */
+  disableMediaInteractions?: boolean;
   /**
    * True while uploader profile attribution (`profiles_public`) is still
    * being resolved. When true and no profile is attached yet, the card
@@ -129,7 +131,7 @@ interface FlowCardProps {
   coin?: { id: string; ticker: string } | null;
 }
 
-const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, onDelete, isOwner, isAdmin, liked, likeCount, commentCount, profilesLoading, coin }: FlowCardProps) => {
+const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, onDelete, isOwner, isAdmin, liked, likeCount, commentCount, disableMediaInteractions = false, profilesLoading, coin }: FlowCardProps) => {
   const navigate = useNavigate();
   const [imageEnlarged, setImageEnlarged] = useState(false);
   const [verifyOpen, setVerifyOpen] = useState(false);
@@ -176,6 +178,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
   const isWriting = item.content_type === "text" || item.content_type === "link" || item.category === "writing";
 
   const showCategoryChip = cardPrefs.badgeVisible && cardPrefs.badgePlacement === "inline";
+  const mediaInteractionClass = disableMediaInteractions ? "pointer-events-none" : undefined;
 
 
   return (
@@ -280,7 +283,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
         {isAudio && (
           <div className="relative">
             {youtubeId && (
-              <div className="aspect-video" onClick={(e) => e.stopPropagation()}>
+              <div className={cn("aspect-video", mediaInteractionClass)} onClick={(e) => e.stopPropagation()}>
                 <iframe
                   src={`https://www.youtube.com/embed/${youtubeId}?rel=0`}
                   width="100%"
@@ -294,7 +297,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
             )}
 
             {spotifyEmbed && !youtubeId && (
-              <div className="w-full" onClick={(e) => e.stopPropagation()}>
+              <div className={cn("w-full", mediaInteractionClass)} onClick={(e) => e.stopPropagation()}>
                 <iframe
                   src={spotifyEmbed}
                   width="100%"
@@ -309,7 +312,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
             )}
 
             {isSoundCloud && item.link_url && !spotifyEmbed && !youtubeId && (
-              <div className="w-full" onClick={(e) => e.stopPropagation()}>
+              <div className={cn("w-full", mediaInteractionClass)} onClick={(e) => e.stopPropagation()}>
                 <iframe
                   width="100%"
                   height="300"
@@ -337,7 +340,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
                   />
                 </div>
               </div>
-                <div className="border-t border-border" onClick={(e) => e.stopPropagation()}>
+                <div className={cn("border-t border-border", mediaInteractionClass)} onClick={(e) => e.stopPropagation()}>
                   <AudioPreview src={item.file_url} title={item.title} />
                 </div>
               </div>
@@ -362,7 +365,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
         {isVideo && (
           <div className="relative">
             {youtubeId ? (
-              <div className="aspect-video" onClick={(e) => e.stopPropagation()}>
+              <div className={cn("aspect-video", mediaInteractionClass)} onClick={(e) => e.stopPropagation()}>
                 <iframe
                   src={`https://www.youtube.com/embed/${youtubeId}?rel=0`}
                   width="100%"
@@ -374,7 +377,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
                 />
               </div>
             ) : item.file_url ? (
-              <div className="aspect-video overflow-hidden bg-foreground/5" onClick={(e) => e.stopPropagation()}>
+              <div className={cn("aspect-video overflow-hidden bg-foreground/5", mediaInteractionClass)} onClick={(e) => e.stopPropagation()}>
                 <video
                   src={`${item.file_url}#t=0.1`}
                   controls
@@ -402,7 +405,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
             {item.link_url ? (
               <div className="min-h-[200px] flex flex-col overflow-hidden">
                 {/* Embedded article preview */}
-                <div className="flex-1 overflow-hidden rounded-t-[20px]" onClick={(e) => e.stopPropagation()}>
+                <div className={cn("flex-1 overflow-hidden rounded-t-[20px]", mediaInteractionClass)} onClick={(e) => e.stopPropagation()}>
                   <iframe
                     src={item.link_url}
                     title={item.title}

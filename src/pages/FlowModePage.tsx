@@ -560,7 +560,7 @@ const FlowModePage = () => {
     // current array in place. Combined with the `placeholderData: undefined`
     // default, this guarantees the swipe view never shows a card from the
     // previous scope while the new feed is loading.
-    queryFn: () => loadFlowFeed(supabase, selectedCategories),
+    queryFn: () => loadFlowFeed(supabase, feedScope === "all" ? [] : selectedCategories),
     enabled: calibrated,
     // Keep retries low so a hard failure surfaces the friendly error UI
     // promptly instead of spinning silently for tens of seconds.
@@ -1835,6 +1835,7 @@ const FlowModePage = () => {
                     <FlowCard
                       item={currentItem}
                       expanded={expandedCard}
+                      disableMediaInteractions
                       onToggleExpand={() => setExpandedCard(!expandedCard)}
                       onLike={() => performAction("like")}
                       onComment={() => performAction("comment")}
