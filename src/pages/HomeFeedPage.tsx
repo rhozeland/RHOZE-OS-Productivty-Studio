@@ -79,7 +79,7 @@ const HomeFeedPage = () => {
     <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-3 pb-12 space-y-8">
       {/* ─── 1. CTA Carousel ────────────────────────────────────────────── */}
       <section className="relative">
-        <div className="relative w-full aspect-[21/9] sm:aspect-[24/9] rounded-3xl overflow-hidden shadow-[0_30px_80px_-30px_hsl(var(--foreground)/0.4)]">
+        <div className="relative w-full min-h-[300px] sm:min-h-[340px] md:aspect-[24/9] md:min-h-0 rounded-3xl overflow-hidden shadow-[0_30px_80px_-30px_hsl(var(--foreground)/0.4)]">
           <AnimatePresence mode="wait">
             <motion.div
               key={slide.id}
@@ -116,7 +116,7 @@ const HomeFeedPage = () => {
               />
 
               {/* Content */}
-              <div className="relative h-full w-full p-5 sm:p-8 flex flex-col justify-between text-white">
+              <div className="relative h-full w-full p-5 sm:p-8 pb-10 sm:pb-12 flex flex-col justify-between gap-4 sm:gap-6 text-white">
                 <div className="flex items-center justify-between">
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-md px-3 py-1 text-[10px] uppercase tracking-[0.2em] font-semibold">
                     <slide.Icon className="h-3 w-3" />
