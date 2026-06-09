@@ -4,10 +4,9 @@
  * Coin" card and TokenizeProjectCta's "Get help launching" button.
  */
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Copy } from "lucide-react";
-import { toast } from "sonner";
-import { pumpFunDetailsJson } from "@/lib/pump-fun";
+import { Sparkles, Headset } from "lucide-react";
 import LaunchCoinFlowModal from "@/components/launchpad/LaunchCoinFlowModal";
 
 interface Props {
