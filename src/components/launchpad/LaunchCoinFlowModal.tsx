@@ -38,6 +38,7 @@ import { useQuery } from "@tanstack/react-query";
 import { deriveTicker } from "@/lib/pump-fun";
 import { toast } from "sonner";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import PitchNewIdeaDialog from "./PitchNewIdeaDialog";
 
 type PickerProject = { id: string; title: string; description?: string | null };
 
@@ -81,6 +82,8 @@ const LaunchCoinFlowModal = ({
   const [step, setStep] = useState<0 | 1 | 2 | 3>(startStep);
   const [submitting, setSubmitting] = useState(false);
   const [selectedProject, setSelectedProject] = useState<PickerProject | null>(project);
+  const [pitchOpen, setPitchOpen] = useState(false);
+
 
   const activeProject = selectedProject ?? project;
 
