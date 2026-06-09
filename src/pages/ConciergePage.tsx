@@ -18,7 +18,34 @@ import {
   Clock,
   ShieldCheck,
   Layers,
+  Headphones,
 } from "lucide-react";
+
+const heroCtaClass =
+  "group relative inline-flex items-center gap-2.5 rounded-full px-6 py-3 text-sm font-semibold text-white overflow-hidden transition-transform hover:scale-[1.04] active:scale-[0.97] shadow-[0_18px_45px_-12px_hsl(200_90%_55%/0.75)] animate-[concierge-pulse_2.4s_ease-in-out_infinite]";
+
+const heroCtaStyle: React.CSSProperties = {
+  backgroundImage:
+    "linear-gradient(120deg, hsl(200 90% 55%) 0%, hsl(260 80% 60%) 45%, hsl(170 80% 50%) 100%)",
+  backgroundSize: "200% 200%",
+  animation:
+    "concierge-pulse 2.4s ease-in-out infinite, concierge-gradient 6s ease infinite",
+};
+
+const ctaKeyframes = `
+@keyframes concierge-pulse {
+  0%, 100% { box-shadow: 0 18px 45px -12px hsl(200 90% 55% / 0.55); }
+  50% { box-shadow: 0 22px 55px -10px hsl(260 80% 60% / 0.85), 0 0 0 6px hsl(200 90% 55% / 0.12); }
+}
+@keyframes concierge-gradient {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+@keyframes concierge-shimmer {
+  0% { transform: translateX(-120%) skewX(-20deg); }
+  100% { transform: translateX(220%) skewX(-20deg); }
+}
+`;
 
 const STEPS = [
   {
