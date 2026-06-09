@@ -124,7 +124,7 @@ const ProposalSheet = ({ open, onOpenChange, proposalId, newProposal }: Props) =
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl p-0 overflow-hidden max-h-[92vh] flex flex-col">
+      <DialogContent className="sm:max-w-3xl p-0 overflow-hidden max-h-[92vh] flex flex-col">
         {activeId ? (
           <ProposalEditor proposalId={activeId} onClose={() => onOpenChange(false)} onConverted={(projectId) => {
             onOpenChange(false);
