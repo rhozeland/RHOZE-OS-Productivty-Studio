@@ -409,7 +409,7 @@ const ProfileDetailPage = () => {
                 {/* Start a project */}
                 <button
                   type="button"
-                  onClick={() => navigate("/messages?tab=projects&new=1")}
+                  onClick={() => setStartProjectOpen(true)}
                   className="w-full text-left rounded-2xl p-5 bg-gradient-to-br from-primary via-fuchsia-500 to-amber-500 text-primary-foreground shadow-lg hover:opacity-95 transition-opacity"
                 >
                   <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] opacity-90">
