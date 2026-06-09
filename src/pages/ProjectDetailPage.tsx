@@ -34,6 +34,8 @@ import TokenizeBottomCta from "@/components/project/shared/TokenizeBottomCta";
 import { computeProjectStatus } from "@/components/project/shared/projectStatus";
 
 import ProjectVision from "@/components/project/ProjectVision";
+import InlineProjectDescription from "@/components/project/InlineProjectDescription";
+import StoryUpdates from "@/components/project/StoryUpdates";
 import RoadmapCalendarView from "@/components/project/RoadmapCalendarView";
 import StageRoadmap from "@/components/project/StageRoadmap";
 import ProjectBudget from "@/components/project/ProjectBudget";
@@ -635,19 +637,14 @@ const ProjectDetailPage = () => {
         </TabsContent>
 
         {/* STORY */}
-        <TabsContent value="story" className="space-y-6">
-          <div className="max-w-3xl">
-            <ProjectVision project={project} projectId={id!} />
-            <div className="mt-8">
-              <StoryFeed
-                items={storyItems}
-                canManage={canManageProject}
-                onAdd={() => {
-                  setTab("roadmap");
-                  toast.info("Add a goal in the Roadmap tab — it becomes a story update.");
-                }}
-              />
-            </div>
+        <TabsContent value="story" className="space-y-8">
+          <div className="max-w-3xl space-y-8">
+            <InlineProjectDescription
+              projectId={id!}
+              description={(project as any).description ?? null}
+              canManage={canManageProject}
+            />
+            <StoryUpdates projectId={id!} canManage={canManageProject} />
           </div>
         </TabsContent>
 
