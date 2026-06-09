@@ -100,6 +100,25 @@ const ContextualSupportButton = ({
     staleTime: 30_000,
   });
 
+  // ── Token info: fetched directly since get_public_profile RPC omits it ──
+  const { data: tokenInfo } = useQuery({
+    queryKey: ["profile-token-info", creatorId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("token_mint_address, token_ticker, token_submission_status, show_token_chip")
+        .eq("user_id", creatorId)
+        .maybeSingle();
+      return data ?? null;
+    },
+    enabled: !!creatorId,
+    staleTime: 60_000,
+  });
+
+  const tokenMintAddress = tokenInfo?.token_mint_address ?? null;
+  const tokenTicker = tokenInfo?.token_ticker ?? null;
+  const tokenStatus = (tokenInfo as any)?.token_submission_status ?? null;
+
   const hasApprovedCoin =
     !!tokenMintAddress &&
     !!tokenTicker &&
