@@ -35,7 +35,7 @@ const statusLabel = (s?: string | null) => {
   return s.charAt(0).toUpperCase() + s.slice(1).replace(/_/g, " ");
 };
 
-export default function ProfileProjectCard({ project, collaborators = [], onOpen }: Props) {
+export default function ProfileProjectCard({ project, collaborators = [], onOpen, canDelete, onDelete }: Props) {
   const accent = project.cover_color || "#7c3aed";
   const bg = `radial-gradient(120% 80% at 20% 0%, ${accent}cc 0%, ${accent}55 45%, #0a0a0a 100%)`;
   const isBacked = project.intake_tier === "concierge";
