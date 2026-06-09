@@ -1411,7 +1411,7 @@ function BackingSection({
               <Link
                 key={p.id}
                 to={p.public_slug ? `/release/${p.public_slug}` : `/projects/${p.id}`}
-                className="group relative shrink-0 w-[280px] rounded-3xl overflow-hidden border border-border/60 bg-card hover:-translate-y-1 hover:shadow-2xl hover:border-foreground/40 transition-all duration-300"
+                className="group relative shrink-0 w-[280px] rounded-3xl overflow-hidden border border-border/60 bg-card hover:-translate-y-1 hover:border-foreground/40 hover:shadow-[0_24px_60px_-20px_hsl(var(--foreground)/0.25)] transition-all duration-300"
               >
                 {/* gradient hero strip */}
                 <div className="relative h-20 bg-gradient-to-br from-rose-500 via-fuchsia-500 to-amber-500">
