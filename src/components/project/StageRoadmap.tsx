@@ -633,7 +633,7 @@ const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, co
                   // ---- ROW VIEW ----
                   <div
                     className={cn(
-                      "group grid grid-cols-[28px_minmax(0,1fr)_auto] md:grid-cols-[28px_minmax(0,1fr)_120px_100px_180px_100px_60px] items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-muted/30 transition-colors",
+                      "group grid grid-cols-[28px_minmax(0,1fr)_auto] md:grid-cols-[28px_minmax(0,1fr)_120px_100px_180px_100px_60px] items-center gap-3 px-3 py-4 cursor-pointer hover:bg-muted/30 transition-colors",
                       status === "shipped" && "bg-emerald-500/[0.03]"
                     )}
                     onClick={() => toggleExpand(stage.id)}
