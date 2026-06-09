@@ -574,86 +574,31 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
               "flex flex-col border-r border-border/60 bg-background/40",
               selectedUser ? "hidden md:flex md:w-[340px]" : "w-full md:w-[340px]"
             )}>
-              {/* Title strip */}
-              <div className="px-5 pt-5 pb-3">
-                <div className="flex items-baseline justify-between">
-                  <h2 className="font-display text-lg font-semibold text-foreground tracking-tight">All inbox</h2>
-                  <button
-                    onClick={() => setNewConvoOpen(true)}
-                    className="text-[11px] text-primary hover:text-primary/80 font-medium inline-flex items-center gap-1"
-                  >
-                    <Plus className="h-3 w-3" /> New
-                  </button>
-                </div>
-                <p className="text-[11px] text-muted-foreground mt-0.5">
-                  {unreadConvoCount > 0
-                    ? `${unreadConvoCount} unread · ${contactsList.length} total`
-                    : `${contactsList.length} ${contactsList.length === 1 ? "thread" : "threads"}`}
-                </p>
-              </div>
-
               {/* Search */}
-              <div className="px-4 pb-2">
+              <div className="px-4 pt-4 pb-2">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search inbox..."
-                    className="pl-9 h-9 rounded-full bg-muted/40 border-border/50 text-xs"
+                    placeholder="Search messages..."
+                    className="pl-9 h-10 rounded-full bg-muted/40 border-border/50 text-xs"
                   />
                 </div>
               </div>
 
-              {/* Partner-id sets derived from inquiry data, used by filter pills */}
-              {(() => { return null; })()}
-
-              {/* Filter pills */}
-              <div className="flex gap-1.5 px-4 pb-3 overflow-x-auto scrollbar-none">
-                {(() => {
-                  const requestIds = new Set<string>();
-                  const collabIds = new Set<string>();
-                  const projectIds = new Set<string>();
-                  (allInquiries ?? []).forEach((i: any) => {
-                    const partner = i.sender_id === user?.id ? i.receiver_id : i.sender_id;
-                    if (i.project_id) projectIds.add(partner);
-                    else if (i.status === "accepted") collabIds.add(partner);
-                    else if (i.status === "pending" && i.receiver_id === user?.id) requestIds.add(partner);
-                  });
-                  const pills = [
-                    { id: "all", label: "All" },
-                    { id: "requests", label: "Requests", badge: requestIds.size || undefined },
-                    { id: "collabs", label: "Collabs", badge: collabIds.size || undefined },
-                    { id: "messages", label: "Messages" },
-                    { id: "projects", label: "Projects", badge: projectIds.size || undefined },
-                  ];
-                  return pills.map((f) => {
-                    const active = inboxFilter === (f.id as any);
-                    return (
-                      <button
-                        key={f.id}
-                        onClick={() => setInboxFilter(f.id as any)}
-                        className={cn(
-                          "shrink-0 inline-flex items-center gap-1 text-[11px] font-medium px-3 py-1 rounded-full border transition-colors whitespace-nowrap",
-                          active
-                            ? "bg-primary text-primary-foreground border-primary"
-                            : "bg-background text-muted-foreground border-border/60 hover:bg-muted/60 hover:text-foreground"
-                        )}
-                      >
-                        {f.label}
-                        {f.badge ? (
-                          <span className={cn(
-                            "ml-0.5 text-[9px] font-bold px-1 rounded-full",
-                            active ? "bg-primary-foreground/20 text-primary-foreground" : "bg-foreground/10 text-foreground"
-                          )}>{f.badge}</span>
-                        ) : null}
-                      </button>
-                    );
-                  });
-                })()}
+              {/* New message CTA */}
+              <div className="px-4 pb-3">
+                <Button
+                  type="button"
+                  onClick={() => setNewConvoOpen(true)}
+                  className="w-full h-10 rounded-full gap-1.5"
+                >
+                  <Plus className="h-4 w-4" /> New message
+                </Button>
               </div>
 
-              <BuddyNotesRow onSelectBuddy={setSelectedUser} />
+
 
               <ScrollArea className="flex-1">
                 {(() => {
