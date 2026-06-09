@@ -12,7 +12,7 @@ import AppLayout from "@/components/AppLayout";
 import FlowAuthGuard from "@/components/FlowAuthGuard";
 import AuthPage from "@/pages/AuthPage";
 import LandingPage from "@/pages/LandingPage";
-import DashboardPage from "@/pages/DashboardPage";
+
 import ProjectsPage from "@/pages/ProjectsPage";
 import StudioPage from "@/pages/StudioPage";
 import ProjectDetailPage from "@/pages/ProjectDetailPage";
