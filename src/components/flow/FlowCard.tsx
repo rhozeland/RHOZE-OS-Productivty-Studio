@@ -115,6 +115,8 @@ interface FlowCardProps {
   /** Cached counts for like/comment buttons. */
   likeCount?: number;
   commentCount?: number;
+  /** In swipe mode, let the parent deck own pointer gestures across media. */
+  disableMediaInteractions?: boolean;
   /**
    * True while uploader profile attribution (`profiles_public`) is still
    * being resolved. When true and no profile is attached yet, the card
@@ -129,7 +131,7 @@ interface FlowCardProps {
   coin?: { id: string; ticker: string } | null;
 }
 
-const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, onDelete, isOwner, isAdmin, liked, likeCount, commentCount, profilesLoading, coin }: FlowCardProps) => {
+const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, onDelete, isOwner, isAdmin, liked, likeCount, commentCount, disableMediaInteractions = false, profilesLoading, coin }: FlowCardProps) => {
   const navigate = useNavigate();
   const [imageEnlarged, setImageEnlarged] = useState(false);
   const [verifyOpen, setVerifyOpen] = useState(false);
@@ -176,6 +178,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
   const isWriting = item.content_type === "text" || item.content_type === "link" || item.category === "writing";
 
   const showCategoryChip = cardPrefs.badgeVisible && cardPrefs.badgePlacement === "inline";
+  const mediaInteractionClass = disableMediaInteractions ? "pointer-events-none" : undefined;
 
 
   return (
