@@ -714,23 +714,13 @@ const StudioPage = () => {
         onOpenChange={setStartProjectOpen}
       />
 
-      {/* Launch a Coin — 3-screen flow modal */}
+      {/* Launch a Coin — picker → 3-screen flow modal */}
       <LaunchCoinFlowModal
         open={coinSheetOpen}
         onOpenChange={setCoinSheetOpen}
-        project={
-          (projects ?? [])[0]
-            ? {
-                id: (projects ?? [])[0].id,
-                title: (projects ?? [])[0].title,
-                description: ((projects ?? [])[0] as any).description ?? null,
-              }
-            : null
-        }
-        backHref={
-          (projects ?? [])[0] ? `/projects/${(projects ?? [])[0].id}` : "/my-projects"
-        }
+        project={null}
       />
+
     </div>
   );
 };
