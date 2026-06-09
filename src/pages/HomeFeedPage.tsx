@@ -79,7 +79,7 @@ const HomeFeedPage = () => {
     <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-3 pb-12 space-y-8">
       {/* ─── 1. CTA Carousel ────────────────────────────────────────────── */}
       <section className="relative">
-        <div className="relative w-full aspect-[21/9] sm:aspect-[24/9] rounded-3xl overflow-hidden shadow-[0_30px_80px_-30px_hsl(var(--foreground)/0.4)]">
+        <div className="relative w-full min-h-[300px] sm:min-h-[340px] md:aspect-[24/9] md:min-h-0 rounded-3xl overflow-hidden shadow-[0_30px_80px_-30px_hsl(var(--foreground)/0.4)]">
           <AnimatePresence mode="wait">
             <motion.div
               key={slide.id}
