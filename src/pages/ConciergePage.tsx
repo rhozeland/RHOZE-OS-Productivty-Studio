@@ -18,7 +18,7 @@ import {
   Clock,
   ShieldCheck,
   Layers,
-  Headphones,
+  
 } from "lucide-react";
 
 const heroCtaClass =
@@ -184,8 +184,7 @@ export default function ConciergePage() {
               className="absolute top-0 left-0 h-full w-1/3 bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none"
               style={{ animation: "concierge-shimmer 2.8s ease-in-out infinite" }}
             />
-            <Headphones className="h-4 w-4 relative" />
-            <span className="relative">Start my release</span>
+            <span className="relative">Start My Release</span>
             <ArrowRight className="h-4 w-4 relative transition-transform group-hover:translate-x-1" />
           </button>
           <a
@@ -297,8 +296,7 @@ export default function ConciergePage() {
             className="absolute top-0 left-0 h-full w-1/3 bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none"
             style={{ animation: "concierge-shimmer 2.8s ease-in-out infinite" }}
           />
-          <Headphones className="h-4 w-4 relative" />
-          <span className="relative">Start my release</span>
+          <span className="relative">Start My Release</span>
           <ArrowRight className="h-4 w-4 relative transition-transform group-hover:translate-x-1" />
         </button>
       </section>
