@@ -211,7 +211,7 @@ export default function PitchNewIdeaDialog({ open, onOpenChange }: Props) {
         if (!o) setTimeout(reset, 300);
       }}
     >
-      <DialogContent className="max-w-xl w-[95vw] max-h-[90vh] overflow-y-auto p-0 border-border bg-background gap-0 [&>button]:hidden">
+      <DialogContent className="w-[min(95vw,42rem)] max-w-[42rem] max-h-[90vh] overflow-hidden p-0 border-border bg-background gap-0 [&>button]:hidden">
         <VisuallyHidden>
           <DialogTitle>Pitch us a new idea</DialogTitle>
           <DialogDescription>Send a release + coin proposal to the Rhozeland A&R team.</DialogDescription>
@@ -242,15 +242,15 @@ export default function PitchNewIdeaDialog({ open, onOpenChange }: Props) {
             </Button>
           </div>
         ) : (
-          <div className="px-5 pt-10 pb-6 sm:px-7 sm:pt-12 sm:pb-7 space-y-5">
-            <div className="text-center space-y-1.5">
+          <div className="max-h-[90vh] overflow-y-auto overflow-x-hidden px-5 pt-10 pb-6 sm:px-7 sm:pt-12 sm:pb-7 space-y-5">
+            <div className="mx-auto max-w-[32rem] text-center space-y-1.5">
               <div
                 className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.2em] px-2.5 py-1 rounded-full"
                 style={{ background: GRADIENT, color: "white" }}
               >
                 <Sparkles className="h-3 w-3" /> New idea pitch
               </div>
-              <h2 className="font-display text-xl sm:text-2xl font-bold tracking-tight">
+              <h2 className="mx-auto max-w-[16ch] font-display text-xl sm:text-2xl font-bold tracking-tight" style={{ overflowWrap: "anywhere" }}>
                 Tell us what you want to launch
               </h2>
               <p className="text-sm text-muted-foreground max-w-md mx-auto">
