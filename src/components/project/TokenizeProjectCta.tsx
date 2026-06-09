@@ -45,7 +45,7 @@ const TokenizeProjectCta = ({
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                  Tokenize this project
+                  Tokenize this release
                 </p>
                 <span className="inline-flex items-center gap-1 rounded-full bg-foreground/5 px-2 py-0.5 text-[10px] font-medium text-foreground">
                   <Sparkles className="h-2.5 w-2.5" /> With Rhozeland
