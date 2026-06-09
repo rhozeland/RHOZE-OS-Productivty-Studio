@@ -442,20 +442,14 @@ const ProfileDetailPage = () => {
                 {/* Start a coin — rendered via <StartCoinCta /> elsewhere on this page */}
               </>
             ) : (
-              <>
-                {/* Support */}
-                <button
-                  type="button"
-                  onClick={() => user ? setSubscribeOpen(true) : navigate("/auth")}
-                  className="w-full text-left rounded-2xl p-5 bg-gradient-to-br from-primary via-fuchsia-500 to-amber-500 text-primary-foreground shadow-lg hover:opacity-95 transition-opacity"
-                >
-                  <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] opacity-90">
-                    <Heart className="h-3.5 w-3.5" /> Back this artist
-                  </div>
-                  <p className="font-display text-lg font-bold mt-2">Support {p.display_name || p.username}</p>
-                  <p className="text-xs opacity-90 mt-1">Subscribe, tip, or fund the next milestone.</p>
-                </button>
-              </>
+              <ContextualSupportButton
+                creatorId={id!}
+                creatorName={p.display_name || p.username || "this artist"}
+                creatorAvatar={p.avatar_url}
+                isFollowing={!!isFollowing}
+                followPending={followMutation.isPending}
+                onFollow={() => followMutation.mutate()}
+              />
             )}
 
             {/* Token / Coin — full chart panel (renders its own empty state) */}
