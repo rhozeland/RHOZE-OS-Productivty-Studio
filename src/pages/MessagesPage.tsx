@@ -618,7 +618,7 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
                     const rel = subRelMap?.get(p.user_id);
                     if (inboxFilter === "unread") return unread;
                     if (inboxFilter === "subscribers") return rel === "subscriber";
-                    if (inboxFilter === "subscribed-to") return rel === "subscribed-to";
+                    if (inboxFilter === "subscribed") return rel === "subscribed-to";
                     return true;
                   });
 
