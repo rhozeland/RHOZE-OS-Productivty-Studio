@@ -282,9 +282,8 @@ const App = () => (
                 {/* Three-Room front doors (Scene · Market · Vault) — additive,
                     organize existing routes without removing any. */}
                 <Route path="/scene" element={<SceneRoomPage />} />
-                <Route path="/market" element={<MarketRoomPage />} />
-                {/* v11 — Match Made retired; deeplink redirects into /market. */}
-                <Route path="/connect/match" element={<Navigate to="/market" replace />} />
+                <Route path="/market" element={<Navigate to="/discover" replace />} />
+                <Route path="/connect/match" element={<Navigate to="/discover" replace />} />
                 <Route path="/vault" element={<ProtectedRoute><VaultRoomPage /></ProtectedRoute>} />
                 <Route path="/discover" element={<DiscoverPage />} />
                 <Route path="/charts" element={<ChartsPage />} />
