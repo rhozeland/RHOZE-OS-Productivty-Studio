@@ -46,6 +46,7 @@ const ProfileDetailPage = () => {
   const [boostOpen, setBoostOpen] = useState(false);
   const [shareCardOpen, setShareCardOpen] = useState(false);
   const [launchCoinOpen, setLaunchCoinOpen] = useState(false);
+  const [startProjectOpen, setStartProjectOpen] = useState(false);
 
   const initialTab = (searchParams.get("tab") as TabKey) || "projects";
   const [tab, setTab] = useState<TabKey>(
