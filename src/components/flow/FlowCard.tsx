@@ -283,7 +283,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
         {isAudio && (
           <div className="relative">
             {youtubeId && (
-              <div className="aspect-video" onClick={(e) => e.stopPropagation()}>
+              <div className={cn("aspect-video", mediaInteractionClass)} onClick={(e) => e.stopPropagation()}>
                 <iframe
                   src={`https://www.youtube.com/embed/${youtubeId}?rel=0`}
                   width="100%"
@@ -297,7 +297,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
             )}
 
             {spotifyEmbed && !youtubeId && (
-              <div className="w-full" onClick={(e) => e.stopPropagation()}>
+              <div className={cn("w-full", mediaInteractionClass)} onClick={(e) => e.stopPropagation()}>
                 <iframe
                   src={spotifyEmbed}
                   width="100%"
@@ -312,7 +312,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
             )}
 
             {isSoundCloud && item.link_url && !spotifyEmbed && !youtubeId && (
-              <div className="w-full" onClick={(e) => e.stopPropagation()}>
+              <div className={cn("w-full", mediaInteractionClass)} onClick={(e) => e.stopPropagation()}>
                 <iframe
                   width="100%"
                   height="300"
