@@ -4,7 +4,7 @@
  * status pill in the top-left, then a white footer block carrying title,
  * description, partnership chips, and an arrow CTA button.
  */
-import { ArrowUpRight, Sparkles, Users } from "lucide-react";
+import { ArrowUpRight, Sparkles, Users, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Collaborator {
@@ -26,6 +26,8 @@ interface Props {
   };
   collaborators?: Collaborator[];
   onOpen: () => void;
+  canDelete?: boolean;
+  onDelete?: () => void;
 }
 
 const statusLabel = (s?: string | null) => {
