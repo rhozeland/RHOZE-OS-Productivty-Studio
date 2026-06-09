@@ -635,19 +635,14 @@ const ProjectDetailPage = () => {
         </TabsContent>
 
         {/* STORY */}
-        <TabsContent value="story" className="space-y-6">
-          <div className="max-w-3xl">
-            <ProjectVision project={project} projectId={id!} />
-            <div className="mt-8">
-              <StoryFeed
-                items={storyItems}
-                canManage={canManageProject}
-                onAdd={() => {
-                  setTab("roadmap");
-                  toast.info("Add a goal in the Roadmap tab — it becomes a story update.");
-                }}
-              />
-            </div>
+        <TabsContent value="story" className="space-y-8">
+          <div className="max-w-3xl space-y-8">
+            <InlineProjectDescription
+              projectId={id!}
+              description={(project as any).description ?? null}
+              canManage={canManageProject}
+            />
+            <StoryUpdates projectId={id!} canManage={canManageProject} />
           </div>
         </TabsContent>
 
