@@ -137,13 +137,27 @@ export default function ConciergePage() {
           it end-to-end.
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-          <Button
-            size="lg"
-            className="rounded-full gap-2"
+          <button
+            type="button"
             onClick={() => setOpen(true)}
+            className="group relative inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-[0_12px_30px_-10px_hsl(330_85%_60%/0.6)] hover:scale-[1.03] active:scale-[0.98] transition-transform overflow-hidden"
+            style={{
+              backgroundImage:
+                "linear-gradient(135deg, hsl(330 85% 60%) 0%, hsl(292 84% 61%) 50%, hsl(38 92% 55%) 100%)",
+            }}
           >
-            Start a brief <ArrowRight className="h-4 w-4" />
-          </Button>
+            <span
+              aria-hidden
+              className="absolute inset-0 opacity-60 pointer-events-none"
+              style={{
+                backgroundImage:
+                  "radial-gradient(circle at 20% 30%, hsl(0 0% 100% / 0.35), transparent 40%), radial-gradient(circle at 80% 70%, hsl(0 0% 100% / 0.22), transparent 45%)",
+              }}
+            />
+            <Sparkles className="h-4 w-4 relative" />
+            <span className="relative">Hand us your release</span>
+            <ArrowRight className="h-4 w-4 relative transition-transform group-hover:translate-x-0.5" />
+          </button>
           <a
             href="#how"
             className="text-sm text-muted-foreground hover:text-foreground underline-offset-4 hover:underline"
@@ -234,13 +248,27 @@ export default function ConciergePage() {
           Send us the brief. We'll get back within 48 hours with a scoped
           proposal — budget, timeline, and the creators we'd staff it with.
         </p>
-        <Button
-          size="lg"
-          className="rounded-full gap-2"
+        <button
+          type="button"
           onClick={() => setOpen(true)}
+          className="group relative inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-[0_12px_30px_-10px_hsl(330_85%_60%/0.6)] hover:scale-[1.03] active:scale-[0.98] transition-transform overflow-hidden"
+          style={{
+            backgroundImage:
+              "linear-gradient(135deg, hsl(330 85% 60%) 0%, hsl(292 84% 61%) 50%, hsl(38 92% 55%) 100%)",
+          }}
         >
-          Start a brief <ArrowRight className="h-4 w-4" />
-        </Button>
+          <span
+            aria-hidden
+            className="absolute inset-0 opacity-60 pointer-events-none"
+            style={{
+              backgroundImage:
+                "radial-gradient(circle at 20% 30%, hsl(0 0% 100% / 0.35), transparent 40%), radial-gradient(circle at 80% 70%, hsl(0 0% 100% / 0.22), transparent 45%)",
+            }}
+          />
+          <Sparkles className="h-4 w-4 relative" />
+          <span className="relative">Hand us your release</span>
+          <ArrowRight className="h-4 w-4 relative transition-transform group-hover:translate-x-0.5" />
+        </button>
       </section>
 
       <ConciergeIntakeSheet open={open} onOpenChange={setOpen} />

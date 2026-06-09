@@ -4,10 +4,9 @@
  * Coin" card and TokenizeProjectCta's "Get help launching" button.
  */
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Copy } from "lucide-react";
-import { toast } from "sonner";
-import { pumpFunDetailsJson } from "@/lib/pump-fun";
+import { Sparkles, Headset } from "lucide-react";
 import LaunchCoinFlowModal from "@/components/launchpad/LaunchCoinFlowModal";
 
 interface Props {
@@ -89,17 +88,14 @@ const TokenizeBottomCta = ({ project, linkedTokenTicker, publicView, stagesPct }
               Launch on pump.fun
             </Button>
             <Button
+              asChild
               variant="outline"
               size="lg"
               className="gap-1.5 bg-transparent text-white border-white/20 hover:bg-white/10 hover:text-white"
-              onClick={async () => {
-                await navigator.clipboard.writeText(
-                  pumpFunDetailsJson({ name: project.title, description }),
-                );
-                toast.success("Coin details copied");
-              }}
             >
-              <Copy className="h-3.5 w-3.5" /> Copy details
+              <Link to="/label-services">
+                <Headset className="h-3.5 w-3.5" /> Have us run it
+              </Link>
             </Button>
           </div>
         </div>
