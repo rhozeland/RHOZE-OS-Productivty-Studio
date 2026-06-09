@@ -354,8 +354,8 @@ const App = () => (
                 <Route path="/smartboards/:id" element={<SmartboardDetailPage />} />
                 <Route path="/drop-rooms" element={<Navigate to="/projects" replace />} />
                 <Route path="/drop-rooms/:id" element={<DropRoomDetailPage />} />
-                {/* Legacy Creators Hub → Discover */}
-                <Route path="/creators" element={<CreatorsPage />} />
+                {/* /creators index removed — redirect to Discover. Detail still resolves listings. */}
+                <Route path="/creators" element={<Navigate to="/discover" replace />} />
                 <Route path="/creators/:id" element={<ListingDetailPage />} />
                 {/* Marketplace — unified mosaic with a Flow shortcut */}
                 <Route path="/marketplace" element={<MarketplacePage />} />
