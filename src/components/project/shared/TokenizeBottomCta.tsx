@@ -22,21 +22,32 @@ interface Props {
   linkedTokenTicker?: string | null;
   /** Public surfaces only render the CTA when the release is opted-in to public mode. */
   publicView?: boolean;
+  /** Optional 0-100 completion to drive the dynamic preamble line. */
+  stagesPct?: number;
 }
 
-const TokenizeBottomCta = ({ project, linkedTokenTicker, publicView }: Props) => {
+const TokenizeBottomCta = ({ project, linkedTokenTicker, publicView, stagesPct }: Props) => {
   const [open, setOpen] = useState(false);
 
   if (linkedTokenTicker) return null; // already coined
   if (publicView && !project.is_public) return null;
 
   const headline = project.tokenize_ready
-    ? "A&R flagged this release for tokenization"
+    ? "A&R selected this release for tokenization"
     : "Turn this release into a coin";
 
   const sub = project.tokenize_ready
     ? "Launch on pump.fun with your title, vision, and cover pre-filled. Holders unlock private updates and earn alongside you."
-    : "When the time's right, tokenize this release so supporters can hold a piece and earn alongside you.";
+    : "Let fans hold a piece of this release and earn as it grows. Rhozeland handles the launch.";
+
+  const preamble =
+    typeof stagesPct === "number"
+      ? stagesPct >= 100
+        ? { text: "You're ready — launch when you are", accent: true }
+        : stagesPct < 50
+          ? { text: "Complete more stages to strengthen your launch", accent: false }
+          : null
+      : null;
 
   const description = project.vision ?? project.description ?? undefined;
 
@@ -55,9 +66,19 @@ const TokenizeBottomCta = ({ project, linkedTokenTicker, publicView }: Props) =>
             <div className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-amber-300 font-semibold mb-2">
               <Sparkles className="h-3 w-3" /> Tokenize
             </div>
+            {preamble && (
+              <p
+                className={`text-xs mb-1.5 ${
+                  preamble.accent ? "text-primary font-medium" : "text-white/60"
+                }`}
+              >
+                {preamble.text}
+              </p>
+            )}
             <h3 className="text-xl md:text-2xl font-display font-bold text-white">{headline}</h3>
             <p className="mt-2 text-sm text-white/70 max-w-xl">{sub}</p>
           </div>
+
           <div className="flex flex-col sm:flex-row gap-2 shrink-0">
             <Button
               size="lg"

@@ -681,7 +681,17 @@ const ProjectDetailPage = () => {
       <TokenizeBottomCta
         project={project as any}
         linkedTokenTicker={null}
+        stagesPct={(() => {
+          const topStages = (goals ?? []).filter((g: any) => !g.parent_id);
+          if (topStages.length === 0) return 0;
+          const done = topStages.filter((g: any) => {
+            const s = (g.status || "").toLowerCase();
+            return s === "completed" || s === "shipped" || s === "done";
+          }).length;
+          return Math.round((done / topStages.length) * 100);
+        })()}
       />
+
     </div>
   );
 };
