@@ -28,6 +28,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import ShareCardModal from "@/components/share/ShareCardModal";
 import ProfileProjectCard from "@/components/profile/ProfileProjectCard";
 import LaunchCoinFlowModal from "@/components/launchpad/LaunchCoinFlowModal";
+import StartProjectPicker from "@/components/project/StartProjectPicker";
 
 type TabKey = "projects" | "works" | "reposts";
 
