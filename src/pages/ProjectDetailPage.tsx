@@ -42,6 +42,7 @@ import ProjectBudget from "@/components/project/ProjectBudget";
 import ProgressChart from "@/components/project/ProgressChart";
 import Timeline from "@/components/project/Timeline";
 import Collaborators from "@/components/project/Collaborators";
+import ProjectBackers from "@/components/project/ProjectBackers";
 import RoadmapLockFlow from "@/components/project/RoadmapLockFlow";
 import ProjectDisputes from "@/components/project/ProjectDisputes";
 import ProjectControls from "@/components/project/ProjectControls";
