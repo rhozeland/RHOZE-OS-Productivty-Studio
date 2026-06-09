@@ -107,7 +107,7 @@ const PublishReleaseCard = ({
 
       {isPublic && (
         <div className="flex items-center justify-between text-xs text-muted-foreground pt-1 border-t border-border/60">
-          <span>{cheerCount} cheer{cheerCount === 1 ? "" : "s"}</span>
+          <span>{cheerCount} like{cheerCount === 1 ? "" : "s"}</span>
           {tokenizeReady ? (
             <button
               type="button"
@@ -118,7 +118,7 @@ const PublishReleaseCard = ({
               Tokenize this release →
             </button>
           ) : (
-            <span className="italic">A&R may flag this release for tokenization</span>
+            <span className="italic">A&R may select this release for tokenization</span>
           )}
         </div>
       )}
