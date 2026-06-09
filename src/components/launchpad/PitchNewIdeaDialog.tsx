@@ -430,22 +430,67 @@ export default function PitchNewIdeaDialog({ open, onOpenChange }: Props) {
               </div>
             </div>
 
+            {/* Submit — matches Launch Coin modal CTA */}
+            <style>{`
+              @keyframes rhoze-cta-flow { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+              @keyframes rhoze-cta-shine { 0%{transform:translateX(-120%) skewX(-20deg)} 60%,100%{transform:translateX(220%) skewX(-20deg)} }
+              @keyframes rhoze-cta-float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-2px)} }
+              .rhoze-cta{
+                position:relative; overflow:hidden; isolation:isolate;
+                background-size:200% 200%;
+                animation: rhoze-cta-flow 6s ease-in-out infinite, rhoze-cta-float 4s ease-in-out infinite;
+                box-shadow:
+                  0 1px 0 rgba(255,255,255,0.5) inset,
+                  0 -3px 8px rgba(0,0,0,0.18) inset,
+                  0 10px 24px -8px hsl(330 85% 55% / 0.55),
+                  0 18px 40px -12px hsl(292 84% 55% / 0.45);
+                transform: translateZ(0);
+                transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
+              }
+              .rhoze-cta:hover{
+                transform: translateY(-2px) scale(1.012);
+                filter: brightness(1.06) saturate(1.08);
+                box-shadow:
+                  0 1px 0 rgba(255,255,255,0.6) inset,
+                  0 -3px 8px rgba(0,0,0,0.22) inset,
+                  0 16px 34px -8px hsl(330 85% 55% / 0.65),
+                  0 26px 50px -12px hsl(292 84% 55% / 0.55);
+              }
+              .rhoze-cta:active{ transform: translateY(1px) scale(0.995); filter: brightness(0.98); }
+              .rhoze-cta::before{
+                content:""; position:absolute; inset:0; pointer-events:none;
+                background: linear-gradient(180deg, rgba(255,255,255,0.35), rgba(255,255,255,0) 45%, rgba(0,0,0,0.18));
+                mix-blend-mode: overlay;
+              }
+              .rhoze-cta::after{
+                content:""; position:absolute; top:0; bottom:0; left:0; width:35%;
+                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent);
+                animation: rhoze-cta-shine 3.2s ease-in-out infinite;
+                pointer-events:none;
+              }
+              .rhoze-cta .rhoze-cta-label{ position:relative; z-index:1; display:inline-flex; align-items:center; gap:0.5rem; text-shadow: 0 1px 1px rgba(0,0,0,0.18); }
+              .rhoze-cta:hover .rhoze-cta-arrow{ transform: translateX(4px); }
+              .rhoze-cta-arrow{ transition: transform .25s ease; }
+            `}</style>
             <Button
               onClick={submit}
               disabled={submitting || !title.trim() || summary.trim().length < 20}
-              className="w-full h-12 text-base font-semibold text-white border-0 shadow-lg hover:opacity-95"
+              className="rhoze-cta w-full h-14 text-base font-semibold text-white border-0 rounded-2xl"
               style={{ background: GRADIENT }}
             >
               {submitting ? (
-                <><Loader2 className="h-4 w-4 animate-spin" /> Sending…</>
+                <span className="rhoze-cta-label"><Loader2 className="h-4 w-4 animate-spin" /> Sending…</span>
               ) : (
-                <>Send pitch to A&R <ArrowRight className="h-4 w-4" /></>
+                <span className="rhoze-cta-label">Send to Rhozeland <ArrowRight className="rhoze-cta-arrow h-4 w-4" /></span>
               )}
             </Button>
 
-            <p className="text-[10px] text-muted-foreground text-center">
-              No fee to pitch. 25% platform fee on the final project ($250 min). You approve the scope before anything moves.
+            <p className="text-[11px] text-muted-foreground text-center leading-relaxed">
+              Free to pitch — our A&R team reviews within 24 hours and replies in your Inbox.
+              <br />
+              If we build it together, platform fee is 7–15% based on your tier. Everything else is yours.
             </p>
+
           </div>
         )}
       </DialogContent>
