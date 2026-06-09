@@ -464,6 +464,7 @@ const ProfileDetailPage = () => {
         )}
         {isOwnProfile && <BoostProfileSheet open={boostOpen} onOpenChange={setBoostOpen} />}
         <LaunchCoinFlowModal open={launchCoinOpen} onOpenChange={setLaunchCoinOpen} project={null} />
+        <StartProjectPicker open={startProjectOpen} onOpenChange={setStartProjectOpen} />
         <Dialog open={bookingOpen} onOpenChange={setBookingOpen}>
           <DialogContent className="max-w-6xl w-[95vw] max-h-[92vh] overflow-y-auto p-0">
             <DialogHeader className="px-6 pt-6 pb-3 border-b border-border/40">
