@@ -47,7 +47,7 @@ const ListingsLane = () => {
           </p>
         </div>
         <Link
-          to="/market?view=calls"
+          to="/discover"
           className="text-xs font-medium text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
         >
           See all <ArrowRight className="h-3 w-3" />

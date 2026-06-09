@@ -79,7 +79,7 @@ import SwapHistoryPage from "@/pages/SwapHistoryPage";
 import UnsubscribePage from "@/pages/UnsubscribePage";
 import VerificationPage from "@/pages/VerificationPage";
 import SceneRoomPage from "@/pages/SceneRoomPage";
-import MarketRoomPage from "@/pages/MarketRoomPage";
+
 import VaultRoomPage from "@/pages/VaultRoomPage";
 // v11 — ConnectMatchPage retired; /connect/match now redirects to /market.
 import NotFound from "./pages/NotFound";
@@ -282,9 +282,8 @@ const App = () => (
                 {/* Three-Room front doors (Scene · Market · Vault) — additive,
                     organize existing routes without removing any. */}
                 <Route path="/scene" element={<SceneRoomPage />} />
-                <Route path="/market" element={<MarketRoomPage />} />
-                {/* v11 — Match Made retired; deeplink redirects into /market. */}
-                <Route path="/connect/match" element={<Navigate to="/market" replace />} />
+                <Route path="/market" element={<Navigate to="/discover" replace />} />
+                <Route path="/connect/match" element={<Navigate to="/discover" replace />} />
                 <Route path="/vault" element={<ProtectedRoute><VaultRoomPage /></ProtectedRoute>} />
                 <Route path="/discover" element={<DiscoverPage />} />
                 <Route path="/charts" element={<ChartsPage />} />
@@ -295,8 +294,8 @@ const App = () => (
                     Legacy roots redirect; sub-routes stay live. */}
                 <Route path="/stream" element={<Navigate to="/discover" replace />} />
                 <Route path="/hub" element={<Navigate to="/discover" replace />} />
-                <Route path="/spaces" element={<Navigate to="/market?kind=live" replace />} />
-                <Route path="/events" element={<Navigate to="/market?kind=live" replace />} />
+                <Route path="/spaces" element={<Navigate to="/discover" replace />} />
+                <Route path="/events" element={<Navigate to="/discover" replace />} />
                 <Route path="/events/new" element={<Navigate to="/spaces/events/new" replace />} />
                 <Route path="/events/:id" element={<LegacyEventRedirect />} />
                 <Route path="/events/:id/manage" element={<LegacyEventRedirect manage />} />
