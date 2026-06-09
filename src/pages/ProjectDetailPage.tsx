@@ -655,6 +655,8 @@ const ProjectDetailPage = () => {
             publicSlug={(project as any).public_slug ?? null}
             projectTitle={project.title}
             cheerCount={(project as any).cheer_count ?? 0}
+            stagesTotal={milestones?.length ?? 0}
+            stagesComplete={milestones?.filter((m: any) => m.status === "approved" || m.status === "released").length ?? 0}
           />
         </aside>
       </div>

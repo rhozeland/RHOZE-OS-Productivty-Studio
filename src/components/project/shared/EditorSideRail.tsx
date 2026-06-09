@@ -12,9 +12,18 @@ interface Props {
   publicSlug?: string | null;
   projectTitle: string;
   cheerCount?: number;
+  stagesComplete?: number;
+  stagesTotal?: number;
 }
 
-const EditorSideRail = ({ isPublic, publicSlug, projectTitle, cheerCount = 0 }: Props) => {
+const EditorSideRail = ({
+  isPublic,
+  publicSlug,
+  projectTitle,
+  cheerCount = 0,
+  stagesComplete = 0,
+  stagesTotal = 0,
+}: Props) => {
   const releaseUrl = publicSlug ? `${typeof window !== "undefined" ? window.location.origin : ""}/release/${publicSlug}` : null;
 
   const copyLink = async () => {
@@ -36,12 +45,39 @@ const EditorSideRail = ({ isPublic, publicSlug, projectTitle, cheerCount = 0 }: 
     }
   };
 
+  const pct = stagesTotal > 0 ? Math.round((stagesComplete / stagesTotal) * 100) : 0;
+
+  const StageProgress = () =>
+    stagesTotal > 0 ? (
+      <div className="pt-3 mt-1 border-t border-border/60 space-y-1.5">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
+            Stage progress
+          </span>
+          <span className="text-[10px] tabular-nums text-muted-foreground">{pct}%</span>
+        </div>
+        <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-rose-500 via-fuchsia-500 to-amber-400 transition-all"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+        <p className="text-[11px] text-muted-foreground">
+          {stagesComplete} of {stagesTotal} stages complete
+        </p>
+      </div>
+    ) : null;
+
   return (
     <div className="rounded-2xl border border-border bg-card/70 backdrop-blur p-4 space-y-3">
-      <div className="flex items-baseline justify-between">
+      <div className="flex items-end justify-between gap-3">
         <div>
-          <div className="text-3xl font-display font-bold tabular-nums">{cheerCount}</div>
-          <div className="text-xs text-muted-foreground">{cheerCount === 1 ? "supporter" : "supporters"}</div>
+          <div className="text-5xl font-display font-bold tabular-nums leading-none bg-gradient-to-br from-rose-500 via-fuchsia-500 to-amber-400 bg-clip-text text-transparent">
+            {cheerCount}
+          </div>
+          <div className="text-xs text-muted-foreground mt-1.5 uppercase tracking-wider font-medium">
+            {cheerCount === 1 ? "supporter" : "supporters"}
+          </div>
         </div>
         <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wider font-medium ${isPublic ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300" : "bg-muted text-muted-foreground"}`}>
           {isPublic ? "Public" : "Private"}
@@ -67,11 +103,15 @@ const EditorSideRail = ({ isPublic, publicSlug, projectTitle, cheerCount = 0 }: 
               <Copy className="h-3.5 w-3.5" /> Copy link
             </Button>
           </div>
+          <StageProgress />
         </>
       ) : (
-        <p className="text-[12px] text-muted-foreground leading-snug">
-          Toggle <span className="font-medium text-foreground">Build in public</span> on the cover to share this release with fans.
-        </p>
+        <>
+          <p className="text-[12px] text-muted-foreground leading-snug">
+            Toggle <span className="font-medium text-foreground">Build in public</span> on the cover to share this release with fans.
+          </p>
+          <StageProgress />
+        </>
       )}
     </div>
   );
