@@ -505,15 +505,38 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
     <div className="w-full">
       <div className="w-full min-w-0 space-y-5">
       <div className="flex items-end justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="font-display text-3xl font-bold text-foreground tracking-tight">Inbox</h1>
-          <p className="text-xs text-muted-foreground mt-1">
-            {unreadConvoCount} unread {unreadConvoCount === 1 ? "message" : "messages"}
-            {" · "}
-            {pendingCount} pending {pendingCount === 1 ? "request" : "requests"}
-            {" · "}
-            {contactsList.length} {contactsList.length === 1 ? "conversation" : "conversations"}
-          </p>
+        <div className="space-y-2">
+          <h1 className="font-display text-4xl font-bold text-foreground tracking-tight">Inbox</h1>
+          {(unreadConvoCount > 0 || pendingCount > 0) && (
+            <div className="flex flex-wrap items-center gap-2">
+              {unreadConvoCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => { setActiveTab("messages"); setInboxFilter("all"); }}
+                  className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold text-white shadow-sm transition-transform hover:scale-[1.03]"
+                  style={{ background: "linear-gradient(90deg, hsl(330 90% 60%), hsl(20 95% 60%))" }}
+                >
+                  <span className="h-1.5 w-1.5 rounded-full bg-white/90" />
+                  {unreadConvoCount} unread
+                </button>
+              )}
+              {pendingCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab("projects");
+                    requestAnimationFrame(() => {
+                      document.getElementById("backing-requests-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    });
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1 text-[11px] font-semibold text-foreground border border-primary/60 hover:border-primary transition-colors"
+                >
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                  {pendingCount} pending
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
