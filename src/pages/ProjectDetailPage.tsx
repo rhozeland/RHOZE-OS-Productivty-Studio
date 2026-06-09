@@ -649,18 +649,9 @@ const ProjectDetailPage = () => {
         </TabsContent>
 
         {/* TEAM */}
-        <TabsContent value="team" className="space-y-6">
+        <TabsContent value="team" className="space-y-8">
           <Collaborators projectId={id!} isCollaborative={project.project_type === "collaborative"} />
-          <div>
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Supporters</h3>
-            <SupportersStrip
-              projectId={id!}
-              ownerId={project.user_id}
-              owner={owner ?? null}
-              team={[]}
-              milestones={milestones as any}
-            />
-          </div>
+          <ProjectBackers projectId={id!} />
         </TabsContent>
 
         {isPaid && (
