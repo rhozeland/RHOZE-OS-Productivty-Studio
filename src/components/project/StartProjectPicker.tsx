@@ -15,6 +15,9 @@
  */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   ArrowUp,
   ArrowLeft,
@@ -95,12 +98,46 @@ const StartProjectPicker = ({ open, onOpenChange }: Props) => {
     onOpenChange(v);
   };
 
-  const goToBlank = () => {
+  const { user } = useAuth();
+
+  const createProject = async (opts: { aiPrompt?: string }) => {
+    if (!user) return null;
+    const title = opts.aiPrompt
+      ? opts.aiPrompt.slice(0, 60)
+      : "Untitled release";
+    const coverColor = "#a855f7";
+    const coverUrl = `data:image/svg+xml;utf8,${encodeURIComponent(
+      `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 600'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='${coverColor}'/><stop offset='1' stop-color='#0a0a0a'/></linearGradient></defs><rect width='600' height='600' fill='url(#g)'/></svg>`,
+    )}`;
+    const { data, error } = await (supabase.rpc as any)("create_project_with_owner", {
+      _title: title,
+      _description: opts.aiPrompt ?? "",
+      _vision: opts.aiPrompt ?? "",
+      _scope_of_work: null,
+      _project_type: "collaborative",
+      _status: "active",
+      _cover_color: coverColor,
+      _cover_image_url: coverUrl,
+    });
+    if (error) {
+      toast.error(error.message ?? "Could not create project.");
+      return null;
+    }
+    const project = Array.isArray(data) ? data[0] : data;
+    return project?.id as string | undefined;
+  };
+
+  const goToBlank = async () => {
     if (!requireAuth("post")) return;
     try { sessionStorage.removeItem("startProjectMode"); } catch { /* ignore */ }
     try { sessionStorage.removeItem("startProjectAiPrompt"); } catch { /* ignore */ }
+    setSubmitting(true);
+    const id = await createProject({});
+    setSubmitting(false);
+    if (!id) return;
     handleOpen(false);
-    navigate("/messages?tab=projects&new=1");
+    toast.success("Project created.");
+    navigate(`/projects/${id}`);
   };
 
   const goToAi = () => {
@@ -108,7 +145,7 @@ const StartProjectPicker = ({ open, onOpenChange }: Props) => {
     setPhase("ai");
   };
 
-  const submitAi = () => {
+  const submitAi = async () => {
     const text = prompt.trim();
     if (text.length < 6) return;
     setSubmitting(true);
@@ -116,8 +153,12 @@ const StartProjectPicker = ({ open, onOpenChange }: Props) => {
       sessionStorage.setItem("startProjectMode", "ai");
       sessionStorage.setItem("startProjectAiPrompt", text);
     } catch { /* ignore */ }
+    const id = await createProject({ aiPrompt: text });
+    setSubmitting(false);
+    if (!id) return;
     handleOpen(false);
-    navigate("/messages?tab=projects&new=1");
+    toast.success("Project created — drafting your roadmap…");
+    navigate(`/projects/${id}`);
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
