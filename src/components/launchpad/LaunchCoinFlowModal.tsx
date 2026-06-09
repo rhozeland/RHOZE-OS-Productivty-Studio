@@ -1,6 +1,8 @@
 /**
- * LaunchCoinFlowModal — 3-screen guided "Launch a Coin" experience.
+ * LaunchCoinFlowModal — guided "Launch a Coin" experience.
  *
+ * Screen 0: Pick a release — only shown when no project is preselected.
+ *           Lists the user's projects + a "pitch us an idea" escape hatch.
  * Screen 1: The Hook — coin preview card + pump.fun/Rhozeland framing.
  * Screen 2: Their Story — 3 AI-prefilled editable fields.
  * Screen 3: Confirmation — submitted to Rhozeland A&R team.
@@ -20,7 +22,16 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { ArrowLeft, ArrowRight, Loader2, Rocket, Sparkles, X } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Loader2,
+  Rocket,
+  Sparkles,
+  X,
+  Lightbulb,
+  FolderOpen,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
@@ -28,10 +39,16 @@ import { deriveTicker } from "@/lib/pump-fun";
 import { toast } from "sonner";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
+type PickerProject = { id: string; title: string; description?: string | null };
+
 interface LaunchCoinFlowModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  project: { id: string; title: string; description?: string | null } | null;
+  /**
+   * Pre-selected project. When omitted/null, the modal opens with a picker
+   * letting the user choose from their existing releases or pitch a new idea.
+   */
+  project: PickerProject | null;
   /** Optional: where to send the user from the confirmation screen. */
   backHref?: string;
 }
@@ -59,8 +76,13 @@ const LaunchCoinFlowModal = ({
 }: LaunchCoinFlowModalProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+
+  const startStep: 0 | 1 = project ? 1 : 0;
+  const [step, setStep] = useState<0 | 1 | 2 | 3>(startStep);
   const [submitting, setSubmitting] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<PickerProject | null>(project);
+
+  const activeProject = selectedProject ?? project;
 
   // Pull avatar for the coin preview.
   const { data: profile } = useQuery({
@@ -76,20 +98,44 @@ const LaunchCoinFlowModal = ({
     },
   });
 
-  const initialName = project?.title ?? "Untitled Release";
+  // Fetch the user's own projects for the picker step.
+  const { data: myProjects, isLoading: projectsLoading } = useQuery({
+    queryKey: ["launch-coin-my-projects", user?.id],
+    enabled: !!user && open && !project,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("id,title,description,linked_token_id,updated_at")
+        .eq("user_id", user!.id)
+        .order("updated_at", { ascending: false })
+        .limit(40);
+      if (error) throw error;
+      return (data ?? []) as Array<
+        PickerProject & { linked_token_id: string | null; updated_at: string }
+      >;
+    },
+  });
+
+  const initialName = activeProject?.title ?? "Untitled Release";
   const initialPitch = useMemo(
-    () => buildPitch(initialName, project?.description),
-    [initialName, project?.description],
+    () => buildPitch(initialName, activeProject?.description),
+    [initialName, activeProject?.description],
   );
 
   const [coinName, setCoinName] = useState(initialName);
   const [pitch, setPitch] = useState(initialPitch);
   const [holderBenefits, setHolderBenefits] = useState(DEFAULT_HOLDER_BENEFITS);
 
-  // Re-sync prefills when a different project opens the modal.
+  // Re-sync prefills when the modal opens or the selected project changes.
   useEffect(() => {
     if (open) {
-      setStep(1);
+      setStep(project ? 1 : 0);
+      setSelectedProject(project);
+    }
+  }, [open, project]);
+
+  useEffect(() => {
+    if (open) {
       setCoinName(initialName);
       setPitch(initialPitch);
       setHolderBenefits(DEFAULT_HOLDER_BENEFITS);
@@ -113,7 +159,7 @@ const LaunchCoinFlowModal = ({
       `Coin: ${coinName.trim()} ($${ticker})`,
       `Pitch: ${pitch.trim()}`,
       `Holder benefits: ${holderBenefits.trim() || "—"}`,
-      project ? `Project: ${project.title} (${project.id})` : null,
+      activeProject ? `Project: ${activeProject.title} (${activeProject.id})` : null,
     ]
       .filter(Boolean)
       .join("\n");
@@ -164,6 +210,9 @@ const LaunchCoinFlowModal = ({
 
   const close = () => onOpenChange(false);
 
+  const confirmationHref =
+    backHref ?? (activeProject ? `/projects/${activeProject.id}` : "/my-projects");
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -172,7 +221,7 @@ const LaunchCoinFlowModal = ({
         <VisuallyHidden>
           <DialogTitle>Launch a Coin</DialogTitle>
           <DialogDescription>
-            Three step flow to submit your release coin to Rhozeland's A&R team.
+            Pick a release (or pitch a new idea) and submit it to Rhozeland's A&R team to coin it on pump.fun.
           </DialogDescription>
         </VisuallyHidden>
 
@@ -186,16 +235,127 @@ const LaunchCoinFlowModal = ({
           <X className="h-4 w-4" />
         </button>
 
-        {/* Back (top left, step 2 only) */}
-        {step === 2 && (
+        {/* Back (top left, steps 1 & 2) */}
+        {(step === 1 || step === 2) && (
           <button
             type="button"
-            onClick={() => setStep(1)}
+            onClick={() => {
+              if (step === 2) setStep(1);
+              else if (step === 1 && !project) setStep(0);
+              else close();
+            }}
             className="absolute left-3 top-3 z-20 h-8 w-8 rounded-full bg-foreground/5 hover:bg-foreground/10 flex items-center justify-center transition-colors"
             aria-label="Back"
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
+        )}
+
+        {/* ── Screen 0 — Project picker ──────────────────────── */}
+        {step === 0 && (
+          <div className="relative px-6 pt-12 pb-6 sm:px-10 sm:pt-14 sm:pb-8">
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0 opacity-60"
+              style={{
+                background:
+                  "radial-gradient(circle at 50% 30%, hsl(330 85% 60% / 0.15), transparent 55%), radial-gradient(circle at 50% 80%, hsl(38 92% 55% / 0.12), transparent 60%)",
+              }}
+            />
+            <div className="relative">
+              <div className="text-center space-y-1.5 mb-6">
+                <h2 className="font-display text-2xl sm:text-3xl font-bold tracking-tight">
+                  Which release are you coining?
+                </h2>
+                <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                  Pick one of your existing releases — or pitch us a new idea and we'll build it with you.
+                </p>
+              </div>
+
+              {/* Project list */}
+              <div className="space-y-2 max-h-[44vh] overflow-y-auto -mx-1 px-1">
+                {projectsLoading && (
+                  <div className="flex items-center justify-center py-10 text-sm text-muted-foreground gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" /> Loading your releases…
+                  </div>
+                )}
+
+                {!projectsLoading && (myProjects ?? []).length === 0 && (
+                  <div className="rounded-xl border border-dashed border-border bg-muted/30 px-4 py-6 text-center text-sm text-muted-foreground">
+                    You haven't started a release yet.
+                  </div>
+                )}
+
+                {!projectsLoading &&
+                  (myProjects ?? []).map((p) => {
+                    const alreadyCoined = !!p.linked_token_id;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        disabled={alreadyCoined}
+                        onClick={() => {
+                          setSelectedProject({
+                            id: p.id,
+                            title: p.title,
+                            description: p.description ?? null,
+                          });
+                          setStep(1);
+                        }}
+                        className="group w-full text-left flex items-center gap-3 rounded-xl border border-border bg-card/60 hover:bg-card hover:border-fuchsia-500/40 transition px-3 py-3 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-card/60 disabled:hover:border-border"
+                      >
+                        <div className="h-9 w-9 shrink-0 rounded-lg bg-foreground/5 flex items-center justify-center">
+                          <FolderOpen className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-sm truncate">{p.title}</p>
+                          {p.description && (
+                            <p className="text-xs text-muted-foreground truncate">
+                              {p.description}
+                            </p>
+                          )}
+                        </div>
+                        {alreadyCoined ? (
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground shrink-0">
+                            Coined
+                          </span>
+                        ) : (
+                          <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition" />
+                        )}
+                      </button>
+                    );
+                  })}
+              </div>
+
+              {/* Divider */}
+              <div className="my-4 flex items-center gap-3 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                <div className="flex-1 h-px bg-border" />
+                or
+                <div className="flex-1 h-px bg-border" />
+              </div>
+
+              {/* New idea escape hatch */}
+              <button
+                type="button"
+                onClick={() => {
+                  close();
+                  navigate("/label-services");
+                }}
+                className="w-full flex items-center gap-3 rounded-xl border border-border bg-card/60 hover:bg-card hover:border-amber-500/40 transition px-3 py-3 text-left"
+              >
+                <div className="h-9 w-9 shrink-0 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                  <Lightbulb className="h-4 w-4 text-amber-500" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-sm">Pitch us a new idea</p>
+                  <p className="text-xs text-muted-foreground">
+                    Send our A&R team a proposal — we'll plan the release and the coin together.
+                  </p>
+                </div>
+                <ArrowRight className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </div>
+          </div>
         )}
 
         {/* ── Screen 1 ───────────────────────────────────────── */}
@@ -217,6 +377,12 @@ const LaunchCoinFlowModal = ({
                 <p className="text-sm text-muted-foreground max-w-md mx-auto">
                   Rhozeland handles everything — wallet, launch, and listing on pump.fun
                 </p>
+                {activeProject && (
+                  <p className="text-xs text-muted-foreground/80">
+                    For release:{" "}
+                    <span className="font-medium text-foreground">{activeProject.title}</span>
+                  </p>
+                )}
               </div>
 
               {/* Coin preview card */}
@@ -376,12 +542,12 @@ const LaunchCoinFlowModal = ({
               <Button
                 onClick={() => {
                   close();
-                  if (backHref) navigate(backHref);
+                  navigate(confirmationHref);
                 }}
                 className="w-full h-12 text-base font-semibold text-white border-0 shadow-lg hover:opacity-95"
                 style={{ background: GRADIENT }}
               >
-                Back to my project
+                {activeProject ? "Back to my project" : "View my projects"}
               </Button>
               <p className="text-[11px] text-muted-foreground">
                 Questions? Email us at{" "}
