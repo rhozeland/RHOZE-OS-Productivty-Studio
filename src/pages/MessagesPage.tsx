@@ -947,56 +947,42 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
         </TabsContent>
 
 
-        <TabsContent value="projects" className="mt-4 space-y-6">
-          <section className="surface-card p-4 sm:p-5 space-y-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                  <Store className="h-4 w-4 text-primary" /> Interest inbox
-                  {pendingCount > 0 && (
-                    <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-medium text-primary-foreground">
-                      {pendingCount}
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Keep this simple: interest comes in here, then you turn the right fit into a project roadmap.
-                </p>
+        <TabsContent value="projects" className="mt-6 space-y-8">
+          {!!allInquiries?.length && (
+            <section id="backing-requests-section" className="space-y-3 scroll-mt-24">
+              <div className="flex items-center gap-2 px-1">
+                <h2 className="text-[11px] font-bold uppercase tracking-[0.14em] text-primary">
+                  Backing requests
+                </h2>
+                {pendingCount > 0 && (
+                  <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
+                    {pendingCount}
+                  </span>
+                )}
               </div>
-              <div className="shrink-0">
-                <PostMenuButton
-                  trigger={
-                    <Button size="sm" className="rounded-full gap-1.5">
-                      <Plus className="h-3.5 w-3.5" /> Post
-                    </Button>
-                  }
-                />
-              </div>
-            </div>
-
-            {!!allInquiries?.length ? (
-              <div id="inquiries-section" className="space-y-3 scroll-mt-24">
+              <div className="space-y-3">
                 {allInquiries.map((i) => renderInquiry(i))}
               </div>
-            ) : (
-              <div className="rounded-2xl border border-dashed border-border bg-muted/20 px-4 py-8 text-center">
-                <p className="text-sm font-medium text-foreground">No interest yet</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Post a listing, event, or space from Connect and the replies will land here.
-                </p>
-              </div>
-            )}
-          </section>
+            </section>
+          )}
 
-          {/* Active project threads — chat, roadmap, vault, splits. */}
-          <div>
-            <div className="flex items-center gap-2 mb-3 px-1">
-              <FolderKanban className="h-4 w-4 text-primary" />
-              <h2 className="text-sm font-semibold text-foreground">Active projects</h2>
+          <section className="space-y-3">
+            <div className="flex items-center justify-between gap-2 px-1">
+              <h2 className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                Active collabs
+              </h2>
+              <PostMenuButton
+                trigger={
+                  <Button size="sm" variant="outline" className="rounded-full gap-1.5 h-8">
+                    <Plus className="h-3.5 w-3.5" /> New collab
+                  </Button>
+                }
+              />
             </div>
             <ProjectsInbox userId={user.id} />
-          </div>
+          </section>
         </TabsContent>
+
 
         {/* Events + Flow live on Discover now (toggles on the mosaic). */}
 
