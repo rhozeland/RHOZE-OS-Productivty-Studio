@@ -755,54 +755,55 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
             {/* Chat Area */}
             <div className={cn("flex flex-1 flex-col bg-background", !selectedUser ? "hidden md:flex" : "flex")}>
               {!selectedUser ? (
-                <div className="flex flex-1 flex-col items-center justify-center px-6 py-8">
-                  <p className="font-display text-base font-semibold text-foreground mb-1">
-                    Nothing open yet
-                  </p>
-                  <p className="text-xs text-muted-foreground mb-6">
-                    Start a conversation, or try one of these:
-                  </p>
-                  <div className="w-full max-w-sm space-y-2">
+                <div className="flex flex-1 flex-col items-center justify-center px-6 py-10">
+                  <div className="w-full max-w-sm space-y-3">
                     {[
                       {
-                        icon: UserPlus,
-                        title: "Message someone you follow",
-                        desc: "Pick from people you follow",
-                        onClick: () => setFollowingOpen(true),
+                        show: true,
+                        icon: User,
+                        title: "Message someone",
+                        desc: "Reach out to an artist, producer, or fan you follow.",
+                        cta: "Find someone",
+                        onClick: () => navigate("/discover"),
                       },
                       {
+                        show: pendingCount > 0,
                         icon: Inbox,
-                        title: "Respond to a request",
-                        desc: allInquiries?.length
-                          ? `${allInquiries.length} waiting`
-                          : "Check pending requests",
-                        onClick: () => setActiveTab("projects"),
+                        title: `You have ${pendingCount} pending ${pendingCount === 1 ? "inquiry" : "inquiries"}`,
+                        desc: "Someone is interested in working with you.",
+                        cta: "Review now",
+                        onClick: () => {
+                          setActiveTab("projects");
+                          requestAnimationFrame(() => {
+                            document.getElementById("backing-requests-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                          });
+                        },
                       },
                       {
-                        icon: Compass,
-                        title: "Browse listings to find collabs",
-                        desc: "Open Discover · Offerings",
+                        show: true,
+                        icon: Briefcase,
+                        title: "Find a collab",
+                        desc: "Browse gigs from artists who need your skills.",
+                        cta: "Browse gigs",
                         onClick: () => navigate("/discover?view=offerings"),
                       },
-                    ].map((s) => (
+                    ].filter((s) => s.show).map((s) => (
                       <button
                         key={s.title}
                         type="button"
                         onClick={s.onClick}
-                        className="group w-full flex items-center gap-3 rounded-xl border border-border/60 bg-card hover:border-foreground/30 hover:bg-muted/40 transition-all px-4 py-3 text-left"
+                        className="group w-full flex items-start gap-3 rounded-2xl border border-border/60 bg-card hover:border-foreground/30 hover:bg-muted/40 transition-all p-4 text-left"
                       >
-                        <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                          <s.icon className="h-4 w-4 text-primary" />
+                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                          <s.icon className="h-5 w-5 text-primary" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-foreground truncate">
-                            {s.title}
-                          </p>
-                          <p className="text-[11px] text-muted-foreground truncate">
-                            {s.desc}
+                          <p className="text-sm font-semibold text-foreground">{s.title}</p>
+                          <p className="text-[12px] text-muted-foreground mt-0.5">{s.desc}</p>
+                          <p className="text-[12px] font-semibold text-primary mt-2 inline-flex items-center gap-1 group-hover:gap-1.5 transition-all">
+                            {s.cta} <ArrowRight className="h-3.5 w-3.5" />
                           </p>
                         </div>
-                        <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all shrink-0" />
                       </button>
                     ))}
                   </div>
