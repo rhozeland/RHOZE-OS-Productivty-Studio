@@ -486,7 +486,7 @@ export default function PitchNewIdeaDialog({ open, onOpenChange }: Props) {
             </Button>
 
             <p className="text-[11px] text-muted-foreground text-center leading-relaxed">
-              Free to pitch — our A&R team reviews within 24 hours and replies in your Inbox.
+              Free to pitch — our A&R team reviews within 48 hours and replies in your Inbox.
               <br />
               If we build it together, platform fee is 7–15% based on your tier. Everything else is yours.
             </p>
