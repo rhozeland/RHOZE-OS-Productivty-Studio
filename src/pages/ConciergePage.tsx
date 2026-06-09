@@ -10,7 +10,7 @@
  */
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ConciergeIntakeSheet } from "@/components/concierge/ConciergeIntakeSheet";
+import StartProjectPicker from "@/components/project/StartProjectPicker";
 import {
   Sparkles,
   ArrowRight,
@@ -271,7 +271,7 @@ export default function ConciergePage() {
         </button>
       </section>
 
-      <ConciergeIntakeSheet open={open} onOpenChange={setOpen} />
+      <StartProjectPicker open={open} onOpenChange={setOpen} />
     </main>
   );
 }
