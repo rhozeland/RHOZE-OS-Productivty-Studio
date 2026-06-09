@@ -1298,7 +1298,7 @@ const FlowModePage = () => {
       setExpandedCard(false);
       setIsAdvancing(false);
     }, 200);
-  }, [searchParams, setSearchParams, currentIndex, allItems.length, baseItems.length, swipeLocked, isAdvancing, currentItem?.id]);
+  }, [searchParams, setSearchParams, currentIndex, allItems.length, baseItems.length, isAdvancing, currentItem?.id]);
 
   // Clean up the advancing timer on unmount so it can't fire after the
   // component is gone.
