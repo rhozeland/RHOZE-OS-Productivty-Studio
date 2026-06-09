@@ -70,6 +70,9 @@ interface LaunchCoinFlowModalProps {
 
 const GRADIENT =
   "linear-gradient(120deg, hsl(330 85% 60%) 0%, hsl(292 84% 61%) 25%, hsl(38 92% 55%) 50%, hsl(292 84% 61%) 75%, hsl(330 85% 60%) 100%)";
+// Cooler gradient for non-CTA accents (timeline pills, AI sparkles) so the warm CTA stays the loudest thing on screen
+const COOL_GRADIENT =
+  "linear-gradient(120deg, hsl(200 90% 58%) 0%, hsl(260 80% 65%) 50%, hsl(170 75% 50%) 100%)";
 
 type ReleaseType = "single" | "ep" | "album" | "beat-tape" | "visual" | "other";
 const RELEASE_TYPES: { value: ReleaseType; label: string }[] = [
