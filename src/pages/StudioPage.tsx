@@ -63,6 +63,15 @@ import {
 
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+
 import { cn } from "@/lib/utils";
 import { fetchCreatorContext } from "@/lib/creator-context";
 import { composeMilestoneDescription, type DraftedMilestone, type AssetRef, type MilestonePhase, PHASE_ORDER, PHASE_LABELS } from "@/hooks/useAiRoadmapDraft";
@@ -625,23 +634,45 @@ const StudioPage = () => {
               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              {livePublicProjects.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => setLiveIdx((i) => i + 1)}
-                  className="h-7 w-7 rounded-full bg-background/10 hover:bg-background/20 flex items-center justify-center transition-colors"
-                  aria-label="Next live release"
+              {livePublicProjects.length > 1 ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="inline-flex items-center gap-1 text-xs font-medium hover:underline focus:outline-none">
+                    View release <ArrowUpRight className="h-3.5 w-3.5" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-72">
+                    <DropdownMenuLabel className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
+                      Your live releases ({livePublicProjects.length})
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {livePublicProjects.map((p) => {
+                      const stats = projectStats(p);
+                      const supporters = supporterCounts?.[p.id] ?? 0;
+                      return (
+                        <DropdownMenuItem key={p.id} asChild>
+                          <Link
+                            to={`/release/${p.public_slug}`}
+                            className="flex flex-col items-start gap-0.5 cursor-pointer"
+                          >
+                            <span className="text-sm font-medium truncate w-full">{p.title}</span>
+                            <span className="text-[11px] text-muted-foreground">
+                              {supporters} supporter{supporters === 1 ? "" : "s"} · {stats.done}/{stats.total} milestones
+                            </span>
+                          </Link>
+                        </DropdownMenuItem>
+                      );
+                    })}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Link
+                  to={`/release/${featuredPublic.public_slug}`}
+                  className="inline-flex items-center gap-1 text-xs font-medium hover:underline"
                 >
-                  <ChevronRight className="h-3.5 w-3.5" />
-                </button>
+                  View release <ArrowUpRight className="h-3.5 w-3.5" />
+                </Link>
               )}
-              <Link
-                to={`/release/${featuredPublic.public_slug}`}
-                className="inline-flex items-center gap-1 text-xs font-medium hover:underline"
-              >
-                View release <ArrowUpRight className="h-3.5 w-3.5" />
-              </Link>
             </div>
+
           </div>
         </div>
       )}
