@@ -338,7 +338,7 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
       })}
 
       {(!collaborators || collaborators.length === 0) && (
-        <p className="mt-2 text-xs text-muted-foreground">No collaborators yet.</p>
+        <p className="mt-2 text-xs text-muted-foreground">No collaborators yet — invite someone from your network.</p>
       )}
     </div>
   );
