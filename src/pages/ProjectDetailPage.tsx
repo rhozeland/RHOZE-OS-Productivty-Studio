@@ -42,6 +42,7 @@ import ProjectBudget from "@/components/project/ProjectBudget";
 import ProgressChart from "@/components/project/ProgressChart";
 import Timeline from "@/components/project/Timeline";
 import Collaborators from "@/components/project/Collaborators";
+import ProjectBackers from "@/components/project/ProjectBackers";
 import RoadmapLockFlow from "@/components/project/RoadmapLockFlow";
 import ProjectDisputes from "@/components/project/ProjectDisputes";
 import ProjectControls from "@/components/project/ProjectControls";
@@ -649,18 +650,9 @@ const ProjectDetailPage = () => {
         </TabsContent>
 
         {/* TEAM */}
-        <TabsContent value="team" className="space-y-6">
+        <TabsContent value="team" className="space-y-8">
           <Collaborators projectId={id!} isCollaborative={project.project_type === "collaborative"} />
-          <div>
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Supporters</h3>
-            <SupportersStrip
-              projectId={id!}
-              ownerId={project.user_id}
-              owner={owner ?? null}
-              team={[]}
-              milestones={milestones as any}
-            />
-          </div>
+          <ProjectBackers projectId={id!} />
         </TabsContent>
 
         {isPaid && (
