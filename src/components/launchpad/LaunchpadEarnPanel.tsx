@@ -284,7 +284,7 @@ const LaunchpadEarnPanel = () => {
             Every action contributes to your on-chain reputation.
           </p>
           <Link
-            to="/dashboard?tab=rewards"
+            to="/credits?tab=how"
             className="text-[11px] font-medium text-foreground hover:text-emerald-500 inline-flex items-center gap-1 shrink-0"
           >
             See all rewards <ArrowRight className="h-3 w-3" />
