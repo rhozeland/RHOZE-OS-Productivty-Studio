@@ -340,7 +340,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
                   />
                 </div>
               </div>
-                <div className="border-t border-border" onClick={(e) => e.stopPropagation()}>
+                <div className={cn("border-t border-border", mediaInteractionClass)} onClick={(e) => e.stopPropagation()}>
                   <AudioPreview src={item.file_url} title={item.title} />
                 </div>
               </div>
@@ -365,7 +365,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
         {isVideo && (
           <div className="relative">
             {youtubeId ? (
-              <div className="aspect-video" onClick={(e) => e.stopPropagation()}>
+              <div className={cn("aspect-video", mediaInteractionClass)} onClick={(e) => e.stopPropagation()}>
                 <iframe
                   src={`https://www.youtube.com/embed/${youtubeId}?rel=0`}
                   width="100%"
@@ -377,7 +377,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
                 />
               </div>
             ) : item.file_url ? (
-              <div className="aspect-video overflow-hidden bg-foreground/5" onClick={(e) => e.stopPropagation()}>
+              <div className={cn("aspect-video overflow-hidden bg-foreground/5", mediaInteractionClass)} onClick={(e) => e.stopPropagation()}>
                 <video
                   src={`${item.file_url}#t=0.1`}
                   controls
@@ -405,7 +405,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
             {item.link_url ? (
               <div className="min-h-[200px] flex flex-col overflow-hidden">
                 {/* Embedded article preview */}
-                <div className="flex-1 overflow-hidden rounded-t-[20px]" onClick={(e) => e.stopPropagation()}>
+                <div className={cn("flex-1 overflow-hidden rounded-t-[20px]", mediaInteractionClass)} onClick={(e) => e.stopPropagation()}>
                   <iframe
                     src={item.link_url}
                     title={item.title}
