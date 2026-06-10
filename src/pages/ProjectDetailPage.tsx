@@ -415,22 +415,6 @@ const ProjectDetailPage = () => {
 
           {/* OVERVIEW */}
           <TabsContent value="overview" className="space-y-8">
-            {/* Owner-only nudge: no stages = not backable by fans */}
-            {canManageProject && (goals?.length ?? 0) === 0 && (
-              <button
-                type="button"
-                onClick={() => setTab("roadmap")}
-                className="w-full text-left rounded-xl border border-amber-500/30 bg-amber-500/5 px-4 py-3 hover:bg-amber-500/10 transition-colors flex items-center justify-between gap-3"
-              >
-                <span className="text-xs text-foreground/80">
-                  Add at least one stage to make this project backable by fans
-                </span>
-                <span className="text-xs font-medium text-amber-600 dark:text-amber-400 shrink-0">
-                  Open roadmap →
-                </span>
-              </button>
-            )}
-
             {/* Thin progress bar — replaces the old stat boxes */}
             {(milestones?.length ?? 0) > 0 && (() => {
               const ms = milestones ?? [];
