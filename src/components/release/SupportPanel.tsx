@@ -1,21 +1,28 @@
 /**
  * SupportPanel — primary CTA stack on the public release page.
  *
- * One highlighted "Support" button (toggles a row in `project_cheers`),
- * plus secondary actions: jump to comments, share to your own feed (creates
- * a `flow_items` row pointing at the release URL), and — when the release
- * has a linked approved coin — a buy CTA that deeplinks to pump.fun.
- *
- * Supporters earn $RHOZE toward their Creator Pass via the standard
- * engagement reward gate (action: like_work) on first support per project.
+ * Click flow:
+ *   1. "Support this release" → opens a confirm dialog with a
+ *      "Share to my profile" toggle (default ON).
+ *   2. Confirming inserts `project_cheers { shared_to_profile }` and
+ *      pops a celebratory success dialog with a shortcut to the
+ *      supporter's profile → Supporting tab.
+ *   3. Already supporting → button flips to "Supporting" and clicking
+ *      removes the cheer; an inline toggle exposes profile visibility.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Heart, MessageCircle, Share2, Coins, Copy, Sparkles } from "lucide-react";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 import { awardEngagementReward } from "@/lib/award-engagement-reward";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +31,7 @@ interface Props {
   projectTitle: string;
   cheerCount: number;
   iSupport: boolean;
+  iSupportShared?: boolean;
   releaseUrl: string;
   ownerName?: string | null;
   coverColor?: string | null;
@@ -38,9 +46,9 @@ const SupportPanel = ({
   projectTitle,
   cheerCount,
   iSupport,
+  iSupportShared,
   releaseUrl,
   ownerName,
-  coverColor,
   coverImageUrl,
   linkedTokenTicker,
   linkedTokenMint,
@@ -48,40 +56,89 @@ const SupportPanel = ({
 }: Props) => {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const navigate = useNavigate();
+  const sb: any = supabase;
   const [sharing, setSharing] = useState(false);
 
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [successOpen, setSuccessOpen] = useState(false);
+  const [shareToProfile, setShareToProfile] = useState(true);
+
+  useEffect(() => {
+    if (iSupport) setShareToProfile(!!iSupportShared);
+  }, [iSupport, iSupportShared]);
+
   const support = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (share: boolean) => {
       if (!user) throw new Error("Sign in to support");
-      if (iSupport) {
-        const { error } = await supabase
-          .from("project_cheers")
-          .delete()
-          .eq("project_id", projectId)
-          .eq("user_id", user.id);
-        if (error) throw error;
-        return { added: false };
-      }
-      const { error } = await supabase
+      const { error } = await sb
         .from("project_cheers")
-        .insert({ project_id: projectId, user_id: user.id });
+        .insert({ project_id: projectId, user_id: user.id, shared_to_profile: share });
       if (error) throw error;
-      // Drip $RHOZE toward Creator Pass — capped daily by the gate.
       await awardEngagementReward({
         userId: user.id,
         action: "like_work",
         referenceId: projectId,
         description: `Supported release: ${projectTitle}`,
       });
-      return { added: true };
     },
-    onSuccess: ({ added }) => {
+    onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["release"] });
       qc.invalidateQueries({ queryKey: ["release-mycheer"] });
-      if (added) toast.success("You're now supporting this release 🌹");
+      qc.invalidateQueries({ queryKey: ["supporting-cheers"] });
+      setConfirmOpen(false);
+      setSuccessOpen(true);
     },
     onError: (e: any) => toast.error(e?.message ?? "Could not support"),
   });
+
+  const unsupport = useMutation({
+    mutationFn: async () => {
+      if (!user) return;
+      const { error } = await sb
+        .from("project_cheers")
+        .delete()
+        .eq("project_id", projectId)
+        .eq("user_id", user.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["release"] });
+      qc.invalidateQueries({ queryKey: ["release-mycheer"] });
+      qc.invalidateQueries({ queryKey: ["supporting-cheers"] });
+      toast.success("Removed your support");
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Could not update"),
+  });
+
+  const updateShare = useMutation({
+    mutationFn: async (share: boolean) => {
+      if (!user) return;
+      const { error } = await sb
+        .from("project_cheers")
+        .update({ shared_to_profile: share })
+        .eq("project_id", projectId)
+        .eq("user_id", user.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["release-mycheer"] });
+      qc.invalidateQueries({ queryKey: ["supporting-cheers"] });
+    },
+  });
+
+  const onSupportClick = () => {
+    if (!user) {
+      toast.error("Sign in to support");
+      return;
+    }
+    if (iSupport) {
+      unsupport.mutate();
+    } else {
+      setShareToProfile(true);
+      setConfirmOpen(true);
+    }
+  };
 
   const shareToFeed = async () => {
     if (!user) {
@@ -128,11 +185,10 @@ const SupportPanel = ({
         <Heart className={cn("h-6 w-6", iSupport ? "fill-rose-500 text-rose-500" : "text-rose-500")} />
       </div>
 
-      {/* Primary highlighted Support button */}
       <Button
         size="lg"
-        onClick={() => support.mutate()}
-        disabled={support.isPending}
+        onClick={onSupportClick}
+        disabled={support.isPending || unsupport.isPending}
         className={cn(
           "w-full gap-2 font-semibold shadow-lg shadow-rose-500/20 transition-all",
           iSupport
@@ -148,7 +204,27 @@ const SupportPanel = ({
         Supporting drips $RHOZE toward your Creator Pass and lets you comment, share, and trade.
       </p>
 
-      {/* Secondary actions */}
+      {iSupport && (
+        <div className="rounded-xl border border-border bg-muted/30 p-3 flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <Label htmlFor="release-share-toggle" className="text-xs font-semibold">
+              Show on my profile
+            </Label>
+            <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
+              {shareToProfile ? "Visible in your Supporting tab." : "Kept private to you."}
+            </p>
+          </div>
+          <Switch
+            id="release-share-toggle"
+            checked={shareToProfile}
+            onCheckedChange={(v) => {
+              setShareToProfile(v);
+              updateShare.mutate(v);
+            }}
+          />
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-2 pt-1">
         <Button variant="outline" size="sm" onClick={onScrollToComments} className="gap-1.5">
           <MessageCircle className="h-3.5 w-3.5" /> Comment
@@ -188,6 +264,76 @@ const SupportPanel = ({
           <Sparkles className="h-3.5 w-3.5 text-emerald-500" />
         </a>
       )}
+
+      {/* Confirm dialog */}
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display text-xl">Support this release?</DialogTitle>
+            <DialogDescription>
+              You're about to back <span className="font-semibold text-foreground">{projectTitle}</span>
+              {ownerName ? <> by <span className="font-semibold text-foreground">{ownerName}</span></> : null}.
+              Supporting drips $RHOZE toward your Creator Pass.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="rounded-xl border border-border bg-muted/30 p-3 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <Label htmlFor="release-share-confirm" className="text-sm font-semibold">
+                Share to my profile
+              </Label>
+              <p className="text-xs text-muted-foreground leading-tight mt-0.5">
+                Show this release in the Supporting tab on your profile so others see what you back.
+              </p>
+            </div>
+            <Switch id="release-share-confirm" checked={shareToProfile} onCheckedChange={setShareToProfile} />
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setConfirmOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => support.mutate(shareToProfile)}
+              disabled={support.isPending}
+              className="bg-gradient-to-r from-rose-500 via-fuchsia-500 to-amber-400 text-white hover:opacity-95"
+            >
+              <Heart className="h-4 w-4 mr-1.5" />
+              {support.isPending ? "Supporting…" : "Confirm support"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Success dialog */}
+      <Dialog open={successOpen} onOpenChange={setSuccessOpen}>
+        <DialogContent className="sm:max-w-md text-center">
+          <div className="mx-auto -mt-2 mb-1 h-16 w-16 rounded-full bg-gradient-to-br from-rose-500 via-fuchsia-500 to-amber-500 flex items-center justify-center shadow-lg">
+            <Heart className="h-7 w-7 text-white fill-white" />
+          </div>
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl text-center">You're in 🌹</DialogTitle>
+            <DialogDescription className="text-center">
+              {shareToProfile ? (
+                <>You're now publicly supporting <span className="font-semibold text-foreground">{projectTitle}</span>. It'll show up under <span className="font-semibold text-foreground">Supporting</span> on your profile.</>
+              ) : (
+                <>Your support is recorded privately. Flip the toggle on the release any time to share it on your profile.</>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-center gap-2">
+            {user && (
+              <Button variant="outline" onClick={() => navigate(`/profile/${user.id}?tab=supporting`)}>
+                View my Supporting
+              </Button>
+            )}
+            <Button
+              onClick={() => setSuccessOpen(false)}
+              className="bg-foreground text-background hover:bg-foreground/90"
+            >
+              Done
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
