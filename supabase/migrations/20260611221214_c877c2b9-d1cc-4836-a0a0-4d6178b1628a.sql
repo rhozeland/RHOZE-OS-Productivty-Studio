@@ -1,0 +1,2 @@
+ALTER TABLE public.project_cheers ADD COLUMN IF NOT EXISTS shared_to_profile boolean NOT NULL DEFAULT false;
+CREATE INDEX IF NOT EXISTS idx_project_cheers_user_shared ON public.project_cheers(user_id, shared_to_profile);
