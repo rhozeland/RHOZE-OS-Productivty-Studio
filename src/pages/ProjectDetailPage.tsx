@@ -537,6 +537,8 @@ const ProjectDetailPage = () => {
                 </div>
               </button>
             </div>
+              );
+            })()}
 
             {/* Timeline shortcut */}
             <button
