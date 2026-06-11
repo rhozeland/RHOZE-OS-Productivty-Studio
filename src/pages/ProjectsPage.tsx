@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, MoreHorizontal, Trash2, Users, User, Calendar, CheckCircle2, Clock, Sparkles } from "lucide-react";
+import { Plus, MoreHorizontal, Trash2, Users, User, Calendar, CheckCircle2, Clock, Sparkles, Wand2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -33,6 +33,31 @@ const ProjectsPage = () => {
   const [coverColor, setCoverColor] = useState(COLORS[0]);
   const [projectType, setProjectType] = useState<"paid" | "collaborative">("paid");
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
+  const [generatingTitle, setGeneratingTitle] = useState(false);
+
+  const regenerateTitle = async () => {
+    const promptText = description.trim();
+    if (promptText.length < 3) {
+      toast.error("Write a brief first so AI has something to work with.");
+      return;
+    }
+    setGeneratingTitle(true);
+    try {
+      const { data: gen, error: genErr } = await supabase.functions.invoke(
+        "generate-project-title",
+        { body: { prompt: promptText } },
+      );
+      if (genErr) throw genErr;
+      const next = (gen as any)?.title?.trim();
+      if (!next) throw new Error("AI returned an empty title");
+      setTitle(next);
+      toast.success("New title drafted");
+    } catch (e: any) {
+      toast.error(e?.message || "Couldn't generate a title");
+    } finally {
+      setGeneratingTitle(false);
+    }
+  };
 
   const { data: projects, isLoading } = useQuery({
     queryKey: ["my-projects", user?.id],
@@ -272,16 +297,36 @@ const ProjectsPage = () => {
                   AI will draft a title and a roadmap from this. You can rename it anytime.
                 </p>
               </div>
-              <details className="text-xs">
+              <details className="text-xs" open={!!title}>
                 <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
                   Set a custom title (optional)
                 </summary>
-                <Input
-                  className="mt-2"
-                  placeholder="Project title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                />
+                <div className="mt-2 flex gap-2">
+                  <Input
+                    placeholder="Project title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={regenerateTitle}
+                    disabled={generatingTitle || description.trim().length < 3}
+                    title="Regenerate title with AI"
+                    className="shrink-0 gap-1.5"
+                  >
+                    {generatingTitle ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Wand2 className="h-3.5 w-3.5" />
+                    )}
+                    {title ? "Regenerate" : "Generate"}
+                  </Button>
+                </div>
+                <p className="mt-1.5 text-[11px] text-muted-foreground">
+                  Leave blank to let AI name it automatically on create.
+                </p>
               </details>
               <div>
                 <p className="text-xs font-medium text-muted-foreground mb-2">Project Type</p>
