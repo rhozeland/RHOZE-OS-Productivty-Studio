@@ -185,39 +185,89 @@ const SupportingTab = ({ userId, isOwnProfile }: Props) => {
 
       {/* Cheered projects */}
       {cheeredProjects.length > 0 && (
-        <section className="space-y-2">
+        <section className="space-y-3">
           <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
             <FolderKanban className="h-3.5 w-3.5" /> Releases cheered
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {cheeredProjects.map((row: any) => {
               const pr = row.project;
               const slug = pr?.public_slug;
               const to = slug ? `/release/${slug}` : `/projects/${pr.id}`;
+              const owner = pr?.owner;
+              const ownerName = owner?.display_name || owner?.username || "Creator";
+              const base = pr.cover_color || "#7c3aed";
+              const when = row.created_at
+                ? formatDistanceToNow(new Date(row.created_at), { addSuffix: true })
+                : null;
               return (
                 <Link
                   key={pr.id}
                   to={to}
-                  className="block rounded-2xl border border-border/60 overflow-hidden hover:opacity-95 transition-opacity"
+                  className="group relative block rounded-3xl overflow-hidden border border-white/10 shadow-lg shadow-black/10 hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-300"
                   style={{
-                    background:
-                      pr.cover_color
-                        ? `linear-gradient(135deg, ${pr.cover_color}, #1a0a2e)`
-                        : "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))",
+                    background: `radial-gradient(120% 100% at 0% 0%, ${base} 0%, transparent 55%), radial-gradient(120% 100% at 100% 100%, hsl(280 80% 35%) 0%, transparent 55%), linear-gradient(135deg, #0b0420 0%, #1a0a2e 100%)`,
                   }}
                 >
-                  <div className="p-4 min-h-[110px] flex items-end justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="text-[10px] uppercase tracking-[0.18em] text-white/70">Cheering</p>
-                      <p className="font-display text-base font-bold text-white truncate">{pr.title}</p>
-                    </div>
-                    {isOwnProfile && !row.shared_to_profile && (
-                      <span className="shrink-0 rounded-full bg-white/15 backdrop-blur px-2 py-0.5 text-[9px] uppercase tracking-wider text-white/90">
-                        Private
-                      </span>
-                    )}
-                  </div>
+                  {/* shimmer overlay */}
+                  <div
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                    style={{
+                      background:
+                        "linear-gradient(115deg, transparent 40%, rgba(255,255,255,0.12) 50%, transparent 60%)",
+                    }}
+                  />
+                  {/* noise / sheen */}
+                  <div
+                    aria-hidden
+                    className="pointer-events-none absolute -top-16 -right-16 h-40 w-40 rounded-full blur-3xl"
+                    style={{ background: "rgba(255,255,255,0.18)" }}
+                  />
 
+                  <div className="relative p-5 flex flex-col gap-4 min-h-[170px]">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-md px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white border border-white/15">
+                        <Heart className="h-3 w-3 fill-white" /> Cheering
+                      </span>
+                      {isOwnProfile && !row.shared_to_profile ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-black/30 backdrop-blur-md px-2 py-1 text-[9px] uppercase tracking-wider text-white/90 border border-white/10">
+                          <Lock className="h-2.5 w-2.5" /> Private
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-white/10 backdrop-blur-md px-2 py-1 text-[9px] uppercase tracking-wider text-white/80 border border-white/10">
+                          <Sparkles className="h-2.5 w-2.5" /> Public
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="mt-auto space-y-3">
+                      <h3 className="font-display text-xl font-bold text-white leading-tight line-clamp-2 drop-shadow-sm">
+                        {pr.title}
+                      </h3>
+
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="h-7 w-7 rounded-full overflow-hidden bg-white/20 border border-white/30 shrink-0">
+                            {owner?.avatar_url && (
+                              <img src={owner.avatar_url} alt="" className="h-full w-full object-cover" />
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-[11px] text-white font-medium truncate leading-tight">
+                              {ownerName}
+                            </p>
+                            {when && (
+                              <p className="text-[10px] text-white/60 leading-tight">{when}</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="h-7 w-7 rounded-full bg-white/15 border border-white/20 flex items-center justify-center shrink-0 group-hover:bg-white group-hover:text-black transition-colors">
+                          <ArrowRight className="h-3.5 w-3.5 text-white group-hover:text-black transition-colors" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </Link>
               );
             })}
