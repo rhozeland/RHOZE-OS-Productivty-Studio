@@ -46,6 +46,7 @@ import {
   Trash2,
   Pencil,
   Shield,
+  Wand2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -149,6 +150,9 @@ const ListingDetailPage = () => {
   const [galleryIdx, setGalleryIdx] = useState(0);
   const [inquiryOpen, setInquiryOpen] = useState(false);
   const [inquiryMsg, setInquiryMsg] = useState("");
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiBrief, setAiBrief] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
   const [dmOpen, setDmOpen] = useState(false);
@@ -999,6 +1003,91 @@ const ListingDetailPage = () => {
             <p className="text-xs text-muted-foreground leading-relaxed">
               {typeMeta.inquiryHint}
             </p>
+
+            {/* AI pitch writer */}
+            <div className="rounded-xl border border-fuchsia-500/30 bg-fuchsia-500/[0.04] p-3 space-y-2">
+              {!aiOpen ? (
+                <button
+                  type="button"
+                  onClick={() => setAiOpen(true)}
+                  className="w-full flex items-center gap-2 text-left"
+                >
+                  <div className="h-8 w-8 rounded-lg bg-fuchsia-500/15 flex items-center justify-center shrink-0">
+                    <Wand2 className="h-4 w-4 text-fuchsia-500" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium">Write this with AI</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Drop a few words — we'll draft a polished message you can edit.
+                    </p>
+                  </div>
+                </button>
+              ) : (
+                <div className="space-y-2">
+                  <Textarea
+                    placeholder="e.g. need a poster + 3 IG carousels for my June 22 release party in Lagos, budget $400, deliver by June 18"
+                    value={aiBrief}
+                    onChange={(e) => setAiBrief(e.target.value)}
+                    rows={3}
+                    className="resize-none text-sm"
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="flex-1 text-white border-0"
+                      style={{ background: typeMeta.accent }}
+                      disabled={aiLoading || aiBrief.trim().length < 5}
+                      onClick={async () => {
+                        setAiLoading(true);
+                        const inquiryKind =
+                          listing.listing_type === "project_request"
+                            ? "pitch"
+                            : listing.listing_type === "collaboration"
+                              ? "collab"
+                              : listing.listing_type === "service"
+                                ? "hire"
+                                : "question";
+                        const { data, error } = await supabase.functions.invoke(
+                          "draft-listing-inquiry",
+                          {
+                            body: {
+                              brief: aiBrief.trim(),
+                              listingTitle: listing.title,
+                              listingType: listing.listing_type,
+                              listingCategory: listing.category,
+                              sellerName: sellerProfile?.display_name ?? "",
+                              inquiryKind,
+                            },
+                          },
+                        );
+                        setAiLoading(false);
+                        if (error || (data as any)?.error) {
+                          toast.error((data as any)?.error || error?.message || "AI couldn't draft this — try again.");
+                          return;
+                        }
+                        const msg = (data as any)?.message?.trim();
+                        if (msg) {
+                          setInquiryMsg(msg);
+                          setAiOpen(false);
+                          toast.success("Drafted — edit anything before sending.");
+                        }
+                      }}
+                    >
+                      {aiLoading ? (
+                        <><Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />Drafting…</>
+                      ) : (
+                        <><Sparkles className="mr-2 h-3.5 w-3.5" />Draft my message</>
+                      )}
+                    </Button>
+                    <Button type="button" size="sm" variant="ghost" onClick={() => setAiOpen(false)}>
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <Textarea
               placeholder={typeMeta.inquiryPlaceholder}
               value={inquiryMsg}
@@ -1007,6 +1096,7 @@ const ListingDetailPage = () => {
               required
               className="text-sm resize-none"
             />
+
             <Button
               type="submit"
               className="w-full rounded-full h-11"
