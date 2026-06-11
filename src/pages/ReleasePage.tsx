@@ -153,9 +153,9 @@ const ReleasePage = () => {
   const { data: myCheer } = useQuery({
     queryKey: ["release-mycheer", project?.id, user?.id],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("project_cheers")
-        .select("id")
+        .select("id, shared_to_profile")
         .eq("project_id", project!.id)
         .eq("user_id", user!.id)
         .maybeSingle();
