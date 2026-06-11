@@ -47,7 +47,7 @@ const SupportingTab = ({ userId, isOwnProfile }: Props) => {
 
       const { data: projects, error: projectsError } = await sb
         .from("projects")
-        .select("id, title, cover_color, public_slug, is_public, user_id")
+        .select("id, title, cover_color, public_slug, is_public, user_id, owner:user_id(id, username, display_name, avatar_url)")
         .in("id", projectIds);
       if (projectsError) throw projectsError;
 
