@@ -297,16 +297,36 @@ const ProjectsPage = () => {
                   AI will draft a title and a roadmap from this. You can rename it anytime.
                 </p>
               </div>
-              <details className="text-xs">
+              <details className="text-xs" open={!!title}>
                 <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
                   Set a custom title (optional)
                 </summary>
-                <Input
-                  className="mt-2"
-                  placeholder="Project title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                />
+                <div className="mt-2 flex gap-2">
+                  <Input
+                    placeholder="Project title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={regenerateTitle}
+                    disabled={generatingTitle || description.trim().length < 3}
+                    title="Regenerate title with AI"
+                    className="shrink-0 gap-1.5"
+                  >
+                    {generatingTitle ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Wand2 className="h-3.5 w-3.5" />
+                    )}
+                    {title ? "Regenerate" : "Generate"}
+                  </Button>
+                </div>
+                <p className="mt-1.5 text-[11px] text-muted-foreground">
+                  Leave blank to let AI name it automatically on create.
+                </p>
               </details>
               <div>
                 <p className="text-xs font-medium text-muted-foreground mb-2">Project Type</p>
