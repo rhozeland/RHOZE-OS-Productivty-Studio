@@ -31,14 +31,33 @@ const SupportingTab = ({ userId, isOwnProfile }: Props) => {
     queryFn: async () => {
       let q = sb
         .from("project_cheers")
-        .select("project_id, created_at, shared_to_profile, projects:project_id(id, title, accent_color, public_slug, is_public, user_id)")
+        .select("project_id, created_at, shared_to_profile")
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .limit(24);
       if (!isOwnProfile) q = q.eq("shared_to_profile", true);
-      const { data, error } = await q;
+      const { data: cheerRows, error } = await q;
       if (error) throw error;
-      return (data ?? []).filter((r: any) => r.projects?.is_public);
+
+      const projectIds = Array.from(
+        new Set((cheerRows ?? []).map((row: any) => row.project_id).filter(Boolean)),
+      );
+      if (!projectIds.length) return [];
+
+      const { data: projects, error: projectsError } = await sb
+        .from("projects")
+        .select("id, title, cover_color, public_slug, is_public, user_id")
+        .in("id", projectIds);
+      if (projectsError) throw projectsError;
+
+      const projectById = new Map((projects ?? []).map((project: any) => [project.id, project]));
+
+      return (cheerRows ?? [])
+        .map((row: any) => ({
+          ...row,
+          project: projectById.get(row.project_id) ?? null,
+        }))
+        .filter((row: any) => row.project?.is_public);
     },
   });
 
@@ -171,7 +190,7 @@ const SupportingTab = ({ userId, isOwnProfile }: Props) => {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {cheeredProjects.map((row: any) => {
-              const pr = row.projects;
+              const pr = row.project;
               const slug = pr?.public_slug;
               const to = slug ? `/release/${slug}` : `/projects/${pr.id}`;
               return (
@@ -181,8 +200,8 @@ const SupportingTab = ({ userId, isOwnProfile }: Props) => {
                   className="block rounded-2xl border border-border/60 overflow-hidden hover:opacity-95 transition-opacity"
                   style={{
                     background:
-                      pr.accent_color
-                        ? `linear-gradient(135deg, ${pr.accent_color}, #1a0a2e)`
+                      pr.cover_color
+                        ? `linear-gradient(135deg, ${pr.cover_color}, #1a0a2e)`
                         : "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))",
                   }}
                 >
