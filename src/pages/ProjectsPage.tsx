@@ -66,6 +66,28 @@ const ProjectsPage = () => {
     enabled: !!projects?.length,
   });
 
+  // Milestone progress per project
+  const { data: goalStats } = useQuery({
+    queryKey: ["project-goal-stats", projects?.map((p) => p.id).join(",")],
+    queryFn: async () => {
+      if (!projects?.length) return {} as Record<string, { total: number; done: number }>;
+      const { data, error } = await supabase
+        .from("project_goals" as any)
+        .select("project_id,status")
+        .in("project_id", projects.map((p) => p.id));
+      if (error) return {};
+      const stats: Record<string, { total: number; done: number }> = {};
+      (data as any[]).forEach((g) => {
+        const s = stats[g.project_id] ?? { total: 0, done: 0 };
+        s.total += 1;
+        if (["approved", "completed", "done", "shipped"].includes(g.status)) s.done += 1;
+        stats[g.project_id] = s;
+      });
+      return stats;
+    },
+    enabled: !!projects?.length,
+  });
+
   const createProject = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("You must be signed in to create a project.");
