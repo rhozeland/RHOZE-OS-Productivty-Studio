@@ -33,6 +33,31 @@ const ProjectsPage = () => {
   const [coverColor, setCoverColor] = useState(COLORS[0]);
   const [projectType, setProjectType] = useState<"paid" | "collaborative">("paid");
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
+  const [generatingTitle, setGeneratingTitle] = useState(false);
+
+  const regenerateTitle = async () => {
+    const promptText = description.trim();
+    if (promptText.length < 3) {
+      toast.error("Write a brief first so AI has something to work with.");
+      return;
+    }
+    setGeneratingTitle(true);
+    try {
+      const { data: gen, error: genErr } = await supabase.functions.invoke(
+        "generate-project-title",
+        { body: { prompt: promptText } },
+      );
+      if (genErr) throw genErr;
+      const next = (gen as any)?.title?.trim();
+      if (!next) throw new Error("AI returned an empty title");
+      setTitle(next);
+      toast.success("New title drafted");
+    } catch (e: any) {
+      toast.error(e?.message || "Couldn't generate a title");
+    } finally {
+      setGeneratingTitle(false);
+    }
+  };
 
   const { data: projects, isLoading } = useQuery({
     queryKey: ["my-projects", user?.id],
