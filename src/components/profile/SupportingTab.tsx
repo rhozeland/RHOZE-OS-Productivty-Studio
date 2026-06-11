@@ -10,9 +10,10 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
+import { formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { EmptyState } from "@/components/ui/empty-state";
-import { HeartHandshake, FolderKanban, Users, Coins, ArrowRight } from "lucide-react";
+import { HeartHandshake, FolderKanban, Users, Coins, ArrowRight, Heart, Lock, Sparkles } from "lucide-react";
 
 interface Props {
   userId: string;
