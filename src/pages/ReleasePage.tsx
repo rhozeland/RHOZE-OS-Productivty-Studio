@@ -418,6 +418,7 @@ const ReleasePage = () => {
             projectTitle={project.title}
             cheerCount={project.cheer_count ?? 0}
             iSupport={!!myCheer}
+            iSupportShared={!!(myCheer as any)?.shared_to_profile}
             releaseUrl={typeof window !== "undefined" ? window.location.href : `/release/${slug}`}
             ownerName={owner?.display_name ?? owner?.username ?? null}
             coverColor={project.cover_color}
