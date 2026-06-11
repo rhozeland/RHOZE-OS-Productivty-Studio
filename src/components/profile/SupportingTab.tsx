@@ -29,8 +29,9 @@ const SupportingTab = ({ userId, isOwnProfile }: Props) => {
     queryFn: async () => {
       const { data, error } = await sb
         .from("project_cheers")
-        .select("project_id, created_at, projects:project_id(id, title, accent_color, public_slug, is_public, owner_id)")
+        .select("project_id, created_at, shared_to_profile, projects:project_id(id, title, accent_color, public_slug, is_public, owner_id)")
         .eq("user_id", userId)
+        .eq("shared_to_profile", true)
         .order("created_at", { ascending: false })
         .limit(24);
       if (error) throw error;

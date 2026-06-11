@@ -61,6 +61,7 @@ import RoadmapCopilot from "@/components/project/RoadmapCopilot";
 import TokenizeProjectCta from "@/components/project/TokenizeProjectCta";
 import EditorSideRail from "@/components/project/shared/EditorSideRail";
 import ProjectCoinLiveCard from "@/components/project/shared/ProjectCoinLiveCard";
+import SupportProjectCard from "@/components/project/shared/SupportProjectCard";
 import { Progress } from "@/components/ui/progress";
 
 const SMARTBOARD_CAP_BY_TIER: Record<string, number> = {
@@ -733,6 +734,14 @@ const ProjectDetailPage = () => {
               cheerCount={(project as any).cheer_count ?? 0}
               stagesTotal={milestones?.length ?? 0}
               stagesComplete={milestones?.filter((m: any) => m.status === "approved" || m.status === "released").length ?? 0}
+            />
+          )}
+          {!canManageProject && (
+            <SupportProjectCard
+              projectId={id!}
+              projectTitle={project.title}
+              isPublic={(project as any).is_public ?? false}
+              ownerName={owner?.display_name ?? owner?.username ?? null}
             />
           )}
           <ProjectCoinLiveCard linkedTokenId={(project as any).linked_token_id ?? null} />
