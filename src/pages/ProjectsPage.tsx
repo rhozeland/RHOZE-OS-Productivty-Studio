@@ -91,12 +91,32 @@ const ProjectsPage = () => {
   const createProject = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("You must be signed in to create a project.");
-      if (!title.trim()) throw new Error("Project title is required.");
+      const promptText = description.trim();
+      if (!title.trim() && !promptText) {
+        throw new Error("Tell us what you're working on.");
+      }
+
+      // Auto-generate a punchy title from the prompt when the user didn't type one.
+      let finalTitle = title.trim();
+      if (!finalTitle) {
+        try {
+          const { data: gen, error: genErr } = await supabase.functions.invoke(
+            "generate-project-title",
+            { body: { prompt: promptText } },
+          );
+          if (genErr) throw genErr;
+          finalTitle = (gen as any)?.title?.trim() || "";
+        } catch {
+          // Fall back to a short slice of the prompt — never reuse the full text.
+          finalTitle = promptText.split(/[.!?\n]/)[0].slice(0, 50).trim() || "Untitled Project";
+        }
+      }
+
       const { data, error } = await supabase
         .from("projects")
         .insert({
-          title: title.trim(),
-          description: description.trim() || null,
+          title: finalTitle,
+          description: promptText || null,
           cover_color: coverColor,
           user_id: user.id,
           project_type: projectType,
@@ -116,7 +136,7 @@ const ProjectsPage = () => {
       setOpen(false);
       setTitle("");
       setDescription("");
-      toast.success("Project created!");
+      toast.success(`"${newProject.title}" created`);
 
       // v11 Pillar 5: auto-fire AI roadmap draft enriched with the creator's
       // profile + recent works + linked coin so the milestones feel hand-crafted
@@ -235,8 +255,33 @@ const ProjectsPage = () => {
               <DialogTitle>Create Project</DialogTitle>
             </DialogHeader>
             <form onSubmit={(e) => { e.preventDefault(); createProject.mutate(); }} className="space-y-4">
-              <Input placeholder="Project title" value={title} onChange={(e) => setTitle(e.target.value)} required />
-              <Textarea placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                  <Sparkles className="h-3 w-3 text-primary" />
+                  What are you working on?
+                </label>
+                <Textarea
+                  placeholder="e.g. I want to drop a 4-track EP about late-night drives this summer…"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={4}
+                  required
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  AI will draft a title and a roadmap from this. You can rename it anytime.
+                </p>
+              </div>
+              <details className="text-xs">
+                <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+                  Set a custom title (optional)
+                </summary>
+                <Input
+                  className="mt-2"
+                  placeholder="Project title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+              </details>
               <div>
                 <p className="text-xs font-medium text-muted-foreground mb-2">Project Type</p>
                 <div className="grid grid-cols-2 gap-2">
