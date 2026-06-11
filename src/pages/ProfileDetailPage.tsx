@@ -13,8 +13,9 @@ import {
 import {
   EyeOff, Loader2, Sparkles, Image as ImageIcon, Play, Music, FileText,
   Calendar as CalendarIcon, FolderKanban, ExternalLink, Coins, Heart,
-  Rocket, Inbox, Users, ArrowRight, Repeat2,
+  Rocket, Inbox, Users, ArrowRight, Repeat2, HeartHandshake,
 } from "lucide-react";
+import SupportingTab from "@/components/profile/SupportingTab";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -34,7 +35,7 @@ import ProfileProjectCard from "@/components/profile/ProfileProjectCard";
 import LaunchCoinFlowModal from "@/components/launchpad/LaunchCoinFlowModal";
 import StartProjectPicker from "@/components/project/StartProjectPicker";
 
-type TabKey = "projects" | "works" | "reposts";
+type TabKey = "projects" | "works" | "reposts" | "supporting";
 
 const ProfileDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -68,7 +69,7 @@ const ProfileDetailPage = () => {
 
   const initialTab = (searchParams.get("tab") as TabKey) || "projects";
   const [tab, setTab] = useState<TabKey>(
-    ["projects", "works", "reposts"].includes(initialTab) ? initialTab : "projects",
+    ["projects", "works", "reposts", "supporting"].includes(initialTab) ? initialTab : "projects",
   );
 
   const [subscribeOpen, setSubscribeOpen] = useState(
@@ -302,6 +303,7 @@ const ProfileDetailPage = () => {
   const TABS: { key: TabKey; label: string; Icon: any }[] = [
     { key: "works", label: "Works", Icon: ImageIcon },
     { key: "projects", label: "Projects", Icon: FolderKanban },
+    { key: "supporting", label: "Supporting", Icon: HeartHandshake },
     // Reposts tab only appears once this user has actually reposted something.
     ...(hasReposts
       ? [{ key: "reposts" as TabKey, label: "Reposts", Icon: Repeat2 }]
@@ -405,6 +407,12 @@ const ProfileDetailPage = () => {
             {tab === "works" && (
               <section className="space-y-3">
                 <PostsGrid posts={flowPosts ?? []} isOwnProfile={isOwnProfile} navigate={navigate} />
+              </section>
+            )}
+
+            {tab === "supporting" && (
+              <section className="space-y-3">
+                <SupportingTab userId={id!} isOwnProfile={isOwnProfile} />
               </section>
             )}
 
