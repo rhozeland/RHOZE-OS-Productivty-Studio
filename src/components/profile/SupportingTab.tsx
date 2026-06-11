@@ -47,11 +47,32 @@ const SupportingTab = ({ userId, isOwnProfile }: Props) => {
 
       const { data: projects, error: projectsError } = await sb
         .from("projects")
-        .select("id, title, cover_color, public_slug, is_public, user_id, owner:user_id(id, username, display_name, avatar_url)")
+        .select("id, title, cover_color, public_slug, is_public, user_id")
         .in("id", projectIds);
       if (projectsError) throw projectsError;
 
-      const projectById = new Map((projects ?? []).map((project: any) => [project.id, project]));
+      const ownerIds = Array.from(
+        new Set((projects ?? []).map((project: any) => project.user_id).filter(Boolean)),
+      );
+
+      const { data: owners, error: ownersError } = ownerIds.length
+        ? await sb
+            .from("profiles")
+            .select("user_id, username, display_name, avatar_url")
+            .in("user_id", ownerIds)
+        : { data: [], error: null };
+      if (ownersError) throw ownersError;
+
+      const ownerById = new Map((owners ?? []).map((owner: any) => [owner.user_id, owner]));
+      const projectById = new Map(
+        (projects ?? []).map((project: any) => [
+          project.id,
+          {
+            ...project,
+            owner: ownerById.get(project.user_id) ?? null,
+          },
+        ]),
+      );
 
       return (cheerRows ?? [])
         .map((row: any) => ({
