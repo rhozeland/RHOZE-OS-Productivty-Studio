@@ -95,12 +95,12 @@ const EditorSideRail = ({
           <p className="text-[11px] text-muted-foreground text-center leading-snug">
             Share the public release so fans can support, comment, and follow milestones live.
           </p>
-          <div className="grid grid-cols-2 gap-2 pt-1">
-            <Button variant="outline" size="sm" onClick={shareNative} className="gap-1.5">
-              <Share2 className="h-3.5 w-3.5" /> Share
+          <div className="flex items-center justify-center gap-2 pt-1">
+            <Button variant="outline" size="icon" onClick={shareNative} className="h-8 w-8" title="Share" aria-label="Share">
+              <Share2 className="h-3.5 w-3.5" />
             </Button>
-            <Button variant="outline" size="sm" onClick={copyLink} className="gap-1.5">
-              <Copy className="h-3.5 w-3.5" /> Copy link
+            <Button variant="outline" size="icon" onClick={copyLink} className="h-8 w-8" title="Copy link" aria-label="Copy link">
+              <Copy className="h-3.5 w-3.5" />
             </Button>
           </div>
           <StageProgress />
