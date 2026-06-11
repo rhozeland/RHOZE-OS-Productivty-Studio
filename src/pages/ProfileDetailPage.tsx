@@ -410,6 +410,12 @@ const ProfileDetailPage = () => {
               </section>
             )}
 
+            {tab === "supporting" && (
+              <section className="space-y-3">
+                <SupportingTab userId={id!} isOwnProfile={isOwnProfile} />
+              </section>
+            )}
+
             {tab === "reposts" && (
               <section className="space-y-3">
                 <PostsGrid
