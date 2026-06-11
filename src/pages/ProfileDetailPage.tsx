@@ -35,7 +35,7 @@ import ProfileProjectCard from "@/components/profile/ProfileProjectCard";
 import LaunchCoinFlowModal from "@/components/launchpad/LaunchCoinFlowModal";
 import StartProjectPicker from "@/components/project/StartProjectPicker";
 
-type TabKey = "projects" | "works" | "reposts";
+type TabKey = "projects" | "works" | "reposts" | "supporting";
 
 const ProfileDetailPage = () => {
   const { id } = useParams<{ id: string }>();
