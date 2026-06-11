@@ -303,6 +303,7 @@ const ProfileDetailPage = () => {
   const TABS: { key: TabKey; label: string; Icon: any }[] = [
     { key: "works", label: "Works", Icon: ImageIcon },
     { key: "projects", label: "Projects", Icon: FolderKanban },
+    { key: "supporting", label: "Supporting", Icon: HeartHandshake },
     // Reposts tab only appears once this user has actually reposted something.
     ...(hasReposts
       ? [{ key: "reposts" as TabKey, label: "Reposts", Icon: Repeat2 }]
