@@ -195,15 +195,6 @@ const ProjectHero = ({ project, owner, status, isOwner, publicView }: ProjectHer
           </span>
         </motion.div>
 
-        {status === "live" && (
-          <div className="pointer-events-none absolute right-3 top-3 hidden md:flex items-center gap-1.5 rounded-full bg-black/45 backdrop-blur px-2 py-0.5 border border-white/15">
-            <span className="relative flex h-1.5 w-1.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-70" />
-              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            </span>
-            <span className="text-[9px] uppercase tracking-wider text-white/90 font-medium">Live</span>
-          </div>
-        )}
 
       </div>
 
