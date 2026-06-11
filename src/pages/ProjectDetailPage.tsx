@@ -478,8 +478,11 @@ const ProjectDetailPage = () => {
               />
             )}
 
-            {/* Bento row: Story / Board / Crew */}
-            <div className="grid gap-4 md:grid-cols-3">
+            {/* Bento row: Story / Board (if any) / Crew */}
+            {(() => {
+              const hasBoard = (deliverables ?? []).some((d: any) => d.file_url);
+              return (
+            <div className={`grid gap-4 ${hasBoard ? "md:grid-cols-3" : "md:grid-cols-2"}`}>
               {/* Story preview */}
               <button
                 onClick={() => setTab("story")}
@@ -494,7 +497,8 @@ const ProjectDetailPage = () => {
                 </div>
               </button>
 
-              {/* Board preview — always show, with empty state inside if needed */}
+              {/* Board preview — only when files exist */}
+              {hasBoard && (
               <button
                 onClick={() => setTab("board")}
                 className="text-left rounded-2xl border border-border bg-card p-5 transition-all hover:border-primary/40 hover:shadow-md min-h-[180px] flex flex-col"
@@ -504,17 +508,14 @@ const ProjectDetailPage = () => {
                   <span className="text-[11px] text-muted-foreground">All →</span>
                 </div>
                 <div className="flex-1" onClick={(e) => e.stopPropagation()}>
-                  {((deliverables ?? []).some((d: any) => d.file_url)) ? (
-                    <BoardMasonry
-                      deliverables={((deliverables ?? []) as any[]).filter((d) => d.file_url)}
-                      limit={4}
-                      onSeeMore={() => setTab("board")}
-                    />
-                  ) : (
-                    <p className="text-xs text-muted-foreground">No files attached yet. Drop refs and finals here.</p>
-                  )}
+                  <BoardMasonry
+                    deliverables={((deliverables ?? []) as any[]).filter((d) => d.file_url)}
+                    limit={4}
+                    onSeeMore={() => setTab("board")}
+                  />
                 </div>
               </button>
+              )}
 
               {/* Crew + Supporters */}
               <button
