@@ -732,6 +732,7 @@ const ProjectDetailPage = () => {
             stagesTotal={milestones?.length ?? 0}
             stagesComplete={milestones?.filter((m: any) => m.status === "approved" || m.status === "released").length ?? 0}
           />
+          <ProjectCoinLiveCard linkedTokenId={(project as any).linked_token_id ?? null} />
         </aside>
       </div>
 
