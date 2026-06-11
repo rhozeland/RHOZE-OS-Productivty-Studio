@@ -177,7 +177,7 @@ export default function SupportFlowSheet({
 
   const handleConfirmBack = async () => {
     if (!user) { navigate("/auth"); return; }
-    if (!selectedProject || !selectedStage || amount < 1) return;
+    if (!selectedProject || amount < 1) return;
     setConfirming(true);
     // Optimistic — write a project_goals comment / connection-style backing
     // record via a generic backers route. We don't have a dedicated table here,
