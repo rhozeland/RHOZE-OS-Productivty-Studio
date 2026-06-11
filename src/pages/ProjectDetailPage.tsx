@@ -426,11 +426,11 @@ const ProjectDetailPage = () => {
               const tiles = [
                 { key: "roadmap", label: "Roadmap", value: total ? `${done}/${total}` : "—", sub: total ? `${pct}% done` : "Add stages", tint: "from-violet-500/15 to-indigo-500/10 text-violet-600 dark:text-violet-300" },
                 { key: "story",   label: "Story",    value: storyCount, sub: storyCount ? "Latest updates" : "Share progress", tint: "from-rose-500/15 to-pink-500/10 text-rose-600 dark:text-rose-300" },
-                { key: "board",   label: "Board",    value: boardCount, sub: boardCount ? "Assets attached" : "No files yet", tint: "from-amber-500/15 to-orange-500/10 text-amber-700 dark:text-amber-300" },
+                ...(boardCount > 0 ? [{ key: "board", label: "Board", value: boardCount, sub: "Assets attached", tint: "from-amber-500/15 to-orange-500/10 text-amber-700 dark:text-amber-300" }] : []),
                 { key: "team",    label: "Crew",     value: teamCount,  sub: collaborators?.length ? `${collaborators.length} collab${collaborators.length === 1 ? "" : "s"}` : "Just you", tint: "from-emerald-500/15 to-teal-500/10 text-emerald-700 dark:text-emerald-300" },
               ];
               return (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className={`grid grid-cols-2 gap-3 ${tiles.length === 4 ? "md:grid-cols-4" : "md:grid-cols-3"}`}>
                   {tiles.map((t) => (
                     <button
                       key={t.key}
