@@ -248,7 +248,7 @@ const SupportProjectCard = ({ projectId, projectTitle, isPublic, ownerName }: Pr
           </DialogHeader>
           <DialogFooter className="sm:justify-center gap-2">
             {user && (
-              <Button variant="outline" onClick={() => navigate(`/profile/${user.id}?tab=supporting`)}>
+              <Button variant="outline" onClick={() => { setSuccessOpen(false); navigate(`/profiles/${user.id}?tab=supporting`); }}>
                 View my Supporting
               </Button>
             )}
