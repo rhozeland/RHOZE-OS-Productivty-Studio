@@ -86,6 +86,7 @@ const SupportPanel = ({
       qc.invalidateQueries({ queryKey: ["release"] });
       qc.invalidateQueries({ queryKey: ["release-mycheer"] });
       qc.invalidateQueries({ queryKey: ["supporting-cheers"] });
+      qc.invalidateQueries({ queryKey: ["studio-backed", user?.id] });
       setConfirmOpen(false);
       setSuccessOpen(true);
     },
@@ -106,6 +107,7 @@ const SupportPanel = ({
       qc.invalidateQueries({ queryKey: ["release"] });
       qc.invalidateQueries({ queryKey: ["release-mycheer"] });
       qc.invalidateQueries({ queryKey: ["supporting-cheers"] });
+      qc.invalidateQueries({ queryKey: ["studio-backed", user?.id] });
       toast.success("Removed your support");
     },
     onError: (e: any) => toast.error(e?.message ?? "Could not update"),
@@ -124,6 +126,7 @@ const SupportPanel = ({
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["release-mycheer"] });
       qc.invalidateQueries({ queryKey: ["supporting-cheers"] });
+      qc.invalidateQueries({ queryKey: ["studio-backed", user?.id] });
     },
   });
 
@@ -321,7 +324,7 @@ const SupportPanel = ({
           </DialogHeader>
           <DialogFooter className="sm:justify-center gap-2">
             {user && (
-              <Button variant="outline" onClick={() => navigate(`/profile/${user.id}?tab=supporting`)}>
+              <Button variant="outline" onClick={() => navigate(`/profiles/${user.id}?tab=supporting`)}>
                 View my Supporting
               </Button>
             )}

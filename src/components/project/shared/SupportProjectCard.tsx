@@ -84,6 +84,7 @@ const SupportProjectCard = ({ projectId, projectTitle, isPublic, ownerName }: Pr
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["project-mycheer", projectId] });
       qc.invalidateQueries({ queryKey: ["supporting-cheers"] });
+      qc.invalidateQueries({ queryKey: ["studio-backed", user?.id] });
       setConfirmOpen(false);
       setSuccessOpen(true);
     },
@@ -102,6 +103,7 @@ const SupportProjectCard = ({ projectId, projectTitle, isPublic, ownerName }: Pr
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["project-mycheer", projectId] });
       qc.invalidateQueries({ queryKey: ["supporting-cheers"] });
+      qc.invalidateQueries({ queryKey: ["studio-backed", user?.id] });
     },
   });
 
@@ -118,6 +120,7 @@ const SupportProjectCard = ({ projectId, projectTitle, isPublic, ownerName }: Pr
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["project-mycheer", projectId] });
       qc.invalidateQueries({ queryKey: ["supporting-cheers"] });
+      qc.invalidateQueries({ queryKey: ["studio-backed", user?.id] });
       toast.success("Removed your support");
     },
     onError: (e: any) => toast.error(e?.message ?? "Could not update"),
