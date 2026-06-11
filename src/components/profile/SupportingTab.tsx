@@ -22,22 +22,26 @@ interface Props {
 const SupportingTab = ({ userId, isOwnProfile }: Props) => {
   const sb: any = supabase;
 
-  // Cheered public projects
+  // Cheered public projects.
+  // On your own profile we show every cheer (private ones get a "Private" chip).
+  // On someone else's, only cheers explicitly shared to profile.
   const { data: cheeredProjects = [] } = useQuery({
-    queryKey: ["supporting-cheers", userId],
+    queryKey: ["supporting-cheers", userId, isOwnProfile],
     enabled: !!userId,
     queryFn: async () => {
-      const { data, error } = await sb
+      let q = sb
         .from("project_cheers")
-        .select("project_id, created_at, shared_to_profile, projects:project_id(id, title, accent_color, public_slug, is_public, owner_id)")
+        .select("project_id, created_at, shared_to_profile, projects:project_id(id, title, accent_color, public_slug, is_public, user_id)")
         .eq("user_id", userId)
-        .eq("shared_to_profile", true)
         .order("created_at", { ascending: false })
         .limit(24);
+      if (!isOwnProfile) q = q.eq("shared_to_profile", true);
+      const { data, error } = await q;
       if (error) throw error;
       return (data ?? []).filter((r: any) => r.projects?.is_public);
     },
   });
+
 
   // Backed creators (subscriptions) — own profile only (RLS)
   const { data: backedCreators = [] } = useQuery({
