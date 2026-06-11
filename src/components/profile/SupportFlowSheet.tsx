@@ -419,43 +419,8 @@ export default function SupportFlowSheet({
               </div>
             </div>
 
-            {/* Step 2 — Stage */}
+            {/* Step 2 — Amount */}
             {selectedProject && (
-              <div className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Which stage?</p>
-                <div className="grid gap-1.5 max-h-44 overflow-y-auto">
-                  {(stages ?? []).length === 0 && (
-                    <p className="text-xs text-muted-foreground p-2">No stages yet on this project.</p>
-                  )}
-                  {(stages ?? []).map((s) => (
-                    <button
-                      key={s.id}
-                      type="button"
-                      onClick={() => setSelectedStage(s)}
-                      className={cn(
-                        "text-left rounded-lg border p-2.5 flex items-center justify-between gap-2 transition",
-                        selectedStage?.id === s.id
-                          ? "border-primary bg-primary/5"
-                          : "border-border bg-card hover:border-border/80",
-                      )}
-                    >
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium truncate">{s.title}</p>
-                        <p className="text-[11px] text-muted-foreground capitalize">{s.status}</p>
-                      </div>
-                      {Number(s.budget_amount) > 0 && (
-                        <span className="text-xs font-mono text-muted-foreground">
-                          ${Number(s.budget_amount).toLocaleString()}
-                        </span>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Step 3 — Amount */}
-            {selectedStage && (
               <div className="space-y-2">
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   How much do you want to back?
