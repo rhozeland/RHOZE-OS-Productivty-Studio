@@ -69,7 +69,7 @@ const ProfileDetailPage = () => {
 
   const initialTab = (searchParams.get("tab") as TabKey) || "projects";
   const [tab, setTab] = useState<TabKey>(
-    ["projects", "works", "reposts"].includes(initialTab) ? initialTab : "projects",
+    ["projects", "works", "reposts", "supporting"].includes(initialTab) ? initialTab : "projects",
   );
 
   const [subscribeOpen, setSubscribeOpen] = useState(
