@@ -66,6 +66,28 @@ const ProjectsPage = () => {
     enabled: !!projects?.length,
   });
 
+  // Milestone progress per project
+  const { data: goalStats } = useQuery({
+    queryKey: ["project-goal-stats", projects?.map((p) => p.id).join(",")],
+    queryFn: async () => {
+      if (!projects?.length) return {} as Record<string, { total: number; done: number }>;
+      const { data, error } = await supabase
+        .from("project_goals" as any)
+        .select("project_id,status")
+        .in("project_id", projects.map((p) => p.id));
+      if (error) return {};
+      const stats: Record<string, { total: number; done: number }> = {};
+      (data as any[]).forEach((g) => {
+        const s = stats[g.project_id] ?? { total: 0, done: 0 };
+        s.total += 1;
+        if (["approved", "completed", "done", "shipped"].includes(g.status)) s.done += 1;
+        stats[g.project_id] = s;
+      });
+      return stats;
+    },
+    enabled: !!projects?.length,
+  });
+
   const createProject = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("You must be signed in to create a project.");
@@ -310,7 +332,7 @@ const ProjectsPage = () => {
         </motion.div>
       ) : (
         <motion.div
-          className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3"
+          className="space-y-3"
           variants={containerVariants}
           initial="hidden"
           animate="show"
@@ -320,79 +342,112 @@ const ProjectsPage = () => {
             const isSolo = project.project_type !== "collaborative" && collabs === 0;
             const cfg = statusConfig[project.status] || statusConfig.active;
             const StatusIcon = cfg.icon;
+            const stats = goalStats?.[project.id];
+            const total = stats?.total ?? 0;
+            const done = stats?.done ?? 0;
+            const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+            const accent = project.cover_color ?? "#7c3aed";
+            const initial = (project.title || "?").trim().charAt(0).toUpperCase();
 
             return (
               <motion.div key={project.id} variants={cardVariants} layout>
                 <Link to={`/projects/${project.id}`} className="group block">
-                  <div className="relative overflow-hidden rounded-xl border border-border bg-card transition-all duration-300 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5">
-                    {/* Color bar with gradient glow */}
-                    <div className="relative h-2" style={{ backgroundColor: project.cover_color ?? "#7c3aed" }}>
+                  <div className="relative overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 hover:border-foreground/20 hover:shadow-[0_8px_30px_-12px_hsl(var(--foreground)/0.15)]">
+                    {/* Hover glow tinted with the project's accent */}
+                    <div
+                      className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-30"
+                      style={{ backgroundColor: accent }}
+                    />
+
+                    <div className="relative flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:gap-5 sm:p-5">
+                      {/* Avatar circle */}
                       <div
-                        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-md"
-                        style={{ backgroundColor: project.cover_color ?? "#7c3aed" }}
-                      />
-                    </div>
-
-                    <div className="p-5 space-y-3">
-                      {/* Title row */}
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-display font-semibold text-foreground truncate text-lg group-hover:text-primary transition-colors">
-                            {project.title}
-                          </h3>
-                          <p className="mt-0.5 text-sm text-muted-foreground line-clamp-2">
-                            {project.description || "No description"}
-                          </p>
-                        </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild onClick={(e) => e.preventDefault()}>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent>
-                            <DropdownMenuItem
-                              className="text-destructive"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                setDeleteTarget({ id: project.id, title: project.title });
-                              }}
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-base font-display font-bold text-white shadow-sm"
+                        style={{
+                          background: `linear-gradient(135deg, ${accent}, ${accent}cc)`,
+                        }}
+                      >
+                        {initial}
+                        <span
+                          className="absolute -inset-1 -z-10 rounded-2xl opacity-30 blur-md"
+                          style={{ backgroundColor: accent }}
+                        />
                       </div>
 
-                      {/* Metadata row */}
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {format(new Date(project.created_at), "MMM d, yyyy")}
-                        </div>
-                        <div className="flex items-center gap-1">
+                      {/* Title + description */}
+                      <div className="min-w-0 flex-1">
+                        <h3 className="truncate font-display text-base font-semibold text-foreground group-hover:text-primary transition-colors">
+                          {project.title}
+                        </h3>
+                        <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                          {project.description || (project.project_type === "collaborative" ? "Collaboration" : "Solo project")}
+                        </p>
+                      </div>
+
+                      {/* Meta pills */}
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-muted/60 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
                           {isSolo ? <User className="h-3 w-3" /> : <Users className="h-3 w-3" />}
-                          {isSolo ? "Solo" : `${collabs + 1} members`}
-                        </div>
-                      </div>
-
-                      {/* Badges row */}
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${cfg.className}`}>
+                          {isSolo ? "Solo" : `${collabs + 1}`}
+                        </span>
+                        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium ${cfg.className}`}>
                           <StatusIcon className="h-3 w-3" />
                           {cfg.label}
                         </span>
-                        {project.project_type === "collaborative" && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground">
-                            <Users className="h-3 w-3" />Collab
-                          </span>
-                        )}
-                        {project.project_type === "paid" && (
-                          <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                        {project.project_type === "paid" ? (
+                          <span className="inline-flex items-center rounded-full bg-amber-500/10 px-2.5 py-1 text-[11px] font-medium text-amber-600 dark:text-amber-400">
                             Paid
                           </span>
+                        ) : (
+                          <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                            Collab
+                          </span>
                         )}
+                        <span className="hidden md:inline-flex items-center gap-1 rounded-full bg-muted/60 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+                          <Calendar className="h-3 w-3" />
+                          {format(new Date(project.created_at), "MMM d")}
+                        </span>
                       </div>
+
+                      {/* Progress */}
+                      <div className="flex w-full items-center gap-3 sm:w-48">
+                        <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+                          <div
+                            className="absolute inset-y-0 left-0 rounded-full transition-all duration-500"
+                            style={{
+                              width: `${pct}%`,
+                              background: `linear-gradient(90deg, ${accent}, ${accent}aa)`,
+                            }}
+                          />
+                        </div>
+                        <span className="w-10 shrink-0 text-right font-display text-sm font-semibold tabular-nums text-foreground">
+                          {pct}%
+                        </span>
+                      </div>
+
+                      {/* Kebab */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild onClick={(e) => e.preventDefault()}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 shrink-0 rounded-full text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100"
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            className="text-destructive"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setDeleteTarget({ id: project.id, title: project.title });
+                            }}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 </Link>
