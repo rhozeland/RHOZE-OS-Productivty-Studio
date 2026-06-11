@@ -150,6 +150,9 @@ const ListingDetailPage = () => {
   const [galleryIdx, setGalleryIdx] = useState(0);
   const [inquiryOpen, setInquiryOpen] = useState(false);
   const [inquiryMsg, setInquiryMsg] = useState("");
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiBrief, setAiBrief] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
   const [dmOpen, setDmOpen] = useState(false);
