@@ -736,6 +736,14 @@ const ProjectDetailPage = () => {
               stagesComplete={milestones?.filter((m: any) => m.status === "approved" || m.status === "released").length ?? 0}
             />
           )}
+          {!canManageProject && (
+            <SupportProjectCard
+              projectId={id!}
+              projectTitle={project.title}
+              isPublic={(project as any).is_public ?? false}
+              ownerName={owner?.display_name ?? owner?.username ?? null}
+            />
+          )}
           <ProjectCoinLiveCard linkedTokenId={(project as any).linked_token_id ?? null} />
         </aside>
       </div>
