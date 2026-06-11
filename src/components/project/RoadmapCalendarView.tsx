@@ -269,7 +269,7 @@ const RoadmapCalendarView = ({ goals, projectId }: RoadmapCalendarViewProps) => 
 
       {/* === WEEKLY === */}
       {view === "weekly" && (
-        <div className="grid grid-cols-1 sm:grid-cols-7 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-7 gap-2.5">
           {weekDays.map((day) => {
             const dayGoals = getGoalsForDay(day);
             const today = isTodayFn(day);
@@ -279,27 +279,29 @@ const RoadmapCalendarView = ({ goals, projectId }: RoadmapCalendarViewProps) => 
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
                 className={cn(
-                  "rounded-2xl border border-border bg-card p-3 min-h-[140px] flex flex-col gap-2 transition-colors",
-                  today && "ring-2 ring-primary/40 border-primary/40",
+                  "group relative rounded-2xl border bg-card/60 backdrop-blur-sm p-3 min-h-[130px] flex flex-col gap-2 transition-all hover:shadow-md hover:-translate-y-0.5",
+                  today
+                    ? "border-primary/50 ring-1 ring-primary/30 shadow-[0_0_0_3px_hsl(var(--primary)/0.08)]"
+                    : "border-border/70 hover:border-border",
                 )}
               >
                 <div className="flex items-baseline justify-between">
-                  <span className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
+                  <span className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground font-semibold">
                     {format(day, "EEE")}
                   </span>
                   <span
                     className={cn(
-                      "text-lg font-display font-semibold",
-                      today ? "text-primary" : "text-foreground",
+                      "font-display font-semibold leading-none",
+                      today ? "text-primary text-xl" : "text-foreground/90 text-lg",
                     )}
                   >
                     {format(day, "d")}
                   </span>
                 </div>
-                <div className="flex flex-col gap-1.5 flex-1">
+                <div className="flex flex-col gap-1 flex-1">
                   {dayGoals.length === 0 ? (
                     <div className="flex-1 flex items-center justify-center">
-                      <span className="text-[11px] text-muted-foreground/60">—</span>
+                      <span className="text-[11px] text-muted-foreground/40">·</span>
                     </div>
                   ) : (
                     dayGoals.map((g) => (
@@ -401,34 +403,37 @@ const GoalChip = ({
 }) => {
   return (
     <div
+      title={goal.title}
       className={cn(
-        "group rounded-lg border px-2 py-1.5 text-[11px] leading-tight transition-colors",
+        "relative rounded-lg pl-2.5 pr-2 py-1.5 text-[11px] leading-tight transition-all overflow-hidden",
         priorityStyles[goal.priority] || priorityStyles.medium,
         goal.status === "completed" && "opacity-60",
       )}
     >
-      <div className="flex items-start gap-1.5">
-        <CircleDot className="h-3 w-3 mt-0.5 shrink-0 opacity-70" />
+      <span
+        className={cn(
+          "absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full",
+          priorityDot[goal.priority] || priorityDot.medium,
+        )}
+      />
+      <div className="flex items-center gap-1.5 min-w-0">
         <span
           className={cn(
-            "font-medium line-clamp-2 flex-1",
+            "font-medium truncate flex-1 min-w-0",
             goal.status === "completed" && "line-through",
           )}
         >
           {goal.title}
         </span>
-      </div>
-      {profile && (
-        <div className="mt-1 flex items-center gap-1">
-          <Avatar className="h-4 w-4">
+        {profile && (
+          <Avatar className="h-4 w-4 shrink-0 ring-1 ring-background">
             <AvatarImage src={profile.avatar_url || undefined} />
             <AvatarFallback className="text-[8px]">
               {(profile.display_name || "?")[0]}
             </AvatarFallback>
           </Avatar>
-          <span className="text-[10px] opacity-80 truncate">{profile.display_name}</span>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
