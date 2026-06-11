@@ -725,14 +725,16 @@ const ProjectDetailPage = () => {
 
         {/* Editor side rail — sticky on desktop */}
         <aside className="space-y-4 lg:sticky lg:top-6 self-start order-first lg:order-none">
-          <EditorSideRail
-            isPublic={(project as any).is_public ?? false}
-            publicSlug={(project as any).public_slug ?? null}
-            projectTitle={project.title}
-            cheerCount={(project as any).cheer_count ?? 0}
-            stagesTotal={milestones?.length ?? 0}
-            stagesComplete={milestones?.filter((m: any) => m.status === "approved" || m.status === "released").length ?? 0}
-          />
+          {canManageProject && (
+            <EditorSideRail
+              isPublic={(project as any).is_public ?? false}
+              publicSlug={(project as any).public_slug ?? null}
+              projectTitle={project.title}
+              cheerCount={(project as any).cheer_count ?? 0}
+              stagesTotal={milestones?.length ?? 0}
+              stagesComplete={milestones?.filter((m: any) => m.status === "approved" || m.status === "released").length ?? 0}
+            />
+          )}
           <ProjectCoinLiveCard linkedTokenId={(project as any).linked_token_id ?? null} />
         </aside>
       </div>
