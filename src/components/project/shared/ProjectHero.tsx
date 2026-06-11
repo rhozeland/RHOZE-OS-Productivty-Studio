@@ -92,8 +92,8 @@ const ProjectHero = ({ project, owner, status, isOwner, publicView }: ProjectHer
 
   return (
     <div
-      className="group relative w-full overflow-hidden rounded-none md:rounded-2xl"
-      style={{ minHeight: 320 }}
+      className="group relative w-full overflow-hidden rounded-xl md:rounded-2xl"
+      style={{ minHeight: 160 }}
     >
       {/* Cover layer */}
       {cover ? (
@@ -115,14 +115,10 @@ const ProjectHero = ({ project, owner, status, isOwner, publicView }: ProjectHer
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          className="absolute inset-0 grid place-items-center text-white/90 hover:text-white"
+          className="absolute right-3 top-3 z-20 inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur px-2.5 py-1 text-[11px] text-white hover:bg-white/25 border border-white/25"
         >
-          <div className="flex flex-col items-center gap-2">
-            <div className="h-14 w-14 rounded-full bg-white/15 backdrop-blur grid place-items-center border border-white/30">
-              {uploading ? <Loader2 className="h-6 w-6 animate-spin" /> : <ImagePlus className="h-6 w-6" />}
-            </div>
-            <span className="text-sm font-medium drop-shadow">Add a cover image</span>
-          </div>
+          {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <ImagePlus className="h-3 w-3" />}
+          Add cover
         </button>
       )}
 
@@ -165,34 +161,34 @@ const ProjectHero = ({ project, owner, status, isOwner, publicView }: ProjectHer
       </div>
 
       {/* Bottom row: title + artist + status pill */}
-      <div className="absolute inset-x-0 bottom-0 z-10 p-4 md:p-6">
+      <div className="absolute inset-x-0 bottom-0 z-10 p-3 md:p-4">
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45 }}
-          className="flex flex-col md:flex-row md:items-end md:justify-between gap-3"
+          transition={{ duration: 0.4 }}
+          className="flex flex-row items-end justify-between gap-3"
         >
           <div className="min-w-0 flex-1">
-            <h1 className="font-display text-3xl md:text-5xl font-bold text-white drop-shadow-md leading-tight">
+            <h1 className="font-display text-xl md:text-2xl font-bold text-white drop-shadow-md leading-tight truncate">
               {project.title}
             </h1>
             {owner && (
               <Link
                 to={`/profile/${owner.username ?? project.user_id}`}
-                className="mt-2 inline-flex items-center gap-2 text-white/90 hover:text-white"
+                className="mt-1 inline-flex items-center gap-1.5 text-white/90 hover:text-white"
               >
                 {owner.avatar_url ? (
-                  <img src={owner.avatar_url} alt="" className="h-6 w-6 rounded-full object-cover border border-white/20" />
+                  <img src={owner.avatar_url} alt="" className="h-4 w-4 rounded-full object-cover border border-white/20" />
                 ) : (
-                  <div className="h-6 w-6 rounded-full bg-white/20" />
+                  <div className="h-4 w-4 rounded-full bg-white/20" />
                 )}
-                <span className="text-sm font-medium drop-shadow">{ownerName}</span>
+                <span className="text-xs font-medium drop-shadow">{ownerName}</span>
               </Link>
             )}
           </div>
 
           <span
-            className={`inline-flex items-center gap-1.5 self-start md:self-end rounded-full border px-3 py-1.5 text-[11px] font-medium backdrop-blur bg-background/70 ${statusMeta.pill}`}
+            className={`inline-flex items-center gap-1.5 self-end rounded-full border px-2.5 py-1 text-[10px] font-medium backdrop-blur bg-background/70 ${statusMeta.pill}`}
           >
             <span className={`h-1.5 w-1.5 rounded-full ${statusMeta.dot}`} />
             {statusMeta.label}
@@ -200,12 +196,12 @@ const ProjectHero = ({ project, owner, status, isOwner, publicView }: ProjectHer
         </motion.div>
 
         {status === "live" && (
-          <div className="pointer-events-none absolute right-4 bottom-16 md:right-6 md:bottom-20 hidden md:flex items-center gap-1.5 rounded-full bg-black/45 backdrop-blur px-2.5 py-1 border border-white/15">
-            <span className="relative flex h-2 w-2">
+          <div className="pointer-events-none absolute right-3 top-3 hidden md:flex items-center gap-1.5 rounded-full bg-black/45 backdrop-blur px-2 py-0.5 border border-white/15">
+            <span className="relative flex h-1.5 w-1.5">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-70" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
             </span>
-            <span className="text-[10px] uppercase tracking-wider text-white/90 font-medium">Live</span>
+            <span className="text-[9px] uppercase tracking-wider text-white/90 font-medium">Live</span>
           </div>
         )}
 
