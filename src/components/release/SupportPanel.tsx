@@ -228,21 +228,9 @@ const SupportPanel = ({
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-2 pt-1">
-        <Button variant="outline" size="sm" onClick={onScrollToComments} className="gap-1.5">
+      <div className="pt-1">
+        <Button variant="outline" size="sm" onClick={onScrollToComments} className="w-full gap-1.5">
           <MessageCircle className="h-3.5 w-3.5" /> Comment
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={shareToFeed}
-          disabled={sharing}
-          className="gap-1.5"
-        >
-          <Share2 className="h-3.5 w-3.5" /> Share to feed
-        </Button>
-        <Button variant="ghost" size="sm" onClick={copyLink} className="gap-1.5 col-span-2 text-xs text-muted-foreground">
-          <Copy className="h-3 w-3" /> Copy link
         </Button>
       </div>
 
