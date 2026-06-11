@@ -413,33 +413,58 @@ const ProjectDetailPage = () => {
             {isPaid && <TabsTrigger value="budget" className={TAB_TRIGGER}>Budget</TabsTrigger>}
           </TabsList>
 
-          {/* OVERVIEW */}
-          <TabsContent value="overview" className="space-y-8">
-            {/* Thin progress bar — replaces the old stat boxes */}
-            {(milestones?.length ?? 0) > 0 && (() => {
+          {/* OVERVIEW — bento dashboard */}
+          <TabsContent value="overview" className="space-y-6">
+            {(() => {
               const ms = milestones ?? [];
               const done = ms.filter((m: any) => m.status === "approved" || m.status === "released").length;
-              const pct = ms.length ? Math.round((done / ms.length) * 100) : 0;
+              const total = ms.length;
+              const pct = total ? Math.round((done / total) * 100) : 0;
+              const storyCount = storyItems.length;
+              const boardCount = (deliverables ?? []).filter((d: any) => d.file_url).length;
+              const teamCount = 1 + (collaborators?.length ?? 0);
+              const tiles = [
+                { key: "roadmap", label: "Roadmap", value: total ? `${done}/${total}` : "—", sub: total ? `${pct}% done` : "Add stages", tint: "from-violet-500/15 to-indigo-500/10 text-violet-600 dark:text-violet-300" },
+                { key: "story",   label: "Story",    value: storyCount, sub: storyCount ? "Latest updates" : "Share progress", tint: "from-rose-500/15 to-pink-500/10 text-rose-600 dark:text-rose-300" },
+                { key: "board",   label: "Board",    value: boardCount, sub: boardCount ? "Assets attached" : "No files yet", tint: "from-amber-500/15 to-orange-500/10 text-amber-700 dark:text-amber-300" },
+                { key: "team",    label: "Crew",     value: teamCount,  sub: collaborators?.length ? `${collaborators.length} collab${collaborators.length === 1 ? "" : "s"}` : "Just you", tint: "from-emerald-500/15 to-teal-500/10 text-emerald-700 dark:text-emerald-300" },
+              ];
               return (
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Progress</span>
-                    <span className="text-[10px] text-muted-foreground tabular-nums">{done} / {ms.length} · {pct}%</span>
-                  </div>
-                  <Progress value={pct} className="h-1" />
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {tiles.map((t) => (
+                    <button
+                      key={t.key}
+                      onClick={() => setTab(t.key)}
+                      className={`group text-left rounded-2xl border border-border bg-gradient-to-br ${t.tint} p-4 transition-all hover:shadow-md hover:-translate-y-0.5`}
+                    >
+                      <div className="text-[10px] uppercase tracking-[0.14em] font-semibold opacity-80">{t.label}</div>
+                      <div className="mt-2 font-display text-2xl md:text-3xl font-bold text-foreground tabular-nums">{t.value}</div>
+                      <div className="mt-1 text-[11px] text-muted-foreground">{t.sub}</div>
+                      {t.key === "roadmap" && total > 0 && (
+                        <div className="mt-3"><Progress value={pct} className="h-1" /></div>
+                      )}
+                    </button>
+                  ))}
                 </div>
               );
             })()}
 
-            <section>
+            {/* Milestones — full-width card */}
+            <button
+              onClick={() => setTab("roadmap")}
+              className="block w-full text-left rounded-2xl border border-border bg-card p-5 transition-all hover:border-primary/40 hover:shadow-md"
+            >
               <div className="flex items-end justify-between gap-3 mb-3">
-                <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Milestones</h2>
-                <button onClick={() => setTab("roadmap")} className="text-[11px] text-muted-foreground hover:text-foreground">
-                  Open roadmap →
-                </button>
+                <div>
+                  <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Milestones</h2>
+                  <p className="font-display text-base font-semibold text-foreground mt-0.5">Stages & deadlines</p>
+                </div>
+                <span className="text-[11px] text-muted-foreground group-hover:text-foreground">Open roadmap →</span>
               </div>
-              <MilestoneTrack milestones={milestones as any} contractId={contract?.id} canManage={canManageProject} />
-            </section>
+              <div onClick={(e) => e.stopPropagation()}>
+                <MilestoneTrack milestones={milestones as any} contractId={contract?.id} canManage={canManageProject} />
+              </div>
+            </button>
 
             {canManageProject && (
               <PublishReleaseCard
@@ -453,49 +478,78 @@ const ProjectDetailPage = () => {
               />
             )}
 
-            <div className="grid gap-6 md:grid-cols-3">
+            {/* Bento row: Story / Board / Crew */}
+            <div className="grid gap-4 md:grid-cols-3">
               {/* Story preview */}
-              <section className="space-y-3">
-                <div className="flex items-center justify-between">
+              <button
+                onClick={() => setTab("story")}
+                className="text-left rounded-2xl border border-border bg-card p-5 transition-all hover:border-primary/40 hover:shadow-md min-h-[180px] flex flex-col"
+              >
+                <div className="flex items-center justify-between mb-3">
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Story</h3>
-                  <button onClick={() => setTab("story")} className="text-[11px] text-muted-foreground hover:text-foreground">
-                    All →
-                  </button>
+                  <span className="text-[11px] text-muted-foreground">All →</span>
                 </div>
-                <StoryFeed items={storyItems} canManage={canManageProject} preview />
-              </section>
+                <div className="flex-1" onClick={(e) => e.stopPropagation()}>
+                  <StoryFeed items={storyItems} canManage={canManageProject} preview />
+                </div>
+              </button>
 
-              {/* Board preview — hidden entirely when no assets attached */}
-              {((deliverables ?? []).some((d: any) => d.file_url)) && (
-                <section className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Board</h3>
-                    <button onClick={() => setTab("board")} className="text-[11px] text-muted-foreground hover:text-foreground">
-                      All →
-                    </button>
-                  </div>
-                  <BoardMasonry
-                    deliverables={((deliverables ?? []) as any[]).filter((d) => d.file_url)}
-                    limit={4}
-                    onSeeMore={() => setTab("board")}
-                  />
-                </section>
-              )}
+              {/* Board preview — always show, with empty state inside if needed */}
+              <button
+                onClick={() => setTab("board")}
+                className="text-left rounded-2xl border border-border bg-card p-5 transition-all hover:border-primary/40 hover:shadow-md min-h-[180px] flex flex-col"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Board</h3>
+                  <span className="text-[11px] text-muted-foreground">All →</span>
+                </div>
+                <div className="flex-1" onClick={(e) => e.stopPropagation()}>
+                  {((deliverables ?? []).some((d: any) => d.file_url)) ? (
+                    <BoardMasonry
+                      deliverables={((deliverables ?? []) as any[]).filter((d) => d.file_url)}
+                      limit={4}
+                      onSeeMore={() => setTab("board")}
+                    />
+                  ) : (
+                    <p className="text-xs text-muted-foreground">No files attached yet. Drop refs and finals here.</p>
+                  )}
+                </div>
+              </button>
 
-              {/* Team + Supporters */}
-              <section>
+              {/* Crew + Supporters */}
+              <button
+                onClick={() => setTab("team")}
+                className="text-left rounded-2xl border border-border bg-card p-5 transition-all hover:border-primary/40 hover:shadow-md min-h-[180px] flex flex-col"
+              >
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Crew & Supporters</h3>
+                  <span className="text-[11px] text-muted-foreground">Manage →</span>
                 </div>
-                <SupportersStrip
-                  projectId={id!}
-                  ownerId={project.user_id}
-                  owner={owner ?? null}
-                  team={teamWithProfiles as any}
-                  milestones={milestones as any}
-                />
-              </section>
+                <div className="flex-1" onClick={(e) => e.stopPropagation()}>
+                  <SupportersStrip
+                    projectId={id!}
+                    ownerId={project.user_id}
+                    owner={owner ?? null}
+                    team={teamWithProfiles as any}
+                    milestones={milestones as any}
+                  />
+                </div>
+              </button>
             </div>
+
+            {/* Timeline shortcut */}
+            <button
+              onClick={() => setTab("timeline")}
+              className="block w-full text-left rounded-2xl border border-dashed border-border bg-muted/30 px-5 py-4 transition-all hover:border-primary/40 hover:bg-muted/50"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Timeline</div>
+                  <p className="text-sm text-foreground mt-0.5">Plan stages, deadlines, and team work by week.</p>
+                </div>
+                <span className="text-[11px] text-muted-foreground shrink-0">Open timeline →</span>
+              </div>
+            </button>
           </TabsContent>
 
 
