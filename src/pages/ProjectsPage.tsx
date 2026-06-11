@@ -107,9 +107,10 @@ const ProjectsPage = () => {
           if (genErr) throw genErr;
           finalTitle = (gen as any)?.title?.trim() || "";
         } catch {
-          // Fall back to a short slice of the prompt — never reuse the full text.
-          finalTitle = promptText.split(/[.!?\n]/)[0].slice(0, 50).trim() || "Untitled Project";
+          // Never reuse the raw prompt as the title — fall back to a neutral placeholder.
+          finalTitle = "Untitled Project";
         }
+        if (!finalTitle) finalTitle = "Untitled Project";
       }
 
       const { data, error } = await supabase
