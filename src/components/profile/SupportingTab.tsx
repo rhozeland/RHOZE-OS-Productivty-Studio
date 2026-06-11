@@ -186,12 +186,18 @@ const SupportingTab = ({ userId, isOwnProfile }: Props) => {
                         : "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))",
                   }}
                 >
-                  <div className="p-4 min-h-[110px] flex items-end">
+                  <div className="p-4 min-h-[110px] flex items-end justify-between gap-2">
                     <div className="min-w-0">
                       <p className="text-[10px] uppercase tracking-[0.18em] text-white/70">Cheering</p>
                       <p className="font-display text-base font-bold text-white truncate">{pr.title}</p>
                     </div>
+                    {isOwnProfile && !row.shared_to_profile && (
+                      <span className="shrink-0 rounded-full bg-white/15 backdrop-blur px-2 py-0.5 text-[9px] uppercase tracking-wider text-white/90">
+                        Private
+                      </span>
+                    )}
                   </div>
+
                 </Link>
               );
             })}
