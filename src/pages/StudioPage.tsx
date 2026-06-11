@@ -268,18 +268,38 @@ const StudioPage = () => {
     queryKey: ["studio-backed", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data: cheerRows, error } = await (supabase as any)
         .from("project_cheers")
-        .select(
-          "created_at, project:projects(id,title,is_public,public_slug,user_id,status)",
-        )
+        .select("project_id, created_at, shared_to_profile")
         .eq("user_id", user!.id)
         .order("created_at", { ascending: false })
         .limit(24);
       if (error) return [];
-      const rows = ((data ?? []) as any[])
-        .map((r) => ({ cheered_at: r.created_at, ...(r.project ?? {}) }))
-        .filter((p) => p && p.id);
+
+      const projectIds = Array.from(
+        new Set(((cheerRows ?? []) as any[]).map((row) => row.project_id).filter(Boolean)),
+      );
+      if (projectIds.length === 0) return [];
+
+      const { data: projectsData, error: projectsError } = await supabase
+        .from("projects")
+        .select("id, title, is_public, public_slug, user_id, status")
+        .in("id", projectIds);
+      if (projectsError) return [];
+
+      const projectById = new Map((projectsData ?? []).map((project: any) => [project.id, project]));
+      const rows = ((cheerRows ?? []) as any[])
+        .map((row) => {
+          const project = projectById.get(row.project_id);
+          if (!project?.is_public) return null;
+          return {
+            ...project,
+            cheered_at: row.created_at,
+            shared_to_profile: !!row.shared_to_profile,
+          };
+        })
+        .filter(Boolean) as any[];
+
       const ownerIds = Array.from(new Set(rows.map((p: any) => p.user_id).filter(Boolean)));
       if (ownerIds.length === 0) return rows;
       const { data: profs } = await supabase
