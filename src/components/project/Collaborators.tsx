@@ -18,6 +18,7 @@ import { useProjectRole } from "@/hooks/useProjectRole";
 const ROLE_INFO: Record<string, { label: string; description: string }> = {
   member: { label: "Member", description: "Can view the project, its goals, files, and team — but cannot edit settings, manage the team, or upload to the moodboard." },
   admin: { label: "Admin", description: "Full editing access — can update project settings, manage the team, edit goals, and upload to the moodboard. Cannot remove the owner." },
+  owner: { label: "Co-owner", description: "Same powers as the original owner — can edit settings, manage the team, invite/remove collaborators, and lock revenue splits. Use for true partners on the project." },
 };
 
 interface CollaboratorsProps {
