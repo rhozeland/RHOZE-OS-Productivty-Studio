@@ -58,7 +58,7 @@ const CATEGORY_OPTIONS = [
 const SECTIONS = [
   // Avatar + banner now folded into Profile (one identity surface).
   { id: "profile", label: "Profile", icon: User },
-  { id: "subscriptions", label: "Subscriptions", icon: Sparkles },
+  { id: "subscriptions", label: "VIP Access", icon: Sparkles },
   { id: "wallet", label: "Wallet", icon: Wallet },
   // Verified IP vault + Verified Artist identity merged into one "Verification" surface.
   // id stays "provenance" so existing /settings#provenance links keep working.
