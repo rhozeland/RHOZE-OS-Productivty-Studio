@@ -934,31 +934,28 @@ const ProjectDetailPage = () => {
           <RoadmapCalendarView goals={goals} projectId={id!} />
         </TabsContent>
 
-        {/* BOARD */}
         <TabsContent value="board" className="space-y-4">
+          {canManageProject && (
+            <div className="flex justify-end">
+              <Button size="sm" variant="outline" onClick={() => setAddAssetOpen(true)}>
+                Add asset
+              </Button>
+            </div>
+          )}
           <BoardMasonry
             deliverables={deliverables as any}
-            showFilters
             canManage={canManageProject}
             onAdd={() => setAddAssetOpen(true)}
+            emptyStateVariant="large"
           />
           <AddBoardAssetDialog
             projectId={id!}
             open={addAssetOpen}
             onOpenChange={setAddAssetOpen}
           />
-          <div className="pt-4 border-t border-border">
-            <ProjectTools
-              projectId={id!}
-              projectTitle={project.title}
-              smartboardDetails={smartboardDetails}
-              onCreateSmartboard={() => createSmartboard.mutate()}
-              onUnlinkSmartboard={(sbId: string) => unlinkSmartboard.mutate(sbId)}
-              smartboardCap={smartboardCap}
-              isCreating={createSmartboard.isPending}
-            />
-          </div>
         </TabsContent>
+
+
 
         {/* STORY */}
         <TabsContent value="story" className="space-y-8">
