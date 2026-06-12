@@ -502,29 +502,23 @@ const StudioPage = () => {
       if (!user) throw new Error("Sign in first");
       setCreating(true);
       const brief = projectBrief.trim();
-      const createdAfter = new Date().toISOString();
-      const { error: insErr } = await supabase
+
+      // Insert and return the new row directly — avoids a race / title
+      // collision when looking the project up by title afterwards.
+      const { data: created, error: insErr } = await supabase
         .from("projects")
         .insert({
           title: draftedTitle,
           description: brief,
+          vision: brief, // populates the Overview tab
           user_id: user.id,
           status: "active",
           project_type: "collaborative",
           cover_color: "#7c3aed",
         })
-      if (insErr) throw insErr;
-
-      const { data: created, error: fetchErr } = await supabase
-        .from("projects")
         .select("id")
-        .eq("user_id", user.id)
-        .eq("title", draftedTitle)
-        .gte("created_at", createdAfter)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (fetchErr) throw fetchErr;
+        .single();
+      if (insErr) throw insErr;
       if (!created?.id) throw new Error("Project was created, but could not be opened.");
 
       if (draftedMilestones.length) {
