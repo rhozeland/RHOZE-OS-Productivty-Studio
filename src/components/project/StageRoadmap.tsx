@@ -149,6 +149,88 @@ const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, co
   const [expandedStages, setExpandedStages] = useState<Set<string>>(new Set());
   const [editingStageId, setEditingStageId] = useState<string | null>(null);
 
+  // ---- Team members (owner + collaborators) with profiles for the Assigned column ----
+  const { data: project } = useQuery({
+    queryKey: ["project-owner", projectId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("user_id")
+        .eq("id", projectId)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const memberIds = Array.from(
+    new Set(
+      [
+        ...(project?.user_id ? [project.user_id] : []),
+        ...((collaborators ?? []).map((c) => c.user_id)),
+      ].filter(Boolean) as string[]
+    )
+  );
+
+  const { data: memberProfiles } = useQuery({
+    queryKey: ["stage-roadmap-members", projectId, memberIds.join(",")],
+    enabled: memberIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("user_id, username, display_name, avatar_url")
+        .in("user_id", memberIds);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const profileById = new Map(
+    (memberProfiles ?? []).map((p: any) => [p.user_id, p])
+  );
+
+  const teamMembers = memberIds.map((id) => {
+    const p: any = profileById.get(id);
+    const isProjectOwner = id === project?.user_id;
+    return {
+      user_id: id,
+      display_name: p?.display_name || p?.username || (isProjectOwner ? "Lead artist" : "Member"),
+      avatar_url: p?.avatar_url as string | null | undefined,
+      isOwner: isProjectOwner,
+    };
+  });
+
+  const assignStage = useMutation({
+    mutationFn: async ({ goalId, assigneeId }: { goalId: string; assigneeId: string | null }) => {
+      const { error } = await supabase.rpc("assign_project_stage" as any, {
+        p_goal_id: goalId,
+        p_assignee_id: assigneeId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project-goals", projectId] });
+      toast.success("Stage assigned");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const requestReview = useMutation({
+    mutationFn: async (goalId: string) => {
+      const { error } = await supabase.rpc("request_stage_review" as any, {
+        p_goal_id: goalId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project-goals", projectId] });
+      toast.success("Sent for review");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+
+
   // Stage form
   const [stageTitle, setStageTitle] = useState("");
   const [stageDesc, setStageDesc] = useState("");
