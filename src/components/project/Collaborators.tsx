@@ -27,6 +27,9 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { isOwner, isAdmin, canManage } = useProjectRole(projectId);
+  // Spec: only the Lead Artist (owner) can invite, remove, or change roles.
+  const canInviteOrRemove = isOwner;
+
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState<{ user_id: string; display_name: string } | null>(null);
@@ -175,7 +178,7 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
             </PopoverContent>
           </Popover>
         </div>
-        {canManage && (
+        {canInviteOrRemove && (
         <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setSearch(""); setSelectedUser(null); } }}>
           <DialogTrigger asChild>
             <Button variant="outline" size="sm"><Plus className="mr-1 h-4 w-4" />Invite</Button>
@@ -301,7 +304,7 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
                 )}
               </div>
             </div>
-            {canManage ? (
+            {canInviteOrRemove ? (
               <Select
                 value={collab.role}
                 onValueChange={(val) => updateRole.mutate({ id: collab.id, role: val })}
@@ -322,7 +325,7 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
                 {ROLE_INFO[collab.role]?.label ?? collab.role}
               </span>
             )}
-            {(canManage || collab.user_id === user?.id) && (
+            {(canInviteOrRemove || collab.user_id === user?.id) && (
               <Button
                 variant="ghost"
                 size="icon"
@@ -333,6 +336,7 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
                 <X className="h-3.5 w-3.5 text-muted-foreground" />
               </Button>
             )}
+
           </motion.div>
         );
       })}

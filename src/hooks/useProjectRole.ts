@@ -36,7 +36,10 @@ export function useProjectRole(projectId?: string) {
     isOwner: role === "owner",
     isAdmin: role === "admin",
     isMember: role === "member",
+    /** Any non-owner team member (admin or member). Spec calls this the "Collaborator" view. */
+    isCollaborator: role === "admin" || role === "member",
     canManage: role === "owner" || role === "admin",
     canView: role !== null,
   };
 }
+

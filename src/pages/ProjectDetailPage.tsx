@@ -80,7 +80,7 @@ const ProjectDetailPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { canManage: canManageProject } = useProjectRole(id);
+  const { canManage: canManageProject, isOwner, isCollaborator } = useProjectRole(id);
 
   const { data: credits } = useQuery({
     queryKey: ["user-credits-balance", user?.id],
@@ -347,8 +347,9 @@ const ProjectDetailPage = () => {
         project={project}
         owner={owner ?? null}
         status={status}
-        isOwner={canManageProject}
+        isOwner={isOwner}
       />
+
 
       {/* Editable header strip below the cover */}
       <div className="mt-4 md:mt-6 flex items-start justify-between gap-3 px-1">
@@ -378,8 +379,8 @@ const ProjectDetailPage = () => {
             </div>
           ) : (
             <div
-              className={"group rounded-lg p-1 -m-1 " + (canManageProject ? "cursor-pointer hover:bg-muted/40" : "")}
-              onClick={canManageProject ? startEditing : undefined}
+              className={"group rounded-lg p-1 -m-1 " + (isOwner ? "cursor-pointer hover:bg-muted/40" : "")}
+              onClick={isOwner ? startEditing : undefined}
             >
               <div className="flex items-center gap-2 flex-wrap">
                 {isLocked && (
@@ -388,7 +389,7 @@ const ProjectDetailPage = () => {
                   </Badge>
                 )}
                 {project.intake_tier === "concierge" && <BackedByRhozelandBadge />}
-                {canManageProject && (
+                {isOwner && (
                   <Pencil className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                 )}
               </div>
@@ -396,6 +397,7 @@ const ProjectDetailPage = () => {
                 <p className="mt-1 text-sm text-muted-foreground">{project.description}</p>
               )}
             </div>
+
           )}
         </div>
       </div>
@@ -468,7 +470,7 @@ const ProjectDetailPage = () => {
               </div>
             </button>
 
-            {canManageProject && (
+            {isOwner && (
               <PublishReleaseCard
                 projectId={project.id}
                 isPublic={(project as any).is_public ?? false}
@@ -479,6 +481,7 @@ const ProjectDetailPage = () => {
                 description={(project as any).vision ?? project.description ?? null}
               />
             )}
+
 
             {/* Bento row: Story / Board (if any) / Crew */}
             {(() => {
@@ -560,7 +563,7 @@ const ProjectDetailPage = () => {
 
         {/* ROADMAP */}
         <TabsContent value="roadmap" className="space-y-6">
-          {canManageProject && (
+          {isOwner && (
             <TokenizeProjectCta
               projectId={project.id}
               projectTitle={project.title}
@@ -569,7 +572,7 @@ const ProjectDetailPage = () => {
             />
           )}
 
-          {canManageProject && !((project as any).linked_token_id) && (() => {
+          {isOwner && !((project as any).linked_token_id) && (() => {
             const topStages = (goals ?? []).filter((g: any) => !g.parent_id);
             const totalStages = topStages.length;
             const completed = topStages.filter((g: any) => {
@@ -597,14 +600,14 @@ const ProjectDetailPage = () => {
 
           <SignedAgreementCard projectId={id!} contractId={contract?.id} />
 
-          {canManageProject && (
+          {isOwner && (
             <AttachCoinToProjectCard
               projectId={project.id}
               linkedTokenId={(project as any).linked_token_id ?? null}
             />
           )}
 
-          <RoadmapCopilot projectId={id!} />
+          {isOwner && <RoadmapCopilot projectId={id!} />}
 
 
           {isPaid && (
@@ -618,7 +621,7 @@ const ProjectDetailPage = () => {
             />
           )}
 
-          {!isLocked && (goals?.filter((g: any) => !g.parent_id).length ?? 0) < 2 && (
+          {isOwner && !isLocked && (goals?.filter((g: any) => !g.parent_id).length ?? 0) < 2 && (
             <AiRoadmapDraftButton
               projectId={id!}
               projectTitle={project.title}
@@ -628,6 +631,7 @@ const ProjectDetailPage = () => {
               existingGoalCount={goals?.filter((g: any) => !g.parent_id).length ?? 0}
             />
           )}
+
 
           <div className="grid gap-6 lg:grid-cols-3">
             <div className="lg:col-span-2">
@@ -640,7 +644,9 @@ const ProjectDetailPage = () => {
                 collaborators={collaborators}
                 isCollaborative={project.project_type === "collaborative"}
                 isLocked={isLocked}
+                isOwner={isOwner}
               />
+
             </div>
             <div className="space-y-4">
               {isPaid && (
@@ -704,7 +710,7 @@ const ProjectDetailPage = () => {
               description={(project as any).description ?? null}
               canManage={canManageProject}
             />
-            <StoryUpdates projectId={id!} canManage={canManageProject} />
+            <StoryUpdates projectId={id!} canManage={canManageProject} isOwner={isOwner} />
           </div>
         </TabsContent>
 
@@ -726,7 +732,7 @@ const ProjectDetailPage = () => {
 
         {/* Editor side rail — sticky on desktop */}
         <aside className="space-y-4 lg:sticky lg:top-6 self-start order-first lg:order-none">
-          {canManageProject && (
+          {isOwner && (
             <EditorSideRail
               isPublic={(project as any).is_public ?? false}
               publicSlug={(project as any).public_slug ?? null}
@@ -736,7 +742,9 @@ const ProjectDetailPage = () => {
               stagesComplete={milestones?.filter((m: any) => m.status === "approved" || m.status === "released").length ?? 0}
             />
           )}
-          {!canManageProject && (
+          {/* Non-team viewers see Support card; collaborators see neither (they're already on the team). */}
+          {!canManageProject && !isCollaborator && (
+
             <SupportProjectCard
               projectId={id!}
               projectTitle={project.title}

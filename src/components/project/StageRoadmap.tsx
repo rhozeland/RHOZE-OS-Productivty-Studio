@@ -63,7 +63,9 @@ interface Goal {
   stage_date_start: string | null;
   stage_date_end: string | null;
   location: string | null;
+  assignee_id?: string | null;
 }
+
 
 interface Collaborator {
   id: string;
@@ -92,7 +94,11 @@ interface StageRoadmapProps {
   collaborators?: Collaborator[] | null;
   isCollaborative?: boolean;
   isLocked?: boolean;
+  /** When false (collaborator view), hide add/delete and show assigned-stage
+   *  accent border. Defaults to true for backwards compatibility. */
+  isOwner?: boolean;
 }
+
 
 // Notion-style status options. Mapped onto project_goals.status values.
 type StatusKey = "planned" | "in_progress" | "in_review" | "shipped" | "archived";
@@ -132,7 +138,7 @@ const PRIORITY_PILL: Record<string, string> = {
   high:   "bg-rose-500/15 text-rose-400 border-rose-500/30",
 };
 
-const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, collaborators, isCollaborative, isLocked }: StageRoadmapProps) => {
+const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, collaborators, isCollaborative, isLocked, isOwner = true }: StageRoadmapProps) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [stageDialogOpen, setStageDialogOpen] = useState(false);
@@ -441,6 +447,7 @@ const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, co
             </span>
           )}
         </div>
+        {isOwner && (
         <Dialog open={stageDialogOpen} onOpenChange={setStageDialogOpen}>
           <DialogTrigger asChild>
             <Button variant="outline" size="sm">
@@ -524,6 +531,8 @@ const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, co
             </form>
           </DialogContent>
         </Dialog>
+        )}
+
       </div>
 
       {/* Overall progress strip */}
@@ -570,8 +579,12 @@ const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, co
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.03 }}
-                className="border-b border-border/40 last:border-b-0"
+                className={cn(
+                  "border-b border-border/40 last:border-b-0",
+                  !isOwner && stage.assignee_id === user?.id && "border-l-2 border-l-primary",
+                )}
               >
+
                 {isEditing ? (
                   // ---- EDIT MODE ----
                   <form
@@ -719,21 +732,28 @@ const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, co
                     </div>
 
                     {/* Row actions */}
+                    {(isOwner || stage.assignee_id === user?.id) && (
                     <div className="hidden md:flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); startEditing(stage); }}>
                         <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
                       </Button>
+                      {isOwner && (
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); deleteGoal.mutate(stage.id); }}>
                         <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
                       </Button>
+                      )}
                     </div>
+                    )}
 
                     {/* Mobile row action menu */}
+                    {(isOwner || stage.assignee_id === user?.id) && (
                     <div className="flex md:hidden items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => startEditing(stage)}>
                         <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
                       </Button>
                     </div>
+                    )}
+
                   </div>
                 )}
 
@@ -849,6 +869,7 @@ const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, co
           })}
 
           {/* New item row at bottom (Notion-style) */}
+          {isOwner && (
           <button
             onClick={() => setStageDialogOpen(true)}
             className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
@@ -856,6 +877,8 @@ const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, co
             <Plus className="h-4 w-4" />
             New stage
           </button>
+          )}
+
         </div>
       )}
     </div>
