@@ -84,9 +84,11 @@ const StoryUpdates = ({ projectId, canManage, isOwner = true }: Props) => {
     setBody("");
     setPhase("");
     setImageUrl(null);
-    setIsPublic(true);
+    // Collaborator: always private. Lead artist: defaults to public.
+    setIsPublic(isOwner);
     setEditingId(null);
   };
+
 
   const openNew = () => {
     resetForm();
