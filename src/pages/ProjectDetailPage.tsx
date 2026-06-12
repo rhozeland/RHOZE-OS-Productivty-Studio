@@ -631,7 +631,7 @@ const ProjectDetailPage = () => {
                     {/* Roadmap + Timeline combined */}
                     <button
                       onClick={() => setTab("roadmap")}
-                      className="text-left rounded-2xl border border-border bg-gradient-to-br from-violet-500/10 via-card to-indigo-500/5 p-4 transition-all hover:border-primary/40 hover:shadow-md min-h-[240px] flex flex-col"
+                      className="md:col-span-4 text-left rounded-2xl border border-border bg-gradient-to-br from-violet-500/10 via-card to-indigo-500/5 p-4 transition-all hover:border-primary/40 hover:shadow-md min-h-[240px] flex flex-col"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
