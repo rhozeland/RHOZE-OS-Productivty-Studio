@@ -12,7 +12,7 @@
  *   - Story renders project_goals as a journal-style feed.
  *   - Tokenize CTA pinned at the bottom of every tab.
  */
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
