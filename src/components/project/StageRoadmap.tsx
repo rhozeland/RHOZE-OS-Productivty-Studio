@@ -732,21 +732,28 @@ const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, co
                     </div>
 
                     {/* Row actions */}
+                    {(isOwner || stage.assignee_id === user?.id) && (
                     <div className="hidden md:flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); startEditing(stage); }}>
                         <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
                       </Button>
+                      {isOwner && (
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); deleteGoal.mutate(stage.id); }}>
                         <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
                       </Button>
+                      )}
                     </div>
+                    )}
 
                     {/* Mobile row action menu */}
+                    {(isOwner || stage.assignee_id === user?.id) && (
                     <div className="flex md:hidden items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => startEditing(stage)}>
                         <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
                       </Button>
                     </div>
+                    )}
+
                   </div>
                 )}
 
