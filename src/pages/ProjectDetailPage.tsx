@@ -762,28 +762,6 @@ const ProjectDetailPage = () => {
                     </div>
                   </button>
 
-                  {/* Bottom: view-as-fan toggle */}
-                  <div className="flex items-center justify-start pt-2">
-                    {(() => {
-                      const slug = (project as any).public_slug;
-                      const isPub = !!(project as any).is_public && !!slug;
-                      const inner = (
-                        <div className={`inline-flex items-center gap-2.5 rounded-full border border-border bg-card/80 backdrop-blur px-3 py-1.5 text-xs ${isPub ? "hover:border-primary/40" : "opacity-70 cursor-not-allowed"}`}>
-                          <Eye className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span className="text-foreground font-medium">View as fan</span>
-                          <Switch checked={false} disabled={!isPub} className="scale-75 -mx-1" />
-                          {!isPub && <span className="text-[10px] text-muted-foreground">— publish first</span>}
-                        </div>
-                      );
-                      return isPub ? (
-                        <Link to={`/release/${slug}`} aria-label="Preview public release page">
-                          {inner}
-                        </Link>
-                      ) : (
-                        inner
-                      );
-                    })()}
-                  </div>
                 </>
               );
             })()}
