@@ -41,6 +41,10 @@ interface Props {
   linkedTokenTicker?: string | null;
   linkedTokenMint?: string | null;
   onScrollToComments?: () => void;
+  /** Compact horizontal bar variant (mirrors EditorSideRail horizontal). */
+  horizontal?: boolean;
+  stagesComplete?: number;
+  stagesTotal?: number;
 }
 
 const SupportPanel = ({
