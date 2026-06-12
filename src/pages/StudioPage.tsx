@@ -444,8 +444,24 @@ const StudioPage = () => {
       if (brief.length < 8) throw new Error("Describe what you want to make.");
 
       setPhase("generating");
-      const firstLine = brief.split(/\n|\.|—|·/)[0].trim();
-      const title = firstLine.slice(0, 60) || "Untitled release";
+
+      // Use the same AI title generator the rest of the app uses so the
+      // project gets a punchy, music-native name instead of the raw brief.
+      let title = "";
+      try {
+        const { data: gen, error: genErr } = await supabase.functions.invoke(
+          "generate-project-title",
+          { body: { prompt: brief } },
+        );
+        if (genErr) throw genErr;
+        title = ((gen as any)?.title ?? "").trim();
+      } catch {
+        title = "";
+      }
+      if (!title) {
+        const firstLine = brief.split(/\n|\.|—|·/)[0].trim();
+        title = firstLine.slice(0, 60) || "Untitled release";
+      }
 
       const ctx = await fetchCreatorContext(user.id, "Creator");
       const { data: drafted, error } = await supabase.functions.invoke(
@@ -465,6 +481,7 @@ const StudioPage = () => {
       const milestones = ((drafted as any)?.milestones ?? []) as DraftedMilestone[];
       if (!milestones.length) throw new Error("AI couldn't draft a roadmap — try a more detailed brief.");
       return { title, milestones };
+
     },
     onSuccess: ({ title, milestones }) => {
       setDraftedTitle(title);
