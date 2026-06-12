@@ -13,7 +13,7 @@ import {
 import {
   EyeOff, Loader2, Sparkles, Image as ImageIcon, Play, Music, FileText,
   Calendar as CalendarIcon, FolderKanban, ExternalLink, Coins, Heart,
-  Rocket, Inbox, Users, ArrowRight, Repeat2, HeartHandshake,
+  Rocket, Inbox, Users, ArrowRight, Repeat2, HeartHandshake, Briefcase,
 } from "lucide-react";
 import SupportingTab from "@/components/profile/SupportingTab";
 import { toast } from "sonner";
@@ -36,7 +36,7 @@ import ProfileProjectCard from "@/components/profile/ProfileProjectCard";
 import LaunchCoinFlowModal from "@/components/launchpad/LaunchCoinFlowModal";
 import StartProjectPicker from "@/components/project/StartProjectPicker";
 
-type TabKey = "projects" | "works" | "reposts" | "supporting";
+type TabKey = "projects" | "works" | "reposts" | "supporting" | "opportunities";
 
 const ProfileDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -70,7 +70,7 @@ const ProfileDetailPage = () => {
 
   const initialTab = (searchParams.get("tab") as TabKey) || "projects";
   const [tab, setTab] = useState<TabKey>(
-    ["projects", "works", "reposts", "supporting"].includes(initialTab) ? initialTab : "projects",
+    ["projects", "works", "reposts", "supporting", "opportunities"].includes(initialTab) ? initialTab : "projects",
   );
 
   const [subscribeOpen, setSubscribeOpen] = useState(
@@ -164,6 +164,19 @@ const ProfileDetailPage = () => {
       const { data } = await supabase.from("projects")
         .select("id, title, description, status, cover_color, cover_image_url, categories, created_at, intake_tier")
         .eq("user_id", id!).order("created_at", { ascending: false }).limit(12);
+      return data ?? [];
+    },
+    enabled: !!id,
+  });
+
+  // Opportunities — active marketplace listings posted by this user
+  const { data: opportunities } = useQuery({
+    queryKey: ["profile-opportunities", id],
+    queryFn: async () => {
+      const { data } = await supabase.from("marketplace_listings")
+        .select("id, title, description, category, listing_type, price, currency, credits_price, cover_url, image_url, tags, created_at")
+        .eq("user_id", id!).eq("is_active", true)
+        .order("created_at", { ascending: false }).limit(24);
       return data ?? [];
     },
     enabled: !!id,
@@ -301,9 +314,13 @@ const ProfileDetailPage = () => {
   };
 
   const hasReposts = (repostedPosts?.length ?? 0) > 0;
+  const hasOpportunities = (opportunities?.length ?? 0) > 0;
   const TABS: { key: TabKey; label: string; Icon: any }[] = [
     { key: "works", label: "Works", Icon: ImageIcon },
     { key: "projects", label: "Projects", Icon: FolderKanban },
+    ...(hasOpportunities
+      ? [{ key: "opportunities" as TabKey, label: "Opportunities", Icon: Briefcase }]
+      : []),
     { key: "supporting", label: "Supporting", Icon: HeartHandshake },
     // Reposts tab only appears once this user has actually reposted something.
     ...(hasReposts
@@ -426,6 +443,56 @@ const ProfileDetailPage = () => {
                   emptyTitle="No reposts yet"
                   emptyDescription="Hit the repost button on any Flow card and it'll land here."
                 />
+              </section>
+            )}
+
+            {tab === "opportunities" && (
+              <section className="space-y-3">
+                {(opportunities?.length ?? 0) === 0 ? (
+                  <EmptyState icon={Briefcase} title="No opportunities yet" description="Active listings posted by this creator will appear here." size="sm" />
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {(opportunities ?? []).map((o: any) => {
+                      const cover = o.cover_url || o.image_url;
+                      const priceLabel = o.price
+                        ? `${o.currency || "USD"} ${Number(o.price).toLocaleString()}`
+                        : o.credits_price
+                          ? `${Number(o.credits_price).toLocaleString()} credits`
+                          : null;
+                      return (
+                        <Link
+                          key={o.id}
+                          to={`/listings/${o.id}`}
+                          className="group rounded-2xl border border-border/60 bg-card/70 hover:bg-card transition-colors overflow-hidden flex flex-col"
+                        >
+                          {cover ? (
+                            <div className="aspect-[16/10] w-full overflow-hidden bg-muted">
+                              <img src={cover} alt={o.title} className="h-full w-full object-cover group-hover:scale-[1.02] transition-transform" />
+                            </div>
+                          ) : (
+                            <div className="aspect-[16/10] w-full bg-gradient-to-br from-primary/20 to-fuchsia-500/20 flex items-center justify-center">
+                              <Briefcase className="h-8 w-8 text-muted-foreground" />
+                            </div>
+                          )}
+                          <div className="p-4 space-y-1.5">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+                                {o.listing_type || o.category}
+                              </span>
+                            </div>
+                            <p className="font-display text-base font-semibold text-foreground line-clamp-1">{o.title}</p>
+                            {o.description && (
+                              <p className="text-xs text-muted-foreground line-clamp-2">{o.description}</p>
+                            )}
+                            {priceLabel && (
+                              <p className="text-sm font-medium text-foreground pt-1">{priceLabel}</p>
+                            )}
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
               </section>
             )}
 
