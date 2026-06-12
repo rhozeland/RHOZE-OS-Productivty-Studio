@@ -42,6 +42,8 @@ interface Props {
   onSeeMore?: () => void;
   canManage?: boolean;
   onAdd?: () => void;
+  /** Required when canManage is true to enable delete + query invalidation. */
+  projectId?: string;
   /** When true and there is no content, render nothing (public surfaces). */
   hideWhenEmpty?: boolean;
   /** Large dashed empty-state variant (editor Board tab). */
