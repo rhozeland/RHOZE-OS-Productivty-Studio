@@ -102,9 +102,25 @@ const StartProjectPicker = ({ open, onOpenChange }: Props) => {
 
   const createProject = async (opts: { aiPrompt?: string }) => {
     if (!user) return null;
-    const title = opts.aiPrompt
-      ? opts.aiPrompt.slice(0, 60)
-      : "Untitled release";
+    // For the AI flow, call generate-project-title to get a punchy, music-native
+    // working title instead of using the raw brief verbatim.
+    let title = "Untitled release";
+    if (opts.aiPrompt) {
+      try {
+        const { data: gen, error: genErr } = await supabase.functions.invoke(
+          "generate-project-title",
+          { body: { prompt: opts.aiPrompt } },
+        );
+        if (!genErr) {
+          const t = ((gen as any)?.title ?? "").toString().trim();
+          if (t) title = t;
+        }
+      } catch { /* ignore — fall through to slice fallback */ }
+      if (title === "Untitled release") {
+        const firstLine = opts.aiPrompt.split(/\n|\.|—|·/)[0].trim();
+        title = firstLine.slice(0, 60) || "Untitled release";
+      }
+    }
     const coverColor = "#a855f7";
     const coverUrl = `data:image/svg+xml;utf8,${encodeURIComponent(
       `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 600'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='${coverColor}'/><stop offset='1' stop-color='#0a0a0a'/></linearGradient></defs><rect width='600' height='600' fill='url(#g)'/></svg>`,
