@@ -109,7 +109,7 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
         .select("user_id, pct")
         .eq("project_id", projectId);
       if (error) throw error;
-      return (data ?? []) as Array<{ user_id: string; pct: number }>;
+      return ((data ?? []) as unknown) as Array<{ user_id: string; pct: number }>;
     },
   });
 
