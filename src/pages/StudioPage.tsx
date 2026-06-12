@@ -528,6 +528,7 @@ const StudioPage = () => {
       if (!created?.id) throw new Error("Project was created, but could not be opened.");
 
       if (draftedMilestones.length) {
+        const dates = chainMilestoneDates(draftedMilestones);
         const { error: goalsErr } = await (supabase as any)
           .from("project_goals")
           .insert(
@@ -539,10 +540,14 @@ const StudioPage = () => {
               budget_amount: m.suggested_amount,
               sort_order: i,
               parent_id: null,
+              stage_date_start: dates[i].stage_date_start,
+              stage_date_end: dates[i].stage_date_end,
+              due_date: dates[i].due_date,
             })),
           );
         if (goalsErr) throw goalsErr;
       }
+
       return created.id as string;
     },
     onSuccess: (projectId) => {
