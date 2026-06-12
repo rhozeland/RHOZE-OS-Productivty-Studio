@@ -670,7 +670,7 @@ const ProjectDetailPage = () => {
                     </button>
 
                     {/* Tasks */}
-                    <div className="rounded-2xl border border-border bg-card p-4 min-h-[240px] flex flex-col">
+                    <div className="md:col-span-3 rounded-2xl border border-border bg-card p-4 min-h-[240px] flex flex-col">
                       <div className="flex items-center justify-between mb-2">
                         <div>
                           <div className="text-[10px] uppercase tracking-[0.14em] font-semibold text-emerald-600 dark:text-emerald-300 flex items-center gap-1.5">
