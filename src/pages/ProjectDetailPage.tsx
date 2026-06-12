@@ -347,8 +347,9 @@ const ProjectDetailPage = () => {
         project={project}
         owner={owner ?? null}
         status={status}
-        isOwner={canManageProject}
+        isOwner={isOwner}
       />
+
 
       {/* Editable header strip below the cover */}
       <div className="mt-4 md:mt-6 flex items-start justify-between gap-3 px-1">
