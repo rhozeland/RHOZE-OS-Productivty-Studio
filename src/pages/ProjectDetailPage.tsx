@@ -644,7 +644,9 @@ const ProjectDetailPage = () => {
                 collaborators={collaborators}
                 isCollaborative={project.project_type === "collaborative"}
                 isLocked={isLocked}
+                isOwner={isOwner}
               />
+
             </div>
             <div className="space-y-4">
               {isPaid && (
