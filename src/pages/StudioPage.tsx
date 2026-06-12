@@ -253,12 +253,11 @@ const StudioPage = () => {
       return ((data as any)?.user_type ?? "creator") as "fan" | "creator";
     },
   });
-  // Activity-based, not role-based: the page flips to "creator mode" the
-  // moment the user has created their first project (and never flips back).
+  // CTA mode: musicians/creators see "Start a Project" + "Launch a Coin".
+  // Fans (or anyone who has already shipped a project) see discovery CTAs.
   const hasOwnProjects = (projects ?? []).length > 0;
-  const showDiscoverCtas = !hasOwnProjects;
-  // Keep userType referenced to avoid a lint warning; ordering is now fixed.
-  void userType;
+  const isFan = userType === "fan";
+  const showDiscoverCtas = isFan && !hasOwnProjects;
 
   // Backing — projects this user has cheered (project_cheers). PostgREST
   // cannot embed `profiles` directly off `projects` (the FK on projects.user_id
