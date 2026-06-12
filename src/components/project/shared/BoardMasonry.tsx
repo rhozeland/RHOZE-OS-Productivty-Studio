@@ -17,6 +17,7 @@ interface Deliverable {
   file_url?: string | null;
   file_name?: string | null;
   mime_type?: string | null;
+  content_hash?: string | null;
   created_at?: string | null;
   anchored_at?: string | null;
 }
@@ -40,9 +41,28 @@ const kindOf = (d: Deliverable): Cat => {
   const mime = (d.mime_type ?? "").toLowerCase();
   const url = (d.file_url ?? "").toLowerCase();
   if (mime.startsWith("image/")) return "images";
-  if (url.startsWith("http") && !mime) return "links";
+  if (mime === "text/uri-list" || (url.startsWith("http") && !mime)) return "links";
   if (mime || url) return "files";
   return "references";
+};
+
+const linkCover = (d: Deliverable): string | null => {
+  const h = d.content_hash ?? "";
+  if (h.startsWith("og:")) return h.slice(3);
+  return null;
+};
+
+const domainOf = (url?: string | null) => {
+  try { return new URL(url!).hostname.replace(/^www\./, ""); } catch { return ""; }
+};
+
+// Deterministic pastel gradient from a string seed
+const gradientFor = (seed: string) => {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  const a = h % 360;
+  const b = (a + 60) % 360;
+  return `linear-gradient(135deg, hsl(${a} 70% 65%), hsl(${b} 70% 55%))`;
 };
 
 const filterChips: { id: Cat; label: string }[] = [
@@ -124,6 +144,8 @@ const BoardMasonry = ({ deliverables, limit, showFilters, onSeeMore, canManage, 
         {filtered.map((d) => {
           const kind = kindOf(d);
           const isImage = kind === "images" && d.file_url;
+          const cover = kind === "links" ? linkCover(d) : null;
+          const domain = kind === "links" ? domainOf(d.file_url) : "";
           return (
             <a
               key={d.id}
@@ -139,13 +161,37 @@ const BoardMasonry = ({ deliverables, limit, showFilters, onSeeMore, canManage, 
                   className="w-full h-auto block"
                   loading="lazy"
                 />
+              ) : kind === "links" ? (
+                cover ? (
+                  <div className="relative aspect-[4/3] overflow-hidden">
+                    <img
+                      src={cover}
+                      alt={d.title}
+                      className="w-full h-full object-cover block"
+                      loading="lazy"
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                    />
+                    <div className="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
+                      <div className="flex items-center gap-1.5 text-[10px] font-medium text-white">
+                        <LinkIcon className="h-3 w-3" />
+                        <span className="truncate">{domain}</span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    className="relative aspect-[4/3] grid place-items-center p-4 text-white"
+                    style={{ backgroundImage: gradientFor(d.file_url || d.title) }}
+                  >
+                    <LinkIcon className="h-8 w-8 opacity-90" />
+                    <div className="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black/40 to-transparent">
+                      <div className="text-[10px] font-medium truncate">{domain || d.title}</div>
+                    </div>
+                  </div>
+                )
               ) : (
                 <div className="aspect-[4/3] grid place-items-center bg-gradient-to-br from-muted to-card p-4">
-                  {kind === "links" ? (
-                    <LinkIcon className="h-8 w-8 text-muted-foreground/60" />
-                  ) : (
-                    <FileText className="h-8 w-8 text-muted-foreground/60" />
-                  )}
+                  <FileText className="h-8 w-8 text-muted-foreground/60" />
                 </div>
               )}
               {d.anchored_at && (
