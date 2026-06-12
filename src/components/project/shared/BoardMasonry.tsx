@@ -7,9 +7,22 @@
  * filename chip, with hover label.
  */
 import { useMemo, useState } from "react";
-import { Image as ImageIcon, FileText, Link as LinkIcon, FolderOpen, ExternalLink } from "lucide-react";
+import { Image as ImageIcon, FileText, Link as LinkIcon, FolderOpen, ExternalLink, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Deliverable {
   id: string;
