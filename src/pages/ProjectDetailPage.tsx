@@ -320,6 +320,7 @@ const ProjectDetailPage = () => {
   });
 
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [addAssetOpen, setAddAssetOpen] = useState(false);
 
   const archiveProject = useMutation({
     mutationFn: async (nextStatus: "archived" | "active") => {
@@ -939,7 +940,12 @@ const ProjectDetailPage = () => {
             deliverables={deliverables as any}
             showFilters
             canManage={canManageProject}
-            onAdd={() => toast.info("Use the Roadmap tab to attach files to deliverables.")}
+            onAdd={() => setAddAssetOpen(true)}
+          />
+          <AddBoardAssetDialog
+            projectId={id!}
+            open={addAssetOpen}
+            onOpenChange={setAddAssetOpen}
           />
           <div className="pt-4 border-t border-border">
             <ProjectTools
