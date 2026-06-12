@@ -17,6 +17,7 @@ interface Deliverable {
   file_url?: string | null;
   file_name?: string | null;
   mime_type?: string | null;
+  content_hash?: string | null;
   created_at?: string | null;
   anchored_at?: string | null;
 }
