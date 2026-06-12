@@ -48,6 +48,7 @@ import { toast } from "sonner";
 import ProjectHero from "@/components/project/shared/ProjectHero";
 import MilestoneTrack from "@/components/project/shared/MilestoneTrack";
 import BoardMasonry from "@/components/project/shared/BoardMasonry";
+import AddBoardAssetDialog from "@/components/project/AddBoardAssetDialog";
 import SupportersStrip from "@/components/project/shared/SupportersStrip";
 import StoryFeed from "@/components/project/shared/StoryFeed";
 import TokenizeBottomCta from "@/components/project/shared/TokenizeBottomCta";
