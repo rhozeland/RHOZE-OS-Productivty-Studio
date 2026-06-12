@@ -42,7 +42,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 import { format, isPast, isToday } from "date-fns";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import ProjectHero from "@/components/project/shared/ProjectHero";
@@ -408,6 +408,19 @@ const ProjectDetailPage = () => {
     else next.set("tab", t);
     setSearchParams(next, { replace: true });
   };
+
+  // When the project was just created via "Build with AI", land on the
+  // Roadmap tab so <AiRoadmapDraftButton /> mounts and its auto-fire effect
+  // runs immediately — otherwise the drafting modal only appears after the
+  // user manually clicks Roadmap.
+  useEffect(() => {
+    let mode: string | null = null;
+    try { mode = sessionStorage.getItem("startProjectMode"); } catch { /* ignore */ }
+    if (mode === "ai" && activeTab !== "roadmap") {
+      setTab("roadmap");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (!project) return <div className="text-muted-foreground p-6">Loading...</div>;
 
