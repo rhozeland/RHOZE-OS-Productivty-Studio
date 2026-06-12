@@ -40,11 +40,14 @@ import {
   Check,
   X,
   Lock,
+  UserPlus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useQuery } from "@tanstack/react-query";
 import StageApproval from "@/components/project/StageApproval";
 
 interface Goal {
@@ -145,6 +148,88 @@ const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, co
   const [itemDialogOpen, setItemDialogOpen] = useState<string | null>(null);
   const [expandedStages, setExpandedStages] = useState<Set<string>>(new Set());
   const [editingStageId, setEditingStageId] = useState<string | null>(null);
+
+  // ---- Team members (owner + collaborators) with profiles for the Assigned column ----
+  const { data: project } = useQuery({
+    queryKey: ["project-owner", projectId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("user_id")
+        .eq("id", projectId)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const memberIds = Array.from(
+    new Set(
+      [
+        ...(project?.user_id ? [project.user_id] : []),
+        ...((collaborators ?? []).map((c) => c.user_id)),
+      ].filter(Boolean) as string[]
+    )
+  );
+
+  const { data: memberProfiles } = useQuery({
+    queryKey: ["stage-roadmap-members", projectId, memberIds.join(",")],
+    enabled: memberIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("user_id, username, display_name, avatar_url")
+        .in("user_id", memberIds);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const profileById = new Map(
+    (memberProfiles ?? []).map((p: any) => [p.user_id, p])
+  );
+
+  const teamMembers = memberIds.map((id) => {
+    const p: any = profileById.get(id);
+    const isProjectOwner = id === project?.user_id;
+    return {
+      user_id: id,
+      display_name: p?.display_name || p?.username || (isProjectOwner ? "Lead artist" : "Member"),
+      avatar_url: p?.avatar_url as string | null | undefined,
+      isOwner: isProjectOwner,
+    };
+  });
+
+  const assignStage = useMutation({
+    mutationFn: async ({ goalId, assigneeId }: { goalId: string; assigneeId: string | null }) => {
+      const { error } = await supabase.rpc("assign_project_stage" as any, {
+        p_goal_id: goalId,
+        p_assignee_id: assigneeId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project-goals", projectId] });
+      toast.success("Stage assigned");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const requestReview = useMutation({
+    mutationFn: async (goalId: string) => {
+      const { error } = await supabase.rpc("request_stage_review" as any, {
+        p_goal_id: goalId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project-goals", projectId] });
+      toast.success("Sent for review");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+
 
   // Stage form
   const [stageTitle, setStageTitle] = useState("");
@@ -431,7 +516,119 @@ const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, co
     );
   };
 
+  const AssigneePill = ({ stage }: { stage: Goal }) => {
+    const assigneeId = stage.assignee_id || null;
+    const assignee = assigneeId
+      ? teamMembers.find((m) => m.user_id === assigneeId)
+      : null;
+    const canEdit = isOwner;
+
+    const initials = (assignee?.display_name || "?")
+      .split(" ")
+      .map((p) => p[0])
+      .filter(Boolean)
+      .slice(0, 2)
+      .join("")
+      .toUpperCase();
+
+    const trigger = (
+      <button
+        type="button"
+        onClick={(e) => e.stopPropagation()}
+        disabled={!canEdit}
+        title={assignee ? `Assigned to ${assignee.display_name}` : "Unassigned"}
+        className={cn(
+          "inline-flex items-center justify-center rounded-full transition",
+          canEdit ? "hover:opacity-80 cursor-pointer" : "cursor-default"
+        )}
+      >
+        {assignee ? (
+          <Avatar className="h-6 w-6 ring-1 ring-border">
+            {assignee.avatar_url ? (
+              <AvatarImage src={assignee.avatar_url} alt={assignee.display_name} />
+            ) : null}
+            <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
+          </Avatar>
+        ) : (
+          <span className="flex h-6 w-6 items-center justify-center rounded-full border border-dashed border-border bg-muted/40 text-muted-foreground">
+            <UserPlus className="h-3 w-3" />
+          </span>
+        )}
+      </button>
+    );
+
+    if (!canEdit) return trigger;
+
+    return (
+      <Popover>
+        <PopoverTrigger asChild>{trigger}</PopoverTrigger>
+        <PopoverContent className="w-56 p-1" align="start" onClick={(e) => e.stopPropagation()}>
+          <div className="px-2 pb-1 pt-1 text-[10px] uppercase tracking-wider text-muted-foreground/70">
+            Assign to
+          </div>
+          {teamMembers.length === 0 && (
+            <div className="px-2 py-2 text-xs text-muted-foreground">No team members yet</div>
+          )}
+          {teamMembers.map((m) => {
+            const mInitials = m.display_name
+              .split(" ")
+              .map((p) => p[0])
+              .filter(Boolean)
+              .slice(0, 2)
+              .join("")
+              .toUpperCase();
+            const selected = assigneeId === m.user_id;
+            return (
+              <button
+                key={m.user_id}
+                onClick={() =>
+                  assignStage.mutate({ goalId: stage.id, assigneeId: m.user_id })
+                }
+                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted/60"
+              >
+                <Avatar className="h-6 w-6">
+                  {m.avatar_url ? <AvatarImage src={m.avatar_url} alt={m.display_name} /> : null}
+                  <AvatarFallback className="text-[10px]">{mInitials}</AvatarFallback>
+                </Avatar>
+                <span className="truncate">{m.display_name}</span>
+                {m.isOwner && (
+                  <span className="ml-auto text-[10px] text-muted-foreground">Lead</span>
+                )}
+                {selected && <Check className="ml-1 h-3.5 w-3.5 text-muted-foreground" />}
+              </button>
+            );
+          })}
+          {assigneeId && (
+            <>
+              <div className="my-1 h-px bg-border/60" />
+              <button
+                onClick={() =>
+                  assignStage.mutate({ goalId: stage.id, assigneeId: null })
+                }
+                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-muted-foreground hover:bg-muted/60"
+              >
+                <X className="h-3.5 w-3.5" /> Unassign
+              </button>
+            </>
+          )}
+        </PopoverContent>
+      </Popover>
+    );
+  };
+
+  // Wraps setStageStatus: if a collaborator (non-owner) marks their assigned stage as
+  // "in_review" or "shipped", route through request_stage_review so the lead artist is notified.
+  const handleStageStatusChange = (stage: Goal, next: StatusKey) => {
+    const isAssignedToMe = stage.assignee_id && stage.assignee_id === user?.id;
+    if (!isOwner && isAssignedToMe && (next === "in_review" || next === "shipped")) {
+      requestReview.mutate(stage.id);
+      return;
+    }
+    setStageStatus.mutate({ goalId: stage.id, status: next });
+  };
+
   const completedStages = stages.filter((s) => normalizeStatus(s.status) === "shipped").length;
+
   const overallProgress = stages.length === 0 ? 0 : Math.round((completedStages / stages.length) * 100);
 
   return (
@@ -556,15 +753,17 @@ const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, co
       {stages.length > 0 && (
         <div className="surface-card overflow-hidden">
           {/* Column header */}
-          <div className="hidden md:grid grid-cols-[28px_minmax(0,1fr)_120px_100px_180px_100px_60px] items-center gap-3 border-b border-border/60 px-3 py-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/80">
+          <div className="hidden md:grid grid-cols-[28px_minmax(0,1fr)_120px_100px_56px_180px_100px_60px] items-center gap-3 border-b border-border/60 px-3 py-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/80">
             <div />
             <div>Stage</div>
             <div>Status</div>
             <div>Priority</div>
+            <div>Assigned</div>
             <div>Timeline</div>
             <div className="text-right">Budget</div>
             <div />
           </div>
+
 
           {stages.map((stage, i) => {
             const subItems = getSubItems(stage.id);
@@ -646,11 +845,12 @@ const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, co
                   // ---- ROW VIEW ----
                   <div
                     className={cn(
-                      "group grid grid-cols-[28px_minmax(0,1fr)_auto] md:grid-cols-[28px_minmax(0,1fr)_120px_100px_180px_100px_60px] items-center gap-3 px-3 py-4 cursor-pointer hover:bg-muted/30 transition-colors",
+                      "group grid grid-cols-[28px_minmax(0,1fr)_auto] md:grid-cols-[28px_minmax(0,1fr)_120px_100px_56px_180px_100px_60px] items-center gap-3 px-3 py-4 cursor-pointer hover:bg-muted/30 transition-colors",
                       status === "shipped" && "bg-emerald-500/[0.03]"
                     )}
                     onClick={() => toggleExpand(stage.id)}
                   >
+
                     {/* Expand chevron + stage number */}
                     <div className="flex items-center justify-center text-muted-foreground">
                       {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
@@ -680,8 +880,11 @@ const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, co
                       )}
                       {/* Mobile compact meta row */}
                       <div className="mt-1.5 flex flex-wrap items-center gap-2 md:hidden">
-                        <StatusPill status={status} onChange={(s) => setStageStatus.mutate({ goalId: stage.id, status: s })} />
+                        <StatusPill status={status} onChange={(s) => handleStageStatusChange(stage, s)} />
                         <PriorityPill priority={stage.priority || "medium"} onChange={(p) => setStagePriorityMutation.mutate({ goalId: stage.id, priority: p })} />
+                        <span onClick={(e) => e.stopPropagation()}>
+                          <AssigneePill stage={stage} />
+                        </span>
                         {stage.stage_date_end && (
                           <span className="text-[11px] text-muted-foreground flex items-center gap-1">
                             <CalendarIcon className="h-3 w-3" />
@@ -696,13 +899,19 @@ const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, co
 
                     {/* Status — desktop column */}
                     <div className="hidden md:block">
-                      <StatusPill status={status} onChange={(s) => setStageStatus.mutate({ goalId: stage.id, status: s })} />
+                      <StatusPill status={status} onChange={(s) => handleStageStatusChange(stage, s)} />
                     </div>
 
                     {/* Priority */}
                     <div className="hidden md:block">
                       <PriorityPill priority={stage.priority || "medium"} onChange={(p) => setStagePriorityMutation.mutate({ goalId: stage.id, priority: p })} />
                     </div>
+
+                    {/* Assigned to */}
+                    <div className="hidden md:flex items-center">
+                      <AssigneePill stage={stage} />
+                    </div>
+
 
                     {/* Timeline */}
                     <div className="hidden md:flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
