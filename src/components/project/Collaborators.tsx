@@ -482,7 +482,7 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
                 </SelectTrigger>
                 <SelectContent>
                   {Object.entries(ROLE_INFO).map(([key, info]) => (
-                    <SelectItem key={key} value={key} disabled={key === "admin" && !isOwner}>
+                    <SelectItem key={key} value={key} disabled={(key === "admin" || key === "owner") && !isOwner}>
                       <span className="capitalize">{info.label}</span>
                     </SelectItem>
                   ))}
