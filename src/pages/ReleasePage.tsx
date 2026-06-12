@@ -204,6 +204,28 @@ const ReleasePage = () => {
     [goals],
   );
 
+  const roadmapStages = useMemo(
+    () =>
+      (goals ?? [])
+        .filter((g: any) => !g.parent_id)
+        .sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
+    [goals],
+  );
+
+  const roadmapDoneCount = useMemo(
+    () =>
+      roadmapStages.filter((g: any) => {
+        const s = (g.status || "").toLowerCase();
+        return s === "approved" || s === "released" || s === "completed" || s === "shipped" || s === "done";
+      }).length,
+    [roadmapStages],
+  );
+
+  const overviewStages = roadmapStages.length ? roadmapStages : (milestones ?? []);
+  const overviewDoneCount = roadmapStages.length
+    ? roadmapDoneCount
+    : (milestones ?? []).filter((m: any) => m.status === "approved" || m.status === "released").length;
+
   const hasMilestones = (milestones?.length ?? 0) > 0;
   const hasStory = storyItems.length > 0;
   const hasBoard = (deliverables ?? []).some((d: any) => d.file_url || d.title);
