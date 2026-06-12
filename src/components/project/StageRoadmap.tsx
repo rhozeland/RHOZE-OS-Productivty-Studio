@@ -63,7 +63,9 @@ interface Goal {
   stage_date_start: string | null;
   stage_date_end: string | null;
   location: string | null;
+  assignee_id?: string | null;
 }
+
 
 interface Collaborator {
   id: string;
