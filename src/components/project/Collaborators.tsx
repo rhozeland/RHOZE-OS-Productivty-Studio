@@ -27,6 +27,9 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { isOwner, isAdmin, canManage } = useProjectRole(projectId);
+  // Spec: only the Lead Artist (owner) can invite, remove, or change roles.
+  const canInviteOrRemove = isOwner;
+
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState<{ user_id: string; display_name: string } | null>(null);
