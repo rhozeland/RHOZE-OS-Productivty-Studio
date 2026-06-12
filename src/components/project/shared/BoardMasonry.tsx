@@ -144,6 +144,8 @@ const BoardMasonry = ({ deliverables, limit, showFilters, onSeeMore, canManage, 
         {filtered.map((d) => {
           const kind = kindOf(d);
           const isImage = kind === "images" && d.file_url;
+          const cover = kind === "links" ? linkCover(d) : null;
+          const domain = kind === "links" ? domainOf(d.file_url) : "";
           return (
             <a
               key={d.id}
@@ -159,13 +161,37 @@ const BoardMasonry = ({ deliverables, limit, showFilters, onSeeMore, canManage, 
                   className="w-full h-auto block"
                   loading="lazy"
                 />
+              ) : kind === "links" ? (
+                cover ? (
+                  <div className="relative aspect-[4/3] overflow-hidden">
+                    <img
+                      src={cover}
+                      alt={d.title}
+                      className="w-full h-full object-cover block"
+                      loading="lazy"
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                    />
+                    <div className="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
+                      <div className="flex items-center gap-1.5 text-[10px] font-medium text-white">
+                        <LinkIcon className="h-3 w-3" />
+                        <span className="truncate">{domain}</span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    className="relative aspect-[4/3] grid place-items-center p-4 text-white"
+                    style={{ backgroundImage: gradientFor(d.file_url || d.title) }}
+                  >
+                    <LinkIcon className="h-8 w-8 opacity-90" />
+                    <div className="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black/40 to-transparent">
+                      <div className="text-[10px] font-medium truncate">{domain || d.title}</div>
+                    </div>
+                  </div>
+                )
               ) : (
                 <div className="aspect-[4/3] grid place-items-center bg-gradient-to-br from-muted to-card p-4">
-                  {kind === "links" ? (
-                    <LinkIcon className="h-8 w-8 text-muted-foreground/60" />
-                  ) : (
-                    <FileText className="h-8 w-8 text-muted-foreground/60" />
-                  )}
+                  <FileText className="h-8 w-8 text-muted-foreground/60" />
                 </div>
               )}
               {d.anchored_at && (
