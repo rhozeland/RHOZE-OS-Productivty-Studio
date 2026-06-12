@@ -732,7 +732,7 @@ const ProjectDetailPage = () => {
 
         {/* Editor side rail — sticky on desktop */}
         <aside className="space-y-4 lg:sticky lg:top-6 self-start order-first lg:order-none">
-          {canManageProject && (
+          {isOwner && (
             <EditorSideRail
               isPublic={(project as any).is_public ?? false}
               publicSlug={(project as any).public_slug ?? null}
@@ -742,7 +742,9 @@ const ProjectDetailPage = () => {
               stagesComplete={milestones?.filter((m: any) => m.status === "approved" || m.status === "released").length ?? 0}
             />
           )}
-          {!canManageProject && (
+          {/* Non-team viewers see Support card; collaborators see neither (they're already on the team). */}
+          {!canManageProject && !isCollaborator && (
+
             <SupportProjectCard
               projectId={id!}
               projectTitle={project.title}
