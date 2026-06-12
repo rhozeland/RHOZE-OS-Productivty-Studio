@@ -251,16 +251,23 @@ const StoryUpdates = ({ projectId, canManage, isOwner = true }: Props) => {
 
               <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
                 <div className="flex items-center gap-2 text-sm">
-                  {isPublic ? (
-                    <span className="text-foreground">Public update</span>
+                  {isOwner ? (
+                    isPublic ? (
+                      <span className="text-foreground">Public update</span>
+                    ) : (
+                      <span className="flex items-center gap-1.5 text-muted-foreground">
+                        <Lock className="h-3.5 w-3.5" /> Private — team only
+                      </span>
+                    )
                   ) : (
                     <span className="flex items-center gap-1.5 text-muted-foreground">
-                      <Lock className="h-3.5 w-3.5" /> Private — team only
+                      <Lock className="h-3.5 w-3.5" /> Team note — only your team can see this
                     </span>
                   )}
                 </div>
-                <Switch checked={isPublic} onCheckedChange={setIsPublic} />
+                {isOwner && <Switch checked={isPublic} onCheckedChange={setIsPublic} />}
               </div>
+
 
               <Button
                 type="submit"
