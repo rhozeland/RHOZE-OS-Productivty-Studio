@@ -465,6 +465,7 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
                 )}
               </div>
             </div>
+            <SplitPill userId={collab.user_id} />
             {canInviteOrRemove ? (
               <Select
                 value={collab.role}
