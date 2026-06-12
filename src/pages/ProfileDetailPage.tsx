@@ -24,6 +24,7 @@ import CreatorAvailabilityCalendar from "@/components/profile/CreatorAvailabilit
 import SupportFlowSheet from "@/components/profile/SupportFlowSheet";
 import CreatorCoinsGallery from "@/components/profile/coins/CreatorCoinsGallery";
 import ProfileGemHeader from "@/components/profile/ProfileGemHeader";
+import { VipDirectAccessButton } from "@/components/profile/VipDirectAccessModal";
 import { BoostProfileSheet } from "@/components/profile/BoostProfileSheet";
 import FlowThumbnail from "@/components/flow/FlowThumbnail";
 import FlowPostOwnerMenu from "@/components/profile/FlowPostOwnerMenu";
