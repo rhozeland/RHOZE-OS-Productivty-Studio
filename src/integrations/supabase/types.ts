@@ -6008,6 +6008,12 @@ export type Database = {
           shipping_country: string
           shipping_state: string
           shipping_zip: string
+          token_mint_address_pending: string
+          token_review_note: string
+          token_reviewed_at: string
+          token_submission_status: string
+          token_submitted_at: string
+          token_ticker_pending: string
           wallet_address: string
           wallet_locked: boolean
         }[]
