@@ -80,7 +80,7 @@ const ProjectDetailPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { canManage: canManageProject } = useProjectRole(id);
+  const { canManage: canManageProject, isOwner, isCollaborator } = useProjectRole(id);
 
   const { data: credits } = useQuery({
     queryKey: ["user-credits-balance", user?.id],
