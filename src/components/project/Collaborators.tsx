@@ -304,7 +304,7 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
                 )}
               </div>
             </div>
-            {canManage ? (
+            {canInviteOrRemove ? (
               <Select
                 value={collab.role}
                 onValueChange={(val) => updateRole.mutate({ id: collab.id, role: val })}
@@ -325,7 +325,7 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
                 {ROLE_INFO[collab.role]?.label ?? collab.role}
               </span>
             )}
-            {(canManage || collab.user_id === user?.id) && (
+            {(canInviteOrRemove || collab.user_id === user?.id) && (
               <Button
                 variant="ghost"
                 size="icon"
@@ -336,6 +336,7 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
                 <X className="h-3.5 w-3.5 text-muted-foreground" />
               </Button>
             )}
+
           </motion.div>
         );
       })}
