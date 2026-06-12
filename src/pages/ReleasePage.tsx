@@ -555,25 +555,8 @@ const ReleasePage = () => {
           </Tabs>
         </div>
 
-        {/* Sticky support rail */}
-        <aside className="space-y-4 lg:sticky lg:top-6 self-start">
-          <SupportPanel
-            projectId={project.id}
-            projectTitle={project.title}
-            cheerCount={project.cheer_count ?? 0}
-            iSupport={!!myCheer}
-            iSupportShared={!!(myCheer as any)?.shared_to_profile}
-            releaseUrl={typeof window !== "undefined" ? window.location.href : `/release/${slug}`}
-            ownerName={owner?.display_name ?? owner?.username ?? null}
-            coverColor={project.cover_color}
-            coverImageUrl={(project as any).cover_image_url ?? null}
-            linkedTokenTicker={linkedToken?.ticker ?? null}
-            linkedTokenMint={linkedToken?.mint_address ?? null}
-          />
-          <ProjectCoinLiveCard linkedTokenId={(project as any).linked_token_id ?? null} />
-        </aside>
-
       </div>
+
 
     </div>
   );
