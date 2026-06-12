@@ -325,7 +325,7 @@ const AppLayout = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("display_name, avatar_url")
+        .select("display_name, avatar_url, username")
         .eq("user_id", user!.id)
         .maybeSingle();
       return data;
