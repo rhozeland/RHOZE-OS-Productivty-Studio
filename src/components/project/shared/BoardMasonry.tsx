@@ -41,9 +41,28 @@ const kindOf = (d: Deliverable): Cat => {
   const mime = (d.mime_type ?? "").toLowerCase();
   const url = (d.file_url ?? "").toLowerCase();
   if (mime.startsWith("image/")) return "images";
-  if (url.startsWith("http") && !mime) return "links";
+  if (mime === "text/uri-list" || (url.startsWith("http") && !mime)) return "links";
   if (mime || url) return "files";
   return "references";
+};
+
+const linkCover = (d: Deliverable): string | null => {
+  const h = d.content_hash ?? "";
+  if (h.startsWith("og:")) return h.slice(3);
+  return null;
+};
+
+const domainOf = (url?: string | null) => {
+  try { return new URL(url!).hostname.replace(/^www\./, ""); } catch { return ""; }
+};
+
+// Deterministic pastel gradient from a string seed
+const gradientFor = (seed: string) => {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  const a = h % 360;
+  const b = (a + 60) % 360;
+  return `linear-gradient(135deg, hsl(${a} 70% 65%), hsl(${b} 70% 55%))`;
 };
 
 const filterChips: { id: Cat; label: string }[] = [
