@@ -18,6 +18,7 @@ import { useProjectRole } from "@/hooks/useProjectRole";
 const ROLE_INFO: Record<string, { label: string; description: string }> = {
   member: { label: "Member", description: "Can view the project, its goals, files, and team — but cannot edit settings, manage the team, or upload to the moodboard." },
   admin: { label: "Admin", description: "Full editing access — can update project settings, manage the team, edit goals, and upload to the moodboard. Cannot remove the owner." },
+  owner: { label: "Co-owner", description: "Same powers as the original owner — can edit settings, manage the team, invite/remove collaborators, and lock revenue splits. Use for true partners on the project." },
 };
 
 interface CollaboratorsProps {
@@ -35,7 +36,7 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState<{ user_id: string; display_name: string } | null>(null);
-  const [role, setRole] = useState<"member" | "admin">("member");
+  const [role, setRole] = useState<"member" | "admin" | "owner">("member");
   const [projectRole, setProjectRole] = useState("client");
   const [showResults, setShowResults] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
@@ -292,6 +293,7 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
   const roleColors: Record<string, string> = {
     member: "bg-secondary text-secondary-foreground",
     admin: "bg-amber-500/10 text-amber-600",
+    owner: "bg-primary/10 text-primary",
   };
 
   const projectRoleColors: Record<string, string> = {
@@ -410,15 +412,19 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
                   </SelectContent>
                 </Select>
               )}
-              <Select value={role} onValueChange={(v) => setRole(v as "member" | "admin")}>
+              <Select value={role} onValueChange={(v) => setRole(v as "member" | "admin" | "owner")}>
                 <SelectTrigger><SelectValue placeholder="Permission" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="member">Member</SelectItem>
                   {isOwner && <SelectItem value="admin">Admin</SelectItem>}
+                  {isOwner && <SelectItem value="owner">Co-owner</SelectItem>}
                 </SelectContent>
               </Select>
-              {!isOwner && role === "admin" && (
-                <p className="text-xs text-muted-foreground">Only the owner can promote someone to Admin.</p>
+              {!isOwner && (role === "admin" || role === "owner") && (
+                <p className="text-xs text-muted-foreground">Only the owner can promote someone to Admin or Co-owner.</p>
+              )}
+              {role === "owner" && (
+                <p className="text-xs text-amber-600">Co-owners get full control of this project — they can edit settings, manage the team, and lock revenue splits.</p>
               )}
               <Button type="submit" className="w-full" disabled={invite.isPending || !selectedUser}>
                 {invite.isPending ? "Inviting..." : "Invite"}
@@ -476,7 +482,7 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
                 </SelectTrigger>
                 <SelectContent>
                   {Object.entries(ROLE_INFO).map(([key, info]) => (
-                    <SelectItem key={key} value={key} disabled={key === "admin" && !isOwner}>
+                    <SelectItem key={key} value={key} disabled={(key === "admin" || key === "owner") && !isOwner}>
                       <span className="capitalize">{info.label}</span>
                     </SelectItem>
                   ))}
