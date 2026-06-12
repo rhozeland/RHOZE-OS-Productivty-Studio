@@ -87,29 +87,26 @@ const EditorSideRail = ({
 
       {isPublic && releaseUrl ? (
         <>
-          <Button asChild size="lg" className="w-full gap-2 bg-gradient-to-r from-rose-500 via-fuchsia-500 to-amber-400 text-white font-semibold hover:opacity-95 shadow-lg shadow-rose-500/20">
+          <Button asChild size="sm" className="w-full gap-1.5 bg-gradient-to-r from-rose-500 via-fuchsia-500 to-amber-400 text-white text-xs font-semibold hover:opacity-95">
             <Link to={`/release/${publicSlug}`} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="h-4 w-4" />
+              <ExternalLink className="h-3 w-3" />
               View public page
             </Link>
           </Button>
-          <p className="text-[11px] text-muted-foreground text-center leading-snug">
-            Share the public release so fans can support, comment, and follow milestones live.
-          </p>
-          <div className="flex items-center justify-center gap-2 pt-1">
-            <Button variant="outline" size="icon" onClick={shareNative} className="h-8 w-8" title="Share" aria-label="Share">
-              <Share2 className="h-3.5 w-3.5" />
+          <div className="flex items-center justify-center gap-1.5">
+            <Button variant="outline" size="icon" onClick={shareNative} className="h-7 w-7" title="Share" aria-label="Share">
+              <Share2 className="h-3 w-3" />
             </Button>
-            <Button variant="outline" size="icon" onClick={copyLink} className="h-8 w-8" title="Copy link" aria-label="Copy link">
-              <Copy className="h-3.5 w-3.5" />
+            <Button variant="outline" size="icon" onClick={copyLink} className="h-7 w-7" title="Copy link" aria-label="Copy link">
+              <Copy className="h-3 w-3" />
             </Button>
           </div>
           <StageProgress />
         </>
       ) : (
         <>
-          <p className="text-[12px] text-muted-foreground leading-snug">
-            Toggle <span className="font-medium text-foreground">Build in public</span> on the cover to share this release with fans.
+          <p className="text-[11px] text-muted-foreground leading-snug">
+            Toggle <span className="font-medium text-foreground">Build in public</span> on the cover to share.
           </p>
           <StageProgress />
         </>
@@ -117,5 +114,6 @@ const EditorSideRail = ({
     </div>
   );
 };
+
 
 export default EditorSideRail;
