@@ -412,15 +412,19 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
                   </SelectContent>
                 </Select>
               )}
-              <Select value={role} onValueChange={(v) => setRole(v as "member" | "admin")}>
+              <Select value={role} onValueChange={(v) => setRole(v as "member" | "admin" | "owner")}>
                 <SelectTrigger><SelectValue placeholder="Permission" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="member">Member</SelectItem>
                   {isOwner && <SelectItem value="admin">Admin</SelectItem>}
+                  {isOwner && <SelectItem value="owner">Co-owner</SelectItem>}
                 </SelectContent>
               </Select>
-              {!isOwner && role === "admin" && (
-                <p className="text-xs text-muted-foreground">Only the owner can promote someone to Admin.</p>
+              {!isOwner && (role === "admin" || role === "owner") && (
+                <p className="text-xs text-muted-foreground">Only the owner can promote someone to Admin or Co-owner.</p>
+              )}
+              {role === "owner" && (
+                <p className="text-xs text-amber-600">Co-owners get full control of this project — they can edit settings, manage the team, and lock revenue splits.</p>
               )}
               <Button type="submit" className="w-full" disabled={invite.isPending || !selectedUser}>
                 {invite.isPending ? "Inviting..." : "Invite"}
