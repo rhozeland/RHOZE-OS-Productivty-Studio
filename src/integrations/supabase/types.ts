@@ -5690,6 +5690,10 @@ export type Database = {
         Returns: undefined
       }
       are_buddies: { Args: { _a: string; _b: string }; Returns: boolean }
+      assign_project_stage: {
+        Args: { p_assignee_id: string; p_goal_id: string }
+        Returns: undefined
+      }
       award_engagement_reward: {
         Args: {
           _action_type: string
@@ -6149,6 +6153,16 @@ export type Database = {
         }
         Returns: undefined
       }
+      notify_user: {
+        Args: {
+          p_body?: string
+          p_link?: string
+          p_title: string
+          p_type: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       process_streaks_and_holds: { Args: never; Returns: Json }
       process_wallet_change: {
         Args: {
@@ -6233,6 +6247,7 @@ export type Database = {
         }
         Returns: string
       }
+      request_stage_review: { Args: { p_goal_id: string }; Returns: undefined }
       request_withdrawal: {
         Args: {
           _amount: number
