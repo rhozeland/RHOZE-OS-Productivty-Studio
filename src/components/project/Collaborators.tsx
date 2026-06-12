@@ -1,17 +1,19 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Users, Plus, X, Search, Info, ChevronDown } from "lucide-react";
+import { Users, Plus, X, Search, Info, ChevronDown, Lock, Check } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 import { useProjectRole } from "@/hooks/useProjectRole";
+
 
 const ROLE_INFO: Record<string, { label: string; description: string }> = {
   member: { label: "Member", description: "Can view the project, its goals, files, and team — but cannot edit settings, manage the team, or upload to the moodboard." },
@@ -81,6 +83,163 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
       return data;
     },
   });
+
+  // ---- Revenue splits ----
+  const { data: project } = useQuery({
+    queryKey: ["project-splits-meta", projectId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("user_id, title, team_splits_locked_at")
+        .eq("id", projectId)
+        .maybeSingle();
+      if (error) throw error;
+      return data as any;
+    },
+  });
+
+  const splitsLocked = !!project?.team_splits_locked_at;
+  const ownerUserId: string | undefined = project?.user_id;
+
+  const { data: splitRows } = useQuery({
+    queryKey: ["project-team-splits", projectId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("project_team_splits" as any)
+        .select("user_id, pct")
+        .eq("project_id", projectId);
+      if (error) throw error;
+      return ((data ?? []) as unknown) as Array<{ user_id: string; pct: number }>;
+    },
+  });
+
+  // Local edit buffer keyed by user_id → pct string
+  const [draftSplits, setDraftSplits] = useState<Record<string, string>>({});
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [confirmLockOpen, setConfirmLockOpen] = useState(false);
+
+  // Seed draft when server data arrives
+  useEffect(() => {
+    if (!splitRows) return;
+    const seed: Record<string, string> = {};
+    splitRows.forEach((r) => { seed[r.user_id] = String(Number(r.pct)); });
+    setDraftSplits(seed);
+  }, [splitRows]);
+
+  const serverPct = useMemo(() => {
+    const m = new Map<string, number>();
+    (splitRows ?? []).forEach((r) => m.set(r.user_id, Number(r.pct) || 0));
+    return m;
+  }, [splitRows]);
+
+  const getDraftNum = (uid: string) => {
+    const raw = draftSplits[uid];
+    if (raw === undefined || raw === "") return 0;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  const allTeamUserIds: string[] = [
+    ...(ownerUserId ? [ownerUserId] : []),
+    ...((collaborators ?? []).map((c) => c.user_id)),
+  ];
+  const total = allTeamUserIds.reduce((sum, uid) => sum + getDraftNum(uid), 0);
+  const totalRounded = Math.round(total * 100) / 100;
+
+  const hasUnsavedChanges = allTeamUserIds.some(
+    (uid) => getDraftNum(uid) !== (serverPct.get(uid) ?? 0)
+  );
+
+  const saveSplits = useMutation({
+    mutationFn: async () => {
+      const rows = allTeamUserIds.map((uid) => ({
+        project_id: projectId,
+        user_id: uid,
+        pct: getDraftNum(uid),
+      }));
+      const { error } = await supabase
+        .from("project_team_splits" as any)
+        .upsert(rows, { onConflict: "project_id,user_id" });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project-team-splits", projectId] });
+      setEditingUserId(null);
+      toast.success("Splits saved");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const lockSplits = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.rpc("lock_project_team_splits" as any, {
+        p_project_id: projectId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project-team-splits", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["project-splits-meta", projectId] });
+      setConfirmLockOpen(false);
+      toast.success("Splits locked — team notified");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  // Inline split pill shown next to a team member. Visible to lead OR self only.
+  const SplitPill = ({ userId }: { userId: string }) => {
+    const canSeeRow = isOwner || userId === user?.id;
+    if (!canSeeRow) return null;
+    const value = draftSplits[userId] ?? "";
+    const displayPct = isOwner ? (value === "" ? 0 : Number(value) || 0) : (serverPct.get(userId) ?? 0);
+    const canEdit = isOwner && !splitsLocked;
+    const isEditing = canEdit && editingUserId === userId;
+
+    if (isEditing) {
+      return (
+        <div className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/5 px-2 py-0.5">
+          <Input
+            type="number"
+            min={0}
+            max={100}
+            step="0.01"
+            value={value}
+            autoFocus
+            onChange={(e) =>
+              setDraftSplits((p) => ({ ...p, [userId]: e.target.value }))
+            }
+            onBlur={() => setEditingUserId(null)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") setEditingUserId(null);
+              if (e.key === "Escape") setEditingUserId(null);
+            }}
+            className="h-5 w-14 text-[11px] px-1 py-0 border-0 bg-transparent focus-visible:ring-0"
+          />
+          <span className="text-[10px] text-muted-foreground">%</span>
+        </div>
+      );
+    }
+
+    return (
+      <button
+        type="button"
+        onClick={canEdit ? () => setEditingUserId(userId) : undefined}
+        disabled={!canEdit}
+        className={cn(
+          "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium tabular-nums",
+          splitsLocked
+            ? "bg-muted text-muted-foreground"
+            : "bg-primary/10 text-primary",
+          canEdit && "hover:bg-primary/15 cursor-pointer",
+        )}
+        title={splitsLocked ? "Splits are locked" : canEdit ? "Click to edit" : undefined}
+      >
+        {splitsLocked && <Lock className="h-2.5 w-2.5" />}
+        {displayPct}%
+      </button>
+    );
+  };
+
 
   const invite = useMutation({
     mutationFn: async () => {
@@ -279,7 +438,9 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
           <p className="text-sm font-medium text-foreground">You</p>
           <p className="text-xs text-muted-foreground">Owner</p>
         </div>
+        {ownerUserId && <SplitPill userId={ownerUserId} />}
       </div>
+
 
       {collaborators?.map((collab, i) => {
         const profile = profileMap.get(collab.user_id);
@@ -304,6 +465,7 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
                 )}
               </div>
             </div>
+            <SplitPill userId={collab.user_id} />
             {canInviteOrRemove ? (
               <Select
                 value={collab.role}
@@ -344,8 +506,92 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
       {(!collaborators || collaborators.length === 0) && (
         <p className="mt-2 text-xs text-muted-foreground">No collaborators yet — invite someone from your network.</p>
       )}
+
+      {/* ── Revenue splits footer ────────────────────────────── */}
+      {isOwner && (
+        <div className="mt-4 border-t border-border/60 pt-3 space-y-2">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <p className="text-xs text-muted-foreground">
+              Total: <span className={cn(
+                "font-semibold tabular-nums",
+                totalRounded === 100 ? "text-emerald-500" : "text-foreground"
+              )}>{totalRounded}%</span> of 100%
+            </p>
+            <div className="flex items-center gap-2">
+              {!splitsLocked && hasUnsavedChanges && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => saveSplits.mutate()}
+                  disabled={saveSplits.isPending}
+                >
+                  {saveSplits.isPending ? "Saving..." : "Save splits"}
+                </Button>
+              )}
+              {!splitsLocked && !hasUnsavedChanges && totalRounded === 100 && (
+                <Button
+                  size="sm"
+                  onClick={() => setConfirmLockOpen(true)}
+                  className="gap-1"
+                >
+                  <Lock className="h-3.5 w-3.5" />
+                  Lock splits
+                </Button>
+              )}
+              {splitsLocked && (
+                <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                  <Lock className="h-3 w-3" /> Locked
+                </span>
+              )}
+            </div>
+          </div>
+          {!splitsLocked && totalRounded !== 100 && (
+            <p className="text-[11px] text-primary">
+              Splits must total 100% before launch.
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Collaborator-only mini footer: just show own % */}
+      {!isOwner && user && (
+        <div className="mt-4 border-t border-border/60 pt-3">
+          <p className="text-xs text-muted-foreground">
+            Your share:{" "}
+            <span className={cn(
+              "inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium tabular-nums",
+              splitsLocked ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary",
+            )}>
+              {splitsLocked && <Lock className="h-2.5 w-2.5" />}
+              {serverPct.get(user.id) ?? 0}%
+            </span>
+          </p>
+        </div>
+      )}
+
+      {/* Confirm lock dialog */}
+      <Dialog open={confirmLockOpen} onOpenChange={setConfirmLockOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Lock splits permanently?</DialogTitle>
+            <DialogDescription>
+              Locking splits is permanent. All team members will be notified. Are you sure?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setConfirmLockOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => lockSplits.mutate()} disabled={lockSplits.isPending} className="gap-1">
+              <Lock className="h-3.5 w-3.5" />
+              {lockSplits.isPending ? "Locking..." : "Lock splits"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
+
 
 export default Collaborators;
