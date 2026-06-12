@@ -83,17 +83,30 @@ const AddBoardAssetDialog = ({ projectId, open, onOpenChange }: Props) => {
     }
   };
 
+  const fetchLinkCover = async (url: string): Promise<string | null> => {
+    try {
+      const res = await fetch(`https://api.microlink.io/?url=${encodeURIComponent(url)}`);
+      const json = await res.json();
+      const img = json?.data?.image?.url || json?.data?.logo?.url || json?.data?.screenshot?.url;
+      return typeof img === "string" ? img : null;
+    } catch {
+      return null;
+    }
+  };
+
   const addLink = useMutation({
     mutationFn: async () => {
       if (!linkUrl.trim()) throw new Error("Add a link URL");
       const url = linkUrl.trim();
+      const cover = await fetchLinkCover(url);
       const { error } = await supabase.from("project_deliverables" as any).insert({
         project_id: projectId,
         user_id: user!.id,
         title: linkTitle.trim() || url,
         file_url: url,
         file_name: linkTitle.trim() || url,
-        mime_type: null,
+        mime_type: "text/uri-list",
+        content_hash: cover ? `og:${cover}` : null,
         sort_order: 0,
       } as any);
       if (error) throw error;
