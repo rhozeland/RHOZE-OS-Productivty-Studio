@@ -283,9 +283,6 @@ const ReleasePage = () => {
                 </div>
               )}
 
-              <div ref={commentsRef}>
-                <ReleaseComments projectId={project.id} />
-              </div>
             </TabsContent>
 
             {/* ROADMAP — vision + scope + AI-drafted milestones (project_goals) */}
