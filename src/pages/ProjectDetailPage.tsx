@@ -723,14 +723,16 @@ const ProjectDetailPage = () => {
                     </div>
 
                     {/* Visual — official project media */}
-                    <ProjectFeaturedVisual
-                      projectId={project.id}
-                      featuredUrl={(project as any).featured_visual_url}
-                      featuredExternalUrl={(project as any).featured_visual_external_url}
-                      featuredMime={(project as any).featured_visual_mime}
-                      featuredTitle={(project as any).featured_visual_title}
-                      canManage={canManageProject}
-                    />
+                    <div className="md:col-span-5">
+                      <ProjectFeaturedVisual
+                        projectId={project.id}
+                        featuredUrl={(project as any).featured_visual_url}
+                        featuredExternalUrl={(project as any).featured_visual_external_url}
+                        featuredMime={(project as any).featured_visual_mime}
+                        featuredTitle={(project as any).featured_visual_title}
+                        canManage={canManageProject}
+                      />
+                    </div>
                   </div>
 
 
