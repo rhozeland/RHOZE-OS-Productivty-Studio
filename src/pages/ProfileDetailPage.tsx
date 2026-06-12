@@ -169,6 +169,19 @@ const ProfileDetailPage = () => {
     enabled: !!id,
   });
 
+  // Opportunities — active marketplace listings posted by this user
+  const { data: opportunities } = useQuery({
+    queryKey: ["profile-opportunities", id],
+    queryFn: async () => {
+      const { data } = await supabase.from("marketplace_listings")
+        .select("id, title, description, category, listing_type, price, currency, credits_price, cover_url, image_url, tags, created_at")
+        .eq("user_id", id!).eq("is_active", true)
+        .order("created_at", { ascending: false }).limit(24);
+      return data ?? [];
+    },
+    enabled: !!id,
+  });
+
   // Collaborators for all projects on this profile — one round-trip
   const projectIds = (buildingProjects ?? []).map((p: any) => p.id);
   const { data: projectCollaborators } = useQuery({
