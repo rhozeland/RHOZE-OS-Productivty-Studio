@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { useMemo, useRef } from "react";
+import { useMemo } from "react";
 
 import ProjectHero from "@/components/project/shared/ProjectHero";
 import MilestoneTrack from "@/components/project/shared/MilestoneTrack";
@@ -24,7 +24,7 @@ import { computeProjectStatus } from "@/components/project/shared/projectStatus"
 
 import SupportPanel from "@/components/release/SupportPanel";
 import ProjectFeaturedVisual from "@/components/project/ProjectFeaturedVisual";
-import ReleaseComments from "@/components/release/ReleaseComments";
+
 import RoadmapCalendarView from "@/components/project/RoadmapCalendarView";
 
 const TAB_TRIGGER =
@@ -192,8 +192,6 @@ const ReleasePage = () => {
   const hasStory = storyItems.length > 0;
   const hasBoard = (deliverables ?? []).some((d: any) => d.file_url || d.title);
 
-  const commentsRef = useRef<HTMLDivElement>(null);
-  const scrollToComments = () => commentsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
 
   if (isLoading) {
     return <div className="container mx-auto py-20 text-center text-muted-foreground">Loading release…</div>;
@@ -283,9 +281,6 @@ const ReleasePage = () => {
                 </div>
               )}
 
-              <div ref={commentsRef}>
-                <ReleaseComments projectId={project.id} />
-              </div>
             </TabsContent>
 
             {/* ROADMAP — vision + scope + AI-drafted milestones (project_goals) */}
@@ -437,7 +432,7 @@ const ReleasePage = () => {
             coverImageUrl={(project as any).cover_image_url ?? null}
             linkedTokenTicker={linkedToken?.ticker ?? null}
             linkedTokenMint={linkedToken?.mint_address ?? null}
-            onScrollToComments={scrollToComments}
+            
           />
         </aside>
       </div>

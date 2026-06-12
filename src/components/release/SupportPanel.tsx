@@ -17,8 +17,10 @@ import { Heart, MessageCircle, Share2, Coins, Copy, Sparkles } from "lucide-reac
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import ReleaseComments from "@/components/release/ReleaseComments";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -38,7 +40,7 @@ interface Props {
   coverImageUrl?: string | null;
   linkedTokenTicker?: string | null;
   linkedTokenMint?: string | null;
-  onScrollToComments: () => void;
+  onScrollToComments?: () => void;
 }
 
 const SupportPanel = ({
@@ -52,7 +54,6 @@ const SupportPanel = ({
   coverImageUrl,
   linkedTokenTicker,
   linkedTokenMint,
-  onScrollToComments,
 }: Props) => {
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -62,6 +63,7 @@ const SupportPanel = ({
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [successOpen, setSuccessOpen] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(false);
   const [shareToProfile, setShareToProfile] = useState(true);
 
   useEffect(() => {
@@ -229,7 +231,7 @@ const SupportPanel = ({
       )}
 
       <div className="pt-1">
-        <Button variant="outline" size="sm" onClick={onScrollToComments} className="w-full gap-1.5">
+        <Button variant="outline" size="sm" onClick={() => setCommentsOpen(true)} className="w-full gap-1.5">
           <MessageCircle className="h-3.5 w-3.5" /> Comment
         </Button>
       </div>
@@ -325,6 +327,16 @@ const SupportPanel = ({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Comments slide-up */}
+      <Sheet open={commentsOpen} onOpenChange={setCommentsOpen}>
+        <SheetContent side="bottom" className="h-[85vh] overflow-y-auto rounded-t-2xl">
+          <SheetHeader className="mb-4">
+            <SheetTitle className="font-display text-xl">Comments</SheetTitle>
+          </SheetHeader>
+          <ReleaseComments projectId={projectId} />
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };
