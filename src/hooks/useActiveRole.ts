@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -29,6 +29,7 @@ const readStored = (): ActiveRole => {
  */
 export const useActiveRole = (): [ActiveRole, (next: ActiveRole) => void] => {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [role, setRole] = useState<ActiveRole>(readStored);
 
   // Cross-component sync (same tab + other tabs).
@@ -92,6 +93,12 @@ export const useActiveRole = (): [ActiveRole, (next: ActiveRole) => void] => {
         { onConflict: "user_id" },
       );
     if (error) console.warn("[useActiveRole] persist failed", error);
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["active-role", user.id] }),
+      queryClient.invalidateQueries({ queryKey: ["discover-artists-archetype"] }),
+      queryClient.invalidateQueries({ queryKey: ["discover-featured-creators"] }),
+      queryClient.invalidateQueries({ queryKey: ["creator-spotlight"] }),
+    ]);
   };
 
   return [role, update];
