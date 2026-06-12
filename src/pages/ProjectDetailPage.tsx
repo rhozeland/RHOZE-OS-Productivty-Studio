@@ -453,148 +453,233 @@ const ProjectDetailPage = () => {
             {isPaid && <TabsTrigger value="budget" className={TAB_TRIGGER}>Budget</TabsTrigger>}
           </TabsList>
 
-          {/* OVERVIEW — bento dashboard */}
+          {/* OVERVIEW — owner workspace */}
           <TabsContent value="overview" className="space-y-6">
             {(() => {
               const ms = milestones ?? [];
               const done = ms.filter((m: any) => m.status === "approved" || m.status === "released").length;
               const total = ms.length;
               const pct = total ? Math.round((done / total) * 100) : 0;
-              const storyCount = storyItems.length;
-              const boardCount = (deliverables ?? []).filter((d: any) => d.file_url).length;
-              const teamCount = 1 + (collaborators?.length ?? 0);
-              const tiles = [
-                { key: "roadmap", label: "Roadmap", value: total ? `${done}/${total}` : "—", sub: total ? `${pct}% done` : "Add stages", tint: "from-violet-500/15 to-indigo-500/10 text-violet-600 dark:text-violet-300" },
-                { key: "story",   label: "Story",    value: storyCount, sub: storyCount ? "Latest updates" : "Share progress", tint: "from-rose-500/15 to-pink-500/10 text-rose-600 dark:text-rose-300" },
-                ...(boardCount > 0 ? [{ key: "board", label: "Board", value: boardCount, sub: "Assets attached", tint: "from-amber-500/15 to-orange-500/10 text-amber-700 dark:text-amber-300" }] : []),
-                { key: "team",    label: "Crew",     value: teamCount,  sub: collaborators?.length ? `${collaborators.length} collab${collaborators.length === 1 ? "" : "s"}` : "Just you", tint: "from-emerald-500/15 to-teal-500/10 text-emerald-700 dark:text-emerald-300" },
-              ];
+              const upcoming = ms
+                .filter((m: any) => m.due_date && m.status !== "approved" && m.status !== "released")
+                .sort((a: any, b: any) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
+                .slice(0, 3);
+
+              const mediaDeliverables = (deliverables ?? []).filter((d: any) => {
+                if (!d.file_url) return false;
+                const m = (d.mime_type || "").toLowerCase();
+                return m.startsWith("audio/") || m.startsWith("video/") || m.startsWith("image/");
+              });
+              const featured = mediaDeliverables[0];
+              const featuredKind = featured
+                ? (featured.mime_type || "").startsWith("video/")
+                  ? "video"
+                  : (featured.mime_type || "").startsWith("audio/")
+                    ? "audio"
+                    : "image"
+                : null;
+
+              const taskList = tasks ?? [];
+              const taskDone = taskList.filter((t: any) => t.completed).length;
+
               return (
-                <div className={`grid grid-cols-2 gap-3 ${tiles.length === 4 ? "md:grid-cols-4" : "md:grid-cols-3"}`}>
-                  {tiles.map((t) => (
+                <>
+                  {/* Top row: Roadmap+Timeline (wide) · Tasks · Visual */}
+                  <div className="grid gap-4 md:grid-cols-4">
+                    {/* Roadmap + Timeline combined — spans 2 cols */}
                     <button
-                      key={t.key}
-                      onClick={() => setTab(t.key)}
-                      className={`group text-left rounded-2xl border border-border bg-gradient-to-br ${t.tint} p-4 transition-all hover:shadow-md hover:-translate-y-0.5`}
+                      onClick={() => setTab("roadmap")}
+                      className="md:col-span-2 text-left rounded-2xl border border-border bg-gradient-to-br from-violet-500/10 via-card to-indigo-500/5 p-5 transition-all hover:border-primary/40 hover:shadow-md min-h-[260px] flex flex-col"
                     >
-                      <div className="text-[10px] uppercase tracking-[0.14em] font-semibold opacity-80">{t.label}</div>
-                      <div className="mt-2 font-display text-2xl md:text-3xl font-bold text-foreground tabular-nums">{t.value}</div>
-                      <div className="mt-1 text-[11px] text-muted-foreground">{t.sub}</div>
-                      {t.key === "roadmap" && total > 0 && (
-                        <div className="mt-3"><Progress value={pct} className="h-1" /></div>
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="text-[10px] uppercase tracking-[0.14em] font-semibold text-violet-600 dark:text-violet-300">Roadmap · Timeline</div>
+                          <p className="font-display text-2xl md:text-3xl font-bold text-foreground mt-1 tabular-nums">
+                            {total ? `${done}/${total}` : "—"}
+                            <span className="ml-2 text-sm font-normal text-muted-foreground">{total ? `${pct}% done` : "no stages yet"}</span>
+                          </p>
+                        </div>
+                        <span className="text-[11px] text-muted-foreground shrink-0">Open →</span>
+                      </div>
+                      {total > 0 && <Progress value={pct} className="mt-3 h-1.5" />}
+                      <div className="mt-4 flex-1" onClick={(e) => e.stopPropagation()}>
+                        {upcoming.length === 0 ? (
+                          <p className="text-xs text-muted-foreground">No upcoming deadlines. Add stages to populate the timeline.</p>
+                        ) : (
+                          <ul className="space-y-2">
+                            {upcoming.map((m: any) => {
+                              const d = new Date(m.due_date);
+                              const overdue = isPast(d) && !isToday(d);
+                              return (
+                                <li key={m.id} className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-background/40 px-3 py-2">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <CalendarIcon className={`h-3.5 w-3.5 shrink-0 ${overdue ? "text-destructive" : "text-muted-foreground"}`} />
+                                    <span className="text-sm text-foreground truncate">{m.title}</span>
+                                  </div>
+                                  <span className={`text-[11px] tabular-nums shrink-0 ${overdue ? "text-destructive" : "text-muted-foreground"}`}>
+                                    {format(d, "MMM d")}{overdue && " · late"}
+                                  </span>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        )}
+                      </div>
+                    </button>
+
+                    {/* Tasks */}
+                    <div className="rounded-2xl border border-border bg-card p-5 min-h-[260px] flex flex-col">
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <div className="text-[10px] uppercase tracking-[0.14em] font-semibold text-emerald-600 dark:text-emerald-300 flex items-center gap-1.5">
+                            <ListChecks className="h-3 w-3" /> Tasks
+                          </div>
+                          <p className="text-[11px] text-muted-foreground mt-0.5 tabular-nums">{taskDone}/{taskList.length} done</p>
+                        </div>
+                      </div>
+                      <div className="flex-1 overflow-y-auto -mx-1 px-1 space-y-1.5">
+                        {taskList.length === 0 ? (
+                          <p className="text-xs text-muted-foreground">No tasks yet. Add one below.</p>
+                        ) : (
+                          taskList.map((t: any) => (
+                            <label key={t.id} className="flex items-center gap-2 rounded-md px-1.5 py-1 hover:bg-muted/40 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={!!t.completed}
+                                onChange={(e) => toggleTask.mutate({ taskId: t.id, completed: e.target.checked })}
+                                className="h-3.5 w-3.5 rounded border-border accent-primary"
+                              />
+                              <span className={`text-xs leading-snug flex-1 ${t.completed ? "line-through text-muted-foreground" : "text-foreground"}`}>
+                                {t.title}
+                              </span>
+                            </label>
+                          ))
+                        )}
+                      </div>
+                      {canManageProject && (
+                        <form
+                          onSubmit={(e) => {
+                            e.preventDefault();
+                            const v = newTaskTitle.trim();
+                            if (!v) return;
+                            addTask.mutate(v);
+                            setNewTaskTitle("");
+                          }}
+                          className="mt-3 flex items-center gap-1.5"
+                        >
+                          <Input
+                            value={newTaskTitle}
+                            onChange={(e) => setNewTaskTitle(e.target.value)}
+                            placeholder="Add task…"
+                            className="h-7 text-xs"
+                          />
+                          <Button type="submit" size="icon" variant="ghost" className="h-7 w-7 shrink-0">
+                            <Plus className="h-3.5 w-3.5" />
+                          </Button>
+                        </form>
+                      )}
+                    </div>
+
+                    {/* Visual — preview of latest audio/video/image */}
+                    <button
+                      onClick={() => setTab("board")}
+                      className="text-left rounded-2xl border border-border bg-card p-5 min-h-[260px] flex flex-col transition-all hover:border-primary/40 hover:shadow-md overflow-hidden"
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="text-[10px] uppercase tracking-[0.14em] font-semibold text-amber-600 dark:text-amber-300 flex items-center gap-1.5">
+                          {featuredKind === "video" ? <VideoIcon className="h-3 w-3" /> : featuredKind === "audio" ? <Music className="h-3 w-3" /> : <ImageIcon className="h-3 w-3" />}
+                          Visual
+                        </div>
+                        <span className="text-[11px] text-muted-foreground">Board →</span>
+                      </div>
+                      {!featured ? (
+                        <div className="flex-1 flex flex-col items-center justify-center text-center rounded-lg border border-dashed border-border bg-muted/20 p-4">
+                          <ImageIcon className="h-6 w-6 text-muted-foreground/50 mb-1.5" />
+                          <p className="text-xs text-muted-foreground">No media yet.</p>
+                          <p className="text-[10px] text-muted-foreground/70 mt-0.5">Attach audio, video or art on the Roadmap.</p>
+                        </div>
+                      ) : featuredKind === "video" ? (
+                        <video
+                          src={featured.file_url}
+                          controls
+                          className="flex-1 w-full rounded-lg bg-black object-cover"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      ) : featuredKind === "audio" ? (
+                        <div className="flex-1 flex flex-col justify-center rounded-lg bg-gradient-to-br from-amber-500/10 to-rose-500/10 p-3">
+                          <p className="text-xs font-medium text-foreground line-clamp-2 mb-2">{featured.title ?? "Audio"}</p>
+                          <audio
+                            src={featured.file_url}
+                            controls
+                            className="w-full"
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </div>
+                      ) : (
+                        <img
+                          src={featured.file_url}
+                          alt={featured.title ?? "Project visual"}
+                          className="flex-1 w-full rounded-lg object-cover"
+                        />
                       )}
                     </button>
-                  ))}
-                </div>
+                  </div>
+
+                  {/* Board — wide card matching the row above */}
+                  <button
+                    onClick={() => setTab("board")}
+                    className="block w-full text-left rounded-2xl border border-border bg-card p-5 transition-all hover:border-primary/40 hover:shadow-md"
+                  >
+                    <div className="flex items-end justify-between gap-3 mb-4">
+                      <div>
+                        <div className="text-[10px] uppercase tracking-[0.14em] font-semibold text-muted-foreground">Board</div>
+                        <p className="font-display text-base font-semibold text-foreground mt-0.5">Mood, references & uploads</p>
+                      </div>
+                      <span className="text-[11px] text-muted-foreground">Open board →</span>
+                    </div>
+                    <div onClick={(e) => e.stopPropagation()}>
+                      {mediaDeliverables.length === 0 ? (
+                        <div className="rounded-xl border border-dashed border-border bg-muted/20 p-8 text-center">
+                          <p className="text-sm text-muted-foreground">No board items yet.</p>
+                          <p className="text-[11px] text-muted-foreground/70 mt-1">Upload visuals, audio clips and colours from the Roadmap tab — they'll cluster here as a creative board.</p>
+                        </div>
+                      ) : (
+                        <BoardMasonry
+                          deliverables={mediaDeliverables as any}
+                          limit={12}
+                          onSeeMore={() => setTab("board")}
+                        />
+                      )}
+                    </div>
+                  </button>
+
+                  {/* Bottom: view-as-fan toggle */}
+                  <div className="flex items-center justify-start pt-2">
+                    {(() => {
+                      const slug = (project as any).public_slug;
+                      const isPub = !!(project as any).is_public && !!slug;
+                      const inner = (
+                        <div className={`inline-flex items-center gap-2.5 rounded-full border border-border bg-card/80 backdrop-blur px-3 py-1.5 text-xs ${isPub ? "hover:border-primary/40" : "opacity-70 cursor-not-allowed"}`}>
+                          <Eye className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span className="text-foreground font-medium">View as fan</span>
+                          <Switch checked={false} disabled={!isPub} className="scale-75 -mx-1" />
+                          {!isPub && <span className="text-[10px] text-muted-foreground">— publish first</span>}
+                        </div>
+                      );
+                      return isPub ? (
+                        <Link to={`/release/${slug}`} aria-label="Preview public release page">
+                          {inner}
+                        </Link>
+                      ) : (
+                        inner
+                      );
+                    })()}
+                  </div>
+                </>
               );
             })()}
-
-            {/* Milestones — full-width card */}
-            <button
-              onClick={() => setTab("roadmap")}
-              className="block w-full text-left rounded-2xl border border-border bg-card p-5 transition-all hover:border-primary/40 hover:shadow-md"
-            >
-              <div className="flex items-end justify-between gap-3 mb-3">
-                <div>
-                  <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Milestones</h2>
-                  <p className="font-display text-base font-semibold text-foreground mt-0.5">Stages & deadlines</p>
-                </div>
-                <span className="text-[11px] text-muted-foreground group-hover:text-foreground">Open roadmap →</span>
-              </div>
-              <div onClick={(e) => e.stopPropagation()}>
-                <MilestoneTrack milestones={milestones as any} contractId={contract?.id} canManage={canManageProject} />
-              </div>
-            </button>
-
-            {isOwner && (
-              <PublishReleaseCard
-                projectId={project.id}
-                isPublic={(project as any).is_public ?? false}
-                publicSlug={(project as any).public_slug ?? null}
-                cheerCount={(project as any).cheer_count ?? 0}
-                tokenizeReady={(project as any).tokenize_ready ?? false}
-                title={project.title}
-                description={(project as any).vision ?? project.description ?? null}
-              />
-            )}
-
-
-            {/* Bento row: Story / Board (if any) / Crew */}
-            {(() => {
-              const hasBoard = (deliverables ?? []).some((d: any) => d.file_url);
-              return (
-            <div className={`grid gap-4 ${hasBoard ? "md:grid-cols-3" : "md:grid-cols-2"}`}>
-              {/* Story preview */}
-              <button
-                onClick={() => setTab("story")}
-                className="text-left rounded-2xl border border-border bg-card p-5 transition-all hover:border-primary/40 hover:shadow-md min-h-[180px] flex flex-col"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Story</h3>
-                  <span className="text-[11px] text-muted-foreground">All →</span>
-                </div>
-                <div className="flex-1" onClick={(e) => e.stopPropagation()}>
-                  <StoryFeed items={storyItems} canManage={canManageProject} preview />
-                </div>
-              </button>
-
-              {/* Board preview — only when files exist */}
-              {hasBoard && (
-              <button
-                onClick={() => setTab("board")}
-                className="text-left rounded-2xl border border-border bg-card p-5 transition-all hover:border-primary/40 hover:shadow-md min-h-[180px] flex flex-col"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Board</h3>
-                  <span className="text-[11px] text-muted-foreground">All →</span>
-                </div>
-                <div className="flex-1" onClick={(e) => e.stopPropagation()}>
-                  <BoardMasonry
-                    deliverables={((deliverables ?? []) as any[]).filter((d) => d.file_url)}
-                    limit={4}
-                    onSeeMore={() => setTab("board")}
-                  />
-                </div>
-              </button>
-              )}
-
-              {/* Crew + Supporters */}
-              <button
-                onClick={() => setTab("team")}
-                className="text-left rounded-2xl border border-border bg-card p-5 transition-all hover:border-primary/40 hover:shadow-md min-h-[180px] flex flex-col"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Crew & Supporters</h3>
-                  <span className="text-[11px] text-muted-foreground">Manage →</span>
-                </div>
-                <div className="flex-1" onClick={(e) => e.stopPropagation()}>
-                  <SupportersStrip
-                    projectId={id!}
-                    ownerId={project.user_id}
-                    owner={owner ?? null}
-                    team={teamWithProfiles as any}
-                    milestones={milestones as any}
-                  />
-                </div>
-              </button>
-            </div>
-              );
-            })()}
-
-            {/* Timeline shortcut */}
-            <button
-              onClick={() => setTab("timeline")}
-              className="block w-full text-left rounded-2xl border border-dashed border-border bg-muted/30 px-5 py-4 transition-all hover:border-primary/40 hover:bg-muted/50"
-            >
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Timeline</div>
-                  <p className="text-sm text-foreground mt-0.5">Plan stages, deadlines, and team work by week.</p>
-                </div>
-                <span className="text-[11px] text-muted-foreground shrink-0">Open timeline →</span>
-              </div>
-            </button>
           </TabsContent>
+
 
 
         {/* ROADMAP */}
