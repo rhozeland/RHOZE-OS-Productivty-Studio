@@ -23,7 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Pencil, Check, X, Lock, ArrowLeft, Plus, Eye, Calendar as CalendarIcon, ListChecks, Music, Video as VideoIcon, Image as ImageIcon, FileText } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { Link } from "react-router-dom";
+
 import { format, isPast, isToday } from "date-fns";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
