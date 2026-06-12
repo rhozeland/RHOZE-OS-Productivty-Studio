@@ -126,7 +126,7 @@ export const AiRoadmapDraftButton = ({
     onSuccess: (milestones) => {
       qc.invalidateQueries({ queryKey: ["project-goals", projectId] });
       qc.invalidateQueries({ queryKey: ["project", projectId] });
-      qc.invalidateQueries({ queryKey: ["tasks", projectId] });
+      qc.invalidateQueries({ queryKey: ["project-tasks", projectId] });
       setProgressPct(100);
       setStepIdx(PROGRESS_STEPS.length - 1);
       setDoneMilestones(milestones ?? []);
