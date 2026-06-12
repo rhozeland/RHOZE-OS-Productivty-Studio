@@ -485,8 +485,8 @@ const ProjectDetailPage = () => {
 
               return (
                 <>
-                  {/* Top row: Roadmap+Timeline (wide) · Tasks · Visual */}
-                  <div className="grid gap-4 md:grid-cols-4">
+                  {/* Top row: Roadmap+Timeline (wide) · Tasks */}
+                  <div className="grid gap-4 md:grid-cols-3">
                     {/* Roadmap + Timeline combined — spans 2 cols */}
                     <button
                       onClick={() => setTab("roadmap")}
