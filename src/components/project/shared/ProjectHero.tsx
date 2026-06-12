@@ -187,12 +187,19 @@ const ProjectHero = ({ project, owner, status, isOwner, publicView }: ProjectHer
             )}
           </div>
 
-          <span
-            className={`inline-flex items-center gap-1.5 self-end rounded-full border px-2.5 py-1 text-[10px] font-medium backdrop-blur bg-background/70 ${statusMeta.pill}`}
-          >
-            <span className={`h-1.5 w-1.5 rounded-full ${statusMeta.dot}`} />
-            {statusMeta.label}
-          </span>
+          {(project as any).is_public ? (
+            <span
+              className={`inline-flex items-center gap-1.5 self-end rounded-full border px-2.5 py-1 text-[10px] font-medium backdrop-blur bg-background/70 ${statusMeta.pill}`}
+            >
+              <span className={`h-1.5 w-1.5 rounded-full ${statusMeta.dot}`} />
+              {statusMeta.label}
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 self-end rounded-full border border-border/60 px-2.5 py-1 text-[10px] font-medium backdrop-blur bg-background/70 text-muted-foreground">
+              <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground" />
+              Private
+            </span>
+          )}
         </motion.div>
 
 
