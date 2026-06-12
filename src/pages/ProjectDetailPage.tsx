@@ -625,40 +625,40 @@ const ProjectDetailPage = () => {
 
               return (
                 <>
-                  {/* Top row: Roadmap+Timeline (wide) · Tasks */}
+                  {/* Top row: Roadmap+Timeline · Tasks · Visual */}
                   <div className="grid gap-4 md:grid-cols-3">
-                    {/* Roadmap + Timeline combined — spans 2 cols */}
+                    {/* Roadmap + Timeline combined */}
                     <button
                       onClick={() => setTab("roadmap")}
-                      className="md:col-span-2 text-left rounded-2xl border border-border bg-gradient-to-br from-violet-500/10 via-card to-indigo-500/5 p-5 transition-all hover:border-primary/40 hover:shadow-md min-h-[260px] flex flex-col"
+                      className="text-left rounded-2xl border border-border bg-gradient-to-br from-violet-500/10 via-card to-indigo-500/5 p-4 transition-all hover:border-primary/40 hover:shadow-md min-h-[240px] flex flex-col"
                     >
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
                           <div className="text-[10px] uppercase tracking-[0.14em] font-semibold text-violet-600 dark:text-violet-300">Roadmap · Timeline</div>
-                          <p className="font-display text-2xl md:text-3xl font-bold text-foreground mt-1 tabular-nums">
+                          <p className="font-display text-xl font-bold text-foreground mt-1 tabular-nums">
                             {total ? `${done}/${total}` : "—"}
-                            <span className="ml-2 text-sm font-normal text-muted-foreground">{total ? `${pct}% done` : "no stages yet"}</span>
+                            <span className="ml-1.5 text-xs font-normal text-muted-foreground">{total ? `${pct}%` : "no stages"}</span>
                           </p>
                         </div>
-                        <span className="text-[11px] text-muted-foreground shrink-0">Open →</span>
+                        <span className="text-[10px] text-muted-foreground shrink-0">Open →</span>
                       </div>
-                      {total > 0 && <Progress value={pct} className="mt-3 h-1.5" />}
-                      <div className="mt-4 flex-1" onClick={(e) => e.stopPropagation()}>
+                      {total > 0 && <Progress value={pct} className="mt-2 h-1.5" />}
+                      <div className="mt-3 flex-1" onClick={(e) => e.stopPropagation()}>
                         {upcoming.length === 0 ? (
-                          <p className="text-xs text-muted-foreground">No upcoming deadlines. Add stages to populate the timeline.</p>
+                          <p className="text-xs text-muted-foreground">No upcoming deadlines.</p>
                         ) : (
-                          <ul className="space-y-2">
-                            {upcoming.map((m: any) => {
+                          <ul className="space-y-1.5">
+                            {upcoming.slice(0, 3).map((m: any) => {
                               const d = new Date(m.due_date);
                               const overdue = isPast(d) && !isToday(d);
                               return (
-                                <li key={m.id} className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-background/40 px-3 py-2">
-                                  <div className="flex items-center gap-2 min-w-0">
-                                    <CalendarIcon className={`h-3.5 w-3.5 shrink-0 ${overdue ? "text-destructive" : "text-muted-foreground"}`} />
-                                    <span className="text-sm text-foreground truncate">{m.title}</span>
+                                <li key={m.id} className="flex items-center justify-between gap-2 rounded-lg border border-border/60 bg-background/40 px-2.5 py-1.5">
+                                  <div className="flex items-center gap-1.5 min-w-0">
+                                    <CalendarIcon className={`h-3 w-3 shrink-0 ${overdue ? "text-destructive" : "text-muted-foreground"}`} />
+                                    <span className="text-xs text-foreground truncate">{m.title}</span>
                                   </div>
-                                  <span className={`text-[11px] tabular-nums shrink-0 ${overdue ? "text-destructive" : "text-muted-foreground"}`}>
-                                    {format(d, "MMM d")}{overdue && " · late"}
+                                  <span className={`text-[10px] tabular-nums shrink-0 ${overdue ? "text-destructive" : "text-muted-foreground"}`}>
+                                    {format(d, "MMM d")}
                                   </span>
                                 </li>
                               );
@@ -669,8 +669,8 @@ const ProjectDetailPage = () => {
                     </button>
 
                     {/* Tasks */}
-                    <div className="rounded-2xl border border-border bg-card p-5 min-h-[260px] flex flex-col">
-                      <div className="flex items-center justify-between mb-3">
+                    <div className="rounded-2xl border border-border bg-card p-4 min-h-[240px] flex flex-col">
+                      <div className="flex items-center justify-between mb-2">
                         <div>
                           <div className="text-[10px] uppercase tracking-[0.14em] font-semibold text-emerald-600 dark:text-emerald-300 flex items-center gap-1.5">
                             <ListChecks className="h-3 w-3" /> Tasks
@@ -678,9 +678,9 @@ const ProjectDetailPage = () => {
                           <p className="text-[11px] text-muted-foreground mt-0.5 tabular-nums">{taskDone}/{taskList.length} done</p>
                         </div>
                       </div>
-                      <div className="flex-1 overflow-y-auto -mx-1 px-1 space-y-1.5">
+                      <div className="flex-1 overflow-y-auto -mx-1 px-1 space-y-1">
                         {taskList.length === 0 ? (
-                          <p className="text-xs text-muted-foreground">No tasks yet. Add one below.</p>
+                          <p className="text-xs text-muted-foreground">No tasks yet.</p>
                         ) : (
                           taskList.map((t: any) => (
                             <label key={t.id} className="flex items-center gap-2 rounded-md px-1.5 py-1 hover:bg-muted/40 cursor-pointer">
@@ -706,7 +706,7 @@ const ProjectDetailPage = () => {
                             addTask.mutate(v);
                             setNewTaskTitle("");
                           }}
-                          className="mt-3 flex items-center gap-1.5"
+                          className="mt-2 flex items-center gap-1.5"
                         >
                           <Input
                             value={newTaskTitle}
@@ -721,17 +721,18 @@ const ProjectDetailPage = () => {
                       )}
                     </div>
 
+                    {/* Visual — official project media */}
+                    <ProjectFeaturedVisual
+                      projectId={project.id}
+                      featuredUrl={(project as any).featured_visual_url}
+                      featuredExternalUrl={(project as any).featured_visual_external_url}
+                      featuredMime={(project as any).featured_visual_mime}
+                      featuredTitle={(project as any).featured_visual_title}
+                      canManage={canManageProject}
+                    />
                   </div>
 
-                  {/* Visual — official project media (separate from Board) */}
-                  <ProjectFeaturedVisual
-                    projectId={project.id}
-                    featuredUrl={(project as any).featured_visual_url}
-                    featuredExternalUrl={(project as any).featured_visual_external_url}
-                    featuredMime={(project as any).featured_visual_mime}
-                    featuredTitle={(project as any).featured_visual_title}
-                    canManage={canManageProject}
-                  />
+
 
 
                   {/* Board — wide card matching the row above */}
