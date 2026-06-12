@@ -92,7 +92,11 @@ interface StageRoadmapProps {
   collaborators?: Collaborator[] | null;
   isCollaborative?: boolean;
   isLocked?: boolean;
+  /** When false (collaborator view), hide add/delete and show assigned-stage
+   *  accent border. Defaults to true for backwards compatibility. */
+  isOwner?: boolean;
 }
+
 
 // Notion-style status options. Mapped onto project_goals.status values.
 type StatusKey = "planned" | "in_progress" | "in_review" | "shipped" | "archived";
