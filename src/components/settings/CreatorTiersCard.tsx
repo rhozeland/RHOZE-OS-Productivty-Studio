@@ -142,6 +142,24 @@ export default function CreatorTiersCard() {
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
+
+    // Ensure a profile row exists (FK target for creator_subscription_tiers.creator_id)
+    const { data: profExists } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (!profExists) {
+      const { error: profErr } = await supabase
+        .from("profiles")
+        .insert({ id: user.id, user_id: user.id });
+      if (profErr) {
+        setSaving(false);
+        toast.error(`Couldn't initialize profile: ${profErr.message}`);
+        return;
+      }
+    }
+
     const upserts = (Object.values(rows) as TierRow[]).map((r) => ({
       creator_id: user.id,
       tier: r.tier,
@@ -162,7 +180,7 @@ export default function CreatorTiersCard() {
       toast.error(error.message);
       return;
     }
-    toast.success("Subscription tiers saved");
+    toast.success("VIP Access tiers saved");
   };
 
   if (loading) {
