@@ -40,7 +40,7 @@ interface Props {
   coverImageUrl?: string | null;
   linkedTokenTicker?: string | null;
   linkedTokenMint?: string | null;
-  onScrollToComments: () => void;
+  onScrollToComments?: () => void;
 }
 
 const SupportPanel = ({
