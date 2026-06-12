@@ -32,6 +32,7 @@ import { useDiscoverFeatured } from "@/components/discover/useDiscoverFeatured";
 import type { RegionMarket } from "@/lib/regions";
 
 const DiscoverGlobe = lazy(() => import("@/components/discover/DiscoverGlobe"));
+import { DailyDropContainer } from "@/components/daily-drop/DailyDropModal";
 
 const STEPS = [
   {
