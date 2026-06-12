@@ -626,11 +626,12 @@ const ProjectDetailPage = () => {
               return (
                 <>
                   {/* Top row: Roadmap+Timeline · Tasks · Visual */}
-                  <div className="grid gap-4 md:grid-cols-3">
+                  <div className="grid gap-4 md:grid-cols-12">
+                    {/* widths: roadmap 4 · tasks 3 · visual 5 */}
                     {/* Roadmap + Timeline combined */}
                     <button
                       onClick={() => setTab("roadmap")}
-                      className="text-left rounded-2xl border border-border bg-gradient-to-br from-violet-500/10 via-card to-indigo-500/5 p-4 transition-all hover:border-primary/40 hover:shadow-md min-h-[240px] flex flex-col"
+                      className="md:col-span-4 text-left rounded-2xl border border-border bg-gradient-to-br from-violet-500/10 via-card to-indigo-500/5 p-4 transition-all hover:border-primary/40 hover:shadow-md min-h-[240px] flex flex-col"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
@@ -669,7 +670,7 @@ const ProjectDetailPage = () => {
                     </button>
 
                     {/* Tasks */}
-                    <div className="rounded-2xl border border-border bg-card p-4 min-h-[240px] flex flex-col">
+                    <div className="md:col-span-3 rounded-2xl border border-border bg-card p-4 min-h-[240px] flex flex-col">
                       <div className="flex items-center justify-between mb-2">
                         <div>
                           <div className="text-[10px] uppercase tracking-[0.14em] font-semibold text-emerald-600 dark:text-emerald-300 flex items-center gap-1.5">
@@ -722,14 +723,16 @@ const ProjectDetailPage = () => {
                     </div>
 
                     {/* Visual — official project media */}
-                    <ProjectFeaturedVisual
-                      projectId={project.id}
-                      featuredUrl={(project as any).featured_visual_url}
-                      featuredExternalUrl={(project as any).featured_visual_external_url}
-                      featuredMime={(project as any).featured_visual_mime}
-                      featuredTitle={(project as any).featured_visual_title}
-                      canManage={canManageProject}
-                    />
+                    <div className="md:col-span-5">
+                      <ProjectFeaturedVisual
+                        projectId={project.id}
+                        featuredUrl={(project as any).featured_visual_url}
+                        featuredExternalUrl={(project as any).featured_visual_external_url}
+                        featuredMime={(project as any).featured_visual_mime}
+                        featuredTitle={(project as any).featured_visual_title}
+                        canManage={canManageProject}
+                      />
+                    </div>
                   </div>
 
 
