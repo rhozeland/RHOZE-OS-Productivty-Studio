@@ -132,6 +132,20 @@ const ReleasePage = () => {
     enabled: !!project?.id,
   });
 
+  const { data: tasks } = useQuery({
+    queryKey: ["release-tasks", project?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("tasks")
+        .select("id, title, completed")
+        .eq("project_id", project!.id)
+        .order("created_at", { ascending: false })
+        .limit(6);
+      return data ?? [];
+    },
+    enabled: !!project?.id,
+  });
+
   const { data: team } = useQuery({
     queryKey: ["release-team", project?.id],
     queryFn: async () => {
