@@ -438,7 +438,9 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
           <p className="text-sm font-medium text-foreground">You</p>
           <p className="text-xs text-muted-foreground">Owner</p>
         </div>
+        {ownerUserId && <SplitPill userId={ownerUserId} />}
       </div>
+
 
       {collaborators?.map((collab, i) => {
         const profile = profileMap.get(collab.user_id);
