@@ -447,6 +447,7 @@ const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, co
             </span>
           )}
         </div>
+        {isOwner && (
         <Dialog open={stageDialogOpen} onOpenChange={setStageDialogOpen}>
           <DialogTrigger asChild>
             <Button variant="outline" size="sm">
@@ -530,6 +531,8 @@ const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, co
             </form>
           </DialogContent>
         </Dialog>
+        )}
+
       </div>
 
       {/* Overall progress strip */}
