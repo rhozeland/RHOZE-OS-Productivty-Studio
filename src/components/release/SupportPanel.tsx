@@ -185,6 +185,82 @@ const SupportPanel = ({
     toast.success("Release link copied");
   };
 
+  const pct = stagesTotal > 0 ? Math.round((stagesComplete / stagesTotal) * 100) : 0;
+
+  if (horizontal) {
+    return (
+      <>
+        <div className="rounded-2xl border border-border bg-card/70 backdrop-blur p-3 flex flex-wrap items-center gap-3">
+          {/* Supporters */}
+          <div className="flex items-center gap-2 pr-3 border-r border-border/60">
+            <div className="text-2xl font-display font-bold tabular-nums leading-none bg-gradient-to-br from-rose-500 via-fuchsia-500 to-amber-400 bg-clip-text text-transparent">
+              {cheerCount}
+            </div>
+            <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium leading-tight">
+              {cheerCount === 1 ? "supporter" : "supporters"}
+            </div>
+            <span className="ml-1 inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px] uppercase tracking-wider font-medium bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
+              Public
+            </span>
+          </div>
+
+          {/* Stages */}
+          {stagesTotal > 0 && (
+            <div className="flex items-center gap-2 min-w-[160px] flex-1 max-w-xs pr-3 border-r border-border/60">
+              <div className="flex-1">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[9px] uppercase tracking-wider font-semibold text-muted-foreground">Stages</span>
+                  <span className="text-[10px] tabular-nums text-muted-foreground">{stagesComplete}/{stagesTotal} · {pct}%</span>
+                </div>
+                <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-rose-500 via-fuchsia-500 to-amber-400 transition-all"
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="flex items-center gap-2 ml-auto">
+            <Button
+              size="sm"
+              onClick={onSupportClick}
+              disabled={support.isPending || unsupport.isPending}
+              className={cn(
+                "gap-1.5 text-xs font-semibold h-8",
+                iSupport
+                  ? "bg-foreground text-background hover:bg-foreground/90"
+                  : "bg-gradient-to-r from-rose-500 via-fuchsia-500 to-amber-400 text-white hover:opacity-95",
+              )}
+            >
+              <Heart className={cn("h-3.5 w-3.5", iSupport && "fill-current")} />
+              {iSupport ? "Supporting" : "Support this release"}
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setCommentsOpen(true)} className="gap-1.5 h-8 text-xs">
+              <MessageCircle className="h-3.5 w-3.5" /> Comment
+            </Button>
+            {linkedTokenTicker && (
+              <a
+                href={linkedTokenMint ? `https://pump.fun/coin/${linkedTokenMint}` : `https://pump.fun/board?q=${encodeURIComponent(linkedTokenTicker)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-md border border-emerald-500/30 bg-emerald-500/5 px-2.5 h-8 text-xs font-semibold hover:bg-emerald-500/10 transition"
+              >
+                <Coins className="h-3.5 w-3.5 text-emerald-500" />
+                Buy ${linkedTokenTicker}
+              </a>
+            )}
+          </div>
+        </div>
+
+        {/* Confirm + success dialogs + comments sheet still render */}
+        {renderDialogs()}
+      </>
+    );
+  }
+
   return (
     <div className="rounded-2xl border border-border bg-card/70 backdrop-blur p-4 space-y-3">
       <div className="flex items-baseline justify-between">
