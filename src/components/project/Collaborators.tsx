@@ -293,6 +293,7 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
   const roleColors: Record<string, string> = {
     member: "bg-secondary text-secondary-foreground",
     admin: "bg-amber-500/10 text-amber-600",
+    owner: "bg-primary/10 text-primary",
   };
 
   const projectRoleColors: Record<string, string> = {
