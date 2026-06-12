@@ -40,6 +40,10 @@ import { RolePicker } from "@/components/profile/RolePicker";
 import ArchetypePicker from "@/components/profile/ArchetypePicker";
 import type { Archetype } from "@/lib/archetypes";
 import { useActiveRole, ROLE_HOME, type ActiveRole } from "@/hooks/useActiveRole";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 
 /** Broad creator categories — replaces the granular role/specialty grid. */
