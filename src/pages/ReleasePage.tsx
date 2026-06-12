@@ -24,7 +24,7 @@ import { computeProjectStatus } from "@/components/project/shared/projectStatus"
 
 import SupportPanel from "@/components/release/SupportPanel";
 import ProjectFeaturedVisual from "@/components/project/ProjectFeaturedVisual";
-import ReleaseComments from "@/components/release/ReleaseComments";
+
 import RoadmapCalendarView from "@/components/project/RoadmapCalendarView";
 
 const TAB_TRIGGER =
