@@ -205,6 +205,39 @@ const ProjectDetailPage = () => {
     },
   });
 
+  const { data: tasks } = useQuery({
+    queryKey: ["project-tasks", id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("tasks")
+        .select("id, title, completed, due_date, priority")
+        .eq("project_id", id!)
+        .order("created_at", { ascending: false })
+        .limit(6);
+      return data ?? [];
+    },
+  });
+
+  const toggleTask = useMutation({
+    mutationFn: async ({ taskId, completed }: { taskId: string; completed: boolean }) => {
+      const { error } = await supabase.from("tasks").update({ completed }).eq("id", taskId);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["project-tasks", id] }),
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const addTask = useMutation({
+    mutationFn: async (title: string) => {
+      if (!user) throw new Error("Sign in");
+      const { error } = await supabase.from("tasks").insert({ project_id: id!, user_id: user.id, title });
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["project-tasks", id] }),
+    onError: (e: any) => toast.error(e.message),
+  });
+  const [newTaskTitle, setNewTaskTitle] = useState("");
+
   const { data: linkedSmartboards } = useQuery({
     queryKey: ["project-smartboards", id],
     queryFn: async () => {
