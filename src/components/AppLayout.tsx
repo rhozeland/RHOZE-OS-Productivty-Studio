@@ -325,7 +325,7 @@ const AppLayout = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("display_name, avatar_url")
+        .select("display_name, avatar_url, username")
         .eq("user_id", user!.id)
         .maybeSingle();
       return data;
@@ -445,8 +445,8 @@ const AppLayout = () => {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
                     <div className="px-2 py-1.5">
-                      <p className="text-sm font-medium truncate">{myProfile?.display_name || user.email?.split("@")[0]}</p>
-                      <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                      <p className="text-sm font-medium truncate">{myProfile?.display_name || myProfile?.username || user.email?.split("@")[0]}</p>
+                      <p className="text-xs text-muted-foreground truncate">{myProfile?.username ? `@${myProfile.username}` : user.email}</p>
                     </div>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
