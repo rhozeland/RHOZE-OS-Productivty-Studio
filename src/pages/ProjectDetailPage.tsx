@@ -21,8 +21,25 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Pencil, Check, X, Lock, ArrowLeft, Plus, Eye, Calendar as CalendarIcon, ListChecks, Music, Video as VideoIcon, Image as ImageIcon, FileText } from "lucide-react";
+import { Pencil, Check, X, Lock, ArrowLeft, Plus, Eye, Calendar as CalendarIcon, ListChecks, Music, Video as VideoIcon, Image as ImageIcon, FileText, MoreHorizontal, Archive, ArchiveRestore, Trash2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 import { format, isPast, isToday } from "date-fns";
 import { useMemo, useState } from "react";
@@ -301,6 +318,38 @@ const ProjectDetailPage = () => {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const archiveProject = useMutation({
+    mutationFn: async (nextStatus: "archived" | "active") => {
+      const { error } = await supabase
+        .from("projects")
+        .update({ status: nextStatus })
+        .eq("id", id!);
+      if (error) throw error;
+      return nextStatus;
+    },
+    onSuccess: (nextStatus) => {
+      queryClient.invalidateQueries({ queryKey: ["project", id] });
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      toast.success(nextStatus === "archived" ? "Project archived" : "Project restored");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const deleteProject = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("projects").delete().eq("id", id!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      toast.success("Project deleted");
+      navigate("/messages?tab=projects");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const unlinkSmartboard = useMutation({
     mutationFn: async (smartboardId: string) => {
       const { error } = await supabase
@@ -437,7 +486,70 @@ const ProjectDetailPage = () => {
 
           )}
         </div>
+        {isOwner && !editingHeader && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+                aria-label="Project actions"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              {project.status === "archived" ? (
+                <DropdownMenuItem onClick={() => archiveProject.mutate("active")}>
+                  <ArchiveRestore className="mr-2 h-4 w-4" /> Restore project
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem onClick={() => archiveProject.mutate("archived")}>
+                  <Archive className="mr-2 h-4 w-4" /> Archive project
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => setConfirmDelete(true)}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="mr-2 h-4 w-4" /> Delete project
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
+
+      {project.status === "archived" && (
+        <div className="mt-3 px-1">
+          <Badge variant="outline" className="gap-1 text-[10px] bg-muted text-muted-foreground">
+            <Archive className="h-2.5 w-2.5" /> Archived
+          </Badge>
+        </div>
+      )}
+
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this project?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove “{project.title}” and all of its milestones, tasks,
+              board items, story updates and uploads. This cannot be undone. If you only want to
+              hide it from your workspace, archive it instead.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteProject.mutate()}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete forever
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
 
       {/* TABS + EDITOR SIDE RAIL */}
       {/* Top support rail — highlighted above the workspace tabs */}
