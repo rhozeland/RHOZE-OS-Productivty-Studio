@@ -148,22 +148,14 @@ const BoardMasonry = ({ deliverables, limit, showFilters, onSeeMore, canManage, 
                   )}
                 </div>
               )}
-              <div className="p-2 opacity-0 group-hover:opacity-100 transition-opacity bg-card">
-                <div className="flex items-center gap-1.5 text-[11px] font-medium line-clamp-1">
-                  {d.title}
-                  {d.file_url && <ExternalLink className="h-2.5 w-2.5 text-muted-foreground shrink-0" />}
-                </div>
-                {d.created_at && (
-                  <p className="text-[10px] text-muted-foreground mt-0.5">
-                    {new Date(d.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
-                  </p>
-                )}
-                {d.anchored_at && (
-                  <Badge variant="outline" className="text-[9px] mt-1">
+              {d.anchored_at && (
+                <div className="p-2 bg-card">
+                  <Badge variant="outline" className="text-[9px]">
                     Verified IP
                   </Badge>
-                )}
-              </div>
+                </div>
+              )}
+
             </a>
           );
         })}
