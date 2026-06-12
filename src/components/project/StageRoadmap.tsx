@@ -136,7 +136,7 @@ const PRIORITY_PILL: Record<string, string> = {
   high:   "bg-rose-500/15 text-rose-400 border-rose-500/30",
 };
 
-const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, collaborators, isCollaborative, isLocked }: StageRoadmapProps) => {
+const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, collaborators, isCollaborative, isLocked, isOwner = true }: StageRoadmapProps) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [stageDialogOpen, setStageDialogOpen] = useState(false);
