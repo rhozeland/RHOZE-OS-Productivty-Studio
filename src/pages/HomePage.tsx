@@ -32,6 +32,7 @@ import { useDiscoverFeatured } from "@/components/discover/useDiscoverFeatured";
 import type { RegionMarket } from "@/lib/regions";
 
 const DiscoverGlobe = lazy(() => import("@/components/discover/DiscoverGlobe"));
+import { DailyDropContainer } from "@/components/daily-drop/DailyDropModal";
 
 const STEPS = [
   {
@@ -69,6 +70,8 @@ const HomePage = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      <DailyDropContainer />
+
       {/* ─── Nav ────────────────────────────────────────────────────────── */}
       <nav className="sticky top-0 z-30 border-b border-border/60 bg-background/85 backdrop-blur-xl">
         <div className="mx-auto flex h-14 items-center justify-between px-4 sm:px-6 max-w-6xl">
