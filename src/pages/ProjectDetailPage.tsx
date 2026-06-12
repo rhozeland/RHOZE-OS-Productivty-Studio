@@ -379,8 +379,8 @@ const ProjectDetailPage = () => {
             </div>
           ) : (
             <div
-              className={"group rounded-lg p-1 -m-1 " + (canManageProject ? "cursor-pointer hover:bg-muted/40" : "")}
-              onClick={canManageProject ? startEditing : undefined}
+              className={"group rounded-lg p-1 -m-1 " + (isOwner ? "cursor-pointer hover:bg-muted/40" : "")}
+              onClick={isOwner ? startEditing : undefined}
             >
               <div className="flex items-center gap-2 flex-wrap">
                 {isLocked && (
@@ -389,7 +389,7 @@ const ProjectDetailPage = () => {
                   </Badge>
                 )}
                 {project.intake_tier === "concierge" && <BackedByRhozelandBadge />}
-                {canManageProject && (
+                {isOwner && (
                   <Pencil className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                 )}
               </div>
@@ -397,6 +397,7 @@ const ProjectDetailPage = () => {
                 <p className="mt-1 text-sm text-muted-foreground">{project.description}</p>
               )}
             </div>
+
           )}
         </div>
       </div>
