@@ -36,7 +36,7 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState<{ user_id: string; display_name: string } | null>(null);
-  const [role, setRole] = useState<"member" | "admin">("member");
+  const [role, setRole] = useState<"member" | "admin" | "owner">("member");
   const [projectRole, setProjectRole] = useState("client");
   const [showResults, setShowResults] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
