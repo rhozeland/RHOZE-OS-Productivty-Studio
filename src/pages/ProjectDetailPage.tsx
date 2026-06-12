@@ -937,11 +937,19 @@ const ProjectDetailPage = () => {
         <TabsContent value="board" className="space-y-4">
           {canManageProject && (
             <div className="flex justify-end">
-              <Button size="sm" variant="outline" onClick={() => setAddAssetOpen(true)}>
-                Add asset
+              <Button
+                size="icon"
+                variant="outline"
+                className="rounded-full h-9 w-9"
+                onClick={() => setAddAssetOpen(true)}
+                aria-label="Add asset"
+                title="Add asset"
+              >
+                <Plus className="h-4 w-4" />
               </Button>
             </div>
           )}
+
           <BoardMasonry
             deliverables={deliverables as any}
             canManage={canManageProject}
