@@ -539,6 +539,20 @@ const StudioPage = () => {
             })),
           );
         if (goalsErr) throw goalsErr;
+
+        // Flatten AI-generated per-milestone tasks into the project's task list
+        // so the Overview "Tasks" card isn't empty after the AI run.
+        const taskRows = draftedMilestones.flatMap((m) =>
+          (m.tasks ?? []).slice(0, 4).map((t) => ({
+            project_id: created.id,
+            user_id: user.id,
+            title: t,
+            completed: false,
+          })),
+        );
+        if (taskRows.length) {
+          await (supabase as any).from("tasks").insert(taskRows);
+        }
       }
 
       return created.id as string;
