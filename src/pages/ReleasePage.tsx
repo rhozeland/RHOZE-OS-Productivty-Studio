@@ -7,7 +7,8 @@
  */
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Check } from "lucide-react";
+import { ArrowLeft, Check, Calendar as CalendarIcon, ListChecks } from "lucide-react";
+import { format, isPast, isToday } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -20,6 +21,7 @@ import BoardMasonry from "@/components/project/shared/BoardMasonry";
 import SupportersStrip from "@/components/project/shared/SupportersStrip";
 import StoryFeed from "@/components/project/shared/StoryFeed";
 import TokenizeBottomCta from "@/components/project/shared/TokenizeBottomCta";
+import ProjectCoinLiveCard from "@/components/project/shared/ProjectCoinLiveCard";
 import { computeProjectStatus } from "@/components/project/shared/projectStatus";
 
 import SupportPanel from "@/components/release/SupportPanel";
