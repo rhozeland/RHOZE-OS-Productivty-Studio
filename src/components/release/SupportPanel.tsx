@@ -58,6 +58,9 @@ const SupportPanel = ({
   coverImageUrl,
   linkedTokenTicker,
   linkedTokenMint,
+  horizontal,
+  stagesComplete = 0,
+  stagesTotal = 0,
 }: Props) => {
   const { user } = useAuth();
   const qc = useQueryClient();
