@@ -410,4 +410,3 @@ const StoryUpdates = ({ projectId, canManage, isOwner = true }: Props) => {
 
 export default StoryUpdates;
 
-export default StoryUpdates;
