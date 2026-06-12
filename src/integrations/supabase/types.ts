@@ -3925,6 +3925,10 @@ export type Database = {
           curator_id: string | null
           currency: string
           description: string | null
+          featured_visual_external_url: string | null
+          featured_visual_mime: string | null
+          featured_visual_title: string | null
+          featured_visual_url: string | null
           id: string
           intake_tier: Database["public"]["Enums"]["project_intake_tier"]
           is_estimate: boolean
@@ -3954,6 +3958,10 @@ export type Database = {
           curator_id?: string | null
           currency?: string
           description?: string | null
+          featured_visual_external_url?: string | null
+          featured_visual_mime?: string | null
+          featured_visual_title?: string | null
+          featured_visual_url?: string | null
           id?: string
           intake_tier?: Database["public"]["Enums"]["project_intake_tier"]
           is_estimate?: boolean
@@ -3983,6 +3991,10 @@ export type Database = {
           curator_id?: string | null
           currency?: string
           description?: string | null
+          featured_visual_external_url?: string | null
+          featured_visual_mime?: string | null
+          featured_visual_title?: string | null
+          featured_visual_url?: string | null
           id?: string
           intake_tier?: Database["public"]["Enums"]["project_intake_tier"]
           is_estimate?: boolean
@@ -5855,6 +5867,10 @@ export type Database = {
               curator_id: string | null
               currency: string
               description: string | null
+              featured_visual_external_url: string | null
+              featured_visual_mime: string | null
+              featured_visual_title: string | null
+              featured_visual_url: string | null
               id: string
               intake_tier: Database["public"]["Enums"]["project_intake_tier"]
               is_estimate: boolean
@@ -5902,6 +5918,10 @@ export type Database = {
               curator_id: string | null
               currency: string
               description: string | null
+              featured_visual_external_url: string | null
+              featured_visual_mime: string | null
+              featured_visual_title: string | null
+              featured_visual_url: string | null
               id: string
               intake_tier: Database["public"]["Enums"]["project_intake_tier"]
               is_estimate: boolean
