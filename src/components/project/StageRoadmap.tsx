@@ -845,11 +845,12 @@ const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, co
                   // ---- ROW VIEW ----
                   <div
                     className={cn(
-                      "group grid grid-cols-[28px_minmax(0,1fr)_auto] md:grid-cols-[28px_minmax(0,1fr)_120px_100px_180px_100px_60px] items-center gap-3 px-3 py-4 cursor-pointer hover:bg-muted/30 transition-colors",
+                      "group grid grid-cols-[28px_minmax(0,1fr)_auto] md:grid-cols-[28px_minmax(0,1fr)_120px_100px_56px_180px_100px_60px] items-center gap-3 px-3 py-4 cursor-pointer hover:bg-muted/30 transition-colors",
                       status === "shipped" && "bg-emerald-500/[0.03]"
                     )}
                     onClick={() => toggleExpand(stage.id)}
                   >
+
                     {/* Expand chevron + stage number */}
                     <div className="flex items-center justify-center text-muted-foreground">
                       {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
