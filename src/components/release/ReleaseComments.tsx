@@ -96,7 +96,28 @@ const ReleaseComments = forwardRef<HTMLDivElement, Props>(({ projectId }, ref) =
         <span className="text-xs text-muted-foreground font-normal">({rows.length})</span>
       </h2>
 
-      {!user && (
+      {user ? (
+        <div className="space-y-2">
+          <Textarea
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            placeholder="Share a thought…"
+            rows={3}
+            className="resize-none"
+          />
+          <div className="flex justify-end">
+            <Button
+              size="sm"
+              onClick={() => post.mutate()}
+              disabled={post.isPending || body.trim().length === 0}
+              className="gap-1.5"
+            >
+              <Send className="h-3.5 w-3.5" />
+              {post.isPending ? "Posting…" : "Post"}
+            </Button>
+          </div>
+        </div>
+      ) : (
         <div className="rounded-xl border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
           <Link to="/auth" className="underline">Sign in</Link> to view the conversation.
         </div>
