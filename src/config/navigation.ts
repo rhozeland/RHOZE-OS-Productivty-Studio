@@ -58,7 +58,7 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "projects", label: "Projects", icon: FolderKanban, path: "/projects" },
   { id: "profile", label: "Profile", icon: User, path: "/profile" },
   // Legacy / utility entries
-  { id: "boards", label: "Boards", icon: Palette, path: "/smartboards" },
+  
   {
     id: "droprooms",
     label: "Drops",
