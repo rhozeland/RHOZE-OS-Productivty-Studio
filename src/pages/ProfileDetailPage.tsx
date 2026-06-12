@@ -24,6 +24,7 @@ import CreatorAvailabilityCalendar from "@/components/profile/CreatorAvailabilit
 import SupportFlowSheet from "@/components/profile/SupportFlowSheet";
 import CreatorCoinsGallery from "@/components/profile/coins/CreatorCoinsGallery";
 import ProfileGemHeader from "@/components/profile/ProfileGemHeader";
+import { VipDirectAccessButton } from "@/components/profile/VipDirectAccessModal";
 import { BoostProfileSheet } from "@/components/profile/BoostProfileSheet";
 import FlowThumbnail from "@/components/flow/FlowThumbnail";
 import FlowPostOwnerMenu from "@/components/profile/FlowPostOwnerMenu";
@@ -463,6 +464,8 @@ const ProfileDetailPage = () => {
                   <p className="font-display text-lg font-bold mt-2">Support {p.display_name || p.username}</p>
                   <p className="text-xs opacity-90 mt-1">Subscribe, tip, or fund the next milestone.</p>
                 </button>
+
+                <VipDirectAccessButton creatorName={p.display_name || p.username || "this artist"} />
               </>
             )}
 
