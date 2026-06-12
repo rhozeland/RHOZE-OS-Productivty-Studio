@@ -3879,6 +3879,41 @@ export type Database = {
           },
         ]
       }
+      project_team_splits: {
+        Row: {
+          created_at: string
+          id: string
+          pct: number
+          project_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          pct?: number
+          project_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          pct?: number
+          project_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_team_splits_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           categories: string[] | null
@@ -3901,6 +3936,7 @@ export type Database = {
           runtime_notes: string | null
           scope_of_work: string | null
           status: string
+          team_splits_locked_at: string | null
           title: string
           tokenize_ready: boolean
           total_budget: number
@@ -3929,6 +3965,7 @@ export type Database = {
           runtime_notes?: string | null
           scope_of_work?: string | null
           status?: string
+          team_splits_locked_at?: string | null
           title: string
           tokenize_ready?: boolean
           total_budget?: number
@@ -3957,6 +3994,7 @@ export type Database = {
           runtime_notes?: string | null
           scope_of_work?: string | null
           status?: string
+          team_splits_locked_at?: string | null
           title?: string
           tokenize_ready?: boolean
           total_budget?: number
@@ -5828,6 +5866,7 @@ export type Database = {
               runtime_notes: string | null
               scope_of_work: string | null
               status: string
+              team_splits_locked_at: string | null
               title: string
               tokenize_ready: boolean
               total_budget: number
@@ -5874,6 +5913,7 @@ export type Database = {
               runtime_notes: string | null
               scope_of_work: string | null
               status: string
+              team_splits_locked_at: string | null
               title: string
               tokenize_ready: boolean
               total_budget: number
@@ -6078,6 +6118,10 @@ export type Database = {
       }
       lock_escrow_credits: {
         Args: { _amount: number; _client_id: string; _contract_id: string }
+        Returns: undefined
+      }
+      lock_project_team_splits: {
+        Args: { p_project_id: string }
         Returns: undefined
       }
       lock_split_config: {
