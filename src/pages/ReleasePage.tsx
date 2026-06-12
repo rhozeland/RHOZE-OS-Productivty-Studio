@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { useMemo, useRef } from "react";
+import { useMemo } from "react";
 
 import ProjectHero from "@/components/project/shared/ProjectHero";
 import MilestoneTrack from "@/components/project/shared/MilestoneTrack";
