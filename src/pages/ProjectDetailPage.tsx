@@ -710,7 +710,7 @@ const ProjectDetailPage = () => {
               description={(project as any).description ?? null}
               canManage={canManageProject}
             />
-            <StoryUpdates projectId={id!} canManage={canManageProject} />
+            <StoryUpdates projectId={id!} canManage={canManageProject} isOwner={isOwner} />
           </div>
         </TabsContent>
 
