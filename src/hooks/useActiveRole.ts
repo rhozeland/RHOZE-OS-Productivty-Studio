@@ -67,20 +67,31 @@ export const useActiveRole = (): [ActiveRole, (next: ActiveRole) => void] => {
     },
   });
 
-  const update = (next: ActiveRole) => {
+  const update = async (next: ActiveRole) => {
     setRole(next);
     try { localStorage.setItem(ROLE_STORAGE_KEY, next); } catch {}
     window.dispatchEvent(new CustomEvent(ROLE_CHANGE_EVENT, { detail: next }));
-    if (user) {
-      // Fire-and-forget upsert so a missing profile row doesn't silently
-      // drop the new role and revert on the next page load.
-      supabase
+    if (!user) return;
+
+    // When switching to Musician, default a missing archetype so the
+    // profile actually surfaces in Discover's Musician section.
+    let archetypePatch: { archetype?: string } = {};
+    if (next === "creator") {
+      const { data: existing } = await supabase
         .from("profiles")
-        .upsert({ user_id: user.id, user_type: next } as any, { onConflict: "user_id" })
-        .then(({ error }) => {
-          if (error) console.warn("[useActiveRole] persist failed", error);
-        });
+        .select("archetype")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!(existing as any)?.archetype) archetypePatch = { archetype: "musician" };
     }
+
+    const { error } = await supabase
+      .from("profiles")
+      .upsert(
+        { user_id: user.id, user_type: next, ...archetypePatch } as any,
+        { onConflict: "user_id" },
+      );
+    if (error) console.warn("[useActiveRole] persist failed", error);
   };
 
   return [role, update];
