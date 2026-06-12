@@ -295,79 +295,121 @@ const StoryUpdates = ({ projectId, canManage, isOwner = true }: Props) => {
           )}
         </div>
       ) : (
-        <ol className="space-y-5">
-          <AnimatePresence initial={false}>
-            {updates.map((u) => {
-              const isAuthor = u.user_id === user?.id;
-              return (
-                <motion.li
-                  key={u.id}
-                  layout
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  className="group rounded-2xl border border-border bg-card overflow-hidden"
-                >
-                  <div className="p-5 md:p-6 space-y-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
-                        <span>{format(new Date(u.created_at), "MMM d, yyyy")}</span>
-                        {!u.is_public && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[9px] text-muted-foreground">
-                            <Lock className="h-2.5 w-2.5" /> Private
-                          </span>
-                        )}
-                      </div>
-                      {(isAuthor || canManage) && (
-                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {isAuthor && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7"
-                              onClick={() => openEdit(u)}
-                            >
-                              <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-                            </Button>
-                          )}
+        (() => {
+          const publicUpdates = updates.filter((u) => u.is_public);
+          const teamNotes = updates.filter((u) => !u.is_public);
+
+          const renderItem = (u: StoryUpdate) => {
+            const isAuthor = u.user_id === user?.id;
+            return (
+              <motion.li
+                key={u.id}
+                layout
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                className="group rounded-2xl border border-border bg-card overflow-hidden"
+              >
+                <div className="p-5 md:p-6 space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+                      <span>{format(new Date(u.created_at), "MMM d, yyyy")}</span>
+                      {!u.is_public && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[9px] text-muted-foreground">
+                          <Lock className="h-2.5 w-2.5" /> Private
+                        </span>
+                      )}
+                    </div>
+                    {(isAuthor || canManage) && (
+                      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {isAuthor && (
                           <Button
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7"
-                            onClick={() => remove.mutate(u.id)}
+                            onClick={() => openEdit(u)}
                           >
-                            <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
+                            <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
                           </Button>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="text-lg md:text-xl font-semibold leading-snug text-foreground">
-                        {u.title}
-                      </h3>
-                      {u.phase && (
-                        <Badge variant="outline" className="text-[10px] uppercase tracking-wider">
-                          {u.phase}
-                        </Badge>
-                      )}
-                    </div>
-
-                    {u.body && (
-                      <p className="text-sm md:text-[15px] text-muted-foreground whitespace-pre-wrap leading-relaxed">
-                        {u.body}
-                      </p>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => remove.mutate(u.id)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
+                        </Button>
+                      </div>
                     )}
                   </div>
 
-                  {u.image_url && (
-                    <img
-                      src={u.image_url}
-                      alt={u.title}
-                      className="w-full object-cover max-h-[520px] border-t border-border"
-                    />
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-lg md:text-xl font-semibold leading-snug text-foreground">
+                      {u.title}
+                    </h3>
+                    {u.phase && (
+                      <Badge variant="outline" className="text-[10px] uppercase tracking-wider">
+                        {u.phase}
+                      </Badge>
+                    )}
+                  </div>
+
+                  {u.body && (
+                    <p className="text-sm md:text-[15px] text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                      {u.body}
+                    </p>
                   )}
-                </motion.li>
+                </div>
+
+                {u.image_url && (
+                  <img
+                    src={u.image_url}
+                    alt={u.title}
+                    className="w-full object-cover max-h-[520px] border-t border-border"
+                  />
+                )}
+              </motion.li>
+            );
+          };
+
+          return (
+            <div className="space-y-8">
+              {publicUpdates.length > 0 && (
+                <ol className="space-y-5">
+                  <AnimatePresence initial={false}>
+                    {publicUpdates.map(renderItem)}
+                  </AnimatePresence>
+                </ol>
+              )}
+              {teamNotes.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 px-1">
+                    <Lock className="h-3 w-3 text-muted-foreground" />
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                      Team notes
+                    </span>
+                    <span className="text-[10px] text-muted-foreground/70">
+                      · only visible to your team
+                    </span>
+                  </div>
+                  <ol className="space-y-5">
+                    <AnimatePresence initial={false}>
+                      {teamNotes.map(renderItem)}
+                    </AnimatePresence>
+                  </ol>
+                </div>
+              )}
+            </div>
+          );
+        })()
+      )}
+    </div>
+  );
+};
+
+export default StoryUpdates;
+
               );
             })}
           </AnimatePresence>
