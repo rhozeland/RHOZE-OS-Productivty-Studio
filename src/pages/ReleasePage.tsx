@@ -551,9 +551,10 @@ const ReleasePage = () => {
             coverImageUrl={(project as any).cover_image_url ?? null}
             linkedTokenTicker={linkedToken?.ticker ?? null}
             linkedTokenMint={linkedToken?.mint_address ?? null}
-            
           />
+          <ProjectCoinLiveCard linkedTokenId={(project as any).linked_token_id ?? null} />
         </aside>
+
       </div>
 
     </div>
