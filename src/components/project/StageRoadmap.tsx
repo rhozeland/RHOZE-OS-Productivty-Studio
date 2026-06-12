@@ -40,11 +40,14 @@ import {
   Check,
   X,
   Lock,
+  UserPlus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useQuery } from "@tanstack/react-query";
 import StageApproval from "@/components/project/StageApproval";
 
 interface Goal {
