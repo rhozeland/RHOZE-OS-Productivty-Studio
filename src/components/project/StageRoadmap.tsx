@@ -898,23 +898,23 @@ const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, co
                     </div>
 
                     {/* Status — desktop column */}
-                    <div className="hidden md:block">
+                    <div className="hidden lg:block">
                       <StatusPill status={status} onChange={(s) => handleStageStatusChange(stage, s)} />
                     </div>
 
                     {/* Priority */}
-                    <div className="hidden md:block">
+                    <div className="hidden lg:block">
                       <PriorityPill priority={stage.priority || "medium"} onChange={(p) => setStagePriorityMutation.mutate({ goalId: stage.id, priority: p })} />
                     </div>
 
                     {/* Assigned to */}
-                    <div className="hidden md:flex items-center">
+                    <div className="hidden lg:flex items-center">
                       <AssigneePill stage={stage} />
                     </div>
 
 
                     {/* Timeline */}
-                    <div className="hidden md:flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
+                    <div className="hidden lg:flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
                       {(stage.stage_date_start || stage.stage_date_end) ? (
                         <>
                           <CalendarIcon className="h-3 w-3 shrink-0" />
@@ -936,13 +936,13 @@ const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, co
                     </div>
 
                     {/* Budget */}
-                    <div className="hidden md:block text-right text-sm tabular-nums text-foreground">
+                    <div className="hidden lg:block text-right text-sm tabular-nums text-foreground">
                       {stage.budget_amount > 0 ? `$${stage.budget_amount.toLocaleString()}` : <span className="text-muted-foreground/40">—</span>}
                     </div>
 
                     {/* Row actions */}
                     {(isOwner || stage.assignee_id === user?.id) && (
-                    <div className="hidden md:flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="hidden lg:flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); startEditing(stage); }}>
                         <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
                       </Button>
