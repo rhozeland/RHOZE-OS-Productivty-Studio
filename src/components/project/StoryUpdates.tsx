@@ -43,11 +43,14 @@ interface StoryUpdate {
 interface Props {
   projectId: string;
   canManage?: boolean;
+  /** When true, this user is the Lead Artist (project owner) and may post
+   *  public updates. Collaborators can only post internal team notes. */
+  isOwner?: boolean;
 }
 
 const safeContentType = (f: File) => f.type || "application/octet-stream";
 
-const StoryUpdates = ({ projectId, canManage }: Props) => {
+const StoryUpdates = ({ projectId, canManage, isOwner = true }: Props) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -58,8 +61,10 @@ const StoryUpdates = ({ projectId, canManage }: Props) => {
   const [body, setBody] = useState("");
   const [phase, setPhase] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [isPublic, setIsPublic] = useState(true);
+  // Collaborators are forced to private; lead artist defaults to public.
+  const [isPublic, setIsPublic] = useState(isOwner);
   const [uploading, setUploading] = useState(false);
+
 
   const { data: updates = [], isLoading } = useQuery({
     queryKey: ["project-story-updates", projectId],
