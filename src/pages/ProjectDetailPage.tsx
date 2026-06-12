@@ -21,8 +21,25 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Pencil, Check, X, Lock, ArrowLeft, Plus, Eye, Calendar as CalendarIcon, ListChecks, Music, Video as VideoIcon, Image as ImageIcon, FileText } from "lucide-react";
+import { Pencil, Check, X, Lock, ArrowLeft, Plus, Eye, Calendar as CalendarIcon, ListChecks, Music, Video as VideoIcon, Image as ImageIcon, FileText, MoreHorizontal, Archive, ArchiveRestore, Trash2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 import { format, isPast, isToday } from "date-fns";
 import { useMemo, useState } from "react";
