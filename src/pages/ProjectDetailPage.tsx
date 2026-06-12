@@ -563,7 +563,7 @@ const ProjectDetailPage = () => {
 
         {/* ROADMAP */}
         <TabsContent value="roadmap" className="space-y-6">
-          {canManageProject && (
+          {isOwner && (
             <TokenizeProjectCta
               projectId={project.id}
               projectTitle={project.title}
@@ -572,7 +572,7 @@ const ProjectDetailPage = () => {
             />
           )}
 
-          {canManageProject && !((project as any).linked_token_id) && (() => {
+          {isOwner && !((project as any).linked_token_id) && (() => {
             const topStages = (goals ?? []).filter((g: any) => !g.parent_id);
             const totalStages = topStages.length;
             const completed = topStages.filter((g: any) => {
@@ -600,14 +600,14 @@ const ProjectDetailPage = () => {
 
           <SignedAgreementCard projectId={id!} contractId={contract?.id} />
 
-          {canManageProject && (
+          {isOwner && (
             <AttachCoinToProjectCard
               projectId={project.id}
               linkedTokenId={(project as any).linked_token_id ?? null}
             />
           )}
 
-          <RoadmapCopilot projectId={id!} />
+          {isOwner && <RoadmapCopilot projectId={id!} />}
 
 
           {isPaid && (
@@ -621,7 +621,7 @@ const ProjectDetailPage = () => {
             />
           )}
 
-          {!isLocked && (goals?.filter((g: any) => !g.parent_id).length ?? 0) < 2 && (
+          {isOwner && !isLocked && (goals?.filter((g: any) => !g.parent_id).length ?? 0) < 2 && (
             <AiRoadmapDraftButton
               projectId={id!}
               projectTitle={project.title}
@@ -631,6 +631,7 @@ const ProjectDetailPage = () => {
               existingGoalCount={goals?.filter((g: any) => !g.parent_id).length ?? 0}
             />
           )}
+
 
           <div className="grid gap-6 lg:grid-cols-3">
             <div className="lg:col-span-2">
