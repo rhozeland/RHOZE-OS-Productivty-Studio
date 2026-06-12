@@ -13,7 +13,7 @@ import {
 import {
   EyeOff, Loader2, Sparkles, Image as ImageIcon, Play, Music, FileText,
   Calendar as CalendarIcon, FolderKanban, ExternalLink, Coins, Heart,
-  Rocket, Inbox, Users, ArrowRight, Repeat2, HeartHandshake,
+  Rocket, Inbox, Users, ArrowRight, Repeat2, HeartHandshake, Briefcase,
 } from "lucide-react";
 import SupportingTab from "@/components/profile/SupportingTab";
 import { toast } from "sonner";
