@@ -131,8 +131,10 @@ const StoryUpdates = ({ projectId, canManage, isOwner = true }: Props) => {
         body: body.trim() || null,
         phase: phase.trim() || null,
         image_url: imageUrl,
-        is_public: isPublic,
+        // Collaborator updates are always internal team notes.
+        is_public: isOwner ? isPublic : false,
       };
+
       if (editingId) {
         const { error } = await supabase
           .from("project_story_updates" as any)
