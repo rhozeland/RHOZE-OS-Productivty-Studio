@@ -432,7 +432,7 @@ const ReleasePage = () => {
             coverImageUrl={(project as any).cover_image_url ?? null}
             linkedTokenTicker={linkedToken?.ticker ?? null}
             linkedTokenMint={linkedToken?.mint_address ?? null}
-            onScrollToComments={scrollToComments}
+            
           />
         </aside>
       </div>
