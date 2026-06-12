@@ -179,8 +179,6 @@ const SettingsPage = () => {
         "available","is_public","avatar_url","banner_gradient","banner_url",
         "profile_background","instagram_url","tiktok_url","twitter_url","youtube_url",
         "token_mint_address","token_ticker",
-        "token_mint_address_pending","token_ticker_pending","token_submission_status",
-        "token_submitted_at","token_reviewed_at","token_review_note",
         "email_notif_messages","email_notif_inquiries",
         "email_notif_purchases","email_notif_reviews",
       ].join(",");
@@ -284,6 +282,18 @@ const SettingsPage = () => {
       }
       if (!bio || bio.trim().length < 40) {
         throw new Error("About needs at least 40 characters — give fans something to read.");
+      }
+      const { data: existingProfile, error: existingProfileError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", user!.id)
+        .maybeSingle();
+      if (existingProfileError) throw existingProfileError;
+      if (!existingProfile) {
+        const { error: insertProfileError } = await supabase
+          .from("profiles")
+          .insert({ id: user!.id, user_id: user!.id });
+        if (insertProfileError) throw insertProfileError;
       }
       const { error } = await supabase.from("profiles").update({
         display_name: displayName,
