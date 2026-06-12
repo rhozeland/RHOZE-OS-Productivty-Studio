@@ -470,7 +470,7 @@ const ProjectDetailPage = () => {
               </div>
             </button>
 
-            {canManageProject && (
+            {isOwner && (
               <PublishReleaseCard
                 projectId={project.id}
                 isPublic={(project as any).is_public ?? false}
@@ -481,6 +481,7 @@ const ProjectDetailPage = () => {
                 description={(project as any).vision ?? project.description ?? null}
               />
             )}
+
 
             {/* Bento row: Story / Board (if any) / Crew */}
             {(() => {
