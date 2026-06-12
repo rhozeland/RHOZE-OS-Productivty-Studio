@@ -345,7 +345,7 @@ const ProjectDetailPage = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       toast.success("Project deleted");
-      navigate("/messages?tab=projects");
+      navigate("/studio");
     },
     onError: (e: any) => toast.error(e.message),
   });
