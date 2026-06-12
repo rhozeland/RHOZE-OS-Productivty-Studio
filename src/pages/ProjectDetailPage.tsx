@@ -440,7 +440,7 @@ const ProjectDetailPage = () => {
       </div>
 
       {/* TABS + EDITOR SIDE RAIL */}
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr,320px]">
+      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr,248px]">
         <Tabs value={activeTab} onValueChange={setTab} className="w-full min-w-0">
           <TabsList
             className="sticky top-0 z-20 -mx-4 px-4 md:mx-0 md:px-0 mb-6 w-[calc(100%+2rem)] md:w-full justify-start overflow-x-auto flex-nowrap shrink-0 h-auto gap-6 rounded-none border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 p-0"
