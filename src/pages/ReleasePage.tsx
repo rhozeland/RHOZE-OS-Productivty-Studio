@@ -192,8 +192,6 @@ const ReleasePage = () => {
   const hasStory = storyItems.length > 0;
   const hasBoard = (deliverables ?? []).some((d: any) => d.file_url || d.title);
 
-  const commentsRef = useRef<HTMLDivElement>(null);
-  const scrollToComments = () => commentsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
 
   if (isLoading) {
     return <div className="container mx-auto py-20 text-center text-muted-foreground">Loading release…</div>;
