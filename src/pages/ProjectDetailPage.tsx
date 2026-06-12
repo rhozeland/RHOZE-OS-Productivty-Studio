@@ -63,6 +63,7 @@ import AttachCoinToProjectCard from "@/components/project/AttachCoinToProjectCar
 import RoadmapCopilot from "@/components/project/RoadmapCopilot";
 import TokenizeProjectCta from "@/components/project/TokenizeProjectCta";
 import EditorSideRail from "@/components/project/shared/EditorSideRail";
+import ProjectFeaturedVisual from "@/components/project/ProjectFeaturedVisual";
 import ProjectCoinLiveCard from "@/components/project/shared/ProjectCoinLiveCard";
 import SupportProjectCard from "@/components/project/shared/SupportProjectCard";
 import { Progress } from "@/components/ui/progress";
@@ -439,7 +440,7 @@ const ProjectDetailPage = () => {
       </div>
 
       {/* TABS + EDITOR SIDE RAIL */}
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr,320px]">
+      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr,248px]">
         <Tabs value={activeTab} onValueChange={setTab} className="w-full min-w-0">
           <TabsList
             className="sticky top-0 z-20 -mx-4 px-4 md:mx-0 md:px-0 mb-6 w-[calc(100%+2rem)] md:w-full justify-start overflow-x-auto flex-nowrap shrink-0 h-auto gap-6 rounded-none border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 p-0"
@@ -484,8 +485,8 @@ const ProjectDetailPage = () => {
 
               return (
                 <>
-                  {/* Top row: Roadmap+Timeline (wide) · Tasks · Visual */}
-                  <div className="grid gap-4 md:grid-cols-4">
+                  {/* Top row: Roadmap+Timeline (wide) · Tasks */}
+                  <div className="grid gap-4 md:grid-cols-3">
                     {/* Roadmap + Timeline combined — spans 2 cols */}
                     <button
                       onClick={() => setTab("roadmap")}
@@ -580,50 +581,18 @@ const ProjectDetailPage = () => {
                       )}
                     </div>
 
-                    {/* Visual — preview of latest audio/video/image */}
-                    <button
-                      onClick={() => setTab("board")}
-                      className="text-left rounded-2xl border border-border bg-card p-5 min-h-[260px] flex flex-col transition-all hover:border-primary/40 hover:shadow-md overflow-hidden"
-                    >
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="text-[10px] uppercase tracking-[0.14em] font-semibold text-amber-600 dark:text-amber-300 flex items-center gap-1.5">
-                          {featuredKind === "video" ? <VideoIcon className="h-3 w-3" /> : featuredKind === "audio" ? <Music className="h-3 w-3" /> : <ImageIcon className="h-3 w-3" />}
-                          Visual
-                        </div>
-                        <span className="text-[11px] text-muted-foreground">Board →</span>
-                      </div>
-                      {!featured ? (
-                        <div className="flex-1 flex flex-col items-center justify-center text-center rounded-lg border border-dashed border-border bg-muted/20 p-4">
-                          <ImageIcon className="h-6 w-6 text-muted-foreground/50 mb-1.5" />
-                          <p className="text-xs text-muted-foreground">No media yet.</p>
-                          <p className="text-[10px] text-muted-foreground/70 mt-0.5">Attach audio, video or art on the Roadmap.</p>
-                        </div>
-                      ) : featuredKind === "video" ? (
-                        <video
-                          src={featured.file_url}
-                          controls
-                          className="flex-1 w-full rounded-lg bg-black object-cover"
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                      ) : featuredKind === "audio" ? (
-                        <div className="flex-1 flex flex-col justify-center rounded-lg bg-gradient-to-br from-amber-500/10 to-rose-500/10 p-3">
-                          <p className="text-xs font-medium text-foreground line-clamp-2 mb-2">{featured.title ?? "Audio"}</p>
-                          <audio
-                            src={featured.file_url}
-                            controls
-                            className="w-full"
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                        </div>
-                      ) : (
-                        <img
-                          src={featured.file_url}
-                          alt={featured.title ?? "Project visual"}
-                          className="flex-1 w-full rounded-lg object-cover"
-                        />
-                      )}
-                    </button>
                   </div>
+
+                  {/* Visual — official project media (separate from Board) */}
+                  <ProjectFeaturedVisual
+                    projectId={project.id}
+                    featuredUrl={(project as any).featured_visual_url}
+                    featuredExternalUrl={(project as any).featured_visual_external_url}
+                    featuredMime={(project as any).featured_visual_mime}
+                    featuredTitle={(project as any).featured_visual_title}
+                    canManage={canManageProject}
+                  />
+
 
                   {/* Board — wide card matching the row above */}
                   <button

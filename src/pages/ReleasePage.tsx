@@ -23,6 +23,7 @@ import TokenizeBottomCta from "@/components/project/shared/TokenizeBottomCta";
 import { computeProjectStatus } from "@/components/project/shared/projectStatus";
 
 import SupportPanel from "@/components/release/SupportPanel";
+import ProjectFeaturedVisual from "@/components/project/ProjectFeaturedVisual";
 import ReleaseComments from "@/components/release/ReleaseComments";
 import RoadmapCalendarView from "@/components/project/RoadmapCalendarView";
 
@@ -39,7 +40,7 @@ const ReleasePage = () => {
       const { data, error } = await supabase
         .from("projects")
         .select(
-          "id, title, description, vision, scope_of_work, cover_color, cover_image_url, cheer_count, tokenize_ready, user_id, public_slug, linked_token_id, is_public, created_at",
+          "id, title, description, vision, scope_of_work, cover_color, cover_image_url, cheer_count, tokenize_ready, user_id, public_slug, linked_token_id, is_public, created_at, featured_visual_url, featured_visual_external_url, featured_visual_mime, featured_visual_title",
         )
         .eq("public_slug", slug!)
         .eq("is_public", true)
@@ -238,6 +239,17 @@ const ReleasePage = () => {
 
             {/* OVERVIEW */}
             <TabsContent value="overview" className="space-y-8">
+              {((project as any).featured_visual_url || (project as any).featured_visual_external_url) && (
+                <ProjectFeaturedVisual
+                  projectId={project.id}
+                  featuredUrl={(project as any).featured_visual_url}
+                  featuredExternalUrl={(project as any).featured_visual_external_url}
+                  featuredMime={(project as any).featured_visual_mime}
+                  featuredTitle={(project as any).featured_visual_title}
+                  canManage={false}
+                  publicView
+                />
+              )}
               {hasMilestones && (
                 <section>
                   <MilestoneTrack milestones={milestones as any} contractId={contract?.id} />

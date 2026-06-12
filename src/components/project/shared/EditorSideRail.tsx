@@ -69,46 +69,44 @@ const EditorSideRail = ({
     ) : null;
 
   return (
-    <div className="rounded-2xl border border-border bg-card/70 backdrop-blur p-4 space-y-3">
-      <div className="flex items-end justify-between gap-3">
-        <div>
-          <div className="text-5xl font-display font-bold tabular-nums leading-none bg-gradient-to-br from-rose-500 via-fuchsia-500 to-amber-400 bg-clip-text text-transparent">
+    <div className="rounded-2xl border border-border bg-card/70 backdrop-blur p-3 space-y-2.5">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-baseline gap-1.5">
+          <div className="text-2xl font-display font-bold tabular-nums leading-none bg-gradient-to-br from-rose-500 via-fuchsia-500 to-amber-400 bg-clip-text text-transparent">
             {cheerCount}
           </div>
-          <div className="text-xs text-muted-foreground mt-1.5 uppercase tracking-wider font-medium">
+          <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
             {cheerCount === 1 ? "supporter" : "supporters"}
           </div>
         </div>
-        <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wider font-medium ${isPublic ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300" : "bg-muted text-muted-foreground"}`}>
+        <span className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px] uppercase tracking-wider font-medium ${isPublic ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300" : "bg-muted text-muted-foreground"}`}>
           {isPublic ? "Public" : "Private"}
         </span>
       </div>
 
+
       {isPublic && releaseUrl ? (
         <>
-          <Button asChild size="lg" className="w-full gap-2 bg-gradient-to-r from-rose-500 via-fuchsia-500 to-amber-400 text-white font-semibold hover:opacity-95 shadow-lg shadow-rose-500/20">
+          <Button asChild size="sm" className="w-full gap-1.5 bg-gradient-to-r from-rose-500 via-fuchsia-500 to-amber-400 text-white text-xs font-semibold hover:opacity-95">
             <Link to={`/release/${publicSlug}`} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="h-4 w-4" />
+              <ExternalLink className="h-3 w-3" />
               View public page
             </Link>
           </Button>
-          <p className="text-[11px] text-muted-foreground text-center leading-snug">
-            Share the public release so fans can support, comment, and follow milestones live.
-          </p>
-          <div className="flex items-center justify-center gap-2 pt-1">
-            <Button variant="outline" size="icon" onClick={shareNative} className="h-8 w-8" title="Share" aria-label="Share">
-              <Share2 className="h-3.5 w-3.5" />
+          <div className="flex items-center justify-center gap-1.5">
+            <Button variant="outline" size="icon" onClick={shareNative} className="h-7 w-7" title="Share" aria-label="Share">
+              <Share2 className="h-3 w-3" />
             </Button>
-            <Button variant="outline" size="icon" onClick={copyLink} className="h-8 w-8" title="Copy link" aria-label="Copy link">
-              <Copy className="h-3.5 w-3.5" />
+            <Button variant="outline" size="icon" onClick={copyLink} className="h-7 w-7" title="Copy link" aria-label="Copy link">
+              <Copy className="h-3 w-3" />
             </Button>
           </div>
           <StageProgress />
         </>
       ) : (
         <>
-          <p className="text-[12px] text-muted-foreground leading-snug">
-            Toggle <span className="font-medium text-foreground">Build in public</span> on the cover to share this release with fans.
+          <p className="text-[11px] text-muted-foreground leading-snug">
+            Toggle <span className="font-medium text-foreground">Build in public</span> on the cover to share.
           </p>
           <StageProgress />
         </>
@@ -116,5 +114,6 @@ const EditorSideRail = ({
     </div>
   );
 };
+
 
 export default EditorSideRail;
