@@ -239,6 +239,17 @@ const ReleasePage = () => {
 
             {/* OVERVIEW */}
             <TabsContent value="overview" className="space-y-8">
+              {((project as any).featured_visual_url || (project as any).featured_visual_external_url) && (
+                <ProjectFeaturedVisual
+                  projectId={project.id}
+                  featuredUrl={(project as any).featured_visual_url}
+                  featuredExternalUrl={(project as any).featured_visual_external_url}
+                  featuredMime={(project as any).featured_visual_mime}
+                  featuredTitle={(project as any).featured_visual_title}
+                  canManage={false}
+                  publicView
+                />
+              )}
               {hasMilestones && (
                 <section>
                   <MilestoneTrack milestones={milestones as any} contractId={contract?.id} />
