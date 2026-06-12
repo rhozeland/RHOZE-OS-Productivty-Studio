@@ -63,6 +63,7 @@ const SupportPanel = ({
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [successOpen, setSuccessOpen] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(false);
   const [shareToProfile, setShareToProfile] = useState(true);
 
   useEffect(() => {
