@@ -486,7 +486,70 @@ const ProjectDetailPage = () => {
 
           )}
         </div>
+        {isOwner && !editingHeader && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+                aria-label="Project actions"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              {project.status === "archived" ? (
+                <DropdownMenuItem onClick={() => archiveProject.mutate("active")}>
+                  <ArchiveRestore className="mr-2 h-4 w-4" /> Restore project
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem onClick={() => archiveProject.mutate("archived")}>
+                  <Archive className="mr-2 h-4 w-4" /> Archive project
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => setConfirmDelete(true)}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="mr-2 h-4 w-4" /> Delete project
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
+
+      {project.status === "archived" && (
+        <div className="mt-3 px-1">
+          <Badge variant="outline" className="gap-1 text-[10px] bg-muted text-muted-foreground">
+            <Archive className="h-2.5 w-2.5" /> Archived
+          </Badge>
+        </div>
+      )}
+
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this project?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove “{project.title}” and all of its milestones, tasks,
+              board items, story updates and uploads. This cannot be undone. If you only want to
+              hide it from your workspace, archive it instead.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteProject.mutate()}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete forever
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
 
       {/* TABS + EDITOR SIDE RAIL */}
       {/* Top support rail — highlighted above the workspace tabs */}
