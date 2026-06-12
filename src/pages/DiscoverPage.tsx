@@ -57,12 +57,11 @@ const useArtistProfiles = (enabled: boolean) =>
       const { data } = await supabase
         .from("profiles")
         .select("user_id, display_name, username, avatar_url, archetype")
-        .or("user_type.eq.creator,user_type.is.null")
         .not("archetype", "is", null)
         .eq("is_public", true)
         .order("featured_pin_until", { ascending: false, nullsFirst: false })
         .order("created_at", { ascending: false })
-        .limit(60);
+        .limit(120);
       return (data ?? []) as ArtistProfile[];
     },
   });
