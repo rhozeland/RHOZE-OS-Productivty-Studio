@@ -401,6 +401,28 @@ const ProjectDetailPage = () => {
     [goals],
   );
 
+  const roadmapStages = useMemo(
+    () =>
+      (goals ?? [])
+        .filter((g: any) => !g.parent_id)
+        .sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
+    [goals],
+  );
+
+  const roadmapDoneCount = useMemo(
+    () =>
+      roadmapStages.filter((g: any) => {
+        const s = (g.status || "").toLowerCase();
+        return s === "approved" || s === "released" || s === "completed" || s === "shipped" || s === "done";
+      }).length,
+    [roadmapStages],
+  );
+
+  const overviewStages = roadmapStages.length ? roadmapStages : (milestones ?? []);
+  const overviewDoneCount = roadmapStages.length
+    ? roadmapDoneCount
+    : (milestones ?? []).filter((m: any) => m.status === "approved" || m.status === "released").length;
+
   const activeTab = searchParams.get("tab") ?? "overview";
   const setTab = (t: string) => {
     const next = new URLSearchParams(searchParams);
@@ -574,8 +596,8 @@ const ProjectDetailPage = () => {
             publicSlug={(project as any).public_slug ?? null}
             projectTitle={project.title}
             cheerCount={(project as any).cheer_count ?? 0}
-            stagesTotal={milestones?.length ?? 0}
-            stagesComplete={milestones?.filter((m: any) => m.status === "approved" || m.status === "released").length ?? 0}
+            stagesTotal={overviewStages.length}
+            stagesComplete={overviewDoneCount}
           />
         </div>
       )}
@@ -610,12 +632,16 @@ const ProjectDetailPage = () => {
           {/* OVERVIEW — owner workspace */}
           <TabsContent value="overview" className="space-y-6">
             {(() => {
-              const ms = milestones ?? [];
-              const done = ms.filter((m: any) => m.status === "approved" || m.status === "released").length;
+              const ms = overviewStages;
+              const done = overviewDoneCount;
               const total = ms.length;
               const pct = total ? Math.round((done / total) * 100) : 0;
               const upcoming = ms
-                .filter((m: any) => m.due_date && m.status !== "approved" && m.status !== "released")
+                .filter((m: any) => {
+                  const s = (m.status || "").toLowerCase();
+                  const isDone = s === "approved" || s === "released" || s === "completed" || s === "shipped" || s === "done";
+                  return m.due_date && !isDone;
+                })
                 .sort((a: any, b: any) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
                 .slice(0, 3);
 
