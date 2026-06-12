@@ -42,7 +42,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 import { format, isPast, isToday } from "date-fns";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import ProjectHero from "@/components/project/shared/ProjectHero";
