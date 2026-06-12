@@ -318,6 +318,38 @@ const ProjectDetailPage = () => {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const archiveProject = useMutation({
+    mutationFn: async (nextStatus: "archived" | "active") => {
+      const { error } = await supabase
+        .from("projects")
+        .update({ status: nextStatus })
+        .eq("id", id!);
+      if (error) throw error;
+      return nextStatus;
+    },
+    onSuccess: (nextStatus) => {
+      queryClient.invalidateQueries({ queryKey: ["project", id] });
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      toast.success(nextStatus === "archived" ? "Project archived" : "Project restored");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const deleteProject = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("projects").delete().eq("id", id!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      toast.success("Project deleted");
+      navigate("/messages?tab=projects");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const unlinkSmartboard = useMutation({
     mutationFn: async (smartboardId: string) => {
       const { error } = await supabase
