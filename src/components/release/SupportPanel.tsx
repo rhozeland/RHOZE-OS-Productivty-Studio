@@ -327,6 +327,16 @@ const SupportPanel = ({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Comments slide-up */}
+      <Sheet open={commentsOpen} onOpenChange={setCommentsOpen}>
+        <SheetContent side="bottom" className="h-[85vh] overflow-y-auto rounded-t-2xl">
+          <SheetHeader className="mb-4">
+            <SheetTitle className="font-display text-xl">Comments</SheetTitle>
+          </SheetHeader>
+          <ReleaseComments projectId={projectId} />
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };
