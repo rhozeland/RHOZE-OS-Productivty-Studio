@@ -440,8 +440,36 @@ const ProjectDetailPage = () => {
       </div>
 
       {/* TABS + EDITOR SIDE RAIL */}
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr,248px]">
+      {/* Top support rail — highlighted above the workspace tabs */}
+      {isOwner && (
+        <div className="mt-6">
+          <EditorSideRail
+            orientation="horizontal"
+            isPublic={(project as any).is_public ?? false}
+            publicSlug={(project as any).public_slug ?? null}
+            projectTitle={project.title}
+            cheerCount={(project as any).cheer_count ?? 0}
+            stagesTotal={milestones?.length ?? 0}
+            stagesComplete={milestones?.filter((m: any) => m.status === "approved" || m.status === "released").length ?? 0}
+          />
+        </div>
+      )}
+      {!canManageProject && !isCollaborator && (
+        <div className="mt-6">
+          <SupportProjectCard
+            projectId={id!}
+            projectTitle={project.title}
+            isPublic={(project as any).is_public ?? false}
+            ownerName={owner?.display_name ?? owner?.username ?? null}
+          />
+        </div>
+      )}
+      <ProjectCoinLiveCard linkedTokenId={(project as any).linked_token_id ?? null} />
+
+      {/* TABS — now full-width */}
+      <div className="mt-6">
         <Tabs value={activeTab} onValueChange={setTab} className="w-full min-w-0">
+
           <TabsList
             className="sticky top-0 z-20 -mx-4 px-4 md:mx-0 md:px-0 mb-6 w-[calc(100%+2rem)] md:w-full justify-start overflow-x-auto flex-nowrap shrink-0 h-auto gap-6 rounded-none border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 p-0"
           >
