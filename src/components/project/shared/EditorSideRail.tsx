@@ -94,12 +94,6 @@ const EditorSideRail = ({
                   View public page
                 </Link>
               </Button>
-              <Button variant="outline" size="icon" onClick={shareNative} className="h-8 w-8" title="Share" aria-label="Share">
-                <Share2 className="h-3.5 w-3.5" />
-              </Button>
-              <Button variant="outline" size="icon" onClick={copyLink} className="h-8 w-8" title="Copy link" aria-label="Copy link">
-                <Copy className="h-3.5 w-3.5" />
-              </Button>
             </>
           ) : (
             <p className="text-[11px] text-muted-foreground leading-snug max-w-[280px]">
