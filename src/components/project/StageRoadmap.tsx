@@ -579,8 +579,12 @@ const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, co
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.03 }}
-                className="border-b border-border/40 last:border-b-0"
+                className={cn(
+                  "border-b border-border/40 last:border-b-0",
+                  !isOwner && stage.assignee_id === user?.id && "border-l-2 border-l-primary",
+                )}
               >
+
                 {isEditing ? (
                   // ---- EDIT MODE ----
                   <form
