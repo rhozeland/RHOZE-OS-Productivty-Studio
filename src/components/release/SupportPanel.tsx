@@ -231,7 +231,7 @@ const SupportPanel = ({
       )}
 
       <div className="pt-1">
-        <Button variant="outline" size="sm" onClick={onScrollToComments} className="w-full gap-1.5">
+        <Button variant="outline" size="sm" onClick={() => setCommentsOpen(true)} className="w-full gap-1.5">
           <MessageCircle className="h-3.5 w-3.5" /> Comment
         </Button>
       </div>
