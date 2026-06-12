@@ -463,6 +463,8 @@ const ProfileDetailPage = () => {
                   <p className="font-display text-lg font-bold mt-2">Support {p.display_name || p.username}</p>
                   <p className="text-xs opacity-90 mt-1">Subscribe, tip, or fund the next milestone.</p>
                 </button>
+
+                <VipDirectAccessButton creatorName={p.display_name || p.username || "this artist"} />
               </>
             )}
 
