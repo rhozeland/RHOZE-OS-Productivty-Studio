@@ -107,11 +107,26 @@ export const AiRoadmapDraftButton = ({
       })) as any;
       const { error } = await supabase.from("project_goals" as any).insert(rows);
       if (error) throw error;
+
+      // Also seed the Tasks card with the AI's per-milestone tasks so the
+      // Overview tab isn't empty after auto-draft.
+      const taskRows = milestones.flatMap((m) =>
+        (m.tasks ?? []).slice(0, 4).map((t) => ({
+          project_id: projectId,
+          user_id: user!.id,
+          title: t,
+          completed: false,
+        })),
+      );
+      if (taskRows.length) {
+        await supabase.from("tasks" as any).insert(taskRows);
+      }
       return milestones;
     },
     onSuccess: (milestones) => {
       qc.invalidateQueries({ queryKey: ["project-goals", projectId] });
       qc.invalidateQueries({ queryKey: ["project", projectId] });
+      qc.invalidateQueries({ queryKey: ["tasks", projectId] });
       setProgressPct(100);
       setStepIdx(PROGRESS_STEPS.length - 1);
       setDoneMilestones(milestones ?? []);

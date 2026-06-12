@@ -102,9 +102,12 @@ const StartProjectPicker = ({ open, onOpenChange }: Props) => {
 
   const createProject = async (opts: { aiPrompt?: string }) => {
     if (!user) return null;
-    // For the AI flow, call generate-project-title to get a punchy, music-native
-    // working title instead of using the raw brief verbatim.
+    // For the AI flow, call generate-project-title to get a punchy working
+    // title AND a clean 1-2 sentence description. The raw user prompt is
+    // NEVER stored as description/vision — it's stashed in sessionStorage
+    // for the roadmap drafter and discarded after.
     let title = "Untitled release";
+    let description = "";
     if (opts.aiPrompt) {
       try {
         const { data: gen, error: genErr } = await supabase.functions.invoke(
@@ -113,9 +116,11 @@ const StartProjectPicker = ({ open, onOpenChange }: Props) => {
         );
         if (!genErr) {
           const t = ((gen as any)?.title ?? "").toString().trim();
+          const d = ((gen as any)?.description ?? "").toString().trim();
           if (t) title = t;
+          if (d) description = d;
         }
-      } catch { /* ignore — fall through to slice fallback */ }
+      } catch { /* ignore */ }
       if (title === "Untitled release") {
         const firstLine = opts.aiPrompt.split(/\n|\.|—|·/)[0].trim();
         title = firstLine.slice(0, 60) || "Untitled release";
@@ -127,8 +132,8 @@ const StartProjectPicker = ({ open, onOpenChange }: Props) => {
     )}`;
     const { data, error } = await (supabase.rpc as any)("create_project_with_owner", {
       _title: title,
-      _description: opts.aiPrompt ?? "",
-      _vision: opts.aiPrompt ?? "",
+      _description: description,
+      _vision: description,
       _scope_of_work: null,
       _project_type: "collaborative",
       _status: "active",

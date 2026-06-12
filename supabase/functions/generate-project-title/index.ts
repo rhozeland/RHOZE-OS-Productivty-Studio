@@ -1,5 +1,7 @@
-// generate-project-title — turns a freeform project description into a short,
-// punchy working title (3-6 words). Music-native voice. No quotes, no emoji.
+// generate-project-title — turns a freeform project brief into a short
+// working title (3-6 words) AND a 1-2 sentence project description.
+// The raw user prompt is never surfaced verbatim in the project page;
+// the AI rewrites it into a clean overview.
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -21,7 +23,11 @@ Deno.serve(async (req) => {
     }
 
     const system =
-      "You name music projects for Rhozeland. Given a creator's freeform brief, return ONE short working title (3-6 words, max 50 chars). Title Case. No quotes, no emoji, no trailing punctuation. Evocative but grounded — not hype.";
+      "You name and frame music projects for Rhozeland. Given a creator's freeform brief, return STRICT JSON: " +
+      `{"title": string, "description": string}. ` +
+      "title = 3-6 words, max 50 chars, Title Case, no quotes, no emoji, no trailing punctuation, evocative but grounded. " +
+      "description = 1-2 sentences (max 220 chars) written in third person about the release — what it is and the vibe. " +
+      "Do NOT echo the user's prompt verbatim. Do NOT use 'I' or 'my'. No quotes around the description.";
 
     const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -31,9 +37,10 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
+        response_format: { type: "json_object" },
         messages: [
           { role: "system", content: system },
-          { role: "user", content: `Brief:\n"""${text.slice(0, 2000)}"""\n\nReturn ONLY the title, nothing else.` },
+          { role: "user", content: `Brief:\n"""${text.slice(0, 2000)}"""\n\nReturn ONLY the JSON object.` },
         ],
       }),
     });
@@ -47,13 +54,26 @@ Deno.serve(async (req) => {
     }
 
     const data = await resp.json();
-    let title = (data?.choices?.[0]?.message?.content || "").toString().trim();
-    // Strip wrapping quotes / trailing punctuation just in case
+    const raw = (data?.choices?.[0]?.message?.content || "").toString().trim();
+    let title = "";
+    let description = "";
+    try {
+      const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "");
+      const parsed = JSON.parse(cleaned);
+      title = (parsed?.title ?? "").toString().trim();
+      description = (parsed?.description ?? "").toString().trim();
+    } catch {
+      // fall through — leave defaults
+    }
+
     title = title.replace(/^["'`“”‘’]+|["'`“”‘’.!?]+$/g, "").trim();
     if (title.length > 60) title = title.slice(0, 60).trim();
     if (!title) title = "Untitled Project";
 
-    return new Response(JSON.stringify({ title }), {
+    description = description.replace(/^["'`“”‘’]+|["'`“”‘’]+$/g, "").trim();
+    if (description.length > 260) description = description.slice(0, 260).trim();
+
+    return new Response(JSON.stringify({ title, description }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
