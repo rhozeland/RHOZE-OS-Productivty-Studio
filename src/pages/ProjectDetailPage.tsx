@@ -816,42 +816,8 @@ const ProjectDetailPage = () => {
 
         {/* ROADMAP */}
         <TabsContent value="roadmap" className="space-y-6">
-          {isOwner && (
-            <TokenizeProjectCta
-              projectId={project.id}
-              projectTitle={project.title}
-              projectDescription={(project as any).description ?? null}
-              linkedTokenId={(project as any).linked_token_id ?? null}
-            />
-          )}
-
-          {isOwner && !((project as any).linked_token_id) && (() => {
-            const topStages = (goals ?? []).filter((g: any) => !g.parent_id);
-            const totalStages = topStages.length;
-            const completed = topStages.filter((g: any) => {
-              const s = (g.status || "").toLowerCase();
-              return s === "completed" || s === "shipped" || s === "done";
-            }).length;
-            const pct = totalStages === 0 ? 0 : Math.round((completed / totalStages) * 100);
-            const remaining = Math.max(0, totalStages - completed);
-            let msg = "";
-            if (totalStages === 0 || pct === 0) {
-              msg = "Keep building — complete stages to unlock tokenization";
-            } else if (pct < 50) {
-              msg = `You're building momentum — ${remaining} stage${remaining === 1 ? "" : "s"} to go`;
-            } else if (pct < 100) {
-              msg = `Almost there — ${remaining} more stage${remaining === 1 ? "" : "s"} and you're ready to launch`;
-            } else {
-              msg = "You're ready to launch your coin ✨";
-            }
-            return (
-              <p className="px-1 text-sm font-medium text-primary">
-                {msg}
-              </p>
-            );
-          })()}
-
           <SignedAgreementCard projectId={id!} contractId={contract?.id} />
+
 
           {isOwner && (
             <AttachCoinToProjectCard
