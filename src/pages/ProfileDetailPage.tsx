@@ -446,6 +446,56 @@ const ProfileDetailPage = () => {
               </section>
             )}
 
+            {tab === "opportunities" && (
+              <section className="space-y-3">
+                {(opportunities?.length ?? 0) === 0 ? (
+                  <EmptyState icon={Briefcase} title="No opportunities yet" description="Active listings posted by this creator will appear here." size="sm" />
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {(opportunities ?? []).map((o: any) => {
+                      const cover = o.cover_url || o.image_url;
+                      const priceLabel = o.price
+                        ? `${o.currency || "USD"} ${Number(o.price).toLocaleString()}`
+                        : o.credits_price
+                          ? `${Number(o.credits_price).toLocaleString()} credits`
+                          : null;
+                      return (
+                        <Link
+                          key={o.id}
+                          to={`/listings/${o.id}`}
+                          className="group rounded-2xl border border-border/60 bg-card/70 hover:bg-card transition-colors overflow-hidden flex flex-col"
+                        >
+                          {cover ? (
+                            <div className="aspect-[16/10] w-full overflow-hidden bg-muted">
+                              <img src={cover} alt={o.title} className="h-full w-full object-cover group-hover:scale-[1.02] transition-transform" />
+                            </div>
+                          ) : (
+                            <div className="aspect-[16/10] w-full bg-gradient-to-br from-primary/20 to-fuchsia-500/20 flex items-center justify-center">
+                              <Briefcase className="h-8 w-8 text-muted-foreground" />
+                            </div>
+                          )}
+                          <div className="p-4 space-y-1.5">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+                                {o.listing_type || o.category}
+                              </span>
+                            </div>
+                            <p className="font-display text-base font-semibold text-foreground line-clamp-1">{o.title}</p>
+                            {o.description && (
+                              <p className="text-xs text-muted-foreground line-clamp-2">{o.description}</p>
+                            )}
+                            {priceLabel && (
+                              <p className="text-sm font-medium text-foreground pt-1">{priceLabel}</p>
+                            )}
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </section>
+            )}
+
           </div>
 
           {/* RIGHT — Action & Utility Hub */}
