@@ -187,6 +187,80 @@ const SupportPanel = ({
 
   const pct = stagesTotal > 0 ? Math.round((stagesComplete / stagesTotal) * 100) : 0;
 
+  const renderDialogs = () => (
+    <>
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display text-xl">Support this release?</DialogTitle>
+            <DialogDescription>
+              You're about to back <span className="font-semibold text-foreground">{projectTitle}</span>
+              {ownerName ? <> by <span className="font-semibold text-foreground">{ownerName}</span></> : null}.
+              Supporting drips $RHOZE toward your Creator Pass.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded-xl border border-border bg-muted/30 p-3 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <Label htmlFor="release-share-confirm-h" className="text-sm font-semibold">Share to my profile</Label>
+              <p className="text-xs text-muted-foreground leading-tight mt-0.5">
+                Show this release in the Supporting tab on your profile so others see what you back.
+              </p>
+            </div>
+            <Switch id="release-share-confirm-h" checked={shareToProfile} onCheckedChange={setShareToProfile} />
+          </div>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setConfirmOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => support.mutate(shareToProfile)}
+              disabled={support.isPending}
+              className="bg-gradient-to-r from-rose-500 via-fuchsia-500 to-amber-400 text-white hover:opacity-95"
+            >
+              <Heart className="h-4 w-4 mr-1.5" />
+              {support.isPending ? "Supporting…" : "Confirm support"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={successOpen} onOpenChange={setSuccessOpen}>
+        <DialogContent className="sm:max-w-md text-center">
+          <div className="mx-auto -mt-2 mb-1 h-16 w-16 rounded-full bg-gradient-to-br from-rose-500 via-fuchsia-500 to-amber-500 flex items-center justify-center shadow-lg">
+            <Heart className="h-7 w-7 text-white fill-white" />
+          </div>
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl text-center">You're in 🌹</DialogTitle>
+            <DialogDescription className="text-center">
+              {shareToProfile
+                ? <>You're now publicly supporting <span className="font-semibold text-foreground">{projectTitle}</span>. It'll show up under <span className="font-semibold text-foreground">Supporting</span> on your profile.</>
+                : <>Your support is recorded privately. Flip the toggle on the release any time to share it on your profile.</>}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-center gap-2">
+            {user && (
+              <Button variant="outline" onClick={() => navigate(`/profiles/${user.id}?tab=supporting`)}>
+                View my Supporting
+              </Button>
+            )}
+            <Button onClick={() => setSuccessOpen(false)} className="bg-foreground text-background hover:bg-foreground/90">
+              Done
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Sheet open={commentsOpen} onOpenChange={setCommentsOpen}>
+        <SheetContent side="bottom" className="h-[85vh] overflow-y-auto rounded-t-2xl">
+          <SheetHeader className="mb-4">
+            <SheetTitle className="font-display text-xl">Comments</SheetTitle>
+          </SheetHeader>
+          <ReleaseComments projectId={projectId} />
+        </SheetContent>
+      </Sheet>
+    </>
+  );
+
+
+
   if (horizontal) {
     return (
       <>
