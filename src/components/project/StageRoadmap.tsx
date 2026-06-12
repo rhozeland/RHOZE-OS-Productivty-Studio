@@ -880,8 +880,11 @@ const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, co
                       )}
                       {/* Mobile compact meta row */}
                       <div className="mt-1.5 flex flex-wrap items-center gap-2 md:hidden">
-                        <StatusPill status={status} onChange={(s) => setStageStatus.mutate({ goalId: stage.id, status: s })} />
+                        <StatusPill status={status} onChange={(s) => handleStageStatusChange(stage, s)} />
                         <PriorityPill priority={stage.priority || "medium"} onChange={(p) => setStagePriorityMutation.mutate({ goalId: stage.id, priority: p })} />
+                        <span onClick={(e) => e.stopPropagation()}>
+                          <AssigneePill stage={stage} />
+                        </span>
                         {stage.stage_date_end && (
                           <span className="text-[11px] text-muted-foreground flex items-center gap-1">
                             <CalendarIcon className="h-3 w-3" />
@@ -896,13 +899,19 @@ const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, co
 
                     {/* Status — desktop column */}
                     <div className="hidden md:block">
-                      <StatusPill status={status} onChange={(s) => setStageStatus.mutate({ goalId: stage.id, status: s })} />
+                      <StatusPill status={status} onChange={(s) => handleStageStatusChange(stage, s)} />
                     </div>
 
                     {/* Priority */}
                     <div className="hidden md:block">
                       <PriorityPill priority={stage.priority || "medium"} onChange={(p) => setStagePriorityMutation.mutate({ goalId: stage.id, priority: p })} />
                     </div>
+
+                    {/* Assigned to */}
+                    <div className="hidden md:flex items-center">
+                      <AssigneePill stage={stage} />
+                    </div>
+
 
                     {/* Timeline */}
                     <div className="hidden md:flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
