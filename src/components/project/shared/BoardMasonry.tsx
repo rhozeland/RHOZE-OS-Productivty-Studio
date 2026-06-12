@@ -88,13 +88,30 @@ const filterChips: { id: Cat; label: string }[] = [
   { id: "links", label: "Links" },
 ];
 
-const BoardMasonry = ({ deliverables, limit, showFilters, onSeeMore, canManage, onAdd, hideWhenEmpty, emptyStateVariant = "default" }: Props) => {
+const BoardMasonry = ({ deliverables, limit, showFilters, onSeeMore, canManage, onAdd, projectId, hideWhenEmpty, emptyStateVariant = "default" }: Props) => {
   const [cat, setCat] = useState<Cat>("all");
+  const [pendingDelete, setPendingDelete] = useState<Deliverable | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const qc = useQueryClient();
   const all = (deliverables ?? []).filter((d) => d.file_url || d.title);
   const filtered = useMemo(() => {
     const base = cat === "all" ? all : all.filter((d) => kindOf(d) === cat);
     return limit ? base.slice(0, limit) : base;
   }, [all, cat, limit]);
+
+  const handleDelete = async () => {
+    if (!pendingDelete) return;
+    setDeleting(true);
+    const { error } = await supabase.from("project_deliverables").delete().eq("id", pendingDelete.id);
+    setDeleting(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Removed from board");
+    setPendingDelete(null);
+    if (projectId) qc.invalidateQueries({ queryKey: ["project-deliverables", projectId] });
+  };
 
   if (!all.length && hideWhenEmpty) return null;
 
