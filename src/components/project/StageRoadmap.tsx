@@ -869,6 +869,7 @@ const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, co
           })}
 
           {/* New item row at bottom (Notion-style) */}
+          {isOwner && (
           <button
             onClick={() => setStageDialogOpen(true)}
             className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
@@ -876,6 +877,8 @@ const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, co
             <Plus className="h-4 w-4" />
             New stage
           </button>
+          )}
+
         </div>
       )}
     </div>
