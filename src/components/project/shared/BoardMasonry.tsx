@@ -179,62 +179,72 @@ const BoardMasonry = ({ deliverables, limit, showFilters, onSeeMore, canManage, 
           const cover = kind === "links" ? linkCover(d) : null;
           const domain = kind === "links" ? domainOf(d.file_url) : "";
           return (
-            <a
-              key={d.id}
-              href={d.file_url ?? "#"}
-              target={d.file_url ? "_blank" : undefined}
-              rel="noopener noreferrer"
-              className="group block break-inside-avoid rounded-xl overflow-hidden border border-border bg-card hover:border-primary/40 hover:shadow-lg transition"
-            >
-              {isImage ? (
-                <img
-                  src={d.file_url!}
-                  alt={d.title}
-                  className="w-full h-auto block"
-                  loading="lazy"
-                />
-              ) : kind === "links" ? (
-                cover ? (
-                  <div className="relative aspect-[4/3] overflow-hidden">
-                    <img
-                      src={cover}
-                      alt={d.title}
-                      className="w-full h-full object-cover block"
-                      loading="lazy"
-                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-                    />
-                    <div className="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
-                      <div className="flex items-center gap-1.5 text-[10px] font-medium text-white">
-                        <LinkIcon className="h-3 w-3" />
-                        <span className="truncate">{domain}</span>
+            <div key={d.id} className="relative break-inside-avoid group">
+              <a
+                href={d.file_url ?? "#"}
+                target={d.file_url ? "_blank" : undefined}
+                rel="noopener noreferrer"
+                className="block rounded-xl overflow-hidden border border-border bg-card hover:border-primary/40 hover:shadow-lg transition"
+              >
+                {isImage ? (
+                  <img
+                    src={d.file_url!}
+                    alt={d.title}
+                    className="w-full h-auto block"
+                    loading="lazy"
+                  />
+                ) : kind === "links" ? (
+                  cover ? (
+                    <div className="relative aspect-[4/3] overflow-hidden">
+                      <img
+                        src={cover}
+                        alt={d.title}
+                        className="w-full h-full object-cover block"
+                        loading="lazy"
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                      />
+                      <div className="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
+                        <div className="flex items-center gap-1.5 text-[10px] font-medium text-white">
+                          <LinkIcon className="h-3 w-3" />
+                          <span className="truncate">{domain}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ) : (
-                  <div
-                    className="relative aspect-[4/3] grid place-items-center p-4 text-white"
-                    style={{ backgroundImage: gradientFor(d.file_url || d.title) }}
-                  >
-                    <LinkIcon className="h-8 w-8 opacity-90" />
-                    <div className="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black/40 to-transparent">
-                      <div className="text-[10px] font-medium truncate">{domain || d.title}</div>
+                  ) : (
+                    <div
+                      className="relative aspect-[4/3] grid place-items-center p-4 text-white"
+                      style={{ backgroundImage: gradientFor(d.file_url || d.title) }}
+                    >
+                      <LinkIcon className="h-8 w-8 opacity-90" />
+                      <div className="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black/40 to-transparent">
+                        <div className="text-[10px] font-medium truncate">{domain || d.title}</div>
+                      </div>
                     </div>
+                  )
+                ) : (
+                  <div className="aspect-[4/3] grid place-items-center bg-gradient-to-br from-muted to-card p-4">
+                    <FileText className="h-8 w-8 text-muted-foreground/60" />
                   </div>
-                )
-              ) : (
-                <div className="aspect-[4/3] grid place-items-center bg-gradient-to-br from-muted to-card p-4">
-                  <FileText className="h-8 w-8 text-muted-foreground/60" />
-                </div>
+                )}
+                {d.anchored_at && (
+                  <div className="p-2 bg-card">
+                    <Badge variant="outline" className="text-[9px]">
+                      Verified IP
+                    </Badge>
+                  </div>
+                )}
+              </a>
+              {canManage && (
+                <button
+                  type="button"
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPendingDelete(d); }}
+                  className="absolute top-2 right-2 h-8 w-8 grid place-items-center rounded-full bg-background/90 backdrop-blur border border-border text-foreground opacity-0 group-hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground hover:border-destructive transition"
+                  aria-label="Delete asset"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
               )}
-              {d.anchored_at && (
-                <div className="p-2 bg-card">
-                  <Badge variant="outline" className="text-[9px]">
-                    Verified IP
-                  </Badge>
-                </div>
-              )}
-
-            </a>
+            </div>
           );
         })}
       </div>
@@ -249,6 +259,23 @@ const BoardMasonry = ({ deliverables, limit, showFilters, onSeeMore, canManage, 
           </button>
         </div>
       )}
+
+      <AlertDialog open={!!pendingDelete} onOpenChange={(o) => !o && setPendingDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove from board?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingDelete?.title || "This item"} will be removed from the board. This can't be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {deleting ? "Removing…" : "Remove"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
