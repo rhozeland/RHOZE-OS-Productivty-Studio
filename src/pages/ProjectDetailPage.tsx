@@ -920,6 +920,7 @@ const ProjectDetailPage = () => {
             deliverables={deliverables as any}
             canManage={canManageProject}
             onAdd={() => setAddAssetOpen(true)}
+            projectId={id!}
             emptyStateVariant="large"
           />
           <AddBoardAssetDialog
