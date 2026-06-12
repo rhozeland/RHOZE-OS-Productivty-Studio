@@ -506,8 +506,92 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
       {(!collaborators || collaborators.length === 0) && (
         <p className="mt-2 text-xs text-muted-foreground">No collaborators yet — invite someone from your network.</p>
       )}
+
+      {/* ── Revenue splits footer ────────────────────────────── */}
+      {isOwner && (
+        <div className="mt-4 border-t border-border/60 pt-3 space-y-2">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <p className="text-xs text-muted-foreground">
+              Total: <span className={cn(
+                "font-semibold tabular-nums",
+                totalRounded === 100 ? "text-emerald-500" : "text-foreground"
+              )}>{totalRounded}%</span> of 100%
+            </p>
+            <div className="flex items-center gap-2">
+              {!splitsLocked && hasUnsavedChanges && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => saveSplits.mutate()}
+                  disabled={saveSplits.isPending}
+                >
+                  {saveSplits.isPending ? "Saving..." : "Save splits"}
+                </Button>
+              )}
+              {!splitsLocked && !hasUnsavedChanges && totalRounded === 100 && (
+                <Button
+                  size="sm"
+                  onClick={() => setConfirmLockOpen(true)}
+                  className="gap-1"
+                >
+                  <Lock className="h-3.5 w-3.5" />
+                  Lock splits
+                </Button>
+              )}
+              {splitsLocked && (
+                <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                  <Lock className="h-3 w-3" /> Locked
+                </span>
+              )}
+            </div>
+          </div>
+          {!splitsLocked && totalRounded !== 100 && (
+            <p className="text-[11px] text-primary">
+              Splits must total 100% before launch.
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Collaborator-only mini footer: just show own % */}
+      {!isOwner && user && (
+        <div className="mt-4 border-t border-border/60 pt-3">
+          <p className="text-xs text-muted-foreground">
+            Your share:{" "}
+            <span className={cn(
+              "inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium tabular-nums",
+              splitsLocked ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary",
+            )}>
+              {splitsLocked && <Lock className="h-2.5 w-2.5" />}
+              {serverPct.get(user.id) ?? 0}%
+            </span>
+          </p>
+        </div>
+      )}
+
+      {/* Confirm lock dialog */}
+      <Dialog open={confirmLockOpen} onOpenChange={setConfirmLockOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Lock splits permanently?</DialogTitle>
+            <DialogDescription>
+              Locking splits is permanent. All team members will be notified. Are you sure?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setConfirmLockOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => lockSplits.mutate()} disabled={lockSplits.isPending} className="gap-1">
+              <Lock className="h-3.5 w-3.5" />
+              {lockSplits.isPending ? "Locking..." : "Lock splits"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
+
 
 export default Collaborators;
