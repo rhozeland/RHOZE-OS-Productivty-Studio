@@ -935,6 +935,13 @@ const ProjectDetailPage = () => {
         </TabsContent>
 
         <TabsContent value="board" className="space-y-4">
+          {canManageProject && (
+            <div className="flex justify-end">
+              <Button size="sm" variant="outline" onClick={() => setAddAssetOpen(true)}>
+                Add asset
+              </Button>
+            </div>
+          )}
           <BoardMasonry
             deliverables={deliverables as any}
             canManage={canManageProject}
@@ -947,6 +954,7 @@ const ProjectDetailPage = () => {
             onOpenChange={setAddAssetOpen}
           />
         </TabsContent>
+
 
 
         {/* STORY */}
