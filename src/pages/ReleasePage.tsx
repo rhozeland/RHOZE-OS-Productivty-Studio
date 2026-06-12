@@ -261,7 +261,25 @@ const ReleasePage = () => {
         />
       </div>
 
-      <div className="container mx-auto px-4 py-8 grid lg:grid-cols-[1fr,340px] gap-8">
+      <div className="container mx-auto px-4 py-8 space-y-6">
+        <SupportPanel
+          horizontal
+          projectId={project.id}
+          projectTitle={project.title}
+          cheerCount={project.cheer_count ?? 0}
+          iSupport={!!myCheer}
+          iSupportShared={!!(myCheer as any)?.shared_to_profile}
+          releaseUrl={typeof window !== "undefined" ? window.location.href : `/release/${slug}`}
+          ownerName={owner?.display_name ?? owner?.username ?? null}
+          coverColor={project.cover_color}
+          coverImageUrl={(project as any).cover_image_url ?? null}
+          linkedTokenTicker={linkedToken?.ticker ?? null}
+          linkedTokenMint={linkedToken?.mint_address ?? null}
+          stagesComplete={overviewDoneCount}
+          stagesTotal={overviewStages.length}
+        />
+        <ProjectCoinLiveCard linkedTokenId={(project as any).linked_token_id ?? null} />
+
         <div className="space-y-6 min-w-0">
           <Tabs defaultValue="overview" className="w-full">
             <TabsList className="sticky top-0 z-20 -mx-4 px-4 md:mx-0 md:px-0 mb-6 w-[calc(100%+2rem)] md:w-full justify-start overflow-x-auto flex-nowrap shrink-0 h-auto gap-6 rounded-none border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 p-0">
