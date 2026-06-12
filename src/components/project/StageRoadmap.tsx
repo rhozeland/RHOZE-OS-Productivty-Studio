@@ -753,7 +753,7 @@ const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, co
       {stages.length > 0 && (
         <div className="surface-card overflow-hidden">
           {/* Column header */}
-          <div className="hidden md:grid grid-cols-[28px_minmax(0,1fr)_120px_100px_56px_180px_100px_60px] items-center gap-3 border-b border-border/60 px-3 py-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/80">
+          <div className="hidden lg:grid grid-cols-[28px_minmax(0,1fr)_110px_90px_56px_170px_90px_44px] items-center gap-3 border-b border-border/60 px-3 py-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/80">
             <div />
             <div>Stage</div>
             <div>Status</div>
