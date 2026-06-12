@@ -40,6 +40,10 @@ import { RolePicker } from "@/components/profile/RolePicker";
 import ArchetypePicker from "@/components/profile/ArchetypePicker";
 import type { Archetype } from "@/lib/archetypes";
 import { useActiveRole, ROLE_HOME, type ActiveRole } from "@/hooks/useActiveRole";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 
 /** Broad creator categories — replaces the granular role/specialty grid. */
@@ -442,6 +446,8 @@ const SettingsPage = () => {
   const navigateRole = useNavigate();
   const [activeRole, setActiveRole] = useActiveRole();
 
+  const [pendingRole, setPendingRole] = useState<ActiveRole | null>(null);
+
   const renderProfile = () => (
     <form onSubmit={(e) => { e.preventDefault(); updateProfile.mutate(); }} className="space-y-6">
       {/* 0. View mode — Fan ↔ Musician */}
@@ -459,8 +465,7 @@ const SettingsPage = () => {
                 aria-selected={active}
                 onClick={() => {
                   if (r === activeRole) return;
-                  setActiveRole(r);
-                  navigateRole(ROLE_HOME[r]);
+                  setPendingRole(r);
                 }}
                 className={cn(
                   "rounded-lg px-3 py-2 text-xs font-semibold transition-all",
@@ -476,6 +481,35 @@ const SettingsPage = () => {
           Switch to {activeRole === "creator" ? "Fan" : "Musician"} mode to change what the sidebar and home feed show.
         </p>
       </div>
+
+      <AlertDialog open={pendingRole !== null} onOpenChange={(o) => { if (!o) setPendingRole(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Switch to {pendingRole === "creator" ? "Musician" : "Fan"} mode?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This changes your sidebar, home feed, and default landing page. You can switch back any time from Settings.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (!pendingRole) return;
+                const next = pendingRole;
+                setActiveRole(next);
+                setPendingRole(null);
+                toast.success(`Now viewing as ${next === "creator" ? "Musician" : "Fan"}`);
+                navigateRole(ROLE_HOME[next]);
+              }}
+            >
+              Yes, switch
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
 
       {/* 1. Display name + Username */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

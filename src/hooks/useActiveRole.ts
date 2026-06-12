@@ -72,10 +72,14 @@ export const useActiveRole = (): [ActiveRole, (next: ActiveRole) => void] => {
     try { localStorage.setItem(ROLE_STORAGE_KEY, next); } catch {}
     window.dispatchEvent(new CustomEvent(ROLE_CHANGE_EVENT, { detail: next }));
     if (user) {
+      // Fire-and-forget upsert so a missing profile row doesn't silently
+      // drop the new role and revert on the next page load.
       supabase
         .from("profiles")
-        .update({ user_type: next } as any)
-        .eq("user_id", user.id);
+        .upsert({ user_id: user.id, user_type: next } as any, { onConflict: "user_id" })
+        .then(({ error }) => {
+          if (error) console.warn("[useActiveRole] persist failed", error);
+        });
     }
   };
 
