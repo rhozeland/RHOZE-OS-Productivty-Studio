@@ -55,7 +55,7 @@ const meta = (
 };
 
 export const ARCHETYPES: ArchetypeMeta[] = [
-  meta("musician", "Musician", "Musicians", "Singer, rapper, band, DJ — the artist.", Mic),
+  meta("musician", "Artist", "Artists", "Singer, rapper, band, DJ — the artist.", Mic),
   meta("producer", "Producer", "Producers", "Beats, production, composition.", Music4),
   meta("engineer", "Engineer", "Engineers", "Mix, master, live sound.", SlidersHorizontal),
   meta("visual", "Visual", "Visuals", "Video, photo, design, art direction.", Camera),
