@@ -255,13 +255,18 @@ function RequestDetail({
 
   // Contact email is column-restricted to admins/owner/scoped curator —
   // fetch via SECURITY DEFINER RPC instead of selecting from the table.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useState(() => {
+  useEffect(() => {
+    let active = true;
     (supabase as any)
       .rpc("get_concierge_contact_email", { _id: row.id })
-      .then(({ data }: { data: string | null }) => setContactEmail(data ?? null));
-    return undefined;
-  });
+      .then(({ data }: { data: string | null }) => {
+        if (active) setContactEmail(data ?? null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [row.id]);
+
 
 
 
