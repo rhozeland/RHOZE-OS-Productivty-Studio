@@ -6,7 +6,7 @@
  * wire "Convert to project" → creates a project with intake_tier='concierge'
  * and platform_fee_bps_override=2500.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -195,11 +195,6 @@ export default function AdminConciergeRequests({ canConvert = true }: AdminConci
                     <Calendar className="h-3 w-3" /> {r.deadline}
                   </span>
                 )}
-                {r.contact_email && (
-                  <span className="inline-flex items-center gap-1">
-                    <Mail className="h-3 w-3" /> {r.contact_email}
-                  </span>
-                )}
               </div>
             </button>
           );
@@ -250,12 +245,29 @@ function RequestDetail({
     row.scoped_budget_cents != null ? String(row.scoped_budget_cents / 100) : "",
   );
   const [converting, setConverting] = useState(false);
+  const [contactEmail, setContactEmail] = useState<string | null>(null);
   const meta = STATUS_META[row.status as Status];
   const canConvert =
     canConvertProp &&
     row.status !== "converted" &&
     row.scoped_budget_cents != null &&
     row.scoped_budget_cents >= 100000;
+
+  // Contact email is column-restricted to admins/owner/scoped curator —
+  // fetch via SECURITY DEFINER RPC instead of selecting from the table.
+  useEffect(() => {
+    let active = true;
+    (supabase as any)
+      .rpc("get_concierge_contact_email", { _id: row.id })
+      .then(({ data }: { data: string | null }) => {
+        if (active) setContactEmail(data ?? null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [row.id]);
+
+
 
 
   return (
@@ -294,7 +306,7 @@ function RequestDetail({
           <Field label="Category" value={row.category ?? "—"} />
           <Field label="Budget range" value={row.budget_range ?? "—"} />
           <Field label="Deadline" value={row.deadline ?? "—"} />
-          <Field label="Contact" value={row.contact_email ?? "—"} />
+          <Field label="Contact" value={contactEmail ?? "—"} />
           <Field label="Splitter wallet" value={row.splitter_address ? `${row.splitter_address.slice(0, 6)}…${row.splitter_address.slice(-4)}` : "—"} />
         </div>
 
