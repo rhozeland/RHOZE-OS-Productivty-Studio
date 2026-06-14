@@ -306,7 +306,7 @@ function RequestDetail({
           <Field label="Category" value={row.category ?? "—"} />
           <Field label="Budget range" value={row.budget_range ?? "—"} />
           <Field label="Deadline" value={row.deadline ?? "—"} />
-          <Field label="Contact" value={row.contact_email ?? "—"} />
+          <Field label="Contact" value={contactEmail ?? "—"} />
           <Field label="Splitter wallet" value={row.splitter_address ? `${row.splitter_address.slice(0, 6)}…${row.splitter_address.slice(-4)}` : "—"} />
         </div>
 
