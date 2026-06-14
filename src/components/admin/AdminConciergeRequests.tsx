@@ -195,11 +195,6 @@ export default function AdminConciergeRequests({ canConvert = true }: AdminConci
                     <Calendar className="h-3 w-3" /> {r.deadline}
                   </span>
                 )}
-                {r.contact_email && (
-                  <span className="inline-flex items-center gap-1">
-                    <Mail className="h-3 w-3" /> {r.contact_email}
-                  </span>
-                )}
               </div>
             </button>
           );
