@@ -456,7 +456,7 @@ const SettingsPage = () => {
         <div role="tablist" aria-label="View as role" className="grid grid-cols-2 gap-1 rounded-xl bg-muted/60 p-1">
           {(["fan", "creator"] as ActiveRole[]).map((r) => {
             const active = activeRole === r;
-            const label = r === "creator" ? "Musician" : "Fan";
+            const label = r === "creator" ? "Artist" : "Fan";
             return (
               <button
                 key={r}
@@ -478,7 +478,7 @@ const SettingsPage = () => {
           })}
         </div>
         <p className="text-[11px] text-muted-foreground">
-          Switch to {activeRole === "creator" ? "Fan" : "Musician"} mode to change what the sidebar and home feed show.
+          Switch to {activeRole === "creator" ? "Fan" : "Artist"} mode to change what the sidebar and home feed show.
         </p>
       </div>
 
@@ -486,7 +486,7 @@ const SettingsPage = () => {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Switch to {pendingRole === "creator" ? "Musician" : "Fan"} mode?
+              Switch to {pendingRole === "creator" ? "Artist" : "Fan"} mode?
             </AlertDialogTitle>
             <AlertDialogDescription>
               This changes your sidebar, home feed, and default landing page. You can switch back any time from Settings.
@@ -500,7 +500,7 @@ const SettingsPage = () => {
                 const next = pendingRole;
                 setActiveRole(next);
                 setPendingRole(null);
-                toast.success(`Now viewing as ${next === "creator" ? "Musician" : "Fan"}`);
+                toast.success(`Now viewing as ${next === "creator" ? "Artist" : "Fan"}`);
                 navigateRole(ROLE_HOME[next]);
               }}
             >
