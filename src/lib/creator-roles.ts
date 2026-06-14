@@ -47,7 +47,7 @@ export const CREATOR_ROLES: CreatorRole[] = [
   },
   {
     id: "musician",
-    label: "Musician",
+    label: "Artist",
     emoji: "🎵",
     Icon: Music,
     specialties: ["Vocalist", "Rapper", "Guitarist", "Drummer", "Pianist", "Bassist", "DJ", "Composer", "Songwriter"],
