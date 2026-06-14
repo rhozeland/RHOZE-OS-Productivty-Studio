@@ -245,12 +245,24 @@ function RequestDetail({
     row.scoped_budget_cents != null ? String(row.scoped_budget_cents / 100) : "",
   );
   const [converting, setConverting] = useState(false);
+  const [contactEmail, setContactEmail] = useState<string | null>(null);
   const meta = STATUS_META[row.status as Status];
   const canConvert =
     canConvertProp &&
     row.status !== "converted" &&
     row.scoped_budget_cents != null &&
     row.scoped_budget_cents >= 100000;
+
+  // Contact email is column-restricted to admins/owner/scoped curator —
+  // fetch via SECURITY DEFINER RPC instead of selecting from the table.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useState(() => {
+    (supabase as any)
+      .rpc("get_concierge_contact_email", { _id: row.id })
+      .then(({ data }: { data: string | null }) => setContactEmail(data ?? null));
+    return undefined;
+  });
+
 
 
   return (
