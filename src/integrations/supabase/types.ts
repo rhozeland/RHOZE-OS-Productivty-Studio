@@ -6004,6 +6004,7 @@ export type Database = {
           trader_hash: string
         }[]
       }
+      get_concierge_contact_email: { Args: { _id: string }; Returns: string }
       get_host_fiat_earnings: {
         Args: { _host_id: string }
         Returns: {
