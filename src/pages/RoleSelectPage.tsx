@@ -11,7 +11,7 @@ import rhozelandLogo from "@/assets/rhozeland-logo.png";
 type Role = "fan" | "musician";
 
 const FAN_BULLETS = [
-  "Discover rising musicians",
+  "Discover rising artists",
   "Back artists and own your rank",
   "Earn $RHOZE rewards",
 ];
@@ -84,7 +84,7 @@ const RoleSelectPage = () => {
               I'm a Fan
             </h2>
             <p className="text-sm text-muted-foreground leading-relaxed mb-6">
-              Discover real musicians. See them building. Back them with a coin before they blow up.
+              Discover real artists. See them building. Back them with a coin before they blow up.
             </p>
             <ul className="space-y-2.5 mb-8 flex-1">
               {FAN_BULLETS.map((b) => (
@@ -111,7 +111,7 @@ const RoleSelectPage = () => {
             className="rounded-3xl border border-border/60 bg-card/80 backdrop-blur-xl shadow-xl p-8 flex flex-col"
           >
             <h2 className="font-display text-xl font-bold text-foreground mb-2">
-              I'm a Musician
+              I'm an Artist
             </h2>
             <p className="text-sm text-muted-foreground leading-relaxed mb-6">
               Get paid for your work. Prove what you ship. Launch a coin with help.
@@ -130,7 +130,7 @@ const RoleSelectPage = () => {
               disabled={saving !== null}
               className="rounded-xl h-11 w-full font-semibold"
             >
-              {saving === "musician" ? "Setting up…" : "Continue as Musician"}
+              {saving === "musician" ? "Setting up…" : "Continue as Artist"}
             </Button>
           </motion.div>
         </div>
@@ -143,7 +143,7 @@ const RoleSelectPage = () => {
           </Link>
         </p>
         <p className="text-center text-[11px] text-muted-foreground/70 mt-3 max-w-md mx-auto">
-          Producers, engineers, visual artists, and promoters — select Musician and pick your role inside.
+          Producers, engineers, visual artists, and promoters — select Artist and pick your role inside.
         </p>
       </div>
     </div>

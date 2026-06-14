@@ -522,7 +522,7 @@ const MusicianOnboardingPage = () => {
                       {displayName || "Your name"}
                     </p>
                     <p className="text-xs text-muted-foreground truncate mt-0.5">
-                      {[genre, city].filter(Boolean).join(" · ") || "Musician"}
+                      {[genre, city].filter(Boolean).join(" · ") || "Artist"}
                     </p>
                   </div>
                 </div>

@@ -32,7 +32,7 @@ const SidebarRoleSwitcher = ({ collapsed }: { collapsed: boolean }) => {
       >
         {(["fan", "creator"] as ActiveRole[]).map((r) => {
           const active = role === r;
-          const label = r === "creator" ? "Musician" : "Fan";
+          const label = r === "creator" ? "Artist" : "Fan";
           return (
             <button
               key={r}
@@ -52,7 +52,7 @@ const SidebarRoleSwitcher = ({ collapsed }: { collapsed: boolean }) => {
         })}
       </div>
       <p className="mt-1.5 px-1 text-[10px] text-muted-foreground/70">
-        Viewing as {role === "creator" ? "Musician" : "Fan"}
+        Viewing as {role === "creator" ? "Artist" : "Fan"}
       </p>
     </div>
   );

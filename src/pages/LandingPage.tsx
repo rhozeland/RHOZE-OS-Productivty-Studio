@@ -304,7 +304,7 @@ const LandingPage = () => {
             className="font-display text-4xl sm:text-6xl md:text-7xl font-bold leading-[1.05] tracking-tight"
             style={{ transform: "translateZ(60px)" }}
           >
-            Where musicians build in public
+            Where artists build in public
             <br className="hidden sm:block" />
             <span
               className="bg-clip-text text-transparent"
@@ -530,7 +530,7 @@ const LandingPage = () => {
           <div className="relative space-y-6">
             <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/70 px-3.5 py-1.5 text-xs font-medium backdrop-blur-md">
               <Music4 className="h-3.5 w-3.5" />
-              For musicians, by musicians
+              For artists, by artists
             </div>
             <h2 className="font-display text-3xl sm:text-5xl md:text-6xl font-bold leading-[1.05]">
               Your next release deserves{" "}
@@ -570,7 +570,7 @@ const LandingPage = () => {
               <span className="font-display text-base font-bold">Rhozeland</span>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              The build-in-public studio for musicians and the fans who back them.
+              The build-in-public studio for artists and the fans who back them.
             </p>
             <div className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.18em] text-muted-foreground pt-1">
               <Sparkles className="h-3 w-3" /> Made in Rhozeland
