@@ -386,7 +386,7 @@ const DiscoverPage = () => {
                   Support an artist
                 </p>
                 <h2 className="font-display text-lg sm:text-xl font-semibold text-foreground">
-                  Artists & musicians
+                  Artists
                 </h2>
               </div>
               <Link
