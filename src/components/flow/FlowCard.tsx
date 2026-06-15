@@ -14,6 +14,7 @@ import { ShieldCheck } from "lucide-react";
 import SaveButton from "@/components/saved/SaveButton";
 import FlowPostOwnerMenu from "@/components/profile/FlowPostOwnerMenu";
 import RepostButton from "@/components/flow/RepostButton";
+import SupportingReleaseCard from "@/components/flow/SupportingReleaseCard";
 
 /* ─── Platform detection ─── */
 const detectPlatform = (url?: string | null) => {
