@@ -420,7 +420,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
         )}
 
         {/* ═══ WRITING — Embedded link preview or rich text card ═══ */}
-        {isWriting && !isAudio && !isVideo && !isImage && (
+        {!isReleaseShare && isWriting && !isAudio && !isVideo && !isImage && (
           <div className="relative">
             {item.link_url ? (
               <div className="min-h-[200px] flex flex-col overflow-hidden">
