@@ -1,22 +1,21 @@
 /**
- * SupportingReleaseCard — feed tile rendered when a user shares a
- * "Supporting" post about a project release (link_url = /release/:slug).
+ * BuildingReleaseCard (file kept as SupportingReleaseCard for import stability)
  *
- * Visual: the project's real cover image when available. Otherwise a
- * clean, modern minimal card built from `cover_color`. No auto-generated
- * link-preview thumbnails (those were rendering unrelated trippy art).
+ * Renders a flow tile for a public project / release that a musician is
+ * building in public. Reframed away from "Supporting X" → toward the artist
+ * and the work itself: avatar, artist name, release title, cheer count,
+ * progress vibe. Compact editorial — no oversized colored block.
  */
 import { useQuery } from "@tanstack/react-query";
-import { Heart, Sparkles } from "lucide-react";
+import { Hammer, Heart, ArrowUpRight } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 interface Props {
-  /** Full release URL — slug is parsed from the trailing segment. */
   linkUrl: string;
   title: string;
   description?: string | null;
-  /** Already-known cover (passed by FlowCard.item.file_url). Skips the lookup when present. */
   knownCoverUrl?: string | null;
 }
 
@@ -33,87 +32,105 @@ const hashHue = (s: string): number => {
 
 const SupportingReleaseCard = ({ linkUrl, title, description, knownCoverUrl }: Props) => {
   const slug = extractSlug(linkUrl);
+  const sb: any = supabase;
 
   const { data: project } = useQuery({
-    queryKey: ["release-project-by-slug", slug],
-    enabled: !!slug && !knownCoverUrl,
+    queryKey: ["release-project-by-slug-v2", slug],
+    enabled: !!slug,
     queryFn: async () => {
-      const { data } = await supabase
+      const { data: p } = await sb
         .from("projects")
-        .select("title, cover_image_url, cover_color")
+        .select("id, title, vision, cover_image_url, cover_color, cheer_count, user_id")
         .eq("public_slug", slug!)
         .maybeSingle();
-      return data;
+      if (!p) return null;
+      const { data: owner } = await sb
+        .from("profiles")
+        .select("display_name, username, avatar_url")
+        .eq("user_id", p.user_id)
+        .maybeSingle();
+      return { ...p, owner };
     },
     staleTime: 5 * 60 * 1000,
   });
 
-  const cover = knownCoverUrl || project?.cover_image_url || null;
-  const accent = project?.cover_color || `hsl(${hashHue(slug ?? title)} 70% 55%)`;
-  const releaseTitle = title.replace(/^Supporting:\s*/i, "") || project?.title || "Release";
+  const cover = project?.cover_image_url || knownCoverUrl || null;
+  const accent = project?.cover_color || `hsl(${hashHue(slug ?? title)} 72% 56%)`;
+  const releaseTitle =
+    project?.title || title.replace(/^Supporting:\s*/i, "") || "Release";
+  const blurb = project?.vision || description || null;
+  const ownerName =
+    project?.owner?.display_name || project?.owner?.username || "Artist";
+  const ownerInitial = ownerName.charAt(0).toUpperCase();
+  const cheerCount = project?.cheer_count ?? 0;
 
-  // ─── Has a real cover image ───
-  if (cover) {
-    return (
-      <a
-        href={linkUrl}
-        className="block relative group"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="aspect-[4/5] overflow-hidden bg-muted">
-          <img
-            src={cover}
-            alt={releaseTitle}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
-            draggable={false}
-          />
-        </div>
-        {/* Floating "Supporting" pill */}
-        <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 rounded-full bg-black/55 backdrop-blur-md px-3 py-1.5 text-[10px] uppercase tracking-[0.18em] text-white font-semibold">
-          <Heart className="h-3 w-3 fill-current" />
-          Supporting
-        </div>
-        {/* Bottom gradient + title */}
-        <div className="absolute inset-x-0 bottom-0 p-5 pt-16 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
-          <p className="text-[10px] uppercase tracking-[0.18em] text-white/70">Release</p>
-          <h3 className="font-display text-xl font-bold text-white leading-tight mt-1 line-clamp-2">
-            {releaseTitle}
-          </h3>
-        </div>
-      </a>
-    );
-  }
-
-  // ─── No cover image — compact editorial card ───
   return (
     <a
       href={linkUrl}
       className="block group px-4 py-4"
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="rounded-2xl border border-foreground/10 bg-card p-4 shadow-sm transition-shadow group-hover:shadow-md flex gap-3 items-center">
-        {/* Small accent thumbnail */}
+      <div className="relative rounded-2xl overflow-hidden border border-foreground/10 bg-card shadow-sm transition-shadow group-hover:shadow-md">
+        {/* Cover strip — image if available, else color accent */}
         <div
-          className="relative h-14 w-14 shrink-0 rounded-xl overflow-hidden flex items-center justify-center"
-          style={{ background: accent }}
+          className="relative h-28 w-full overflow-hidden"
+          style={cover ? undefined : { background: accent }}
         >
-          <Sparkles className="h-5 w-5 text-white" strokeWidth={1.75} />
+          {cover && (
+            <img
+              src={cover}
+              alt={releaseTitle}
+              className="h-full w-full object-cover"
+              draggable={false}
+            />
+          )}
+          {/* Building pill */}
+          <div className="absolute top-3 left-3 inline-flex items-center gap-1 rounded-full bg-black/55 backdrop-blur-md px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-white font-semibold">
+            <Hammer className="h-3 w-3" />
+            Building
+          </div>
+          {cheerCount > 0 && (
+            <div className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-black/55 backdrop-blur-md px-2.5 py-1 text-[10px] font-semibold text-white">
+              <Heart className="h-3 w-3 fill-current" />
+              {cheerCount}
+            </div>
+          )}
         </div>
 
-        {/* Text */}
-        <div className="min-w-0 flex-1">
-          <div className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.18em] font-semibold text-rose-500">
-            <Heart className="h-3 w-3 fill-current" />
-            Supporting
+        {/* Body */}
+        <div className="p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Avatar className="h-6 w-6">
+              {project?.owner?.avatar_url && (
+                <AvatarImage src={project.owner.avatar_url} alt={ownerName} />
+              )}
+              <AvatarFallback className="text-[10px]">{ownerInitial}</AvatarFallback>
+            </Avatar>
+            <span className="text-xs font-medium text-muted-foreground truncate">
+              {ownerName}
+            </span>
+            <span className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground/70 ml-auto">
+              Release
+            </span>
           </div>
-          <h3 className="font-display text-base font-bold leading-tight mt-0.5 line-clamp-1 text-foreground">
+
+          <h3 className={cn(
+            "font-display font-bold leading-tight text-foreground line-clamp-2",
+            releaseTitle.length > 28 ? "text-base" : "text-lg",
+          )}>
             {releaseTitle}
           </h3>
-          {description && (
-            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1 leading-snug">
-              {description}
+
+          {blurb && (
+            <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2 leading-snug">
+              {blurb}
             </p>
           )}
+
+          <div className="mt-3 inline-flex items-center gap-1 text-[11px] font-semibold text-foreground/80 group-hover:text-foreground">
+            Follow the roadmap
+            <ArrowUpRight className="h-3 w-3" />
+          </div>
         </div>
       </div>
     </a>
@@ -121,4 +138,3 @@ const SupportingReleaseCard = ({ linkUrl, title, description, knownCoverUrl }: P
 };
 
 export default SupportingReleaseCard;
-
