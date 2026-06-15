@@ -84,49 +84,33 @@ const SupportingReleaseCard = ({ linkUrl, title, description, knownCoverUrl }: P
     );
   }
 
-  // ─── No cover image — clean minimal card built from cover_color ───
+  // ─── No cover image — compact editorial card ───
   return (
     <a
       href={linkUrl}
-      className="block relative group"
+      className="block group px-4 py-4"
       onClick={(e) => e.stopPropagation()}
     >
-      <div
-        className="aspect-[4/5] relative overflow-hidden flex flex-col justify-between p-6"
-        style={{ background: accent }}
-      >
-        {/* Subtle texture: faint diagonal sheen */}
+      <div className="rounded-2xl border border-foreground/10 bg-card p-4 shadow-sm transition-shadow group-hover:shadow-md flex gap-3 items-center">
+        {/* Small accent thumbnail */}
         <div
-          className="absolute inset-0 pointer-events-none opacity-[0.12]"
-          style={{
-            background:
-              "linear-gradient(135deg, rgba(255,255,255,0.6) 0%, transparent 35%, transparent 65%, rgba(0,0,0,0.4) 100%)",
-          }}
-        />
-        {/* Top label */}
-        <div className="relative inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-sm px-3 py-1.5 text-[10px] uppercase tracking-[0.18em] text-white font-semibold self-start">
-          <Heart className="h-3 w-3 fill-current" />
-          Supporting
+          className="relative h-14 w-14 shrink-0 rounded-xl overflow-hidden flex items-center justify-center"
+          style={{ background: accent }}
+        >
+          <Sparkles className="h-5 w-5 text-white" strokeWidth={1.75} />
         </div>
 
-        {/* Centered minimal mark */}
-        <div className="relative flex-1 flex items-center justify-center">
-          <div className="h-16 w-16 rounded-full bg-white/15 backdrop-blur-md flex items-center justify-center ring-1 ring-white/25">
-            <Sparkles className="h-7 w-7 text-white" strokeWidth={1.5} />
+        {/* Text */}
+        <div className="min-w-0 flex-1">
+          <div className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.18em] font-semibold text-rose-500">
+            <Heart className="h-3 w-3 fill-current" />
+            Supporting
           </div>
-        </div>
-
-        {/* Bottom title block */}
-        <div className="relative">
-          <p className="text-[10px] uppercase tracking-[0.22em] text-white/70">Release</p>
-          <h3 className={cn(
-            "font-display font-bold text-white leading-tight mt-1.5 line-clamp-2",
-            releaseTitle.length > 24 ? "text-xl" : "text-2xl",
-          )}>
+          <h3 className="font-display text-base font-bold leading-tight mt-0.5 line-clamp-1 text-foreground">
             {releaseTitle}
           </h3>
           {description && (
-            <p className="text-xs text-white/75 mt-2 line-clamp-2 leading-relaxed">
+            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1 leading-snug">
               {description}
             </p>
           )}
@@ -137,3 +121,4 @@ const SupportingReleaseCard = ({ linkUrl, title, description, knownCoverUrl }: P
 };
 
 export default SupportingReleaseCard;
+
