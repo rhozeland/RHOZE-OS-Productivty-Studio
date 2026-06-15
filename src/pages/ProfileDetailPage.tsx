@@ -670,6 +670,9 @@ const ProfileDetailPage = () => {
         {isOwnProfile && <BoostProfileSheet open={boostOpen} onOpenChange={setBoostOpen} />}
         <LaunchCoinFlowModal open={launchCoinOpen} onOpenChange={setLaunchCoinOpen} project={null} />
         <StartProjectPicker open={startProjectOpen} onOpenChange={setStartProjectOpen} />
+        {isOwnProfile && id && (
+          <FollowingDialog open={followingOpen} onOpenChange={setFollowingOpen} userId={id} />
+        )}
         <AlertDialog open={!!deleteProjectTarget} onOpenChange={(o) => !o && setDeleteProjectTarget(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
