@@ -14,6 +14,7 @@ import { ShieldCheck } from "lucide-react";
 import SaveButton from "@/components/saved/SaveButton";
 import FlowPostOwnerMenu from "@/components/profile/FlowPostOwnerMenu";
 import RepostButton from "@/components/flow/RepostButton";
+import SupportingReleaseCard from "@/components/flow/SupportingReleaseCard";
 
 /* ─── Platform detection ─── */
 const detectPlatform = (url?: string | null) => {
@@ -177,6 +178,14 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
     (!!youtubeId && !isAudioPlatform);
   const isWriting = item.content_type === "text" || item.content_type === "link" || item.category === "writing";
 
+  // Release-share posts ("Supporting: ...") get their own clean card —
+  // bypasses link-preview fetching that would otherwise pull an unrelated
+  // image and ignores the trippy auto-generated thumbnail fallback.
+  const isReleaseShare =
+    !!item.link_url &&
+    /\/release\/[^/?#]+/.test(item.link_url) &&
+    (item.tags?.includes("supporting") || /^Supporting:/i.test(item.title ?? ""));
+
   const showCategoryChip = cardPrefs.badgeVisible && cardPrefs.badgePlacement === "inline";
   const mediaInteractionClass = disableMediaInteractions ? "pointer-events-none" : undefined;
 
@@ -251,8 +260,19 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
             </div>
           </div>
         )}
+
+        {/* ═══ RELEASE SHARE — clean project-cover card ═══ */}
+        {isReleaseShare && (
+          <SupportingReleaseCard
+            linkUrl={item.link_url!}
+            title={item.title}
+            description={item.description}
+            knownCoverUrl={item.file_url}
+          />
+        )}
+
         {/* ═══ PHOTO / DESIGN — Full image with click to enlarge ═══ */}
-        {isImage && item.file_url && (
+        {!isReleaseShare && isImage && item.file_url && (
           <div className="relative group">
             <button
               type="button"
@@ -280,7 +300,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
         )}
 
         {/* ═══ MUSIC — Artwork + embedded player ═══ */}
-        {isAudio && (
+        {!isReleaseShare && isAudio && (
           <div className="relative">
             {youtubeId && (
               <div className={cn("aspect-video", mediaInteractionClass)} onClick={(e) => e.stopPropagation()}>
@@ -362,7 +382,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
         )}
 
         {/* ═══ VIDEO — YouTube/Vimeo embed or uploaded ═══ */}
-        {isVideo && (
+        {!isReleaseShare && isVideo && (
           <div className="relative">
             {youtubeId ? (
               <div className={cn("aspect-video", mediaInteractionClass)} onClick={(e) => e.stopPropagation()}>
@@ -400,7 +420,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
         )}
 
         {/* ═══ WRITING — Embedded link preview or rich text card ═══ */}
-        {isWriting && !isAudio && !isVideo && !isImage && (
+        {!isReleaseShare && isWriting && !isAudio && !isVideo && !isImage && (
           <div className="relative">
             {item.link_url ? (
               <div className="min-h-[200px] flex flex-col overflow-hidden">
@@ -451,7 +471,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
         )}
 
         {/* ═══ Fallback for design with no file ═══ */}
-        {isImage && !item.file_url && (
+        {!isReleaseShare && isImage && !item.file_url && (
           <div className="min-h-[280px] bg-gradient-to-br from-teal/10 via-accent/5 to-muted flex items-center justify-center p-6">
             <div className="text-center">
               <div className="h-20 w-20 mx-auto rounded-2xl bg-card/40 backdrop-blur-md flex items-center justify-center mb-4 shadow-xl border border-border/20">
