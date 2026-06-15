@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import ProfileBadges from "@/components/profile/ProfileBadges";
+import PinnedAnnouncementCard from "@/components/profile/PinnedAnnouncementCard";
 import VerifiedProBadge from "@/components/profile/VerifiedProBadge";
 import ProfileTierBadge from "@/components/profile/ProfileTierBadge";
 import ArchetypeChip from "@/components/profile/ArchetypeChip";
