@@ -57,12 +57,6 @@ const PinnedAnnouncementCard = ({ userId }: { userId: string }) => {
           className="mt-3 w-full max-h-72 object-cover rounded-xl border border-border"
         />
       )}
-      <Link
-        to={`/profiles/${userId}?tab=updates`}
-        className="mt-3 inline-flex items-center gap-1 text-[11px] uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <Megaphone className="h-3 w-3" /> All updates
-      </Link>
     </div>
   );
 };
