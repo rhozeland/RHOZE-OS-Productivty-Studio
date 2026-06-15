@@ -329,9 +329,13 @@ const ProfileDetailPage = () => {
 
   const hasReposts = (repostedPosts?.length ?? 0) > 0;
   const hasOpportunities = (opportunities?.length ?? 0) > 0;
+  const hasUpdates = isOwnProfile || (announcementsCount ?? 0) > 0;
   const TABS: { key: TabKey; label: string; Icon: any }[] = [
     { key: "works", label: "Works", Icon: ImageIcon },
     { key: "projects", label: "Projects", Icon: FolderKanban },
+    ...(hasUpdates
+      ? [{ key: "updates" as TabKey, label: "Updates", Icon: Megaphone }]
+      : []),
     ...(hasOpportunities
       ? [{ key: "opportunities" as TabKey, label: "Opportunities", Icon: Briefcase }]
       : []),
