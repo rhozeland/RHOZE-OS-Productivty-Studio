@@ -100,17 +100,8 @@ const SupportingReleaseCard = ({ linkUrl, title, description, knownCoverUrl }: P
         {/* Body */}
         <div className="p-4">
           <div className="flex items-center gap-2 mb-2">
-            <Avatar className="h-6 w-6">
-              {project?.owner?.avatar_url && (
-                <AvatarImage src={project.owner.avatar_url} alt={ownerName} />
-              )}
-              <AvatarFallback className="text-[10px]">{ownerInitial}</AvatarFallback>
-            </Avatar>
-            <span className="text-xs font-medium text-muted-foreground truncate">
-              {ownerName}
-            </span>
-            <span className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground/70 ml-auto">
-              Release
+            <span className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground/70">
+              Release in progress
             </span>
           </div>
 
