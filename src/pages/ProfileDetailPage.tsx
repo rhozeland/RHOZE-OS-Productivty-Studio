@@ -183,6 +183,19 @@ const ProfileDetailPage = () => {
     enabled: !!id,
   });
 
+  // Announcements count — drives whether the Updates tab is shown to visitors
+  const { data: announcementsCount } = useQuery({
+    queryKey: ["profile-announcements-count", id],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("artist_announcements" as any)
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", id!);
+      return count ?? 0;
+    },
+    enabled: !!id,
+  });
+
   // Collaborators for all projects on this profile — one round-trip
   const projectIds = (buildingProjects ?? []).map((p: any) => p.id);
   const { data: projectCollaborators } = useQuery({
