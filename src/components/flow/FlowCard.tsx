@@ -692,6 +692,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
         </div>
 
         {/* ═══ POSTER INFO ═══ */}
+        {!isReleaseShare && (
         <div className="px-5 pb-1.5 flex items-center gap-2 min-h-[20px]">
           {(item as any).profiles ? (
             <button
