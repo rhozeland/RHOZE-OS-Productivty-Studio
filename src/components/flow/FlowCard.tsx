@@ -382,7 +382,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
         )}
 
         {/* ═══ VIDEO — YouTube/Vimeo embed or uploaded ═══ */}
-        {isVideo && (
+        {!isReleaseShare && isVideo && (
           <div className="relative">
             {youtubeId ? (
               <div className={cn("aspect-video", mediaInteractionClass)} onClick={(e) => e.stopPropagation()}>
