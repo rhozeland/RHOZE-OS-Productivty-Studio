@@ -306,11 +306,76 @@ const ProfileDetailPage = () => {
     );
   }
   if (!isOwnProfile && profile.is_public === false) {
+    const pp = profile as any;
+    const displayName = pp.display_name || pp.username || "Creator";
+    const initials = displayName.slice(0, 2).toUpperCase();
     return (
-      <div className="text-center py-20">
-        <EyeOff className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-        <h2 className="font-display text-xl font-semibold text-foreground">Private Profile</h2>
-        <p className="text-muted-foreground mt-2">This creator's profile is set to private.</p>
+      <div className="max-w-xl mx-auto px-4 py-12">
+        <div className="flex flex-col items-center text-center">
+          {pp.avatar_url ? (
+            <img
+              src={pp.avatar_url}
+              alt={displayName}
+              className="h-28 w-28 rounded-full object-cover ring-2 ring-border"
+            />
+          ) : (
+            <div className="h-28 w-28 rounded-full bg-muted flex items-center justify-center font-display text-2xl text-muted-foreground ring-2 ring-border">
+              {initials}
+            </div>
+          )}
+          <h1 className="mt-5 font-display text-2xl font-semibold text-foreground">{displayName}</h1>
+          {pp.username && (
+            <p className="text-sm text-muted-foreground mt-1">@{pp.username}</p>
+          )}
+          {pp.bio && (
+            <p className="mt-4 text-sm text-foreground/80 leading-relaxed max-w-md">{pp.bio}</p>
+          )}
+
+          {user && !isOwnProfile && (
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+              <Button
+                onClick={() => followMutation.mutate()}
+                disabled={followMutation.isPending}
+                variant={isFollowing ? "outline" : "default"}
+              >
+                {followMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : isFollowing ? (
+                  "Requested"
+                ) : (
+                  "Request to follow"
+                )}
+              </Button>
+              <Button variant="outline" onClick={() => setSubscribeOpen(true)}>
+                <Heart className="h-4 w-4 mr-2" /> Support
+              </Button>
+            </div>
+          )}
+          {!user && (
+            <Button asChild className="mt-6">
+              <Link to={`/auth?redirect=/profiles/${id}`}>Sign in to follow</Link>
+            </Button>
+          )}
+        </div>
+
+        <div className="mt-10 rounded-2xl border border-border bg-card/40 backdrop-blur p-8 text-center">
+          <EyeOff className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+          <h2 className="font-display text-lg font-semibold text-foreground">This profile is private</h2>
+          <p className="text-sm text-muted-foreground mt-2 max-w-sm mx-auto">
+            Works, projects, updates and reposts are hidden. Follow {displayName} to request access — they'll be notified.
+          </p>
+        </div>
+
+        {subscribeOpen && (
+          <SupportFlowSheet
+            open={subscribeOpen}
+            onOpenChange={setSubscribeOpen}
+            creatorId={id!}
+            creatorName={displayName}
+            creatorUsername={pp.username}
+            creatorAvatar={pp.avatar_url}
+          />
+        )}
       </div>
     );
   }
