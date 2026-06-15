@@ -285,9 +285,9 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
                   <Megaphone className="h-3 w-3" />
                   Update
                 </div>
-                {item.created_at && (
+                {(item as any).created_at && (
                   <span className="text-[10px] text-muted-foreground">
-                    {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
+                    {formatDistanceToNow(new Date((item as any).created_at), { addSuffix: true })}
                   </span>
                 )}
               </div>
