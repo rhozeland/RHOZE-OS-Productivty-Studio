@@ -666,9 +666,8 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
             {item.id && (
               <RepostButton flowItemId={item.id} ownerId={item.user_id} />
             )}
-            {item.id && (
-              <SaveButton type="work" id={item.id} variant="icon" size="sm" />
-            )}
+
+
 
             {item.link_url && (
               <a
