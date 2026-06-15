@@ -29,11 +29,11 @@ export default function FollowingDialog({ open, onOpenChange, userId }: Props) {
       if (ids.length === 0) return [];
       const { data: profs } = await supabase
         .from("profiles")
-        .select("id, display_name, username, avatar_url, archetype")
-        .in("id", ids);
+        .select("id, user_id, display_name, username, avatar_url, archetype")
+        .in("user_id", ids);
       const order = new Map(ids.map((id, i) => [id, i]));
       return (profs ?? []).sort(
-        (a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0),
+        (a, b) => (order.get(a.user_id) ?? 0) - (order.get(b.user_id) ?? 0),
       );
     },
     enabled: open && !!userId,
@@ -89,7 +89,7 @@ export default function FollowingDialog({ open, onOpenChange, userId }: Props) {
                 return (
                   <li key={p.id}>
                     <Link
-                      to={`/profiles/${p.id}`}
+                      to={`/profiles/${p.user_id}`}
                       onClick={() => onOpenChange(false)}
                       className="flex items-center gap-3 py-2.5 px-1 rounded-lg hover:bg-muted/60 transition"
                     >
