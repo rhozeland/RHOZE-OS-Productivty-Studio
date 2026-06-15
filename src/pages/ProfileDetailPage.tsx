@@ -446,6 +446,14 @@ const ProfileDetailPage = () => {
               </section>
             )}
 
+            {tab === "updates" && (
+              <section className="space-y-3">
+                <AnnouncementsTab userId={id!} isOwnProfile={isOwnProfile} />
+              </section>
+            )}
+
+
+
             {tab === "supporting" && (
               <section className="space-y-3">
                 <SupportingTab userId={id!} isOwnProfile={isOwnProfile} />
