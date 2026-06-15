@@ -471,7 +471,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
         )}
 
         {/* ═══ Fallback for design with no file ═══ */}
-        {isImage && !item.file_url && (
+        {!isReleaseShare && isImage && !item.file_url && (
           <div className="min-h-[280px] bg-gradient-to-br from-teal/10 via-accent/5 to-muted flex items-center justify-center p-6">
             <div className="text-center">
               <div className="h-20 w-20 mx-auto rounded-2xl bg-card/40 backdrop-blur-md flex items-center justify-center mb-4 shadow-xl border border-border/20">
