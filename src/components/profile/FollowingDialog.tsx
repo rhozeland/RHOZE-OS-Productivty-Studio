@@ -89,7 +89,7 @@ export default function FollowingDialog({ open, onOpenChange, userId }: Props) {
                 return (
                   <li key={p.id}>
                     <Link
-                      to={`/profiles/${p.id}`}
+                      to={`/profiles/${p.user_id}`}
                       onClick={() => onOpenChange(false)}
                       className="flex items-center gap-3 py-2.5 px-1 rounded-lg hover:bg-muted/60 transition"
                     >
