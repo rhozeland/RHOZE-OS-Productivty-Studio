@@ -78,11 +78,32 @@ const AnnouncementsTab = ({ userId, isOwnProfile }: { userId: string; isOwnProfi
         link_url: link,
       });
       if (error) throw error;
+
+      // Also surface in Flow so fans see it in their feed
+      const titleSource = trimmed.split("\n")[0] || trimmed;
+      const title = titleSource.length > 80 ? titleSource.slice(0, 77) + "…" : titleSource;
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("display_name, username")
+        .eq("id", user!.id)
+        .maybeSingle();
+      await supabase.from("flow_items").insert({
+        user_id: user!.id,
+        title,
+        description: trimmed,
+        content_type: imageUrl ? "image" : "text",
+        file_url: imageUrl,
+        link_url: link,
+        category: imageUrl ? "photo" : "writing",
+        tags: ["announcement"],
+        creator_name: prof?.display_name || prof?.username || null,
+      });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["artist-announcements", userId] });
+      qc.invalidateQueries({ queryKey: ["flow-items"] });
       setBody(""); setLinkUrl(""); setImageUrl(null);
-      toast.success("Announcement posted — your subscribers were notified.");
+      toast.success("Posted — subscribers notified and shared to Flow.");
     },
     onError: (e: any) => toast.error(e.message),
   });
