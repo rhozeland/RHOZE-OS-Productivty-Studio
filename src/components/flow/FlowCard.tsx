@@ -745,6 +745,8 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
             </span>
           )}
         </div>
+        )}
+
 
         {/* ═══ TITLE + DESCRIPTION ═══ */}
         {!isAnnouncement && !(isWriting && !isAudio && !isVideo && !isImage && !item.file_url && !item.link_url) && (
