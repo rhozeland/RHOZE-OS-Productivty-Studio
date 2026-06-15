@@ -55,6 +55,7 @@ const ProfileDetailPage = () => {
   const [launchCoinOpen, setLaunchCoinOpen] = useState(false);
   const [startProjectOpen, setStartProjectOpen] = useState(false);
   const [deleteProjectTarget, setDeleteProjectTarget] = useState<{ id: string; title: string } | null>(null);
+  const [followingOpen, setFollowingOpen] = useState(false);
 
   const deleteProjectMutation = useMutation({
     mutationFn: async (projectId: string) => {
