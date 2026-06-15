@@ -178,6 +178,14 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
     (!!youtubeId && !isAudioPlatform);
   const isWriting = item.content_type === "text" || item.content_type === "link" || item.category === "writing";
 
+  // Release-share posts ("Supporting: ...") get their own clean card —
+  // bypasses link-preview fetching that would otherwise pull an unrelated
+  // image and ignores the trippy auto-generated thumbnail fallback.
+  const isReleaseShare =
+    !!item.link_url &&
+    /\/release\/[^/?#]+/.test(item.link_url) &&
+    (item.tags?.includes("supporting") || /^Supporting:/i.test(item.title ?? ""));
+
   const showCategoryChip = cardPrefs.badgeVisible && cardPrefs.badgePlacement === "inline";
   const mediaInteractionClass = disableMediaInteractions ? "pointer-events-none" : undefined;
 
