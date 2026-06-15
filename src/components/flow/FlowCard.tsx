@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, useReducedMotion, AnimatePresence } from "framer-motion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Play, FileText, ExternalLink, ChevronDown, Music, Palette, Camera, Video, PenTool, Heart, MessageCircle, Send, Maximize2, X, Trash2, Fingerprint } from "lucide-react";
+import { Play, FileText, ExternalLink, ChevronDown, Music, Palette, Camera, Video, PenTool, Heart, MessageCircle, Send, Maximize2, X, Trash2, Fingerprint, Megaphone } from "lucide-react";
 import AudioPreview from "@/components/marketplace/AudioPreview";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
@@ -15,6 +15,7 @@ import SaveButton from "@/components/saved/SaveButton";
 import FlowPostOwnerMenu from "@/components/profile/FlowPostOwnerMenu";
 import RepostButton from "@/components/flow/RepostButton";
 import SupportingReleaseCard from "@/components/flow/SupportingReleaseCard";
+import { formatDistanceToNow } from "date-fns";
 
 /* ─── Platform detection ─── */
 const detectPlatform = (url?: string | null) => {
@@ -186,6 +187,10 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
     /\/release\/[^/?#]+/.test(item.link_url) &&
     (item.tags?.includes("supporting") || /^Supporting:/i.test(item.title ?? ""));
 
+  // Announcement posts (mirrored from profile updates) — render as a clean
+  // editorial "pinned update" style card instead of the giant-headline writing layout.
+  const isAnnouncement = !!item.tags?.includes("announcement") && !isReleaseShare;
+
   const showCategoryChip = cardPrefs.badgeVisible && cardPrefs.badgePlacement === "inline";
   const mediaInteractionClass = disableMediaInteractions ? "pointer-events-none" : undefined;
 
@@ -271,8 +276,49 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
           />
         )}
 
+        {/* ═══ ANNOUNCEMENT — editorial pinned-update style ═══ */}
+        {isAnnouncement && (
+          <div className="px-5 pt-12 pb-5">
+            <div className="rounded-2xl border border-foreground/10 bg-gradient-to-br from-amber-500/10 via-rose-500/5 to-fuchsia-500/10 p-5 shadow-sm">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="inline-flex items-center gap-1 rounded-full bg-foreground text-background px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider">
+                  <Megaphone className="h-3 w-3" />
+                  Update
+                </div>
+                {(item as any).created_at && (
+                  <span className="text-[10px] text-muted-foreground">
+                    {formatDistanceToNow(new Date((item as any).created_at), { addSuffix: true })}
+                  </span>
+                )}
+              </div>
+              <p className="text-[15px] leading-snug font-medium text-foreground whitespace-pre-wrap">
+                {item.description || item.title}
+              </p>
+              {item.link_url && (
+                <a
+                  href={item.link_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="mt-3 inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  <span className="truncate max-w-[280px]">{item.link_url}</span>
+                </a>
+              )}
+              {item.file_url && (
+                <img
+                  src={item.file_url}
+                  alt=""
+                  className="mt-3 w-full max-h-72 object-cover rounded-xl border border-border"
+                />
+              )}
+            </div>
+          </div>
+        )}
+
         {/* ═══ PHOTO / DESIGN — Full image with click to enlarge ═══ */}
-        {!isReleaseShare && isImage && item.file_url && (
+        {!isReleaseShare && !isAnnouncement && isImage && item.file_url && (
           <div className="relative group">
             <button
               type="button"
@@ -300,7 +346,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
         )}
 
         {/* ═══ MUSIC — Artwork + embedded player ═══ */}
-        {!isReleaseShare && isAudio && (
+        {!isReleaseShare && !isAnnouncement && isAudio && (
           <div className="relative">
             {youtubeId && (
               <div className={cn("aspect-video", mediaInteractionClass)} onClick={(e) => e.stopPropagation()}>
@@ -382,7 +428,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
         )}
 
         {/* ═══ VIDEO — YouTube/Vimeo embed or uploaded ═══ */}
-        {!isReleaseShare && isVideo && (
+        {!isReleaseShare && !isAnnouncement && isVideo && (
           <div className="relative">
             {youtubeId ? (
               <div className={cn("aspect-video", mediaInteractionClass)} onClick={(e) => e.stopPropagation()}>
@@ -420,7 +466,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
         )}
 
         {/* ═══ WRITING — Embedded link preview or rich text card ═══ */}
-        {!isReleaseShare && isWriting && !isAudio && !isVideo && !isImage && (
+        {!isReleaseShare && !isAnnouncement && isWriting && !isAudio && !isVideo && !isImage && (
           <div className="relative">
             {item.link_url ? (
               <div className="min-h-[200px] flex flex-col overflow-hidden">
@@ -471,7 +517,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
         )}
 
         {/* ═══ Fallback for design with no file ═══ */}
-        {!isReleaseShare && isImage && !item.file_url && (
+        {!isReleaseShare && !isAnnouncement && isImage && !item.file_url && (
           <div className="min-h-[280px] bg-gradient-to-br from-teal/10 via-accent/5 to-muted flex items-center justify-center p-6">
             <div className="text-center">
               <div className="h-20 w-20 mx-auto rounded-2xl bg-card/40 backdrop-blur-md flex items-center justify-center mb-4 shadow-xl border border-border/20">
@@ -701,7 +747,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
         </div>
 
         {/* ═══ TITLE + DESCRIPTION ═══ */}
-        {!(isWriting && !isAudio && !isVideo && !isImage && !item.file_url && !item.link_url) && (
+        {!isAnnouncement && !(isWriting && !isAudio && !isVideo && !isImage && !item.file_url && !item.link_url) && (
           <div className="px-5 pb-5">
             <h3 className="font-display font-bold text-foreground text-sm md:text-base leading-snug">{item.title}</h3>
             {item.description && (
