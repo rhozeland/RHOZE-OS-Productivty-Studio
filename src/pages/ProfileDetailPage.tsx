@@ -13,8 +13,9 @@ import {
 import {
   EyeOff, Loader2, Sparkles, Image as ImageIcon, Play, Music, FileText,
   Calendar as CalendarIcon, FolderKanban, ExternalLink, Coins, Heart,
-  Rocket, Inbox, Users, ArrowRight, Repeat2, HeartHandshake, Briefcase,
+  Rocket, Inbox, Users, ArrowRight, Repeat2, HeartHandshake, Briefcase, Megaphone,
 } from "lucide-react";
+import AnnouncementsTab from "@/components/profile/AnnouncementsTab";
 import SupportingTab from "@/components/profile/SupportingTab";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -36,7 +37,7 @@ import ProfileProjectCard from "@/components/profile/ProfileProjectCard";
 import LaunchCoinFlowModal from "@/components/launchpad/LaunchCoinFlowModal";
 import StartProjectPicker from "@/components/project/StartProjectPicker";
 
-type TabKey = "projects" | "works" | "reposts" | "supporting" | "opportunities";
+type TabKey = "projects" | "works" | "updates" | "reposts" | "supporting" | "opportunities";
 
 const ProfileDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -70,7 +71,7 @@ const ProfileDetailPage = () => {
 
   const initialTab = (searchParams.get("tab") as TabKey) || "projects";
   const [tab, setTab] = useState<TabKey>(
-    ["projects", "works", "reposts", "supporting", "opportunities"].includes(initialTab) ? initialTab : "projects",
+    ["projects", "works", "updates", "reposts", "supporting", "opportunities"].includes(initialTab) ? initialTab : "projects",
   );
 
   const [subscribeOpen, setSubscribeOpen] = useState(
@@ -178,6 +179,19 @@ const ProfileDetailPage = () => {
         .eq("user_id", id!).eq("is_active", true)
         .order("created_at", { ascending: false }).limit(24);
       return data ?? [];
+    },
+    enabled: !!id,
+  });
+
+  // Announcements count — drives whether the Updates tab is shown to visitors
+  const { data: announcementsCount } = useQuery({
+    queryKey: ["profile-announcements-count", id],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("artist_announcements" as any)
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", id!);
+      return count ?? 0;
     },
     enabled: !!id,
   });
@@ -315,9 +329,13 @@ const ProfileDetailPage = () => {
 
   const hasReposts = (repostedPosts?.length ?? 0) > 0;
   const hasOpportunities = (opportunities?.length ?? 0) > 0;
+  const hasUpdates = isOwnProfile || (announcementsCount ?? 0) > 0;
   const TABS: { key: TabKey; label: string; Icon: any }[] = [
     { key: "works", label: "Works", Icon: ImageIcon },
     { key: "projects", label: "Projects", Icon: FolderKanban },
+    ...(hasUpdates
+      ? [{ key: "updates" as TabKey, label: "Updates", Icon: Megaphone }]
+      : []),
     ...(hasOpportunities
       ? [{ key: "opportunities" as TabKey, label: "Opportunities", Icon: Briefcase }]
       : []),
@@ -427,6 +445,14 @@ const ProfileDetailPage = () => {
                 <PostsGrid posts={flowPosts ?? []} isOwnProfile={isOwnProfile} navigate={navigate} />
               </section>
             )}
+
+            {tab === "updates" && (
+              <section className="space-y-3">
+                <AnnouncementsTab userId={id!} isOwnProfile={isOwnProfile} />
+              </section>
+            )}
+
+
 
             {tab === "supporting" && (
               <section className="space-y-3">

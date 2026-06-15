@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      artist_announcements: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          image_url: string | null
+          link_url: string | null
+          published_at: string
+          scheduled_for: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          link_url?: string | null
+          published_at?: string
+          scheduled_for?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          link_url?: string | null
+          published_at?: string
+          scheduled_for?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       artist_verification_requests: {
         Row: {
           bio: string | null
