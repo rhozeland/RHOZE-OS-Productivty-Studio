@@ -13,8 +13,9 @@ import {
 import {
   EyeOff, Loader2, Sparkles, Image as ImageIcon, Play, Music, FileText,
   Calendar as CalendarIcon, FolderKanban, ExternalLink, Coins, Heart,
-  Rocket, Inbox, Users, ArrowRight, Repeat2, HeartHandshake, Briefcase,
+  Rocket, Inbox, Users, ArrowRight, Repeat2, HeartHandshake, Briefcase, Megaphone,
 } from "lucide-react";
+import AnnouncementsTab from "@/components/profile/AnnouncementsTab";
 import SupportingTab from "@/components/profile/SupportingTab";
 import { toast } from "sonner";
 import { format } from "date-fns";
