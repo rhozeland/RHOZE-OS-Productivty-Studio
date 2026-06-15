@@ -36,6 +36,7 @@ import ShareCardModal from "@/components/share/ShareCardModal";
 import ProfileProjectCard from "@/components/profile/ProfileProjectCard";
 import LaunchCoinFlowModal from "@/components/launchpad/LaunchCoinFlowModal";
 import StartProjectPicker from "@/components/project/StartProjectPicker";
+import FollowingDialog from "@/components/profile/FollowingDialog";
 
 type TabKey = "projects" | "works" | "updates" | "reposts" | "supporting" | "opportunities";
 
