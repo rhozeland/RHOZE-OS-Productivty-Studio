@@ -186,6 +186,10 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
     /\/release\/[^/?#]+/.test(item.link_url) &&
     (item.tags?.includes("supporting") || /^Supporting:/i.test(item.title ?? ""));
 
+  // Announcement posts (mirrored from profile updates) — render as a clean
+  // editorial "pinned update" style card instead of the giant-headline writing layout.
+  const isAnnouncement = !!item.tags?.includes("announcement") && !isReleaseShare;
+
   const showCategoryChip = cardPrefs.badgeVisible && cardPrefs.badgePlacement === "inline";
   const mediaInteractionClass = disableMediaInteractions ? "pointer-events-none" : undefined;
 
