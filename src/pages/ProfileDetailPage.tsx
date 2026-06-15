@@ -36,6 +36,7 @@ import ShareCardModal from "@/components/share/ShareCardModal";
 import ProfileProjectCard from "@/components/profile/ProfileProjectCard";
 import LaunchCoinFlowModal from "@/components/launchpad/LaunchCoinFlowModal";
 import StartProjectPicker from "@/components/project/StartProjectPicker";
+import FollowingDialog from "@/components/profile/FollowingDialog";
 
 type TabKey = "projects" | "works" | "updates" | "reposts" | "supporting" | "opportunities";
 
@@ -55,6 +56,7 @@ const ProfileDetailPage = () => {
   const [launchCoinOpen, setLaunchCoinOpen] = useState(false);
   const [startProjectOpen, setStartProjectOpen] = useState(false);
   const [deleteProjectTarget, setDeleteProjectTarget] = useState<{ id: string; title: string } | null>(null);
+  const [followingOpen, setFollowingOpen] = useState(false);
 
   const deleteProjectMutation = useMutation({
     mutationFn: async (projectId: string) => {
@@ -433,25 +435,39 @@ const ProfileDetailPage = () => {
         />
 
         {/* ─── Floating icon tabs (no bar, free-flowing) ─── */}
-        <div className="flex items-center justify-start gap-2">
-          {TABS.map(({ key, label, Icon }) => (
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            {TABS.map(({ key, label, Icon }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => handleTabChange(key)}
+                aria-label={label}
+                title={label}
+                className={cn(
+                  "inline-flex items-center justify-center h-10 w-10 rounded-full transition-all",
+                  tab === key
+                    ? "bg-foreground text-background shadow-md scale-105"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/60",
+                )}
+              >
+                <Icon className="h-4 w-4" />
+              </button>
+            ))}
+          </div>
+          {isOwnProfile && (
             <button
-              key={key}
               type="button"
-              onClick={() => handleTabChange(key)}
-              aria-label={label}
-              title={label}
-              className={cn(
-                "inline-flex items-center justify-center h-10 w-10 rounded-full transition-all",
-                tab === key
-                  ? "bg-foreground text-background shadow-md scale-105"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/60",
-              )}
+              onClick={() => setFollowingOpen(true)}
+              title="Who you're following"
+              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs text-muted-foreground hover:text-foreground hover:bg-muted/60 transition"
             >
-              <Icon className="h-4 w-4" />
+              <Users className="h-3.5 w-3.5" />
+              Following
             </button>
-          ))}
+          )}
         </div>
+
 
         {/* ─── 65/35 grid ─── */}
         <div className="grid grid-cols-1 lg:grid-cols-[1.85fr_1fr] gap-5">
@@ -654,6 +670,9 @@ const ProfileDetailPage = () => {
         {isOwnProfile && <BoostProfileSheet open={boostOpen} onOpenChange={setBoostOpen} />}
         <LaunchCoinFlowModal open={launchCoinOpen} onOpenChange={setLaunchCoinOpen} project={null} />
         <StartProjectPicker open={startProjectOpen} onOpenChange={setStartProjectOpen} />
+        {isOwnProfile && id && (
+          <FollowingDialog open={followingOpen} onOpenChange={setFollowingOpen} userId={id} />
+        )}
         <AlertDialog open={!!deleteProjectTarget} onOpenChange={(o) => !o && setDeleteProjectTarget(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
