@@ -292,6 +292,9 @@ export const ProfileGemHeader = ({
         </div>
       )}
 
+      {/* Pinned announcement — surfaced above reputation signals */}
+      <PinnedAnnouncementCard userId={id} />
+
       {/* Reputation metrics — under bio + socials */}
       <div className="mt-5 rounded-2xl border border-border/50 bg-gradient-to-br from-muted/30 via-background to-background p-3 sm:p-4">
         <div className="flex items-center justify-between mb-2.5">
