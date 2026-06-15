@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import ProfileBadges from "@/components/profile/ProfileBadges";
+import PinnedAnnouncementCard from "@/components/profile/PinnedAnnouncementCard";
 import VerifiedProBadge from "@/components/profile/VerifiedProBadge";
 import ProfileTierBadge from "@/components/profile/ProfileTierBadge";
 import ArchetypeChip from "@/components/profile/ArchetypeChip";
@@ -290,6 +291,9 @@ export const ProfileGemHeader = ({
           )}
         </div>
       )}
+
+      {/* Pinned announcement — surfaced above reputation signals */}
+      <PinnedAnnouncementCard userId={id} />
 
       {/* Reputation metrics — under bio + socials */}
       <div className="mt-5 rounded-2xl border border-border/50 bg-gradient-to-br from-muted/30 via-background to-background p-3 sm:p-4">

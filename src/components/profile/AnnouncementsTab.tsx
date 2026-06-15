@@ -6,7 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Megaphone, Link as LinkIcon, ImagePlus, Loader2, Trash2, X, ExternalLink } from "lucide-react";
+import {
+  Megaphone, Link as LinkIcon, ImagePlus, Loader2, Trash2, X, ExternalLink,
+  Pin, PinOff, Pencil, Check,
+} from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 
@@ -17,6 +20,7 @@ interface Announcement {
   image_url: string | null;
   link_url: string | null;
   published_at: string;
+  is_pinned: boolean;
 }
 
 const MAX_LEN = 500;
@@ -28,6 +32,8 @@ const AnnouncementsTab = ({ userId, isOwnProfile }: { userId: string; isOwnProfi
   const [linkUrl, setLinkUrl] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editBody, setEditBody] = useState("");
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["artist-announcements", userId],
@@ -36,6 +42,7 @@ const AnnouncementsTab = ({ userId, isOwnProfile }: { userId: string; isOwnProfi
         .from("artist_announcements" as any)
         .select("*")
         .eq("user_id", userId)
+        .order("is_pinned", { ascending: false })
         .order("published_at", { ascending: false })
         .limit(50);
       if (error) throw error;
@@ -79,7 +86,6 @@ const AnnouncementsTab = ({ userId, isOwnProfile }: { userId: string; isOwnProfi
       });
       if (error) throw error;
 
-      // Also surface in Flow so fans see it in their feed
       const titleSource = trimmed.split("\n")[0] || trimmed;
       const title = titleSource.length > 80 ? titleSource.slice(0, 77) + "…" : titleSource;
       const { data: prof } = await supabase
@@ -103,7 +109,53 @@ const AnnouncementsTab = ({ userId, isOwnProfile }: { userId: string; isOwnProfi
       qc.invalidateQueries({ queryKey: ["artist-announcements", userId] });
       qc.invalidateQueries({ queryKey: ["flow-items"] });
       setBody(""); setLinkUrl(""); setImageUrl(null);
-      toast.success("Posted — subscribers notified and shared to Flow.");
+      toast.success("Posted — your subscribers were notified.");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const editSave = useMutation({
+    mutationFn: async () => {
+      const trimmed = editBody.trim();
+      if (!trimmed) throw new Error("Body required");
+      if (trimmed.length > MAX_LEN) throw new Error(`Max ${MAX_LEN} characters`);
+      const { error } = await supabase
+        .from("artist_announcements" as any)
+        .update({ body: trimmed, updated_at: new Date().toISOString() })
+        .eq("id", editingId!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["artist-announcements", userId] });
+      qc.invalidateQueries({ queryKey: ["pinned-announcement", userId] });
+      setEditingId(null);
+      toast.success("Updated");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const pin = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.rpc("set_pinned_announcement", { _announcement_id: id } as any);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["artist-announcements", userId] });
+      qc.invalidateQueries({ queryKey: ["pinned-announcement", userId] });
+      toast.success("Pinned to your profile");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const unpin = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.rpc("unpin_announcement", { _announcement_id: id } as any);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["artist-announcements", userId] });
+      qc.invalidateQueries({ queryKey: ["pinned-announcement", userId] });
+      toast.success("Unpinned");
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -115,6 +167,7 @@ const AnnouncementsTab = ({ userId, isOwnProfile }: { userId: string; isOwnProfi
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["artist-announcements", userId] });
+      qc.invalidateQueries({ queryKey: ["pinned-announcement", userId] });
       toast.success("Removed");
     },
     onError: (e: any) => toast.error(e.message),
@@ -192,7 +245,7 @@ const AnnouncementsTab = ({ userId, isOwnProfile }: { userId: string; isOwnProfi
       ) : items.length === 0 ? (
         <EmptyState
           icon={Megaphone}
-          title={isOwnProfile ? "No updates yet" : "No updates yet"}
+          title="No updates yet"
           description={isOwnProfile
             ? "Share what you're working on. Your subscribers will get notified instantly."
             : "Follow or subscribe to get notified when this artist posts an update."}
@@ -200,39 +253,105 @@ const AnnouncementsTab = ({ userId, isOwnProfile }: { userId: string; isOwnProfi
         />
       ) : (
         <ol className="space-y-3">
-          {items.map((a) => (
-            <li key={a.id} className="group rounded-2xl border border-border bg-card overflow-hidden">
-              <div className="p-4 sm:p-5 space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-                    {formatDistanceToNow(new Date(a.published_at), { addSuffix: true })}
-                  </span>
-                  {isOwnProfile && (
-                    <Button
-                      variant="ghost" size="icon"
-                      className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => { if (confirm("Delete this update?")) remove.mutate(a.id); }}
-                    >
-                      <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
-                    </Button>
+          {items.map((a) => {
+            const isEditing = editingId === a.id;
+            return (
+              <li
+                key={a.id}
+                className={`group rounded-2xl border bg-card overflow-hidden transition-colors ${
+                  a.is_pinned ? "border-foreground/30 ring-1 ring-foreground/10" : "border-border"
+                }`}
+              >
+                <div className="p-4 sm:p-5 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      {a.is_pinned && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-foreground text-background px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider">
+                          <Pin className="h-3 w-3" /> Pinned
+                        </span>
+                      )}
+                      <span className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+                        {formatDistanceToNow(new Date(a.published_at), { addSuffix: true })}
+                      </span>
+                    </div>
+                    {isOwnProfile && !isEditing && (
+                      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          variant="ghost" size="icon"
+                          className="h-7 w-7"
+                          title={a.is_pinned ? "Unpin" : "Pin to profile"}
+                          onClick={() => (a.is_pinned ? unpin.mutate(a.id) : pin.mutate(a.id))}
+                          disabled={pin.isPending || unpin.isPending}
+                        >
+                          {a.is_pinned
+                            ? <PinOff className="h-3.5 w-3.5 text-muted-foreground" />
+                            : <Pin className="h-3.5 w-3.5 text-muted-foreground" />}
+                        </Button>
+                        <Button
+                          variant="ghost" size="icon"
+                          className="h-7 w-7"
+                          title="Edit"
+                          onClick={() => { setEditingId(a.id); setEditBody(a.body); }}
+                        >
+                          <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                        </Button>
+                        <Button
+                          variant="ghost" size="icon"
+                          className="h-7 w-7"
+                          title="Delete"
+                          onClick={() => { if (confirm("Delete this update?")) remove.mutate(a.id); }}
+                        >
+                          <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+
+                  {isEditing ? (
+                    <div className="space-y-2">
+                      <Textarea
+                        value={editBody}
+                        onChange={(e) => setEditBody(e.target.value.slice(0, MAX_LEN))}
+                        rows={3}
+                        className="resize-none text-[15px]"
+                      />
+                      <div className="flex items-center justify-end gap-2">
+                        <span className="text-[11px] text-muted-foreground mr-auto">{editBody.length}/{MAX_LEN}</span>
+                        <Button variant="ghost" size="sm" onClick={() => setEditingId(null)}>
+                          Cancel
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => editSave.mutate()}
+                          disabled={editSave.isPending || !editBody.trim()}
+                          className="rounded-full"
+                        >
+                          <Check className="h-3.5 w-3.5 mr-1" />
+                          {editSave.isPending ? "Saving…" : "Save"}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-[15px] leading-relaxed text-foreground whitespace-pre-wrap">{a.body}</p>
+                      {a.link_url && (
+                        <a
+                          href={a.link_url} target="_blank" rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                          <span className="truncate max-w-[260px]">{a.link_url}</span>
+                        </a>
+                      )}
+                    </>
                   )}
                 </div>
-                <p className="text-[15px] leading-relaxed text-foreground whitespace-pre-wrap">{a.body}</p>
-                {a.link_url && (
-                  <a
-                    href={a.link_url} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
-                  >
-                    <ExternalLink className="h-3 w-3" />
-                    <span className="truncate max-w-[260px]">{a.link_url}</span>
-                  </a>
+                {a.image_url && (
+                  <img src={a.image_url} alt="" className="w-full object-cover max-h-[520px] border-t border-border" />
                 )}
-              </div>
-              {a.image_url && (
-                <img src={a.image_url} alt="" className="w-full object-cover max-h-[520px] border-t border-border" />
-              )}
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ol>
       )}
     </div>

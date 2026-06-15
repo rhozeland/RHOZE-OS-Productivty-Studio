@@ -20,7 +20,9 @@ export type Database = {
           created_at: string
           id: string
           image_url: string | null
+          is_pinned: boolean
           link_url: string | null
+          pinned_at: string | null
           published_at: string
           scheduled_for: string | null
           updated_at: string
@@ -31,7 +33,9 @@ export type Database = {
           created_at?: string
           id?: string
           image_url?: string | null
+          is_pinned?: boolean
           link_url?: string | null
+          pinned_at?: string | null
           published_at?: string
           scheduled_for?: string | null
           updated_at?: string
@@ -42,7 +46,9 @@ export type Database = {
           created_at?: string
           id?: string
           image_url?: string | null
+          is_pinned?: boolean
           link_url?: string | null
+          pinned_at?: string | null
           published_at?: string
           scheduled_for?: string | null
           updated_at?: string
@@ -6404,6 +6410,10 @@ export type Database = {
         Args: { _action_type: string; _cap: number; _user_id: string }
         Returns: boolean
       }
+      set_pinned_announcement: {
+        Args: { _announcement_id: string }
+        Returns: undefined
+      }
       sign_project_proposal: { Args: { _proposal_id: string }; Returns: Json }
       simulate_coin_trade: {
         Args: { _amount: number; _launch_id: string; _side: string }
@@ -6437,6 +6447,10 @@ export type Database = {
         }[]
       }
       touch_user_activity: { Args: { _user_id: string }; Returns: undefined }
+      unpin_announcement: {
+        Args: { _announcement_id: string }
+        Returns: undefined
+      }
       update_platform_fee_tiers: {
         Args: { _payload: Json }
         Returns: undefined
