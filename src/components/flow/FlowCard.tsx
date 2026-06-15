@@ -276,8 +276,49 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
           />
         )}
 
+        {/* ═══ ANNOUNCEMENT — editorial pinned-update style ═══ */}
+        {isAnnouncement && (
+          <div className="px-5 pt-12 pb-5">
+            <div className="rounded-2xl border border-foreground/10 bg-gradient-to-br from-amber-500/10 via-rose-500/5 to-fuchsia-500/10 p-5 shadow-sm">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="inline-flex items-center gap-1 rounded-full bg-foreground text-background px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider">
+                  <Megaphone className="h-3 w-3" />
+                  Update
+                </div>
+                {item.created_at && (
+                  <span className="text-[10px] text-muted-foreground">
+                    {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
+                  </span>
+                )}
+              </div>
+              <p className="text-[15px] leading-snug font-medium text-foreground whitespace-pre-wrap">
+                {item.description || item.title}
+              </p>
+              {item.link_url && (
+                <a
+                  href={item.link_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="mt-3 inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  <span className="truncate max-w-[280px]">{item.link_url}</span>
+                </a>
+              )}
+              {item.file_url && (
+                <img
+                  src={item.file_url}
+                  alt=""
+                  className="mt-3 w-full max-h-72 object-cover rounded-xl border border-border"
+                />
+              )}
+            </div>
+          </div>
+        )}
+
         {/* ═══ PHOTO / DESIGN — Full image with click to enlarge ═══ */}
-        {!isReleaseShare && isImage && item.file_url && (
+        {!isReleaseShare && !isAnnouncement && isImage && item.file_url && (
           <div className="relative group">
             <button
               type="button"
