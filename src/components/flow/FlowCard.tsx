@@ -260,8 +260,19 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
             </div>
           </div>
         )}
+
+        {/* ═══ RELEASE SHARE — clean project-cover card ═══ */}
+        {isReleaseShare && (
+          <SupportingReleaseCard
+            linkUrl={item.link_url!}
+            title={item.title}
+            description={item.description}
+            knownCoverUrl={item.file_url}
+          />
+        )}
+
         {/* ═══ PHOTO / DESIGN — Full image with click to enlarge ═══ */}
-        {isImage && item.file_url && (
+        {!isReleaseShare && isImage && item.file_url && (
           <div className="relative group">
             <button
               type="button"
