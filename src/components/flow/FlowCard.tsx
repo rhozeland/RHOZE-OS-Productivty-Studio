@@ -749,7 +749,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
 
 
         {/* ═══ TITLE + DESCRIPTION ═══ */}
-        {!isAnnouncement && !(isWriting && !isAudio && !isVideo && !isImage && !item.file_url && !item.link_url) && (
+        {!isReleaseShare && !isAnnouncement && !(isWriting && !isAudio && !isVideo && !isImage && !item.file_url && !item.link_url) && (
           <div className="px-5 pb-5">
             <h3 className="font-display font-bold text-foreground text-sm md:text-base leading-snug">{item.title}</h3>
             {item.description && (
