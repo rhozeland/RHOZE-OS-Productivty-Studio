@@ -346,7 +346,7 @@ const FlowCard = ({ item, expanded, onToggleExpand, onLike, onComment, onShare, 
         )}
 
         {/* ═══ MUSIC — Artwork + embedded player ═══ */}
-        {!isReleaseShare && isAudio && (
+        {!isReleaseShare && !isAnnouncement && isAudio && (
           <div className="relative">
             {youtubeId && (
               <div className={cn("aspect-video", mediaInteractionClass)} onClick={(e) => e.stopPropagation()}>
