@@ -255,7 +255,7 @@ export const VipDirectAccessButton = ({ creatorName, className }: TriggerProps) 
           <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.22em] text-amber-300">
             <Zap className="h-3.5 w-3.5 fill-amber-300" /> VIP DIRECT ACCESS
           </div>
-          <p className="font-display text-lg font-bold mt-2">Message {creatorName} directly</p>
+          <p className="font-display text-lg font-bold mt-2">Make a Request</p>
           <p className="text-xs text-white/70 mt-1">Guaranteed 48-hour response or no charge.</p>
         </div>
       </button>
