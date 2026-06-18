@@ -29,7 +29,7 @@ const ArchetypePicker = (props: Props) => {
 
   const handleClick = (id: Archetype) => {
     if (props.multi) {
-      const set = new Set(props.value);
+      const set = new Set<Archetype>(props.value);
       if (set.has(id)) {
         if (set.size === 1) return; // keep at least one
         set.delete(id);
@@ -37,7 +37,7 @@ const ArchetypePicker = (props: Props) => {
         set.add(id);
       }
       // preserve canonical ARCHETYPES order
-      props.onChange(ARCHETYPES.map((a) => a.id).filter((id) => set.has(id)));
+      props.onChange(ARCHETYPES.map((a) => a.id).filter((k) => set.has(k)));
     } else {
       props.onChange(id);
     }
