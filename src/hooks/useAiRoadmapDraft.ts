@@ -74,7 +74,26 @@ export const useAiRoadmapDraft = () => {
       const { data, error } = await supabase.functions.invoke("draft-project-roadmap", {
         body: input,
       });
-      if (error) throw new Error(error.message);
+      if (error) {
+        // supabase-js wraps non-2xx as FunctionsHttpError and hides the body.
+        // Pull the JSON body so the UI can show the real reason (e.g. 402 credits, 429 rate-limit).
+        let detail = error.message;
+        try {
+          const ctx: any = (error as any).context;
+          if (ctx && typeof ctx.json === "function") {
+            const body = await ctx.json();
+            if (body?.error) detail = body.error;
+          }
+        } catch {
+          /* ignore */
+        }
+        if (/credits? exhausted/i.test(detail)) {
+          detail = "AI credits exhausted. Top up in Workspace → Usage to keep drafting rollouts.";
+        } else if (/rate.?limit/i.test(detail) || /429/.test(detail)) {
+          detail = "AI is rate-limited right now — try again in a moment.";
+        }
+        throw new Error(detail);
+      }
       if ((data as any)?.error) throw new Error((data as any).error);
       return ((data as any)?.milestones ?? []) as DraftedMilestone[];
     },
