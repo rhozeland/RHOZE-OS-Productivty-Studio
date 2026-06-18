@@ -298,7 +298,7 @@ const CreatorPassCard = ({ hideBalanceClaim = false }: { hideBalanceClaim?: bool
                 value: `${verifiedWorks ?? 0}`,
                 icon: ImageIcon,
                 isZero: (verifiedWorks ?? 0) === 0,
-                hint: { text: "Upload a work →", to: "/credits?tab=works" as string | null },
+                hint: { text: "Upload a work →", to: "/studio?start=1" as string | null },
                 action: "works" as const,
               },
               {
@@ -306,8 +306,8 @@ const CreatorPassCard = ({ hideBalanceClaim = false }: { hideBalanceClaim?: bool
                 value: `${passportCount}`,
                 icon: Ticket,
                 isZero: passportCount === 0,
-                hint: { text: "Find events →", to: "/discover?view=events" as string | null },
-                action: "/credits?tab=passport",
+                hint: { text: "Find events →", to: "/discover?kind=event" as string | null },
+                action: "/portfolio?tab=passport",
               },
               {
                 label: "Projects",
@@ -315,15 +315,15 @@ const CreatorPassCard = ({ hideBalanceClaim = false }: { hideBalanceClaim?: bool
                 icon: FolderKanban,
                 isZero: false,
                 hint: { text: "", to: null as string | null },
-                action: "projects" as const,
+                action: "/studio" as const,
               },
               {
                 label: "Fundraising",
                 value: `${tokensLaunched ?? 0}`,
                 icon: TrendingUp,
                 isZero: (tokensLaunched ?? 0) === 0,
-                hint: { text: "Launch a coin →", to: "/launchpad" as string | null },
-                action: "/credits?tab=portfolio",
+                hint: { text: "Launch a coin →", to: "/studio?coin=1" as string | null },
+                action: "/portfolio?tab=tokens",
               },
             ] as const).map((stat) => {
               const showHint = stat.isZero && !!stat.hint?.text;
