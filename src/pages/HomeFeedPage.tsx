@@ -215,15 +215,11 @@ const HomeFeedPage = () => {
           </h2>
         </div>
         {/*
-          FlowModePage uses `-m-4 md:-m-8` + `min-h-[calc(100vh-3.5rem)]` to
-          bleed into the app shell when mounted at /flow. We neutralize both
-          here so the embedded version sits in its own rounded card matching
-          the globe section above.
+          Embedded scrollable feed. Replaces the previous embedded FlowModePage
+          which broke scroll and surfaced its own filter row inside the card.
         */}
-        <div className="relative rounded-3xl overflow-hidden border border-border/60 bg-card/40 h-[640px] sm:h-[720px]">
-          <div className="absolute inset-0 p-4 md:p-8 overflow-hidden [&>div]:!min-h-full [&>div]:!m-0">
-            <FlowModePage />
-          </div>
+        <div className="rounded-3xl border border-border/60 bg-card/40 p-4 md:p-6">
+          <FlowFeed />
         </div>
       </section>
 
