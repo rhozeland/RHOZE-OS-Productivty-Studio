@@ -3214,6 +3214,65 @@ export type Database = {
           },
         ]
       }
+      project_board_elements: {
+        Row: {
+          color: string | null
+          created_at: string
+          created_by: string
+          height: number
+          id: string
+          kind: string
+          payload: Json
+          project_id: string
+          rotation: number
+          updated_at: string
+          width: number
+          x: number
+          y: number
+          z: number
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          created_by: string
+          height?: number
+          id?: string
+          kind: string
+          payload?: Json
+          project_id: string
+          rotation?: number
+          updated_at?: string
+          width?: number
+          x?: number
+          y?: number
+          z?: number
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          created_by?: string
+          height?: number
+          id?: string
+          kind?: string
+          payload?: Json
+          project_id?: string
+          rotation?: number
+          updated_at?: string
+          width?: number
+          x?: number
+          y?: number
+          z?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_board_elements_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_cheers: {
         Row: {
           created_at: string
@@ -3420,6 +3479,13 @@ export type Database = {
       project_deliverables: {
         Row: {
           anchored_at: string | null
+          bg_removed: boolean
+          board_height: number | null
+          board_rotation: number
+          board_width: number | null
+          board_x: number | null
+          board_y: number | null
+          board_z: number
           completed: boolean
           content_hash: string | null
           created_at: string
@@ -3438,6 +3504,13 @@ export type Database = {
         }
         Insert: {
           anchored_at?: string | null
+          bg_removed?: boolean
+          board_height?: number | null
+          board_rotation?: number
+          board_width?: number | null
+          board_x?: number | null
+          board_y?: number | null
+          board_z?: number
           completed?: boolean
           content_hash?: string | null
           created_at?: string
@@ -3456,6 +3529,13 @@ export type Database = {
         }
         Update: {
           anchored_at?: string | null
+          bg_removed?: boolean
+          board_height?: number | null
+          board_rotation?: number
+          board_width?: number | null
+          board_x?: number | null
+          board_y?: number | null
+          board_z?: number
           completed?: boolean
           content_hash?: string | null
           created_at?: string
