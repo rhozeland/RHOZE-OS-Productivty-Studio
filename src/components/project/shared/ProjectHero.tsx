@@ -38,10 +38,29 @@ const ProjectHero = ({ project, owner, status, isOwner, publicView }: ProjectHer
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState<string>(project?.title ?? "");
   const cover = project?.cover_image_url as string | null;
   const accent = project?.cover_color ?? "hsl(var(--primary))";
   const ownerName = owner?.display_name ?? owner?.username ?? "Artist";
   const statusMeta = STATUS_META[status];
+  const canEditTitle = isOwner && !publicView;
+
+  const saveTitle = useMutation({
+    mutationFn: async (next: string) => {
+      const trimmed = next.trim();
+      if (!trimmed) throw new Error("Title can't be empty");
+      if (trimmed === project.title) return;
+      const { error } = await supabase.from("projects").update({ title: trimmed }).eq("id", project.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project", project.id] });
+      setEditingTitle(false);
+      toast.success("Title updated");
+    },
+    onError: (e: any) => toast.error(e.message ?? "Could not update title"),
+  });
 
   const togglePublic = useMutation({
     mutationFn: async (next: boolean) => {
@@ -169,9 +188,28 @@ const ProjectHero = ({ project, owner, status, isOwner, publicView }: ProjectHer
           className="flex flex-row items-end justify-between gap-3"
         >
           <div className="min-w-0 flex-1">
-            <h1 className="font-display text-xl md:text-2xl font-bold text-white drop-shadow-md leading-tight truncate">
-              {project.title}
-            </h1>
+            {editingTitle && canEditTitle ? (
+              <input
+                autoFocus
+                value={titleDraft}
+                onChange={(e) => setTitleDraft(e.target.value)}
+                onBlur={() => saveTitle.mutate(titleDraft)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") { e.preventDefault(); (e.target as HTMLInputElement).blur(); }
+                  if (e.key === "Escape") { setTitleDraft(project.title); setEditingTitle(false); }
+                }}
+                disabled={saveTitle.isPending}
+                className="w-full bg-transparent border-b border-white/40 focus:border-white outline-none font-display text-xl md:text-2xl font-bold text-white drop-shadow-md leading-tight"
+              />
+            ) : (
+              <h1
+                onClick={() => { if (canEditTitle) { setTitleDraft(project.title); setEditingTitle(true); } }}
+                className={`font-display text-xl md:text-2xl font-bold text-white drop-shadow-md leading-tight truncate ${canEditTitle ? "cursor-text hover:opacity-90" : ""}`}
+                title={canEditTitle ? "Click to edit" : undefined}
+              >
+                {project.title}
+              </h1>
+            )}
             {owner && (
               <Link
                 to={`/profile/${owner.username ?? project.user_id}`}
