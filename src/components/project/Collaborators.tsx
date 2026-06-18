@@ -308,26 +308,31 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
   };
 
   const handleSelectUser = (u: { user_id: string; display_name: string }) => {
-    setSelectedUser(u);
-    setSearch(u.display_name);
+    setSelectedUsers((prev) =>
+      prev.find((p) => p.user_id === u.user_id) ? prev : [...prev, u],
+    );
+    setSearch("");
     setShowResults(false);
+  };
+
+  const handleRemoveSelected = (id: string) => {
+    setSelectedUsers((prev) => prev.filter((p) => p.user_id !== id));
   };
 
   const handleSearchChange = (val: string) => {
     setSearch(val);
-    setSelectedUser(null);
     setShowResults(true);
   };
 
   return (
     <div className="surface-card p-6">
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Users className="h-5 w-5 text-primary" />
           <h2 className="font-display text-lg font-semibold text-foreground">Team</h2>
           <Popover>
             <PopoverTrigger asChild>
-              <button className="text-muted-foreground hover:text-foreground transition-colors">
+              <button className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Role permissions">
                 <Info className="h-4 w-4" />
               </button>
             </PopoverTrigger>
@@ -343,31 +348,37 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
           </Popover>
         </div>
         {canInviteOrRemove && (
-        <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setSearch(""); setSelectedUser(null); } }}>
+        <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setSearch(""); setSelectedUsers([]); } }}>
           <DialogTrigger asChild>
-            <Button variant="outline" size="sm"><Plus className="mr-1 h-4 w-4" />Invite</Button>
+            <Button size="default" className="gap-1.5 shadow-sm">
+              <Plus className="h-4 w-4" />Invite people
+            </Button>
           </DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>Invite Collaborator</DialogTitle></DialogHeader>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Invite people to the project</DialogTitle>
+              <DialogDescription>
+                Search by name to add multiple collaborators at once — they'll all be invited with the same role.
+              </DialogDescription>
+            </DialogHeader>
             <form onSubmit={(e) => { e.preventDefault(); invite.mutate(); }} className="space-y-4">
               <div className="relative">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Search by name..."
+                    placeholder={selectedUsers.length ? "Add another person..." : "Search by name..."}
                     value={search}
                     onChange={(e) => handleSearchChange(e.target.value)}
-                    onFocus={() => !selectedUser && setShowResults(true)}
+                    onFocus={() => setShowResults(true)}
                     className="pl-9"
-                    required
                   />
                 </div>
 
                 {/* Search results dropdown */}
-                {showResults && debouncedSearch.length >= 2 && !selectedUser && (
+                {showResults && debouncedSearch.length >= 2 && (
                   <div
                     ref={resultsRef}
-                    className="absolute z-50 mt-1 w-full rounded-lg border border-border bg-popover shadow-lg overflow-hidden"
+                    className="absolute z-50 mt-1 w-full rounded-lg border border-border bg-popover shadow-lg overflow-hidden max-h-60 overflow-y-auto"
                   >
                     {searchResults && searchResults.length > 0 ? (
                       searchResults.map((u: any) => (
@@ -381,6 +392,7 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
                             {(u.display_name?.[0] ?? "?").toUpperCase()}
                           </div>
                           <span className="text-sm font-medium text-foreground truncate">{u.display_name}</span>
+                          <Plus className="h-3.5 w-3.5 text-muted-foreground ml-auto" />
                         </button>
                       ))
                     ) : (
@@ -389,48 +401,92 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
                   </div>
                 )}
 
-                {/* Selected user chip */}
-                {selectedUser && (
-                  <div className="mt-2 flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 w-fit">
-                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
-                      {(selectedUser.display_name?.[0] ?? "?").toUpperCase()}
-                    </div>
-                    <span className="text-sm font-medium text-primary">{selectedUser.display_name}</span>
-                    <button type="button" onClick={() => { setSelectedUser(null); setSearch(""); }} className="ml-1">
-                      <X className="h-3.5 w-3.5 text-primary/60 hover:text-primary" />
-                    </button>
+                {/* Selected user chips */}
+                {selectedUsers.length > 0 && (
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    {selectedUsers.map((u) => (
+                      <div key={u.user_id} className="flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1">
+                        <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
+                          {(u.display_name?.[0] ?? "?").toUpperCase()}
+                        </div>
+                        <span className="text-xs font-medium text-primary">{u.display_name}</span>
+                        <button type="button" onClick={() => handleRemoveSelected(u.user_id)} aria-label={`Remove ${u.display_name}`}>
+                          <X className="h-3 w-3 text-primary/60 hover:text-primary" />
+                        </button>
+                      </div>
+                    ))}
+                    <span className="text-[11px] text-muted-foreground ml-1">
+                      {selectedUsers.length} selected
+                    </span>
                   </div>
                 )}
               </div>
 
               {!isCollaborative && (
-                <Select value={projectRole} onValueChange={setProjectRole}>
-                  <SelectTrigger><SelectValue placeholder="Project role" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="client">Client</SelectItem>
-                    <SelectItem value="specialist">Specialist</SelectItem>
-                    <SelectItem value="manager">Manager</SelectItem>
-                    <SelectItem value="label">Record Label</SelectItem>
-                    <SelectItem value="contributor">Contributor</SelectItem>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Project role</label>
+                  <Select value={projectRole} onValueChange={setProjectRole}>
+                    <SelectTrigger><SelectValue placeholder="Project role" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="client">Client</SelectItem>
+                      <SelectItem value="specialist">Specialist</SelectItem>
+                      <SelectItem value="manager">Manager</SelectItem>
+                      <SelectItem value="label">Record Label</SelectItem>
+                      <SelectItem value="contributor">Contributor</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Permission level</label>
+                <Select value={role} onValueChange={(v) => setRole(v as "member" | "admin" | "owner")}>
+                  <SelectTrigger><SelectValue placeholder="Permission" /></SelectTrigger>
+                  <SelectContent className="max-w-sm">
+                    <SelectItem value="member">
+                      <div className="flex flex-col py-0.5">
+                        <span className="font-medium">Member</span>
+                        <span className="text-[11px] text-muted-foreground leading-snug whitespace-normal">
+                          View only — can see goals, files, and team. Cannot edit settings or manage people.
+                        </span>
+                      </div>
+                    </SelectItem>
+                    {isOwner && (
+                      <SelectItem value="admin">
+                        <div className="flex flex-col py-0.5">
+                          <span className="font-medium">Admin</span>
+                          <span className="text-[11px] text-muted-foreground leading-snug whitespace-normal">
+                            Full edit access — update settings, manage the team, edit goals, upload files.
+                          </span>
+                        </div>
+                      </SelectItem>
+                    )}
+                    {isOwner && (
+                      <SelectItem value="owner">
+                        <div className="flex flex-col py-0.5">
+                          <span className="font-medium">Co-owner</span>
+                          <span className="text-[11px] text-muted-foreground leading-snug whitespace-normal">
+                            Same powers as you — can lock splits and remove other admins.
+                          </span>
+                        </div>
+                      </SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
-              )}
-              <Select value={role} onValueChange={(v) => setRole(v as "member" | "admin" | "owner")}>
-                <SelectTrigger><SelectValue placeholder="Permission" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="member">Member</SelectItem>
-                  {isOwner && <SelectItem value="admin">Admin</SelectItem>}
-                  {isOwner && <SelectItem value="owner">Co-owner</SelectItem>}
-                </SelectContent>
-              </Select>
+              </div>
+
               {!isOwner && (role === "admin" || role === "owner") && (
                 <p className="text-xs text-muted-foreground">Only the owner can promote someone to Admin or Co-owner.</p>
               )}
               {role === "owner" && (
                 <p className="text-xs text-amber-600">Co-owners get full control of this project — they can edit settings, manage the team, and lock revenue splits.</p>
               )}
-              <Button type="submit" className="w-full" disabled={invite.isPending || !selectedUser}>
-                {invite.isPending ? "Inviting..." : "Invite"}
+              <Button type="submit" className="w-full" disabled={invite.isPending || !selectedUsers.length}>
+                {invite.isPending
+                  ? "Inviting..."
+                  : selectedUsers.length > 1
+                    ? `Invite ${selectedUsers.length} people`
+                    : "Invite"}
               </Button>
             </form>
           </DialogContent>
