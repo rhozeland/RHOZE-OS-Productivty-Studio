@@ -125,11 +125,19 @@ const PostMenuButton = ({ trigger, intent = "post" }: PostMenuButtonProps = {}) 
               <span className="text-[11px] text-muted-foreground">Service, open call, or collab brief</span>
             </div>
           </DropdownMenuItem>
+          <DropdownMenuItem onClick={openProject} className="gap-3 py-2.5">
+            <Rocket className="h-4 w-4 text-muted-foreground" />
+            <div className="flex flex-col">
+              <span className="text-sm font-medium">Start a Project</span>
+              <span className="text-[11px] text-muted-foreground">Spin up a release, brief, or collab workspace</span>
+            </div>
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
       <CreateListingDialog open={createListingOpen} onOpenChange={setCreateListingOpen} />
       <AnnouncementComposerDialog open={announceOpen} onOpenChange={setAnnounceOpen} />
+      <StartProjectPicker open={startProjectOpen} onOpenChange={setStartProjectOpen} />
     </>
   );
 };
