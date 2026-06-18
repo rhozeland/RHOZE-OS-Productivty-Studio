@@ -11,10 +11,11 @@
  */
 import { useEffect, useState, type ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Plus, Sparkles, Megaphone, Briefcase } from "lucide-react";
+import { Plus, Sparkles, Megaphone, Briefcase, Rocket } from "lucide-react";
 import { useAuthGate } from "@/components/AuthGateDialog";
 import CreateListingDialog from "@/components/marketplace/CreateListingDialog";
 import AnnouncementComposerDialog from "@/components/profile/AnnouncementComposerDialog";
+import StartProjectPicker from "@/components/project/StartProjectPicker";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,6 +37,7 @@ const PostMenuButton = ({ trigger, intent = "post" }: PostMenuButtonProps = {}) 
   const { requireAuth } = useAuthGate();
   const [createListingOpen, setCreateListingOpen] = useState(false);
   const [announceOpen, setAnnounceOpen] = useState(false);
+  const [startProjectOpen, setStartProjectOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
   const gate = () => requireAuth("post");
@@ -43,6 +45,7 @@ const PostMenuButton = ({ trigger, intent = "post" }: PostMenuButtonProps = {}) 
   const openWork = () => { if (gate()) navigate("/flow?share=1"); };
   const openUpdate = () => { if (gate()) setAnnounceOpen(true); };
   const openListing = () => { if (gate()) setCreateListingOpen(true); };
+  const openProject = () => { if (gate()) setStartProjectOpen(true); };
 
   // Legacy `?post=1` deep-link → Share-to-Flow.
   useEffect(() => {
@@ -122,11 +125,19 @@ const PostMenuButton = ({ trigger, intent = "post" }: PostMenuButtonProps = {}) 
               <span className="text-[11px] text-muted-foreground">Service, open call, or collab brief</span>
             </div>
           </DropdownMenuItem>
+          <DropdownMenuItem onClick={openProject} className="gap-3 py-2.5">
+            <Rocket className="h-4 w-4 text-muted-foreground" />
+            <div className="flex flex-col">
+              <span className="text-sm font-medium">Start a Project</span>
+              <span className="text-[11px] text-muted-foreground">Spin up a release, brief, or collab workspace</span>
+            </div>
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
       <CreateListingDialog open={createListingOpen} onOpenChange={setCreateListingOpen} />
       <AnnouncementComposerDialog open={announceOpen} onOpenChange={setAnnounceOpen} />
+      <StartProjectPicker open={startProjectOpen} onOpenChange={setStartProjectOpen} />
     </>
   );
 };
