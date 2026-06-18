@@ -78,6 +78,7 @@ import PublishReleaseCard from "@/components/project/PublishReleaseCard";
 import SignedAgreementCard from "@/components/proposals/SignedAgreementCard";
 import ProjectScopeReview from "@/components/project/ProjectScopeReview";
 import AiRoadmapDraftButton from "@/components/project/AiRoadmapDraftButton";
+import ProjectRolloutTab from "@/components/project/ProjectRolloutTab";
 import AttachCoinToProjectCard from "@/components/project/AttachCoinToProjectCard";
 import RoadmapCopilot from "@/components/project/RoadmapCopilot";
 import TokenizeProjectCta from "@/components/project/TokenizeProjectCta";
@@ -625,6 +626,7 @@ const ProjectDetailPage = () => {
           >
             <TabsTrigger value="overview" className={TAB_TRIGGER}>Overview</TabsTrigger>
             <TabsTrigger value="roadmap" className={TAB_TRIGGER}>Roadmap</TabsTrigger>
+            <TabsTrigger value="rollout" className={TAB_TRIGGER}>Rollout</TabsTrigger>
             <TabsTrigger value="timeline" className={TAB_TRIGGER}>Timeline</TabsTrigger>
             <TabsTrigger value="board" className={TAB_TRIGGER}>Board</TabsTrigger>
             <TabsTrigger value="story" className={TAB_TRIGGER}>Story</TabsTrigger>
@@ -894,6 +896,17 @@ const ProjectDetailPage = () => {
               )}
             </div>
           </div>
+        </TabsContent>
+
+        {/* ROLLOUT — empty-canvas marketing planner w/ AI sidekick */}
+        <TabsContent value="rollout" className="space-y-6">
+          <ProjectRolloutTab
+            projectId={id!}
+            projectOwnerId={project.user_id}
+            ownerProfileId={project.user_id}
+            isOwner={isOwner}
+            existingGoalCount={goals?.filter((g: any) => !g.parent_id).length ?? 0}
+          />
         </TabsContent>
 
         {/* TIMELINE */}
