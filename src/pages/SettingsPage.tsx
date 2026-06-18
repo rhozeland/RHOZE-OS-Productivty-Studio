@@ -283,7 +283,10 @@ const SettingsPage = () => {
 
   const updateProfile = useMutation({
     mutationFn: async () => {
-      if (!archetype) {
+      if (!archetypes.length) {
+        throw new Error("Pick at least one creator type — you can choose more than one.");
+      }
+      if (false) {
         throw new Error("Pick a creator type — Artist, Builder, or Influencer.");
       }
       if (!bio || bio.trim().length < 40) {
