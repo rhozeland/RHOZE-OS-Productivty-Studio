@@ -188,9 +188,28 @@ const ProjectHero = ({ project, owner, status, isOwner, publicView }: ProjectHer
           className="flex flex-row items-end justify-between gap-3"
         >
           <div className="min-w-0 flex-1">
-            <h1 className="font-display text-xl md:text-2xl font-bold text-white drop-shadow-md leading-tight truncate">
-              {project.title}
-            </h1>
+            {editingTitle && canEditTitle ? (
+              <input
+                autoFocus
+                value={titleDraft}
+                onChange={(e) => setTitleDraft(e.target.value)}
+                onBlur={() => saveTitle.mutate(titleDraft)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") { e.preventDefault(); (e.target as HTMLInputElement).blur(); }
+                  if (e.key === "Escape") { setTitleDraft(project.title); setEditingTitle(false); }
+                }}
+                disabled={saveTitle.isPending}
+                className="w-full bg-transparent border-b border-white/40 focus:border-white outline-none font-display text-xl md:text-2xl font-bold text-white drop-shadow-md leading-tight"
+              />
+            ) : (
+              <h1
+                onClick={() => { if (canEditTitle) { setTitleDraft(project.title); setEditingTitle(true); } }}
+                className={`font-display text-xl md:text-2xl font-bold text-white drop-shadow-md leading-tight truncate ${canEditTitle ? "cursor-text hover:opacity-90" : ""}`}
+                title={canEditTitle ? "Click to edit" : undefined}
+              >
+                {project.title}
+              </h1>
+            )}
             {owner && (
               <Link
                 to={`/profile/${owner.username ?? project.user_id}`}
