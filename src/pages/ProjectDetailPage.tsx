@@ -78,6 +78,7 @@ import PublishReleaseCard from "@/components/project/PublishReleaseCard";
 import SignedAgreementCard from "@/components/proposals/SignedAgreementCard";
 import ProjectScopeReview from "@/components/project/ProjectScopeReview";
 import AiRoadmapDraftButton from "@/components/project/AiRoadmapDraftButton";
+import ProjectRolloutTab from "@/components/project/ProjectRolloutTab";
 import AttachCoinToProjectCard from "@/components/project/AttachCoinToProjectCard";
 import RoadmapCopilot from "@/components/project/RoadmapCopilot";
 import TokenizeProjectCta from "@/components/project/TokenizeProjectCta";
