@@ -12,7 +12,7 @@ import { Suspense, lazy, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Rocket, Coins, ArrowRight, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
-import FlowModePage from "@/pages/FlowModePage";
+import FlowFeed from "@/components/creators/FlowFeed";
 import { useDiscoverFeatured } from "@/components/discover/useDiscoverFeatured";
 import type { RegionMarket } from "@/lib/regions";
 import StartProjectPicker from "@/components/project/StartProjectPicker";
