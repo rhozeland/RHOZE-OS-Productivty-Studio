@@ -2931,6 +2931,7 @@ export type Database = {
           ar_splitter_address: string | null
           ar_splitter_share_bps: number | null
           archetype: string | null
+          archetypes: string[]
           available: boolean | null
           avatar_url: string | null
           ban_reason: string | null
@@ -3009,6 +3010,7 @@ export type Database = {
           ar_splitter_address?: string | null
           ar_splitter_share_bps?: number | null
           archetype?: string | null
+          archetypes?: string[]
           available?: boolean | null
           avatar_url?: string | null
           ban_reason?: string | null
@@ -3087,6 +3089,7 @@ export type Database = {
           ar_splitter_address?: string | null
           ar_splitter_share_bps?: number | null
           archetype?: string | null
+          archetypes?: string[]
           available?: boolean | null
           avatar_url?: string | null
           ban_reason?: string | null
