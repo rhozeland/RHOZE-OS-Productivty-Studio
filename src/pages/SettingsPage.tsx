@@ -286,9 +286,6 @@ const SettingsPage = () => {
       if (!archetypes.length) {
         throw new Error("Pick at least one creator type — you can choose more than one.");
       }
-      if (false) {
-        throw new Error("Pick a creator type — Artist, Builder, or Influencer.");
-      }
       if (!bio || bio.trim().length < 40) {
         throw new Error("About needs at least 40 characters — give fans something to read.");
       }
