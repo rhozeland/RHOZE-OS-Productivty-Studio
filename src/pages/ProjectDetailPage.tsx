@@ -48,6 +48,7 @@ import { toast } from "sonner";
 import ProjectHero from "@/components/project/shared/ProjectHero";
 import MilestoneTrack from "@/components/project/shared/MilestoneTrack";
 import BoardMasonry from "@/components/project/shared/BoardMasonry";
+import ProjectBoardCanvas from "@/components/project/board/ProjectBoardCanvas";
 import AddBoardAssetDialog from "@/components/project/AddBoardAssetDialog";
 import SupportersStrip from "@/components/project/shared/SupportersStrip";
 import StoryFeed from "@/components/project/shared/StoryFeed";
@@ -901,28 +902,37 @@ const ProjectDetailPage = () => {
         </TabsContent>
 
         <TabsContent value="board" className="space-y-4">
-          {canManageProject && (
-            <div className="flex justify-end">
-              <Button
-                size="icon"
-                variant="outline"
-                className="rounded-full h-9 w-9"
-                onClick={() => setAddAssetOpen(true)}
-                aria-label="Add asset"
-                title="Add asset"
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
-
-          <BoardMasonry
-            deliverables={deliverables as any}
-            canManage={canManageProject}
-            onAdd={() => setAddAssetOpen(true)}
-            projectId={id!}
-            emptyStateVariant="large"
-          />
+          {/* Desktop/tablet: real whiteboard. Mobile (<sm): masonry fallback. */}
+          <div className="hidden sm:block">
+            <ProjectBoardCanvas
+              projectId={id!}
+              canManage={canManageProject}
+              onAdd={() => setAddAssetOpen(true)}
+            />
+          </div>
+          <div className="sm:hidden space-y-3">
+            {canManageProject && (
+              <div className="flex justify-end">
+                <Button
+                  size="icon"
+                  variant="outline"
+                  className="rounded-full h-9 w-9"
+                  onClick={() => setAddAssetOpen(true)}
+                  aria-label="Add asset"
+                  title="Add asset"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+            <BoardMasonry
+              deliverables={deliverables as any}
+              canManage={canManageProject}
+              onAdd={() => setAddAssetOpen(true)}
+              projectId={id!}
+              emptyStateVariant="large"
+            />
+          </div>
           <AddBoardAssetDialog
             projectId={id!}
             open={addAssetOpen}
