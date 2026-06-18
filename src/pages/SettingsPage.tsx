@@ -127,7 +127,7 @@ const SettingsPage = () => {
   const [bio, setBio] = useState("");
   const [portfolioUrl, setPortfolioUrl] = useState("");
   const [creatorRoles, setCreatorRoles] = useState<string[]>([]);
-  const [archetype, setArchetype] = useState<Archetype | null>(null);
+  const [archetypes, setArchetypes] = useState<Archetype[]>([]);
   const [skillsList, setSkillsList] = useState<string[]>([]);
   const [mediumsList, setMediumsList] = useState<string[]>([]);
   const [location, setLocation] = useState("");
@@ -179,7 +179,7 @@ const SettingsPage = () => {
       // privacy; fetch them via the SECURITY DEFINER RPC and merge.
       const safeCols = [
         "id","user_id","display_name","username","headline","bio","portfolio_url",
-        "creator_roles","archetype","skills","mediums","location","region_code",
+        "creator_roles","archetype","archetypes","skills","mediums","location","region_code",
         "available","is_public","avatar_url","banner_gradient","banner_url",
         "profile_background","instagram_url","tiktok_url","twitter_url","youtube_url",
         "token_mint_address","token_ticker",
@@ -207,7 +207,9 @@ const SettingsPage = () => {
       setBio(p.bio ?? "");
       setPortfolioUrl(p.portfolio_url ?? "");
       setCreatorRoles(Array.isArray(p.creator_roles) ? p.creator_roles : []);
-      setArchetype((p.archetype as Archetype | null) ?? null);
+      const fromArr = Array.isArray(p.archetypes) ? (p.archetypes as Archetype[]) : [];
+      const single = (p.archetype as Archetype | null) ?? null;
+      setArchetypes(fromArr.length ? fromArr : single ? [single] : []);
       setSkillsList(Array.isArray(p.skills) ? p.skills : []);
       setMediumsList(Array.isArray(p.mediums) ? p.mediums : []);
       setLocation(p.location ?? "");
@@ -281,8 +283,8 @@ const SettingsPage = () => {
 
   const updateProfile = useMutation({
     mutationFn: async () => {
-      if (!archetype) {
-        throw new Error("Pick a creator type — Artist, Builder, or Influencer.");
+      if (!archetypes.length) {
+        throw new Error("Pick at least one creator type — you can choose more than one.");
       }
       if (!bio || bio.trim().length < 40) {
         throw new Error("About needs at least 40 characters — give fans something to read.");
@@ -305,7 +307,8 @@ const SettingsPage = () => {
         headline, bio,
         portfolio_url: portfolioUrl || null,
         creator_roles: creatorRoles,
-        archetype,
+        archetype: archetypes[0] ?? null,
+        archetypes,
         skills: skillsList,
         mediums: mediumsList,
         location: location || null,
@@ -406,7 +409,7 @@ const SettingsPage = () => {
   const handleExportData = async () => {
     if (!user) return;
     const [{ data: baseProfile }, { data: priv }] = await Promise.all([
-      supabase.from("profiles").select("id,user_id,display_name,username,headline,bio,portfolio_url,creator_roles,archetype,skills,mediums,location,region_code,available,is_public,avatar_url,banner_gradient,banner_url,profile_background,instagram_url,tiktok_url,twitter_url,youtube_url,token_mint_address,token_ticker,email_notif_messages,email_notif_inquiries,email_notif_purchases,email_notif_reviews,created_at,updated_at").eq("user_id", user.id).single(),
+      supabase.from("profiles").select("id,user_id,display_name,username,headline,bio,portfolio_url,creator_roles,archetype,archetypes,skills,mediums,location,region_code,available,is_public,avatar_url,banner_gradient,banner_url,profile_background,instagram_url,tiktok_url,twitter_url,youtube_url,token_mint_address,token_ticker,email_notif_messages,email_notif_inquiries,email_notif_purchases,email_notif_reviews,created_at,updated_at").eq("user_id", user.id).single(),
       (supabase as any).rpc("get_my_private_profile_fields"),
     ]);
     const privRow = Array.isArray(priv) ? priv[0] : priv;
@@ -528,8 +531,11 @@ const SettingsPage = () => {
 
       {/* 2. Creator type */}
       <div className="space-y-2">
-        <Label>Creator type <span className="text-destructive">*</span></Label>
-        <ArchetypePicker value={archetype} onChange={setArchetype} />
+        <div className="flex items-center justify-between">
+          <Label>Creator types <span className="text-destructive">*</span></Label>
+          <span className="text-[11px] text-muted-foreground">Pick one or more</span>
+        </div>
+        <ArchetypePicker multi value={archetypes} onChange={setArchetypes} />
       </div>
 
       {/* 3. Location + Region */}
