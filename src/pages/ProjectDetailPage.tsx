@@ -898,6 +898,17 @@ const ProjectDetailPage = () => {
           </div>
         </TabsContent>
 
+        {/* ROLLOUT — empty-canvas marketing planner w/ AI sidekick */}
+        <TabsContent value="rollout" className="space-y-6">
+          <ProjectRolloutTab
+            projectId={id!}
+            projectOwnerId={project.user_id}
+            ownerProfileId={project.user_id}
+            isOwner={isOwner}
+            existingGoalCount={goals?.filter((g: any) => !g.parent_id).length ?? 0}
+          />
+        </TabsContent>
+
         {/* TIMELINE */}
         <TabsContent value="timeline" className="space-y-6">
           <RoadmapCalendarView goals={goals} projectId={id!} />
