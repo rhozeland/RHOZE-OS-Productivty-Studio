@@ -36,10 +36,10 @@ const ArchetypePicker = (props: Props) => {
       } else {
         set.add(id);
       }
-      // preserve canonical ARCHETYPES order
-      props.onChange(ARCHETYPES.map((a) => a.id).filter((k) => set.has(k)));
+      const next = ARCHETYPES.map((a) => a.id).filter((k) => set.has(k));
+      (props.onChange as (n: Archetype[]) => void)(next);
     } else {
-      props.onChange(id);
+      (props.onChange as (n: Archetype) => void)(id);
     }
   };
 
