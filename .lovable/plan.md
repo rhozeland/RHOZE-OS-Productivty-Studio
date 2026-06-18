@@ -1,78 +1,49 @@
+# Whiteboard Board tab
 
-# Connect → Projects refactor
+Replace the static masonry on each project's **Board** tab with a true shared whiteboard. One canvas per project, synced for the whole team.
 
-A focused, multi-surface cleanup grouped into four waves. Wave A and B are pure surface fixes (no migrations). Wave C and D add the AI copilot + verified-coin-on-project capability.
+## What you'll get
 
----
+- **Infinite pannable canvas** with zoom (trackpad pinch + +/− buttons + space-drag to pan)
+- **Drag, resize, rotate** every item (existing deliverables + new elements)
+- **Sticky notes** — pick a color, type text, drop anywhere
+- **Freehand draw** — pen tool with color + stroke width, eraser, undo
+- **Background removal** on any image with one click ("Cutout") — runs in the browser, no API key, produces a transparent PNG that re-uploads to storage
+- **Toolbar** floating at the bottom: Select · Pen · Note · Image · Cutout · Undo · Zoom
+- **Falls back to the old masonry on mobile** (<640px) — touch whiteboard is its own beast; mobile users can still view + add, just no freeform editing
+- **Shared** — every team member sees the same layout in real time
 
-## Wave A — Kill the phantom "Building in Public" lane
+## Technical details
 
-**Problem:** `PublicReleasesLane` pulls `profiles.token_ticker` for any public release owner and slaps a `$TICKER` chip on the card — even when the user never attached the coin to that project. The whole lane is also off-strategy.
+### Schema
 
-**Fix:**
-- Unmount `<PublicReleasesLane />` from `DiscoverPage.tsx` (line 376).
-- Delete `src/components/discover/PublicReleasesLane.tsx` (no other callers).
-- Leave the `/release/:slug` page + `is_public` flag on projects alone — owners can still share links manually; we just stop the auto-attached coin lie.
+New columns on `project_deliverables` (canvas position is opt-in; null = legacy masonry behavior):
+- `board_x`, `board_y` `int` — top-left in canvas coords
+- `board_width`, `board_height` `int`
+- `board_rotation` `numeric default 0`
+- `board_z` `int default 0`
+- `bg_removed` `boolean default false` — set after a cutout pass
 
----
+New table `project_board_elements` for whiteboard-native primitives (notes, ink, shapes) that aren't files:
+```
+id uuid pk, project_id uuid fk → projects, created_by uuid → auth.users,
+kind text check in ('note','drawing','shape'),
+x int, y int, width int, height int, rotation numeric default 0, z int default 0,
+color text, payload jsonb,   -- note: {text}; drawing: {paths: [...]}; shape: {type,...}
+created_at, updated_at
+```
+RLS: select for any project member/owner; insert/update/delete for members + owner. GRANTs to `authenticated` + `service_role`.
 
-## Wave B — Connect page: Listings → Projects, swap Post → Start a Project, drop emojis
+### Frontend
 
-**`/market` (MarketRoomPage + ConnectBoard):**
-- Rename the **Listings** filter chip → **Projects**. URL alias: `?kind=listings` keeps working; we also accept `?kind=projects`.
-- Replace the floating **"Post"** button (currently top-right of MarketRoomPage) with a single **"Start a Project"** button. Click → opens the existing `ProposalSheet` (or `NewProjectDialog` for the no-counterparty path) — same dialog used today for "Start a project from this listing", just without a pre-seeded counterparty.
-- Remove the `PostMenuButton` dropdown from the Connect page entirely (Work/Listing/Event/Space). Posting an event or space still lives in their dedicated create pages — Connect is now a discovery/start surface only.
-- Strip emoji glyphs from any visible labels under `src/components/connect/` and from the AI roadmap description composer (`composeMilestoneDescription` in `useAiRoadmapDraft.ts` currently emits 🎯 / 📈 — replace with plain `Strategy —` / `Target —`).
+- New `src/components/project/board/ProjectBoardCanvas.tsx` — the whole canvas
+- Sub-components: `BoardToolbar`, `BoardItemFrame` (drag/resize/rotate wrapper), `StickyNote`, `DrawingLayer` (SVG path renderer + pen capture), `useBoardSync` (one query merging deliverables + elements, mutation helpers)
+- Background removal: dynamic `import("@imgly/background-removal")` only when the Cutout button is pressed (keeps initial bundle small). Result blob → upload to existing `project-deliverables` storage bucket → patch the row with new `file_url` + `bg_removed=true` + `content_hash` cleared
+- Wire into `ProjectDetailPage` Board tab: keep `BoardMasonry` for the Overview preview + mobile; render `<ProjectBoardCanvas />` on the full Board tab at ≥sm breakpoint
+- Keep `AddBoardAssetDialog` for adding files (now drops them at center of current viewport with sensible default size)
 
-**EMPTY_COPY** updates `call` + `listings` to read "No open projects yet — be the first to start one."
+### Out of scope (this pass)
 
----
-
-## Wave C — Move voice intake into the listing/proposal flow
-
-Currently `<AiRoadmapDraftButton />` has a voice mic that lives **inside** an existing project's Roadmap tab. That's backwards — by the time you're in the roadmap, the brief is already locked. Move voice capture to where the brief is actually being authored:
-
-- **Add voice mic** to `<ProposalSheet />`'s brief step (the "What / When / Vibe" textarea trio). Same `useVoiceBrief` hook, drops a transcript into the `what` field.
-- **Remove** the voice mic from the in-project `<AiRoadmapDraftButton />` (the AI button stays; it just re-drafts silently from the existing project context).
-
----
-
-## Wave D — Verified-coin-on-project + AI auto-roadmap + Copilot chat
-
-**D1. Attach coin to a project (verified only)**
-- New nullable col `projects.linked_token_id uuid references public.creator_tokens(id)`.
-- Owner-only `<AttachCoinToProjectCard />` on `ProjectDetailPage` (Roadmap tab, near `PublishReleaseCard`) — dropdown of the owner's `status='approved'` creator_tokens; "None" clears the link.
-- `PublicReleasesLane` is gone, but `ReleasePage` (public `/release/:slug`) gets the coin chip **only when `projects.linked_token_id` resolves to an approved token**. No more profile-token fallback.
-
-**D2. AI auto-roadmap on project create (no empty roadmaps)**
-- Today the auto-draft only fires from `ProjectsPage` when created via that page. Move the auto-draft into a DB-side hook + client-side fallback so **every** newly-created project (including those born from `sign_project_proposal`) gets `draft-project-roadmap` invoked once.
-- Server side: the `sign_project_proposal` RPC already materializes goals from the proposal milestones — keep that path. For projects without a proposal (direct create), trigger a one-shot client effect on first load of `ProjectDetailPage` when `goals.length === 0`.
-
-**D3. Roadmap Copilot chat (new)**
-- New component `<RoadmapCopilot />` mounted as a collapsible right-side panel on the Roadmap tab of `ProjectDetailPage`.
-- New edge function `roadmap-copilot` (Gemini 2.5 Pro, streaming) — system prompt includes the project, current goals + milestones, both collaborators' profiles + recent works, and the linked token (if any). Returns either a chat reply or a structured `proposed_changes` payload (add/edit/reorder milestones).
-- Apply-changes button writes through to `project_goals` (with the existing RLS — owner/specialist only).
-- **Out of scope for this wave:** AI-generated smartboards, Instagram/socials deep-dive scraping (no scraping infra + ToS risk). I'll add a placeholder "Generate intro brief" action in the Copilot that summarizes what we already have on file (profile bio + linked socials + recent works) — no scraping.
-
----
-
-## Sequence
-
-1. Wave A (delete lane, unmount) — pure deletion, ships in one pass.
-2. Wave B (Connect rename + button swap + emoji strip).
-3. Wave C (move voice mic to proposal sheet).
-4. Migration for `projects.linked_token_id` → then D1 UI.
-5. D2 auto-roadmap fallback.
-6. D3 Copilot edge function + panel.
-
-I'll execute waves A→C in one go (no migration needed), then pause for confirmation before the D wave since it adds DB + edge-function surface area.
-
----
-
-## Technical notes
-
-- `PublicReleasesLane` deletion is safe — only one caller (`DiscoverPage`).
-- `ConnectBoard`'s `kind="listings"` branch already wraps `call`-rows, so renaming the chip is a label-only change in `MarketRoomPage`.
-- The "start a project with no counterparty" path needs `ProposalSheet` to accept an empty `counterpartyId` — today it requires one. Fall back to `NewProjectDialog` when no counterparty is set.
-- For D2, avoid double-drafts: gate the client fallback on `goals.length === 0 && !contract` (proposal-born projects always have a contract).
-- For D3, store chat history in a new `project_copilot_messages` table (project_id, role, content, created_at) with RLS scoped via `useProjectRole`.
+- Touch/pen support on phones (canvas is desktop/tablet only; mobile sees masonry)
+- Real-time cursors / multi-cursor presence (positions still sync via tanstack-query refetch + supabase realtime on the two tables — but no live cursor avatars)
+- Connectors/arrows between items
