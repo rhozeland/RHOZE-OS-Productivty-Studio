@@ -35,7 +35,7 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
 
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [selectedUser, setSelectedUser] = useState<{ user_id: string; display_name: string } | null>(null);
+  const [selectedUsers, setSelectedUsers] = useState<Array<{ user_id: string; display_name: string }>>([]);
   const [role, setRole] = useState<"member" | "admin" | "owner">("member");
   const [projectRole, setProjectRole] = useState("client");
   const [showResults, setShowResults] = useState(false);
@@ -50,13 +50,14 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
 
   const { data: searchResults } = useQuery({
     queryKey: ["user-search", debouncedSearch],
-    enabled: debouncedSearch.length >= 2 && !selectedUser,
+    enabled: debouncedSearch.length >= 2,
     queryFn: async () => {
       const { data, error } = await supabase.rpc("lookup_user_by_display_name", { _name: debouncedSearch });
       if (error) throw error;
-      // Filter out current user and existing collaborators
+      // Filter out current user, existing collaborators, and already-picked
       const existingIds = new Set(collaborators?.map((c) => c.user_id) ?? []);
       existingIds.add(user?.id ?? "");
+      selectedUsers.forEach((u) => existingIds.add(u.user_id));
       return (data ?? []).filter((p: any) => !existingIds.has(p.user_id));
     },
   });
