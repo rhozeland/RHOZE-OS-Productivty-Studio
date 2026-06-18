@@ -195,7 +195,7 @@ const VerificationPage = () => {
                   variant="outline"
                   size="sm"
                   className="mt-4"
-                  onClick={() => navigate("/home?tab=works")}
+                  onClick={() => navigate("/studio?start=1")}
                 >
                   <Upload className="mr-1.5 h-3.5 w-3.5" /> Upload a work
                 </Button>
