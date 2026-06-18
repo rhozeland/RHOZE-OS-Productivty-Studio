@@ -531,8 +531,11 @@ const SettingsPage = () => {
 
       {/* 2. Creator type */}
       <div className="space-y-2">
-        <Label>Creator type <span className="text-destructive">*</span></Label>
-        <ArchetypePicker value={archetype} onChange={setArchetype} />
+        <div className="flex items-center justify-between">
+          <Label>Creator types <span className="text-destructive">*</span></Label>
+          <span className="text-[11px] text-muted-foreground">Pick one or more</span>
+        </div>
+        <ArchetypePicker multi value={archetypes} onChange={setArchetypes} />
       </div>
 
       {/* 3. Location + Region */}
