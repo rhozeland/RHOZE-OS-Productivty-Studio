@@ -37,6 +37,7 @@ const PostMenuButton = ({ trigger, intent = "post" }: PostMenuButtonProps = {}) 
   const { requireAuth } = useAuthGate();
   const [createListingOpen, setCreateListingOpen] = useState(false);
   const [announceOpen, setAnnounceOpen] = useState(false);
+  const [startProjectOpen, setStartProjectOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
   const gate = () => requireAuth("post");
@@ -44,6 +45,7 @@ const PostMenuButton = ({ trigger, intent = "post" }: PostMenuButtonProps = {}) 
   const openWork = () => { if (gate()) navigate("/flow?share=1"); };
   const openUpdate = () => { if (gate()) setAnnounceOpen(true); };
   const openListing = () => { if (gate()) setCreateListingOpen(true); };
+  const openProject = () => { if (gate()) setStartProjectOpen(true); };
 
   // Legacy `?post=1` deep-link → Share-to-Flow.
   useEffect(() => {
