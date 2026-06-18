@@ -38,10 +38,29 @@ const ProjectHero = ({ project, owner, status, isOwner, publicView }: ProjectHer
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState<string>(project?.title ?? "");
   const cover = project?.cover_image_url as string | null;
   const accent = project?.cover_color ?? "hsl(var(--primary))";
   const ownerName = owner?.display_name ?? owner?.username ?? "Artist";
   const statusMeta = STATUS_META[status];
+  const canEditTitle = isOwner && !publicView;
+
+  const saveTitle = useMutation({
+    mutationFn: async (next: string) => {
+      const trimmed = next.trim();
+      if (!trimmed) throw new Error("Title can't be empty");
+      if (trimmed === project.title) return;
+      const { error } = await supabase.from("projects").update({ title: trimmed }).eq("id", project.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project", project.id] });
+      setEditingTitle(false);
+      toast.success("Title updated");
+    },
+    onError: (e: any) => toast.error(e.message ?? "Could not update title"),
+  });
 
   const togglePublic = useMutation({
     mutationFn: async (next: boolean) => {
