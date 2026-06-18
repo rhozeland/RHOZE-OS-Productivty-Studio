@@ -245,23 +245,25 @@ const Collaborators = ({ projectId, isCollaborative }: CollaboratorsProps) => {
 
   const invite = useMutation({
     mutationFn: async () => {
-      if (!selectedUser) throw new Error("Please select a user from the search results.");
+      if (!selectedUsers.length) throw new Error("Pick at least one person to invite.");
 
-      const { error } = await supabase.from("project_collaborators").insert({
+      const rows = selectedUsers.map((u) => ({
         project_id: projectId,
-        user_id: selectedUser.user_id,
+        user_id: u.user_id,
         invited_by: user!.id,
         role,
         project_role: isCollaborative ? "collaborator" : projectRole,
-      } as any);
+      }));
+      const { error } = await supabase.from("project_collaborators").insert(rows as any);
       if (error) throw error;
+      return rows.length;
     },
-    onSuccess: () => {
+    onSuccess: (count) => {
       queryClient.invalidateQueries({ queryKey: ["project-collaborators", projectId] });
       setOpen(false);
       setSearch("");
-      setSelectedUser(null);
-      toast.success("Collaborator invited!");
+      setSelectedUsers([]);
+      toast.success(count === 1 ? "Collaborator invited!" : `${count} collaborators invited!`);
     },
     onError: (e: any) => toast.error(e.message),
   });
