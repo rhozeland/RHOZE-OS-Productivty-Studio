@@ -179,7 +179,7 @@ const SettingsPage = () => {
       // privacy; fetch them via the SECURITY DEFINER RPC and merge.
       const safeCols = [
         "id","user_id","display_name","username","headline","bio","portfolio_url",
-        "creator_roles","archetype","skills","mediums","location","region_code",
+        "creator_roles","archetype","archetypes","skills","mediums","location","region_code",
         "available","is_public","avatar_url","banner_gradient","banner_url",
         "profile_background","instagram_url","tiktok_url","twitter_url","youtube_url",
         "token_mint_address","token_ticker",
