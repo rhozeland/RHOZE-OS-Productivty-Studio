@@ -11,7 +11,7 @@
  */
 import { useEffect, useState, type ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Plus, Sparkles, Megaphone, Briefcase, Rocket } from "lucide-react";
+import { Plus, Sparkles, Megaphone, Briefcase, Rocket, ArrowRight } from "lucide-react";
 import { useAuthGate } from "@/components/AuthGateDialog";
 import CreateListingDialog from "@/components/marketplace/CreateListingDialog";
 import AnnouncementComposerDialog from "@/components/profile/AnnouncementComposerDialog";
@@ -125,11 +125,44 @@ const PostMenuButton = ({ trigger, intent = "post" }: PostMenuButtonProps = {}) 
               <span className="text-[11px] text-muted-foreground">Service, open call, or collab brief</span>
             </div>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={openProject} className="gap-3 py-2.5">
-            <Rocket className="h-4 w-4 text-muted-foreground" />
-            <div className="flex flex-col">
-              <span className="text-sm font-medium">Start a Project</span>
-              <span className="text-[11px] text-muted-foreground">Spin up a release, brief, or collab workspace</span>
+          <div className="px-1 pt-1.5 pb-0.5">
+            <div className="h-px bg-border/60" />
+            <p className="px-2 pt-2 text-[9px] uppercase tracking-[0.18em] text-muted-foreground/70 font-semibold">
+              Featured
+            </p>
+          </div>
+          <DropdownMenuItem
+            onClick={openProject}
+            className="m-1 mt-1 gap-3 rounded-xl p-0 focus:bg-transparent data-[highlighted]:bg-transparent"
+          >
+            <div
+              className="group relative w-full overflow-hidden rounded-xl p-[1.5px] bg-[length:200%_200%] animate-gradient-shift shadow-md"
+              style={{
+                backgroundImage: `linear-gradient(120deg, hsl(${todayGradient().stops[0]}), hsl(${todayGradient().stops[1]}), hsl(${todayGradient().stops[2]}), hsl(${todayGradient().stops[0]}))`,
+              }}
+            >
+              <div className="relative flex items-center gap-3 rounded-[10px] bg-card/95 px-3 py-2.5 transition-colors group-hover:bg-card/80">
+                <div
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white shadow-sm bg-[length:200%_200%] animate-gradient-shift"
+                  style={{
+                    backgroundImage: `linear-gradient(120deg, hsl(${todayGradient().stops[0]}), hsl(${todayGradient().stops[1]}), hsl(${todayGradient().stops[2]}))`,
+                  }}
+                >
+                  <Rocket className="h-4 w-4" />
+                </div>
+                <div className="flex flex-col flex-1 min-w-0">
+                  <span
+                    className="text-sm font-semibold bg-clip-text text-transparent bg-[length:200%_200%] animate-gradient-shift"
+                    style={{
+                      backgroundImage: `linear-gradient(120deg, hsl(${todayGradient().stops[0]}), hsl(${todayGradient().stops[1]}), hsl(${todayGradient().stops[2]}))`,
+                    }}
+                  >
+                    Start a Project
+                  </span>
+                  <span className="text-[11px] text-muted-foreground">Spin up a release, brief, or collab workspace</span>
+                </div>
+                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+              </div>
             </div>
           </DropdownMenuItem>
         </DropdownMenuContent>
