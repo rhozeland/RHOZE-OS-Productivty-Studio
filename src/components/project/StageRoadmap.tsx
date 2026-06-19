@@ -762,7 +762,7 @@ const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, co
               const isExpanded = expandedStages.has(stage.id);
               const status = normalizeStatus(stage.status);
               const isEditing = editingStageId === stage.id;
-              const statusMeta = STATUS_META[status];
+              
 
               const shippedCount = subItems.filter((it) => normalizeStatus(it.status) === "shipped").length;
 
