@@ -11,7 +11,7 @@
  */
 import { useEffect, useState, type ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Plus, Sparkles, Megaphone, Briefcase, Rocket } from "lucide-react";
+import { Plus, Sparkles, Megaphone, Briefcase, Rocket, ArrowRight } from "lucide-react";
 import { useAuthGate } from "@/components/AuthGateDialog";
 import CreateListingDialog from "@/components/marketplace/CreateListingDialog";
 import AnnouncementComposerDialog from "@/components/profile/AnnouncementComposerDialog";
