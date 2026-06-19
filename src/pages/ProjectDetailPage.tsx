@@ -427,13 +427,19 @@ const ProjectDetailPage = () => {
     ? roadmapDoneCount
     : (milestones ?? []).filter((m: any) => m.status === "approved" || m.status === "released").length;
 
-  const activeTab = searchParams.get("tab") ?? "overview";
+  const rawTab = searchParams.get("tab") ?? "overview";
+  // Timeline tab merged into Roadmap — redirect legacy deeplinks.
+  const activeTab = rawTab === "timeline" ? "roadmap" : rawTab;
   const setTab = (t: string) => {
     const next = new URLSearchParams(searchParams);
     if (t === "overview") next.delete("tab");
     else next.set("tab", t);
     setSearchParams(next, { replace: true });
   };
+
+  const [roadmapView, setRoadmapView] = useState<"list" | "calendar">(
+    rawTab === "timeline" ? "calendar" : "list",
+  );
 
   // When the project was just created via "Build with AI", land on the
   // Roadmap tab so <AiRoadmapDraftButton /> mounts and its auto-fire effect
@@ -627,7 +633,6 @@ const ProjectDetailPage = () => {
             <TabsTrigger value="overview" className={TAB_TRIGGER}>Overview</TabsTrigger>
             <TabsTrigger value="roadmap" className={TAB_TRIGGER}>Roadmap</TabsTrigger>
             <TabsTrigger value="rollout" className={TAB_TRIGGER}>Rollout</TabsTrigger>
-            <TabsTrigger value="timeline" className={TAB_TRIGGER}>Timeline</TabsTrigger>
             <TabsTrigger value="board" className={TAB_TRIGGER}>Board</TabsTrigger>
             <TabsTrigger value="story" className={TAB_TRIGGER}>Story</TabsTrigger>
             <TabsTrigger value="team" className={TAB_TRIGGER}>Team</TabsTrigger>
@@ -856,19 +861,50 @@ const ProjectDetailPage = () => {
 
 
           <div className="grid gap-6 lg:grid-cols-3">
-            <div className="lg:col-span-2">
-              <StageRoadmap
-                goals={goals}
-                projectId={id!}
-                projectTitle={project.title}
-                contract={contract}
-                milestones={milestones}
-                collaborators={collaborators}
-                isCollaborative={project.project_type === "collaborative"}
-                isLocked={isLocked}
-                isOwner={isOwner}
-              />
+            <div className="lg:col-span-2 space-y-3">
+              {/* View toggle: List ↔ Calendar (Timeline merged in) */}
+              <div className="flex items-center justify-end">
+                <div className="inline-flex rounded-lg border border-border/70 bg-muted/40 p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setRoadmapView("list")}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                      roadmapView === "list"
+                        ? "bg-background shadow-sm text-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    List
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRoadmapView("calendar")}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                      roadmapView === "calendar"
+                        ? "bg-background shadow-sm text-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Calendar
+                  </button>
+                </div>
+              </div>
 
+              {roadmapView === "list" ? (
+                <StageRoadmap
+                  goals={goals}
+                  projectId={id!}
+                  projectTitle={project.title}
+                  contract={contract}
+                  milestones={milestones}
+                  collaborators={collaborators}
+                  isCollaborative={project.project_type === "collaborative"}
+                  isLocked={isLocked}
+                  isOwner={isOwner}
+                />
+              ) : (
+                <RoadmapCalendarView goals={goals} projectId={id!} />
+              )}
             </div>
             <div className="space-y-4">
               {isPaid && (
@@ -909,10 +945,8 @@ const ProjectDetailPage = () => {
           />
         </TabsContent>
 
-        {/* TIMELINE */}
-        <TabsContent value="timeline" className="space-y-6">
-          <RoadmapCalendarView goals={goals} projectId={id!} />
-        </TabsContent>
+        {/* Timeline merged into Roadmap tab — calendar view is a toggle there. */}
+
 
         <TabsContent value="board" className="space-y-4">
           {/* Desktop/tablet: real whiteboard. Mobile (<sm): masonry fallback. */}
