@@ -945,10 +945,8 @@ const ProjectDetailPage = () => {
           />
         </TabsContent>
 
-        {/* TIMELINE */}
-        <TabsContent value="timeline" className="space-y-6">
-          <RoadmapCalendarView goals={goals} projectId={id!} />
-        </TabsContent>
+        {/* Timeline merged into Roadmap tab — calendar view is a toggle there. */}
+
 
         <TabsContent value="board" className="space-y-4">
           {/* Desktop/tablet: real whiteboard. Mobile (<sm): masonry fallback. */}
