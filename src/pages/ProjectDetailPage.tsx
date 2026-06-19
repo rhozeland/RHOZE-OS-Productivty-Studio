@@ -719,7 +719,13 @@ const ProjectDetailPage = () => {
                     </button>
 
                     {/* Tasks */}
-                    <div className="md:col-span-3 rounded-2xl border border-border bg-card p-4 min-h-[240px] flex flex-col">
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => setTab("roadmap")}
+                      onKeyDown={(e) => { if (e.key === "Enter") setTab("roadmap"); }}
+                      className="md:col-span-3 rounded-2xl border border-border bg-card p-4 min-h-[240px] flex flex-col cursor-pointer transition-all hover:border-primary/40 hover:shadow-md"
+                    >
                       <div className="flex items-center justify-between mb-2">
                         <div>
                           <div className="text-[10px] uppercase tracking-[0.14em] font-semibold text-emerald-600 dark:text-emerald-300 flex items-center gap-1.5">
@@ -727,8 +733,9 @@ const ProjectDetailPage = () => {
                           </div>
                           <p className="text-[11px] text-muted-foreground mt-0.5 tabular-nums">{taskDone}/{taskList.length} done</p>
                         </div>
+                        <span className="text-[10px] text-muted-foreground shrink-0">Open →</span>
                       </div>
-                      <div className="flex-1 overflow-y-auto -mx-1 px-1 space-y-1">
+                      <div className="flex-1 overflow-y-auto -mx-1 px-1 space-y-1" onClick={(e) => e.stopPropagation()}>
                         {taskList.length === 0 ? (
                           <p className="text-xs text-muted-foreground">No tasks yet.</p>
                         ) : (
@@ -749,8 +756,10 @@ const ProjectDetailPage = () => {
                       </div>
                       {canManageProject && (
                         <form
+                          onClick={(e) => e.stopPropagation()}
                           onSubmit={(e) => {
                             e.preventDefault();
+                            e.stopPropagation();
                             const v = newTaskTitle.trim();
                             if (!v) return;
                             addTask.mutate(v);
@@ -772,17 +781,26 @@ const ProjectDetailPage = () => {
                     </div>
 
                     {/* Visual — official project media */}
-                    <div className="md:col-span-5">
-                      <ProjectFeaturedVisual
-                        projectId={project.id}
-                        featuredUrl={(project as any).featured_visual_url}
-                        featuredExternalUrl={(project as any).featured_visual_external_url}
-                        featuredMime={(project as any).featured_visual_mime}
-                        featuredTitle={(project as any).featured_visual_title}
-                        canManage={canManageProject}
-                      />
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => setTab("board")}
+                      onKeyDown={(e) => { if (e.key === "Enter") setTab("board"); }}
+                      className="md:col-span-5 rounded-2xl cursor-pointer transition-all hover:opacity-95"
+                    >
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <ProjectFeaturedVisual
+                          projectId={project.id}
+                          featuredUrl={(project as any).featured_visual_url}
+                          featuredExternalUrl={(project as any).featured_visual_external_url}
+                          featuredMime={(project as any).featured_visual_mime}
+                          featuredTitle={(project as any).featured_visual_title}
+                          canManage={canManageProject}
+                        />
+                      </div>
                     </div>
                   </div>
+
 
 
 
