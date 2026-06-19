@@ -749,347 +749,318 @@ const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, co
         </div>
       )}
 
-      {/* Table */}
+      {/* Timeline */}
       {stages.length > 0 && (
-        <div className="surface-card overflow-hidden">
-          {/* Column header */}
-          <div className="hidden lg:grid grid-cols-[28px_minmax(0,1fr)_110px_90px_56px_170px_90px_44px] items-center gap-3 border-b border-border/60 px-3 py-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/80">
-            <div />
-            <div>Stage</div>
-            <div>Status</div>
-            <div>Priority</div>
-            <div>Assigned</div>
-            <div>Timeline</div>
-            <div className="text-right">Budget</div>
-            <div />
-          </div>
+        <div className="relative">
+          {/* Vertical timeline rail */}
+          <div className="absolute left-[26px] top-2 bottom-2 w-px bg-gradient-to-b from-primary/40 via-border to-border/30" aria-hidden />
 
+          <ol className="space-y-3">
+            {stages.map((stage, i) => {
+              const subItems = getSubItems(stage.id);
+              const progress = getStageProgress(stage.id);
+              const isExpanded = expandedStages.has(stage.id);
+              const status = normalizeStatus(stage.status);
+              const isEditing = editingStageId === stage.id;
+              
 
-          {stages.map((stage, i) => {
-            const subItems = getSubItems(stage.id);
-            const progress = getStageProgress(stage.id);
-            const isExpanded = expandedStages.has(stage.id);
-            const status = normalizeStatus(stage.status);
-            const isEditing = editingStageId === stage.id;
+              const shippedCount = subItems.filter((it) => normalizeStatus(it.status) === "shipped").length;
 
-            return (
-              <motion.div
-                key={stage.id}
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.03 }}
-                className={cn(
-                  "border-b border-border/40 last:border-b-0",
-                  !isOwner && stage.assignee_id === user?.id && "border-l-2 border-l-primary",
-                )}
-              >
-
-                {isEditing ? (
-                  // ---- EDIT MODE ----
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      if (editTitle.trim()) updateStage.mutate(stage.id);
-                    }}
-                    className="space-y-3 p-4"
-                  >
-                    <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} placeholder="Stage title" required autoFocus />
-                    <Textarea value={editDesc} onChange={(e) => setEditDesc(e.target.value)} placeholder="Description / details" rows={2} />
-                    <div className="grid grid-cols-2 gap-3">
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button type="button" variant="outline" className={cn("justify-start text-left text-sm", !editStartDate && "text-muted-foreground")}>
-                            <CalendarIcon className="mr-2 h-3.5 w-3.5" />
-                            {editStartDate ? format(editStartDate, "MMM d, yyyy") : "Start date"}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar mode="single" selected={editStartDate} onSelect={setEditStartDate} initialFocus className="p-3 pointer-events-auto" />
-                        </PopoverContent>
-                      </Popover>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button type="button" variant="outline" className={cn("justify-start text-left text-sm", !editEndDate && "text-muted-foreground")}>
-                            <CalendarIcon className="mr-2 h-3.5 w-3.5" />
-                            {editEndDate ? format(editEndDate, "MMM d, yyyy") : "End date"}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar mode="single" selected={editEndDate} onSelect={setEditEndDate} initialFocus className="p-3 pointer-events-auto" />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                    <div className="grid grid-cols-3 gap-3">
-                      <Input placeholder="Location" value={editLocation} onChange={(e) => setEditLocation(e.target.value)} />
-                      <Input type="number" placeholder="Budget" value={editBudget} onChange={(e) => setEditBudget(e.target.value)} min="0" step="0.01" />
-                      <Select value={editPriority} onValueChange={setEditPriority}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="low">Low</SelectItem>
-                          <SelectItem value="medium">Medium</SelectItem>
-                          <SelectItem value="high">High</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex gap-2 justify-end">
-                      <Button type="button" variant="ghost" size="sm" onClick={cancelEditing}>
-                        <X className="mr-1 h-3.5 w-3.5" /> Cancel
-                      </Button>
-                      <Button type="submit" size="sm" disabled={updateStage.isPending}>
-                        <Check className="mr-1 h-3.5 w-3.5" />
-                        {updateStage.isPending ? "Saving..." : "Save"}
-                      </Button>
-                    </div>
-                  </form>
-                ) : (
-                  // ---- ROW VIEW ----
+              return (
+                <motion.li
+                  key={stage.id}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.03 }}
+                  className="relative pl-14"
+                >
+                  {/* Stage node (number bubble) */}
                   <div
                     className={cn(
-                      "group grid grid-cols-[28px_minmax(0,1fr)_auto] lg:grid-cols-[28px_minmax(0,1fr)_110px_90px_56px_170px_90px_44px] items-center gap-3 px-3 py-4 cursor-pointer hover:bg-muted/30 transition-colors",
-                      status === "shipped" && "bg-emerald-500/[0.03]"
+                      "absolute left-0 top-3 z-10 flex h-[52px] w-[52px] items-center justify-center rounded-full border-2 bg-background font-display text-sm font-bold tabular-nums shadow-sm transition-colors",
+                      status === "shipped"
+                        ? "border-emerald-500 text-emerald-500"
+                        : status === "in_progress"
+                        ? "border-primary text-primary"
+                        : status === "in_review"
+                        ? "border-amber-500 text-amber-500"
+                        : "border-border text-muted-foreground",
                     )}
-                    onClick={() => toggleExpand(stage.id)}
                   >
-
-                    {/* Expand chevron + stage number */}
-                    <div className="flex items-center justify-center text-muted-foreground">
-                      {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                    </div>
-
-                    {/* Title + meta */}
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-[11px] font-semibold text-muted-foreground tabular-nums shrink-0">
-                          {String(i + 1).padStart(2, "0")}
-                        </span>
-                        <span className={cn(
-                          "truncate text-sm font-medium",
-                          status === "shipped" ? "text-muted-foreground line-through" : "text-foreground"
-                        )}>
-                          {stage.title}
-                        </span>
-                        {isLocked && <Lock className="h-3 w-3 text-muted-foreground/50 shrink-0" />}
-                        {subItems.length > 0 && (
-                          <span className="ml-1 rounded-full bg-muted/60 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground shrink-0">
-                            {subItems.filter((it) => normalizeStatus(it.status) === "shipped").length}/{subItems.length}
-                          </span>
-                        )}
-                      </div>
-                      {stage.description && (
-                        <p className="mt-0.5 truncate text-xs text-muted-foreground">{stage.description}</p>
-                      )}
-                      {/* Mobile compact meta row */}
-                      <div className="mt-1.5 flex flex-wrap items-center gap-2 md:hidden">
-                        <StatusPill status={status} onChange={(s) => handleStageStatusChange(stage, s)} />
-                        <PriorityPill priority={stage.priority || "medium"} onChange={(p) => setStagePriorityMutation.mutate({ goalId: stage.id, priority: p })} />
-                        <span onClick={(e) => e.stopPropagation()}>
-                          <AssigneePill stage={stage} />
-                        </span>
-                        {stage.stage_date_end && (
-                          <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-                            <CalendarIcon className="h-3 w-3" />
-                            {format(new Date(stage.stage_date_end), "MMM d")}
-                          </span>
-                        )}
-                        {stage.budget_amount > 0 && (
-                          <span className="text-[11px] font-medium text-foreground">${stage.budget_amount.toLocaleString()}</span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Status — desktop column */}
-                    <div className="hidden lg:block">
-                      <StatusPill status={status} onChange={(s) => handleStageStatusChange(stage, s)} />
-                    </div>
-
-                    {/* Priority */}
-                    <div className="hidden lg:block">
-                      <PriorityPill priority={stage.priority || "medium"} onChange={(p) => setStagePriorityMutation.mutate({ goalId: stage.id, priority: p })} />
-                    </div>
-
-                    {/* Assigned to */}
-                    <div className="hidden lg:flex items-center">
-                      <AssigneePill stage={stage} />
-                    </div>
-
-
-                    {/* Timeline */}
-                    <div className="hidden lg:flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
-                      {(stage.stage_date_start || stage.stage_date_end) ? (
-                        <>
-                          <CalendarIcon className="h-3 w-3 shrink-0" />
-                          <span className="truncate">
-                            {stage.stage_date_start && format(new Date(stage.stage_date_start), "MMM d")}
-                            {stage.stage_date_start && stage.stage_date_end && " — "}
-                            {stage.stage_date_end && format(new Date(stage.stage_date_end), "MMM d, yyyy")}
-                          </span>
-                        </>
-                      ) : (
-                        <span className="text-muted-foreground/40">—</span>
-                      )}
-                      {stage.location && (
-                        <span className="ml-1 flex items-center gap-0.5 text-muted-foreground/70">
-                          <MapPin className="h-3 w-3" />
-                          <span className="truncate">{stage.location}</span>
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Budget */}
-                    <div className="hidden lg:block text-right text-sm tabular-nums text-foreground">
-                      {stage.budget_amount > 0 ? `$${stage.budget_amount.toLocaleString()}` : <span className="text-muted-foreground/40">—</span>}
-                    </div>
-
-                    {/* Row actions */}
-                    {(isOwner || stage.assignee_id === user?.id) && (
-                    <div className="hidden lg:flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); startEditing(stage); }}>
-                        <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-                      </Button>
-                      {isOwner && (
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); deleteGoal.mutate(stage.id); }}>
-                        <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
-                      </Button>
-                      )}
-                    </div>
-                    )}
-
-                    {/* Mobile row action menu */}
-                    {(isOwner || stage.assignee_id === user?.id) && (
-                    <div className="flex md:hidden items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => startEditing(stage)}>
-                        <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-                      </Button>
-                    </div>
-                    )}
-
+                    {status === "shipped" ? <Check className="h-5 w-5" /> : String(i + 1).padStart(2, "0")}
                   </div>
-                )}
 
-                {/* Expanded checklist + approval */}
-                <AnimatePresence>
-                  {isExpanded && !isEditing && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.18 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="bg-muted/10 px-4 py-3 md:pl-12 space-y-3 border-t border-border/40">
-                        {/* Progress + checklist */}
-                        {subItems.length > 0 && (
-                          <div className="flex items-center gap-3 pb-1">
-                            <Progress value={progress} className="h-1 flex-1" />
-                            <span className="text-[11px] tabular-nums text-muted-foreground w-8 text-right">{progress}%</span>
+                  {/* Card */}
+                  <div
+                    className={cn(
+                      "group rounded-2xl border bg-card/80 backdrop-blur-sm shadow-sm transition-all hover:shadow-md hover:border-foreground/20",
+                      status === "shipped" ? "border-emerald-500/30 bg-emerald-500/[0.03]" : "border-border/70",
+                      !isOwner && stage.assignee_id === user?.id && "ring-1 ring-primary/40",
+                    )}
+                  >
+                    {isEditing ? (
+                      // ---- EDIT MODE ----
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          if (editTitle.trim()) updateStage.mutate(stage.id);
+                        }}
+                        className="space-y-3 p-4"
+                      >
+                        <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} placeholder="Stage title" required autoFocus />
+                        <Textarea value={editDesc} onChange={(e) => setEditDesc(e.target.value)} placeholder="Description / details" rows={2} />
+                        <div className="grid grid-cols-2 gap-3">
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button type="button" variant="outline" className={cn("justify-start text-left text-sm", !editStartDate && "text-muted-foreground")}>
+                                <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                                {editStartDate ? format(editStartDate, "MMM d, yyyy") : "Start date"}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar mode="single" selected={editStartDate} onSelect={setEditStartDate} initialFocus className="p-3 pointer-events-auto" />
+                            </PopoverContent>
+                          </Popover>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button type="button" variant="outline" className={cn("justify-start text-left text-sm", !editEndDate && "text-muted-foreground")}>
+                                <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                                {editEndDate ? format(editEndDate, "MMM d, yyyy") : "End date"}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar mode="single" selected={editEndDate} onSelect={setEditEndDate} initialFocus className="p-3 pointer-events-auto" />
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                        <div className="grid grid-cols-3 gap-3">
+                          <Input placeholder="Location" value={editLocation} onChange={(e) => setEditLocation(e.target.value)} />
+                          <Input type="number" placeholder="Budget" value={editBudget} onChange={(e) => setEditBudget(e.target.value)} min="0" step="0.01" />
+                          <Select value={editPriority} onValueChange={setEditPriority}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="low">Low</SelectItem>
+                              <SelectItem value="medium">Medium</SelectItem>
+                              <SelectItem value="high">High</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex gap-2 justify-end">
+                          <Button type="button" variant="ghost" size="sm" onClick={cancelEditing}>
+                            <X className="mr-1 h-3.5 w-3.5" /> Cancel
+                          </Button>
+                          <Button type="submit" size="sm" disabled={updateStage.isPending}>
+                            <Check className="mr-1 h-3.5 w-3.5" />
+                            {updateStage.isPending ? "Saving..." : "Save"}
+                          </Button>
+                        </div>
+                      </form>
+                    ) : (
+                      // ---- CARD VIEW ----
+                      <div
+                        className="cursor-pointer p-4"
+                        onClick={() => toggleExpand(stage.id)}
+                      >
+                        {/* Title row */}
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h3 className={cn(
+                                "font-display text-base font-semibold leading-snug",
+                                status === "shipped" ? "text-muted-foreground line-through" : "text-foreground"
+                              )}>
+                                {stage.title}
+                              </h3>
+                              {isLocked && <Lock className="h-3.5 w-3.5 text-muted-foreground/50" />}
+                              {subItems.length > 0 && (
+                                <span className="rounded-full bg-muted/70 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground tabular-nums">
+                                  {shippedCount}/{subItems.length} tasks
+                                </span>
+                              )}
+                            </div>
+                            {stage.description && (
+                              <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{stage.description}</p>
+                            )}
                           </div>
-                        )}
 
-                        <div className="space-y-0.5">
-                          {subItems.map((item, j) => {
-                            const itemDone = normalizeStatus(item.status) === "shipped";
-                            return (
-                              <motion.div
-                                key={item.id}
-                                initial={{ opacity: 0, x: -4 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: j * 0.02 }}
-                                className="group/item flex items-start gap-3 rounded-md px-2 py-1.5 hover:bg-muted/40 transition-colors"
-                              >
-                                <Checkbox
-                                  checked={itemDone}
-                                  onCheckedChange={(checked) =>
-                                    toggleItemComplete.mutate({ goalId: item.id, completed: !!checked })
-                                  }
-                                  className="mt-0.5"
-                                />
-                                <div className="flex-1 min-w-0">
-                                  <p className={cn("text-sm", itemDone ? "line-through text-muted-foreground" : "text-foreground")}>
-                                    {item.title}
-                                  </p>
-                                  {item.description && (
-                                    <p className="text-xs text-muted-foreground mt-0.5">{item.description}</p>
-                                  )}
-                                </div>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6 opacity-0 group-hover/item:opacity-100 transition-opacity shrink-0"
-                                  onClick={() => deleteGoal.mutate(item.id)}
-                                >
-                                  <Trash2 className="h-3 w-3 text-muted-foreground" />
+                          <div className="flex items-center gap-1 shrink-0">
+                            {(isOwner || stage.assignee_id === user?.id) && (
+                              <div className="hidden md:flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); startEditing(stage); }}>
+                                  <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
                                 </Button>
-                              </motion.div>
-                            );
-                          })}
-
-                          {/* Add item */}
-                          <Dialog
-                            open={itemDialogOpen === stage.id}
-                            onOpenChange={(o) => setItemDialogOpen(o ? stage.id : null)}
-                          >
-                            <DialogTrigger asChild>
-                              <button className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors w-full">
-                                <Plus className="h-3.5 w-3.5" />
-                                Add task
-                              </button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Add task to {stage.title}</DialogTitle>
-                              </DialogHeader>
-                              <form
-                                onSubmit={(e) => {
-                                  e.preventDefault();
-                                  if (itemTitle.trim()) addSubItem.mutate(stage.id);
-                                }}
-                                className="space-y-4"
-                              >
-                                <Input placeholder="Task title" value={itemTitle} onChange={(e) => setItemTitle(e.target.value)} required />
-                                <Textarea placeholder="Details (optional)" value={itemDesc} onChange={(e) => setItemDesc(e.target.value)} />
-                                <Button type="submit" className="w-full" disabled={addSubItem.isPending}>
-                                  {addSubItem.isPending ? "Adding..." : "Add task"}
-                                </Button>
-                              </form>
-                            </DialogContent>
-                          </Dialog>
+                                {isOwner && (
+                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); deleteGoal.mutate(stage.id); }}>
+                                    <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
+                                  </Button>
+                                )}
+                              </div>
+                            )}
+                            <span className="text-muted-foreground">
+                              {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                            </span>
+                          </div>
                         </div>
 
-                        {/* Stage Approval */}
-                        {(progress === 100 || subItems.length > 0) && (
-                          <div className="pt-2">
-                            <StageApproval
-                              goalId={stage.id}
-                              projectId={projectId}
-                              projectTitle={projectTitle || ""}
-                              stageTitle={stage.title}
-                              stageComplete={progress === 100 || status === "shipped"}
-                              contract={!isCollaborative ? contract : null}
-                              milestone={!isCollaborative && milestones ? milestones.find((_, idx) => idx === i) : null}
-                            />
+                        {/* Task progress bar */}
+                        {subItems.length > 0 && (
+                          <div className="mt-3 flex items-center gap-2">
+                            <Progress value={progress} className="h-1 flex-1" />
+                            <span className="text-[10px] tabular-nums text-muted-foreground/80 w-8 text-right">{progress}%</span>
                           </div>
                         )}
+
+                        {/* Meta chip row */}
+                        <div
+                          className="mt-3 flex flex-wrap items-center gap-2"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <StatusPill status={status} onChange={(s) => handleStageStatusChange(stage, s)} />
+                          <PriorityPill priority={stage.priority || "medium"} onChange={(p) => setStagePriorityMutation.mutate({ goalId: stage.id, priority: p })} />
+                          <AssigneePill stage={stage} />
+                          {(stage.stage_date_start || stage.stage_date_end) && (
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/30 px-2.5 py-1 text-[11px] text-muted-foreground">
+                              <CalendarIcon className="h-3 w-3" />
+                              {stage.stage_date_start && format(new Date(stage.stage_date_start), "MMM d")}
+                              {stage.stage_date_start && stage.stage_date_end && " — "}
+                              {stage.stage_date_end && format(new Date(stage.stage_date_end), "MMM d")}
+                            </span>
+                          )}
+                          {stage.location && (
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/30 px-2.5 py-1 text-[11px] text-muted-foreground">
+                              <MapPin className="h-3 w-3" />
+                              {stage.location}
+                            </span>
+                          )}
+                          {(isOwner || stage.assignee_id === user?.id) && (
+                            <div className="md:hidden ml-auto flex items-center gap-0.5">
+                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => startEditing(stage)}>
+                                <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                              </Button>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-            );
-          })}
+                    )}
 
-          {/* New item row at bottom (Notion-style) */}
+                    {/* Expanded checklist + approval */}
+                    <AnimatePresence>
+                      {isExpanded && !isEditing && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.18 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="border-t border-border/40 bg-muted/10 px-4 py-3 space-y-3 rounded-b-2xl">
+                            <div className="space-y-0.5">
+                              {subItems.map((item, j) => {
+                                const itemDone = normalizeStatus(item.status) === "shipped";
+                                return (
+                                  <motion.div
+                                    key={item.id}
+                                    initial={{ opacity: 0, x: -4 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: j * 0.02 }}
+                                    className="group/item flex items-start gap-3 rounded-md px-2 py-1.5 hover:bg-muted/40 transition-colors"
+                                  >
+                                    <Checkbox
+                                      checked={itemDone}
+                                      onCheckedChange={(checked) =>
+                                        toggleItemComplete.mutate({ goalId: item.id, completed: !!checked })
+                                      }
+                                      className="mt-0.5"
+                                    />
+                                    <div className="flex-1 min-w-0">
+                                      <p className={cn("text-sm", itemDone ? "line-through text-muted-foreground" : "text-foreground")}>
+                                        {item.title}
+                                      </p>
+                                      {item.description && (
+                                        <p className="text-xs text-muted-foreground mt-0.5">{item.description}</p>
+                                      )}
+                                    </div>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-6 w-6 opacity-0 group-hover/item:opacity-100 transition-opacity shrink-0"
+                                      onClick={() => deleteGoal.mutate(item.id)}
+                                    >
+                                      <Trash2 className="h-3 w-3 text-muted-foreground" />
+                                    </Button>
+                                  </motion.div>
+                                );
+                              })}
+
+                              {/* Add item */}
+                              <Dialog
+                                open={itemDialogOpen === stage.id}
+                                onOpenChange={(o) => setItemDialogOpen(o ? stage.id : null)}
+                              >
+                                <DialogTrigger asChild>
+                                  <button className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors w-full">
+                                    <Plus className="h-3.5 w-3.5" />
+                                    Add task
+                                  </button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                  <DialogHeader>
+                                    <DialogTitle>Add task to {stage.title}</DialogTitle>
+                                  </DialogHeader>
+                                  <form
+                                    onSubmit={(e) => {
+                                      e.preventDefault();
+                                      if (itemTitle.trim()) addSubItem.mutate(stage.id);
+                                    }}
+                                    className="space-y-4"
+                                  >
+                                    <Input placeholder="Task title" value={itemTitle} onChange={(e) => setItemTitle(e.target.value)} required />
+                                    <Textarea placeholder="Details (optional)" value={itemDesc} onChange={(e) => setItemDesc(e.target.value)} />
+                                    <Button type="submit" className="w-full" disabled={addSubItem.isPending}>
+                                      {addSubItem.isPending ? "Adding..." : "Add task"}
+                                    </Button>
+                                  </form>
+                                </DialogContent>
+                              </Dialog>
+                            </div>
+
+                            {/* Stage Approval */}
+                            {(progress === 100 || subItems.length > 0) && (
+                              <div className="pt-2">
+                                <StageApproval
+                                  goalId={stage.id}
+                                  projectId={projectId}
+                                  projectTitle={projectTitle || ""}
+                                  stageTitle={stage.title}
+                                  stageComplete={progress === 100 || status === "shipped"}
+                                  contract={!isCollaborative ? contract : null}
+                                  milestone={!isCollaborative && milestones ? milestones.find((_, idx) => idx === i) : null}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </motion.li>
+              );
+            })}
+          </ol>
+
+          {/* New stage button */}
           {isOwner && (
-          <button
-            onClick={() => setStageDialogOpen(true)}
-            className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-            New stage
-          </button>
+            <button
+              onClick={() => setStageDialogOpen(true)}
+              className="mt-3 ml-14 flex items-center gap-2 rounded-xl border border-dashed border-border/70 px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:border-foreground/40 hover:bg-muted/20 transition-colors"
+            >
+              <Plus className="h-4 w-4" />
+              New stage
+            </button>
           )}
-
         </div>
       )}
+
     </div>
   );
 };
