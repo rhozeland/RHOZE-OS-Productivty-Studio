@@ -214,118 +214,241 @@ const ProjectRolloutTab = ({
     <div className="grid gap-6 lg:grid-cols-[1fr,1.4fr]">
       {/* Sidekick brief panel */}
       <aside className="space-y-4 rounded-2xl border border-border/70 bg-card/60 p-5">
-        <div className="flex items-center gap-2">
-          <div className="rounded-full bg-primary/10 p-1.5">
-            <Sparkles className="h-4 w-4 text-primary" />
-          </div>
-          <div>
-            <h3 className="font-display text-sm font-semibold">Rollout sidekick</h3>
-            <p className="text-[11px] text-muted-foreground">
-              Tell it the budget and what you're dropping.
-            </p>
-          </div>
+        {/* Mode toggle */}
+        <div className="inline-flex w-full rounded-lg border border-border/70 bg-muted/40 p-0.5">
+          <button
+            type="button"
+            onClick={() => setMode("ai")}
+            className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-medium transition-colors ${
+              mode === "ai"
+                ? "bg-background shadow-sm text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Sparkles className="h-3.5 w-3.5" /> AI sidekick
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode("manual")}
+            className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-medium transition-colors ${
+              mode === "manual"
+                ? "bg-background shadow-sm text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <PencilLine className="h-3.5 w-3.5" /> Build manually
+          </button>
         </div>
 
-        <div className="space-y-3">
-          <div>
-            <Label className="text-xs">What are you releasing?</Label>
-            <div className="mt-1.5 grid grid-cols-2 gap-1.5">
-              {RELEASE_OPTIONS.map((opt) => {
-                const active = releaseType === opt.id;
-                return (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => setReleaseType(opt.id)}
-                    className={`text-left rounded-lg border px-2.5 py-1.5 text-[11px] transition-colors ${
-                      active
-                        ? "border-foreground bg-foreground text-background"
-                        : "border-border/70 hover:border-foreground/40"
-                    }`}
-                  >
-                    <div className="font-medium">{opt.label}</div>
-                    <div
-                      className={`text-[10px] mt-0.5 ${
-                        active ? "text-background/70" : "text-muted-foreground"
-                      }`}
-                    >
-                      {opt.hint}
-                    </div>
-                  </button>
-                );
-              })}
+        {mode === "ai" ? (
+          <>
+            <div className="flex items-center gap-2">
+              <div className="rounded-full bg-primary/10 p-1.5">
+                <Sparkles className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-display text-sm font-semibold">Rollout sidekick</h3>
+                <p className="text-[11px] text-muted-foreground">
+                  Tell it the budget and what you're dropping.
+                </p>
+              </div>
             </div>
-          </div>
 
-          <div>
-            <Label htmlFor="rollout-budget" className="text-xs">
-              Marketing budget (USD)
-            </Label>
-            <div className="relative mt-1.5">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-                $
-              </span>
-              <Input
-                id="rollout-budget"
-                type="number"
-                min={0}
-                step={50}
-                value={budget}
-                onChange={(e) => setBudget(e.target.value)}
-                placeholder="1000"
-                className="pl-6 h-9 text-sm"
-              />
+            <div className="space-y-3">
+              <div>
+                <Label className="text-xs">What are you releasing?</Label>
+                <div className="mt-1.5 grid grid-cols-2 gap-1.5">
+                  {RELEASE_OPTIONS.map((opt) => {
+                    const active = releaseType === opt.id;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setReleaseType(opt.id)}
+                        className={`text-left rounded-lg border px-2.5 py-1.5 text-[11px] transition-colors ${
+                          active
+                            ? "border-foreground bg-foreground text-background"
+                            : "border-border/70 hover:border-foreground/40"
+                        }`}
+                      >
+                        <div className="font-medium">{opt.label}</div>
+                        <div
+                          className={`text-[10px] mt-0.5 ${
+                            active ? "text-background/70" : "text-muted-foreground"
+                          }`}
+                        >
+                          {opt.hint}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="rollout-budget" className="text-xs">
+                  Marketing budget (USD)
+                </Label>
+                <div className="relative mt-1.5">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                    $
+                  </span>
+                  <Input
+                    id="rollout-budget"
+                    type="number"
+                    min={0}
+                    step={50}
+                    value={budget}
+                    onChange={(e) => setBudget(e.target.value)}
+                    placeholder="1000"
+                    className="pl-6 h-9 text-sm"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="rollout-date" className="text-xs">
+                  Target release date <span className="text-muted-foreground">(optional)</span>
+                </Label>
+                <Input
+                  id="rollout-date"
+                  type="date"
+                  value={targetDate}
+                  onChange={(e) => setTargetDate(e.target.value)}
+                  className="mt-1.5 h-9 text-sm"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="rollout-vibe" className="text-xs">
+                  Vibe / angle <span className="text-muted-foreground">(optional)</span>
+                </Label>
+                <Textarea
+                  id="rollout-vibe"
+                  value={vibe}
+                  onChange={(e) => setVibe(e.target.value)}
+                  placeholder="e.g. nostalgic summer R&B, lean into the late-night TikTok crowd"
+                  rows={3}
+                  className="mt-1.5 text-sm"
+                />
+              </div>
             </div>
-          </div>
 
-          <div>
-            <Label htmlFor="rollout-date" className="text-xs">
-              Target release date <span className="text-muted-foreground">(optional)</span>
-            </Label>
-            <Input
-              id="rollout-date"
-              type="date"
-              value={targetDate}
-              onChange={(e) => setTargetDate(e.target.value)}
-              className="mt-1.5 h-9 text-sm"
-            />
-          </div>
+            <Button
+              type="button"
+              onClick={() => generate.mutate()}
+              disabled={isWorking}
+              className="w-full gap-2"
+            >
+              {isWorking ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Drafting rollout…
+                </>
+              ) : generated ? (
+                <>
+                  <Wand2 className="h-4 w-4" /> Re-draft
+                </>
+              ) : (
+                <>
+                  <Wand2 className="h-4 w-4" /> Draft rollout
+                </>
+              )}
+            </Button>
+          </>
+        ) : (
+          <>
+            <div className="flex items-center gap-2">
+              <div className="rounded-full bg-muted p-1.5">
+                <PencilLine className="h-4 w-4 text-foreground" />
+              </div>
+              <div>
+                <h3 className="font-display text-sm font-semibold">Add a milestone</h3>
+                <p className="text-[11px] text-muted-foreground">
+                  Build your rollout one step at a time.
+                </p>
+              </div>
+            </div>
 
-          <div>
-            <Label htmlFor="rollout-vibe" className="text-xs">
-              Vibe / angle <span className="text-muted-foreground">(optional)</span>
-            </Label>
-            <Textarea
-              id="rollout-vibe"
-              value={vibe}
-              onChange={(e) => setVibe(e.target.value)}
-              placeholder="e.g. nostalgic summer R&B, lean into the late-night TikTok crowd"
-              rows={3}
-              className="mt-1.5 text-sm"
-            />
-          </div>
-        </div>
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="m-title" className="text-xs">Title</Label>
+                <Input
+                  id="m-title"
+                  value={manualTitle}
+                  onChange={(e) => setManualTitle(e.target.value)}
+                  placeholder="e.g. Teaser clip on TikTok"
+                  className="mt-1.5 h-9 text-sm"
+                />
+              </div>
+              <div>
+                <Label htmlFor="m-desc" className="text-xs">
+                  Details <span className="text-muted-foreground">(optional)</span>
+                </Label>
+                <Textarea
+                  id="m-desc"
+                  value={manualDesc}
+                  onChange={(e) => setManualDesc(e.target.value)}
+                  placeholder="What ships, who's involved, links…"
+                  rows={3}
+                  className="mt-1.5 text-sm"
+                />
+              </div>
+              <div>
+                <Label htmlFor="m-budget" className="text-xs">
+                  Budget (USD) <span className="text-muted-foreground">(optional)</span>
+                </Label>
+                <div className="relative mt-1.5">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">$</span>
+                  <Input
+                    id="m-budget"
+                    type="number"
+                    min={0}
+                    step={50}
+                    value={manualBudget}
+                    onChange={(e) => setManualBudget(e.target.value)}
+                    placeholder="0"
+                    className="pl-6 h-9 text-sm"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label htmlFor="m-start" className="text-xs">Start</Label>
+                  <Input
+                    id="m-start"
+                    type="date"
+                    value={manualStart}
+                    onChange={(e) => setManualStart(e.target.value)}
+                    className="mt-1.5 h-9 text-sm"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="m-end" className="text-xs">Due</Label>
+                  <Input
+                    id="m-end"
+                    type="date"
+                    value={manualEnd}
+                    onChange={(e) => setManualEnd(e.target.value)}
+                    className="mt-1.5 h-9 text-sm"
+                  />
+                </div>
+              </div>
+            </div>
 
-        <Button
-          type="button"
-          onClick={() => generate.mutate()}
-          disabled={isWorking}
-          className="w-full gap-2"
-        >
-          {isWorking ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" /> Drafting rollout…
-            </>
-          ) : generated ? (
-            <>
-              <Wand2 className="h-4 w-4" /> Re-draft
-            </>
-          ) : (
-            <>
-              <Wand2 className="h-4 w-4" /> Draft rollout
-            </>
-          )}
-        </Button>
+            <Button
+              type="button"
+              onClick={() => insertManual.mutate()}
+              disabled={insertManual.isPending || !manualTitle.trim()}
+              className="w-full gap-2"
+            >
+              {insertManual.isPending ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> Adding…</>
+              ) : (
+                <><Plus className="h-4 w-4" /> Add milestone</>
+              )}
+            </Button>
+          </>
+        )}
       </aside>
 
       {/* Canvas */}
