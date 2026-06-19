@@ -943,131 +943,124 @@ const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, co
                       </div>
                     )}
 
+                    {/* Expanded checklist + approval */}
+                    <AnimatePresence>
+                      {isExpanded && !isEditing && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.18 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="border-t border-border/40 bg-muted/10 px-4 py-3 space-y-3 rounded-b-2xl">
+                            <div className="space-y-0.5">
+                              {subItems.map((item, j) => {
+                                const itemDone = normalizeStatus(item.status) === "shipped";
+                                return (
+                                  <motion.div
+                                    key={item.id}
+                                    initial={{ opacity: 0, x: -4 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: j * 0.02 }}
+                                    className="group/item flex items-start gap-3 rounded-md px-2 py-1.5 hover:bg-muted/40 transition-colors"
+                                  >
+                                    <Checkbox
+                                      checked={itemDone}
+                                      onCheckedChange={(checked) =>
+                                        toggleItemComplete.mutate({ goalId: item.id, completed: !!checked })
+                                      }
+                                      className="mt-0.5"
+                                    />
+                                    <div className="flex-1 min-w-0">
+                                      <p className={cn("text-sm", itemDone ? "line-through text-muted-foreground" : "text-foreground")}>
+                                        {item.title}
+                                      </p>
+                                      {item.description && (
+                                        <p className="text-xs text-muted-foreground mt-0.5">{item.description}</p>
+                                      )}
+                                    </div>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-6 w-6 opacity-0 group-hover/item:opacity-100 transition-opacity shrink-0"
+                                      onClick={() => deleteGoal.mutate(item.id)}
+                                    >
+                                      <Trash2 className="h-3 w-3 text-muted-foreground" />
+                                    </Button>
+                                  </motion.div>
+                                );
+                              })}
 
-                {/* Expanded checklist + approval */}
-                <AnimatePresence>
-                  {isExpanded && !isEditing && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.18 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="bg-muted/10 px-4 py-3 md:pl-12 space-y-3 border-t border-border/40">
-                        {/* Progress + checklist */}
-                        {subItems.length > 0 && (
-                          <div className="flex items-center gap-3 pb-1">
-                            <Progress value={progress} className="h-1 flex-1" />
-                            <span className="text-[11px] tabular-nums text-muted-foreground w-8 text-right">{progress}%</span>
-                          </div>
-                        )}
-
-                        <div className="space-y-0.5">
-                          {subItems.map((item, j) => {
-                            const itemDone = normalizeStatus(item.status) === "shipped";
-                            return (
-                              <motion.div
-                                key={item.id}
-                                initial={{ opacity: 0, x: -4 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: j * 0.02 }}
-                                className="group/item flex items-start gap-3 rounded-md px-2 py-1.5 hover:bg-muted/40 transition-colors"
+                              {/* Add item */}
+                              <Dialog
+                                open={itemDialogOpen === stage.id}
+                                onOpenChange={(o) => setItemDialogOpen(o ? stage.id : null)}
                               >
-                                <Checkbox
-                                  checked={itemDone}
-                                  onCheckedChange={(checked) =>
-                                    toggleItemComplete.mutate({ goalId: item.id, completed: !!checked })
-                                  }
-                                  className="mt-0.5"
+                                <DialogTrigger asChild>
+                                  <button className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors w-full">
+                                    <Plus className="h-3.5 w-3.5" />
+                                    Add task
+                                  </button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                  <DialogHeader>
+                                    <DialogTitle>Add task to {stage.title}</DialogTitle>
+                                  </DialogHeader>
+                                  <form
+                                    onSubmit={(e) => {
+                                      e.preventDefault();
+                                      if (itemTitle.trim()) addSubItem.mutate(stage.id);
+                                    }}
+                                    className="space-y-4"
+                                  >
+                                    <Input placeholder="Task title" value={itemTitle} onChange={(e) => setItemTitle(e.target.value)} required />
+                                    <Textarea placeholder="Details (optional)" value={itemDesc} onChange={(e) => setItemDesc(e.target.value)} />
+                                    <Button type="submit" className="w-full" disabled={addSubItem.isPending}>
+                                      {addSubItem.isPending ? "Adding..." : "Add task"}
+                                    </Button>
+                                  </form>
+                                </DialogContent>
+                              </Dialog>
+                            </div>
+
+                            {/* Stage Approval */}
+                            {(progress === 100 || subItems.length > 0) && (
+                              <div className="pt-2">
+                                <StageApproval
+                                  goalId={stage.id}
+                                  projectId={projectId}
+                                  projectTitle={projectTitle || ""}
+                                  stageTitle={stage.title}
+                                  stageComplete={progress === 100 || status === "shipped"}
+                                  contract={!isCollaborative ? contract : null}
+                                  milestone={!isCollaborative && milestones ? milestones.find((_, idx) => idx === i) : null}
                                 />
-                                <div className="flex-1 min-w-0">
-                                  <p className={cn("text-sm", itemDone ? "line-through text-muted-foreground" : "text-foreground")}>
-                                    {item.title}
-                                  </p>
-                                  {item.description && (
-                                    <p className="text-xs text-muted-foreground mt-0.5">{item.description}</p>
-                                  )}
-                                </div>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6 opacity-0 group-hover/item:opacity-100 transition-opacity shrink-0"
-                                  onClick={() => deleteGoal.mutate(item.id)}
-                                >
-                                  <Trash2 className="h-3 w-3 text-muted-foreground" />
-                                </Button>
-                              </motion.div>
-                            );
-                          })}
-
-                          {/* Add item */}
-                          <Dialog
-                            open={itemDialogOpen === stage.id}
-                            onOpenChange={(o) => setItemDialogOpen(o ? stage.id : null)}
-                          >
-                            <DialogTrigger asChild>
-                              <button className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors w-full">
-                                <Plus className="h-3.5 w-3.5" />
-                                Add task
-                              </button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Add task to {stage.title}</DialogTitle>
-                              </DialogHeader>
-                              <form
-                                onSubmit={(e) => {
-                                  e.preventDefault();
-                                  if (itemTitle.trim()) addSubItem.mutate(stage.id);
-                                }}
-                                className="space-y-4"
-                              >
-                                <Input placeholder="Task title" value={itemTitle} onChange={(e) => setItemTitle(e.target.value)} required />
-                                <Textarea placeholder="Details (optional)" value={itemDesc} onChange={(e) => setItemDesc(e.target.value)} />
-                                <Button type="submit" className="w-full" disabled={addSubItem.isPending}>
-                                  {addSubItem.isPending ? "Adding..." : "Add task"}
-                                </Button>
-                              </form>
-                            </DialogContent>
-                          </Dialog>
-                        </div>
-
-                        {/* Stage Approval */}
-                        {(progress === 100 || subItems.length > 0) && (
-                          <div className="pt-2">
-                            <StageApproval
-                              goalId={stage.id}
-                              projectId={projectId}
-                              projectTitle={projectTitle || ""}
-                              stageTitle={stage.title}
-                              stageComplete={progress === 100 || status === "shipped"}
-                              contract={!isCollaborative ? contract : null}
-                              milestone={!isCollaborative && milestones ? milestones.find((_, idx) => idx === i) : null}
-                            />
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-            );
-          })}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </motion.li>
+              );
+            })}
+          </ol>
 
-          {/* New item row at bottom (Notion-style) */}
+          {/* New stage button */}
           {isOwner && (
-          <button
-            onClick={() => setStageDialogOpen(true)}
-            className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-            New stage
-          </button>
+            <button
+              onClick={() => setStageDialogOpen(true)}
+              className="mt-3 ml-14 flex items-center gap-2 rounded-xl border border-dashed border-border/70 px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:border-foreground/40 hover:bg-muted/20 transition-colors"
+            >
+              <Plus className="h-4 w-4" />
+              New stage
+            </button>
           )}
-
         </div>
       )}
+
     </div>
   );
 };
