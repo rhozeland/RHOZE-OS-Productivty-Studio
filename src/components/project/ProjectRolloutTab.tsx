@@ -60,11 +60,19 @@ const ProjectRolloutTab = ({
   const qc = useQueryClient();
   const draft = useAiRoadmapDraft();
 
+  const [mode, setMode] = useState<"ai" | "manual">("ai");
   const [releaseType, setReleaseType] = useState<ReleaseType>("single");
   const [budget, setBudget] = useState<string>("1000");
   const [targetDate, setTargetDate] = useState<string>("");
   const [vibe, setVibe] = useState<string>("");
   const [generated, setGenerated] = useState<DraftedMilestone[] | null>(null);
+
+  // Manual milestone form
+  const [manualTitle, setManualTitle] = useState("");
+  const [manualDesc, setManualDesc] = useState("");
+  const [manualBudget, setManualBudget] = useState<string>("");
+  const [manualStart, setManualStart] = useState<string>("");
+  const [manualEnd, setManualEnd] = useState<string>("");
 
   const releaseLabel = useMemo(
     () => RELEASE_OPTIONS.find((r) => r.id === releaseType)?.label ?? "release",
