@@ -427,13 +427,19 @@ const ProjectDetailPage = () => {
     ? roadmapDoneCount
     : (milestones ?? []).filter((m: any) => m.status === "approved" || m.status === "released").length;
 
-  const activeTab = searchParams.get("tab") ?? "overview";
+  const rawTab = searchParams.get("tab") ?? "overview";
+  // Timeline tab merged into Roadmap — redirect legacy deeplinks.
+  const activeTab = rawTab === "timeline" ? "roadmap" : rawTab;
   const setTab = (t: string) => {
     const next = new URLSearchParams(searchParams);
     if (t === "overview") next.delete("tab");
     else next.set("tab", t);
     setSearchParams(next, { replace: true });
   };
+
+  const [roadmapView, setRoadmapView] = useState<"list" | "calendar">(
+    rawTab === "timeline" ? "calendar" : "list",
+  );
 
   // When the project was just created via "Build with AI", land on the
   // Roadmap tab so <AiRoadmapDraftButton /> mounts and its auto-fire effect
