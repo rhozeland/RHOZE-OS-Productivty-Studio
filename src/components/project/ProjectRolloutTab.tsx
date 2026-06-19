@@ -458,8 +458,9 @@ const ProjectRolloutTab = ({
             <Megaphone className="h-7 w-7 text-muted-foreground/50 mb-3" />
             <h3 className="font-display text-base font-semibold">Empty canvas</h3>
             <p className="mt-1.5 text-xs text-muted-foreground max-w-sm">
-              Set your budget and release on the left, then ask the sidekick to
-              draft a marketing rollout. Nothing locks in until you say so.
+              Use the AI sidekick to draft a full rollout, or switch to{" "}
+              <span className="font-medium text-foreground">Build manually</span>{" "}
+              and add milestones one at a time. Nothing locks in until you say so.
             </p>
           </div>
         )}
