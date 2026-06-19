@@ -164,6 +164,39 @@ const ProjectRolloutTab = ({
     onError: (e: any) => toast.error(e?.message ?? "Couldn't add to roadmap"),
   });
 
+  const insertManual = useMutation({
+    mutationFn: async () => {
+      if (!user?.id) throw new Error("Not signed in");
+      const title = manualTitle.trim();
+      if (!title) throw new Error("Add a title");
+      const row = {
+        project_id: projectId,
+        user_id: user.id,
+        title,
+        description: manualDesc.trim() || null,
+        budget_amount: Math.max(0, Number(manualBudget) || 0),
+        sort_order: existingGoals ?? 0,
+        parent_id: null,
+        stage_date_start: manualStart || null,
+        stage_date_end: manualEnd || null,
+        due_date: manualEnd || null,
+      } as any;
+      const { error } = await supabase.from("project_goals" as any).insert(row);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["project-goals", projectId] });
+      qc.invalidateQueries({ queryKey: ["project", projectId] });
+      toast.success("Milestone added");
+      setManualTitle("");
+      setManualDesc("");
+      setManualBudget("");
+      setManualStart("");
+      setManualEnd("");
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Couldn't add milestone"),
+  });
+
   const isWorking = generate.isPending;
 
   if (!isOwner) {
