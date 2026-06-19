@@ -15,7 +15,7 @@
  */
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Sparkles, Loader2, Wand2, Megaphone, Plus, CheckCircle2 } from "lucide-react";
+import { Sparkles, Loader2, Wand2, Megaphone, Plus, CheckCircle2, PencilLine } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
