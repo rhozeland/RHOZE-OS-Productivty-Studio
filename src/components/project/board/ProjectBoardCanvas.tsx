@@ -783,6 +783,7 @@ const ProjectBoardCanvas = ({ projectId, canManage, onAdd }: Props) => {
           <span className="text-[11px] tabular-nums w-10 text-center text-muted-foreground">{Math.round(zoom * 100)}%</span>
           <ToolBtn icon={Plus} label="Zoom in" onClick={() => setZoom((z) => Math.min(3, z + 0.1))} />
           <ToolBtn icon={RotateCcw} label="Reset view" onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }} />
+          <ToolBtn icon={expanded ? Minimize2 : Maximize2} label={expanded ? "Exit fullscreen" : "Expand"} onClick={() => setExpanded((v) => !v)} />
         </div>
       )}
 
