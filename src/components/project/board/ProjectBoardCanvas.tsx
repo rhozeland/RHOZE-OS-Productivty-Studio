@@ -28,8 +28,21 @@ import {
   Loader2,
   X,
   Hand,
+  Type,
+  Bold,
+  Italic,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+const TEXT_COLORS = ["#0F172A", "#EF4444", "#F59E0B", "#10B981", "#3B82F6", "#8B5CF6", "#FFFFFF"];
+const TEXT_FONTS = [
+  { label: "Sans", value: "'Inter', system-ui, sans-serif" },
+  { label: "Serif", value: "'Playfair Display', Georgia, serif" },
+  { label: "Mono", value: "'JetBrains Mono', ui-monospace, monospace" },
+  { label: "Display", value: "'Space Grotesk', system-ui, sans-serif" },
+  { label: "Handwritten", value: "'Caveat', 'Comic Sans MS', cursive" },
+];
+const TEXT_SIZES = [14, 18, 24, 32, 48, 72];
 
 interface Deliverable {
   id: string;
