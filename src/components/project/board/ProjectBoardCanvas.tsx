@@ -627,13 +627,14 @@ const ProjectBoardCanvas = ({ projectId, canManage, onAdd }: Props) => {
         {positioned.map(renderDeliverable)}
         {(elements ?? []).map(renderElement)}
 
-        {drawing && (
-          <svg className="absolute inset-0 overflow-visible pointer-events-none" style={{ width: 1, height: 1 }}>
+        {drawingRef.current && (
+          <svg key={drawingVersion} className="absolute inset-0 overflow-visible pointer-events-none" style={{ width: 1, height: 1 }}>
             <polyline
-              points={drawing.pts.map((p) => `${p.x},${p.y}`).join(" ")}
+              ref={livePolylineRef}
+              points={drawingRef.current.pts.map((p) => `${p.x},${p.y}`).join(" ")}
               fill="none"
-              stroke={drawing.color}
-              strokeWidth={drawing.w}
+              stroke={drawingRef.current.color}
+              strokeWidth={drawingRef.current.w}
               strokeLinecap="round"
               strokeLinejoin="round"
             />
