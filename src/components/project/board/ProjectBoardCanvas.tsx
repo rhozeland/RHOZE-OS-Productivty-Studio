@@ -31,6 +31,8 @@ import {
   Type,
   Bold,
   Italic,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -97,6 +99,15 @@ const ProjectBoardCanvas = ({ projectId, canManage, onAdd }: Props) => {
   const [penWidth, setPenWidth] = useState(3);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [cuttingId, setCuttingId] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState(false);
+  useEffect(() => {
+    if (!expanded) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setExpanded(false); };
+    window.addEventListener("keydown", onKey);
+    return () => { document.body.style.overflow = prev; window.removeEventListener("keydown", onKey); };
+  }, [expanded]);
 
   // ───── data ─────
   const { data: deliverables } = useQuery({
@@ -699,8 +710,12 @@ const ProjectBoardCanvas = ({ projectId, canManage, onAdd }: Props) => {
   return (
     <div
       ref={wrapRef}
-      className="relative w-full rounded-2xl border border-border bg-[radial-gradient(circle,_hsl(var(--muted-foreground)/0.15)_1px,_transparent_1px)] bg-[length:24px_24px] overflow-hidden"
-      style={{ height: "min(78vh, 820px)", cursor }}
+      className={
+        expanded
+          ? "fixed inset-0 z-[100] w-screen h-screen bg-background border-0 rounded-none overflow-hidden bg-[radial-gradient(circle,_hsl(var(--muted-foreground)/0.15)_1px,_transparent_1px)] bg-[length:24px_24px]"
+          : "relative w-full rounded-2xl border border-border bg-[radial-gradient(circle,_hsl(var(--muted-foreground)/0.15)_1px,_transparent_1px)] bg-[length:24px_24px] overflow-hidden"
+      }
+      style={expanded ? { cursor } : { height: "min(78vh, 820px)", cursor }}
       onMouseDown={(e) => { onCanvasMouseDown(e); onPenDown(e); }}
       onContextMenu={(e) => e.preventDefault()}
       onWheel={onWheel}
@@ -768,6 +783,7 @@ const ProjectBoardCanvas = ({ projectId, canManage, onAdd }: Props) => {
           <span className="text-[11px] tabular-nums w-10 text-center text-muted-foreground">{Math.round(zoom * 100)}%</span>
           <ToolBtn icon={Plus} label="Zoom in" onClick={() => setZoom((z) => Math.min(3, z + 0.1))} />
           <ToolBtn icon={RotateCcw} label="Reset view" onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }} />
+          <ToolBtn icon={expanded ? Minimize2 : Maximize2} label={expanded ? "Exit fullscreen" : "Expand"} onClick={() => setExpanded((v) => !v)} />
         </div>
       )}
 
@@ -787,8 +803,17 @@ const ProjectBoardCanvas = ({ projectId, canManage, onAdd }: Props) => {
         </div>
       )}
 
+      {/* expand toggle (always visible) */}
+      <button
+        onClick={() => setExpanded((v) => !v)}
+        title={expanded ? "Exit fullscreen" : "Expand board"}
+        className="absolute top-3 right-3 h-9 w-9 grid place-items-center rounded-full bg-background/95 backdrop-blur border border-border shadow-md hover:bg-muted z-40"
+      >
+        {expanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+      </button>
+
       {/* hint */}
-      <div className="absolute top-3 right-3 text-[10px] text-muted-foreground bg-background/80 backdrop-blur px-2 py-1 rounded-md border border-border">
+      <div className="absolute top-3 right-14 text-[10px] text-muted-foreground bg-background/80 backdrop-blur px-2 py-1 rounded-md border border-border hidden md:block">
         Hold Space to pan · ⌘/Ctrl + scroll to zoom
       </div>
     </div>
