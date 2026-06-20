@@ -803,8 +803,17 @@ const ProjectBoardCanvas = ({ projectId, canManage, onAdd }: Props) => {
         </div>
       )}
 
+      {/* expand toggle (always visible) */}
+      <button
+        onClick={() => setExpanded((v) => !v)}
+        title={expanded ? "Exit fullscreen" : "Expand board"}
+        className="absolute top-3 right-3 h-9 w-9 grid place-items-center rounded-full bg-background/95 backdrop-blur border border-border shadow-md hover:bg-muted z-40"
+      >
+        {expanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+      </button>
+
       {/* hint */}
-      <div className="absolute top-3 right-3 text-[10px] text-muted-foreground bg-background/80 backdrop-blur px-2 py-1 rounded-md border border-border">
+      <div className="absolute top-3 right-14 text-[10px] text-muted-foreground bg-background/80 backdrop-blur px-2 py-1 rounded-md border border-border hidden md:block">
         Hold Space to pan · ⌘/Ctrl + scroll to zoom
       </div>
     </div>
