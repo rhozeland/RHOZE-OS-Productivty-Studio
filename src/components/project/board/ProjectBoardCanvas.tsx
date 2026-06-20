@@ -389,26 +389,40 @@ const ProjectBoardCanvas = ({ projectId, canManage, onAdd }: Props) => {
           cursor: canManage && tool === "select" ? "grab" : "default",
         }}
         onMouseDown={(e) => beginDrag(e, d.id, d.board_x!, d.board_y!, (p) => patchDeliverable(d.id, p))}
+        onDragStart={(e) => e.preventDefault()}
+        draggable={false}
         onClick={(e) => { e.stopPropagation(); setSelectedId(d.id); }}
       >
         {isImage && (
           <img src={d.file_url!} alt={d.title ?? ""} className="w-full h-full object-cover pointer-events-none" draggable={false} />
         )}
         {isVideo && (
-          <video src={d.file_url!} className="w-full h-full object-cover" muted playsInline />
+          <video src={d.file_url!} className="w-full h-full object-cover pointer-events-none" muted playsInline />
         )}
         {isAudio && (
           <div className="w-full h-full p-3 flex flex-col justify-center">
             <div className="text-xs font-medium truncate mb-2">{d.title}</div>
-            <audio src={d.file_url!} controls className="w-full" />
+            <audio src={d.file_url!} controls className="w-full" onMouseDown={(e) => e.stopPropagation()} />
           </div>
         )}
         {isLink && !isImage && !isVideo && !isAudio && (
-          <a href={d.file_url!} target="_blank" rel="noopener noreferrer" className="w-full h-full p-3 flex flex-col justify-center hover:bg-muted/40">
+          <div className="w-full h-full p-3 flex flex-col justify-center pointer-events-none">
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Link</div>
             <div className="text-sm font-medium truncate mt-1">{d.title}</div>
             <div className="text-[11px] text-muted-foreground truncate mt-1">{d.file_url}</div>
-          </a>
+            {selected && (
+              <a
+                href={d.file_url!}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+                className="pointer-events-auto mt-2 text-[11px] underline text-primary self-start"
+              >
+                Open link ↗
+              </a>
+            )}
+          </div>
         )}
         {!isImage && !isVideo && !isAudio && !isLink && (
           <div className="w-full h-full p-3 flex flex-col justify-center">
@@ -490,10 +504,31 @@ const ProjectBoardCanvas = ({ projectId, canManage, onAdd }: Props) => {
 
         {selected && canManage && (
           <>
-            <div className="absolute -top-10 left-0 flex items-center gap-1 bg-background border border-border rounded-lg shadow-lg px-1 py-1 z-30">
+            <div className="absolute -top-10 left-0 flex items-center gap-1 bg-background border border-border rounded-lg shadow-lg px-1.5 py-1 z-30">
+              {el.kind === "note" && (
+                <>
+                  <div className="flex items-center gap-1 pr-1.5 border-r border-border">
+                    {NOTE_COLORS.map((c) => (
+                      <button
+                        key={c}
+                        title="Change color"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          patchElement(el.id, { color: c } as any);
+                          qc.invalidateQueries({ queryKey: ["project-board-elements", projectId] });
+                        }}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        className={`h-5 w-5 rounded-full border-2 ${el.color === c ? "border-foreground" : "border-transparent"}`}
+                        style={{ background: c }}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
               <button
                 title="Delete"
                 onClick={(e) => { e.stopPropagation(); deleteElement(el.id); setSelectedId(null); }}
+                onMouseDown={(e) => e.stopPropagation()}
                 className="h-7 w-7 grid place-items-center rounded hover:bg-destructive hover:text-destructive-foreground"
               >
                 <Trash2 className="h-3.5 w-3.5" />
