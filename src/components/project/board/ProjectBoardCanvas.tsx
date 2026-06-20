@@ -761,6 +761,7 @@ const ProjectBoardCanvas = ({ projectId, canManage, onAdd }: Props) => {
               </div>
             )}
           </div>
+          <ToolBtn icon={Type} label="Text" active={tool === "text"} onClick={() => setTool("text")} />
           <ToolBtn icon={ImageIcon} label="Add file" onClick={onAdd} />
           <div className="h-6 w-px bg-border mx-1" />
           <ToolBtn icon={Minus} label="Zoom out" onClick={() => setZoom((z) => Math.max(0.25, z - 0.1))} />
