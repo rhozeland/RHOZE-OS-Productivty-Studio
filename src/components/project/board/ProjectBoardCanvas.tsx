@@ -389,26 +389,40 @@ const ProjectBoardCanvas = ({ projectId, canManage, onAdd }: Props) => {
           cursor: canManage && tool === "select" ? "grab" : "default",
         }}
         onMouseDown={(e) => beginDrag(e, d.id, d.board_x!, d.board_y!, (p) => patchDeliverable(d.id, p))}
+        onDragStart={(e) => e.preventDefault()}
+        draggable={false}
         onClick={(e) => { e.stopPropagation(); setSelectedId(d.id); }}
       >
         {isImage && (
           <img src={d.file_url!} alt={d.title ?? ""} className="w-full h-full object-cover pointer-events-none" draggable={false} />
         )}
         {isVideo && (
-          <video src={d.file_url!} className="w-full h-full object-cover" muted playsInline />
+          <video src={d.file_url!} className="w-full h-full object-cover pointer-events-none" muted playsInline />
         )}
         {isAudio && (
           <div className="w-full h-full p-3 flex flex-col justify-center">
             <div className="text-xs font-medium truncate mb-2">{d.title}</div>
-            <audio src={d.file_url!} controls className="w-full" />
+            <audio src={d.file_url!} controls className="w-full" onMouseDown={(e) => e.stopPropagation()} />
           </div>
         )}
         {isLink && !isImage && !isVideo && !isAudio && (
-          <a href={d.file_url!} target="_blank" rel="noopener noreferrer" className="w-full h-full p-3 flex flex-col justify-center hover:bg-muted/40">
+          <div className="w-full h-full p-3 flex flex-col justify-center pointer-events-none">
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Link</div>
             <div className="text-sm font-medium truncate mt-1">{d.title}</div>
             <div className="text-[11px] text-muted-foreground truncate mt-1">{d.file_url}</div>
-          </a>
+            {selected && (
+              <a
+                href={d.file_url!}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+                className="pointer-events-auto mt-2 text-[11px] underline text-primary self-start"
+              >
+                Open link ↗
+              </a>
+            )}
+          </div>
         )}
         {!isImage && !isVideo && !isAudio && !isLink && (
           <div className="w-full h-full p-3 flex flex-col justify-center">
