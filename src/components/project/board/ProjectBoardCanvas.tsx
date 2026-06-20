@@ -559,30 +559,117 @@ const ProjectBoardCanvas = ({ projectId, canManage, onAdd }: Props) => {
             />
           </svg>
         )}
+        {el.kind === "shape" && el.payload?.type === "text" && (
+          <TextBody
+            text={el.payload?.text ?? ""}
+            color={el.color ?? TEXT_COLORS[0]}
+            fontSize={el.payload?.fontSize ?? 24}
+            fontFamily={el.payload?.fontFamily ?? TEXT_FONTS[0].value}
+            bold={!!el.payload?.bold}
+            italic={!!el.payload?.italic}
+            align={el.payload?.align ?? "left"}
+            editable={canManage}
+            onChange={(text) => patchElement(el.id, { payload: { ...el.payload, text } } as any)}
+          />
+        )}
 
         {selected && canManage && (
           <>
-            <div className="absolute -top-10 left-0 flex items-center gap-1 bg-background border border-border rounded-lg shadow-lg px-1.5 py-1 z-30">
+            <div className="absolute -top-10 left-0 flex items-center gap-1 bg-background border border-border rounded-lg shadow-lg px-1.5 py-1 z-30 whitespace-nowrap">
               {el.kind === "note" && (
-                <>
-                  <div className="flex items-center gap-1 pr-1.5 border-r border-border">
-                    {NOTE_COLORS.map((c) => (
+                <div className="flex items-center gap-1 pr-1.5 border-r border-border">
+                  {NOTE_COLORS.map((c) => (
+                    <button
+                      key={c}
+                      title="Change color"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        patchElement(el.id, { color: c } as any);
+                        qc.invalidateQueries({ queryKey: ["project-board-elements", projectId] });
+                      }}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      className={`h-5 w-5 rounded-full border-2 ${el.color === c ? "border-foreground" : "border-transparent"}`}
+                      style={{ background: c }}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {el.kind === "shape" && el.payload?.type === "text" && (
+                <div className="flex items-center gap-1 pr-1.5 border-r border-border">
+                  <select
+                    title="Font"
+                    value={el.payload?.fontFamily ?? TEXT_FONTS[0].value}
+                    onChange={(e) => {
+                      patchElement(el.id, { payload: { ...el.payload, fontFamily: e.target.value } } as any);
+                      qc.invalidateQueries({ queryKey: ["project-board-elements", projectId] });
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={(e) => e.stopPropagation()}
+                    className="h-7 text-xs bg-transparent border border-border rounded px-1.5"
+                  >
+                    {TEXT_FONTS.map((f) => (
+                      <option key={f.value} value={f.value}>{f.label}</option>
+                    ))}
+                  </select>
+                  <select
+                    title="Size"
+                    value={el.payload?.fontSize ?? 24}
+                    onChange={(e) => {
+                      patchElement(el.id, { payload: { ...el.payload, fontSize: Number(e.target.value) } } as any);
+                      qc.invalidateQueries({ queryKey: ["project-board-elements", projectId] });
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={(e) => e.stopPropagation()}
+                    className="h-7 text-xs bg-transparent border border-border rounded px-1.5 tabular-nums"
+                  >
+                    {TEXT_SIZES.map((s) => (
+                      <option key={s} value={s}>{s}px</option>
+                    ))}
+                  </select>
+                  <button
+                    title="Bold"
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      patchElement(el.id, { payload: { ...el.payload, bold: !el.payload?.bold } } as any);
+                      qc.invalidateQueries({ queryKey: ["project-board-elements", projectId] });
+                    }}
+                    className={`h-7 w-7 grid place-items-center rounded ${el.payload?.bold ? "bg-foreground text-background" : "hover:bg-muted"}`}
+                  >
+                    <Bold className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    title="Italic"
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      patchElement(el.id, { payload: { ...el.payload, italic: !el.payload?.italic } } as any);
+                      qc.invalidateQueries({ queryKey: ["project-board-elements", projectId] });
+                    }}
+                    className={`h-7 w-7 grid place-items-center rounded ${el.payload?.italic ? "bg-foreground text-background" : "hover:bg-muted"}`}
+                  >
+                    <Italic className="h-3.5 w-3.5" />
+                  </button>
+                  <div className="flex items-center gap-1 pl-1.5 border-l border-border">
+                    {TEXT_COLORS.map((c) => (
                       <button
                         key={c}
-                        title="Change color"
+                        title="Text color"
+                        onMouseDown={(e) => e.stopPropagation()}
                         onClick={(e) => {
                           e.stopPropagation();
                           patchElement(el.id, { color: c } as any);
                           qc.invalidateQueries({ queryKey: ["project-board-elements", projectId] });
                         }}
-                        onMouseDown={(e) => e.stopPropagation()}
-                        className={`h-5 w-5 rounded-full border-2 ${el.color === c ? "border-foreground" : "border-transparent"}`}
+                        className={`h-5 w-5 rounded-full border ${el.color === c ? "border-foreground ring-2 ring-foreground/20" : "border-border"}`}
                         style={{ background: c }}
                       />
                     ))}
                   </div>
-                </>
+                </div>
               )}
+
               <button
                 title="Delete"
                 onClick={(e) => { e.stopPropagation(); deleteElement(el.id); setSelectedId(null); }}
@@ -606,7 +693,8 @@ const ProjectBoardCanvas = ({ projectId, canManage, onAdd }: Props) => {
   const cursor =
     tool === "pan" || spaceDown ? "grab" :
     tool === "pen" ? "crosshair" :
-    tool === "note" ? "copy" : "default";
+    tool === "note" || tool === "text" ? "copy" : "default";
+
 
   return (
     <div
