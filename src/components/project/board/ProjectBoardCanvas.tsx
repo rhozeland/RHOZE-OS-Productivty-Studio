@@ -72,7 +72,7 @@ interface BoardElement {
   payload: any;
 }
 
-type Tool = "select" | "pan" | "pen" | "note";
+type Tool = "select" | "pan" | "pen" | "note" | "text";
 
 interface Props {
   projectId: string;
