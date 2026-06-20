@@ -834,4 +834,55 @@ const NoteBody = ({ color, text, editable, onChange }: { color: string; text: st
   );
 };
 
+const TextBody = ({
+  text, color, fontSize, fontFamily, bold, italic, align, editable, onChange,
+}: {
+  text: string;
+  color: string;
+  fontSize: number;
+  fontFamily: string;
+  bold: boolean;
+  italic: boolean;
+  align: "left" | "center" | "right";
+  editable: boolean;
+  onChange: (t: string) => void;
+}) => {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(text);
+  useEffect(() => { setDraft(text); }, [text]);
+  const style: React.CSSProperties = {
+    color,
+    fontSize,
+    fontFamily,
+    fontWeight: bold ? 700 : 400,
+    fontStyle: italic ? "italic" : "normal",
+    textAlign: align,
+    lineHeight: 1.15,
+  };
+  return (
+    <div
+      className="w-full h-full p-2"
+      onDoubleClick={(e) => { e.stopPropagation(); if (editable) setEditing(true); }}
+    >
+      {editing ? (
+        <textarea
+          autoFocus
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={() => { setEditing(false); if (draft !== text) onChange(draft); }}
+          onMouseDown={(e) => e.stopPropagation()}
+          className="w-full h-full bg-transparent outline-none resize-none"
+          style={style}
+          placeholder="Type…"
+        />
+      ) : (
+        <div className="w-full h-full whitespace-pre-wrap break-words overflow-hidden" style={style}>
+          {text || <span style={{ ...style, opacity: 0.35 }}>Double-click to edit</span>}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default ProjectBoardCanvas;
+
