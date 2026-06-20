@@ -710,8 +710,12 @@ const ProjectBoardCanvas = ({ projectId, canManage, onAdd }: Props) => {
   return (
     <div
       ref={wrapRef}
-      className="relative w-full rounded-2xl border border-border bg-[radial-gradient(circle,_hsl(var(--muted-foreground)/0.15)_1px,_transparent_1px)] bg-[length:24px_24px] overflow-hidden"
-      style={{ height: "min(78vh, 820px)", cursor }}
+      className={
+        expanded
+          ? "fixed inset-0 z-[100] w-screen h-screen bg-background border-0 rounded-none overflow-hidden bg-[radial-gradient(circle,_hsl(var(--muted-foreground)/0.15)_1px,_transparent_1px)] bg-[length:24px_24px]"
+          : "relative w-full rounded-2xl border border-border bg-[radial-gradient(circle,_hsl(var(--muted-foreground)/0.15)_1px,_transparent_1px)] bg-[length:24px_24px] overflow-hidden"
+      }
+      style={expanded ? { cursor } : { height: "min(78vh, 820px)", cursor }}
       onMouseDown={(e) => { onCanvasMouseDown(e); onPenDown(e); }}
       onContextMenu={(e) => e.preventDefault()}
       onWheel={onWheel}
