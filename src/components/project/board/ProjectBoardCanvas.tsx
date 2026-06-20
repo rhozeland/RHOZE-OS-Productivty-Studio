@@ -504,10 +504,31 @@ const ProjectBoardCanvas = ({ projectId, canManage, onAdd }: Props) => {
 
         {selected && canManage && (
           <>
-            <div className="absolute -top-10 left-0 flex items-center gap-1 bg-background border border-border rounded-lg shadow-lg px-1 py-1 z-30">
+            <div className="absolute -top-10 left-0 flex items-center gap-1 bg-background border border-border rounded-lg shadow-lg px-1.5 py-1 z-30">
+              {el.kind === "note" && (
+                <>
+                  <div className="flex items-center gap-1 pr-1.5 border-r border-border">
+                    {NOTE_COLORS.map((c) => (
+                      <button
+                        key={c}
+                        title="Change color"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          patchElement(el.id, { color: c } as any);
+                          qc.invalidateQueries({ queryKey: ["project-board-elements", projectId] });
+                        }}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        className={`h-5 w-5 rounded-full border-2 ${el.color === c ? "border-foreground" : "border-transparent"}`}
+                        style={{ background: c }}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
               <button
                 title="Delete"
                 onClick={(e) => { e.stopPropagation(); deleteElement(el.id); setSelectedId(null); }}
+                onMouseDown={(e) => e.stopPropagation()}
                 className="h-7 w-7 grid place-items-center rounded hover:bg-destructive hover:text-destructive-foreground"
               >
                 <Trash2 className="h-3.5 w-3.5" />
