@@ -99,6 +99,15 @@ const ProjectBoardCanvas = ({ projectId, canManage, onAdd }: Props) => {
   const [penWidth, setPenWidth] = useState(3);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [cuttingId, setCuttingId] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState(false);
+  useEffect(() => {
+    if (!expanded) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setExpanded(false); };
+    window.addEventListener("keydown", onKey);
+    return () => { document.body.style.overflow = prev; window.removeEventListener("keydown", onKey); };
+  }, [expanded]);
 
   // ───── data ─────
   const { data: deliverables } = useQuery({
