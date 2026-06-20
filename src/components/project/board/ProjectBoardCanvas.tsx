@@ -28,8 +28,21 @@ import {
   Loader2,
   X,
   Hand,
+  Type,
+  Bold,
+  Italic,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+const TEXT_COLORS = ["#0F172A", "#EF4444", "#F59E0B", "#10B981", "#3B82F6", "#8B5CF6", "#FFFFFF"];
+const TEXT_FONTS = [
+  { label: "Sans", value: "'Inter', system-ui, sans-serif" },
+  { label: "Serif", value: "'Playfair Display', Georgia, serif" },
+  { label: "Mono", value: "'JetBrains Mono', ui-monospace, monospace" },
+  { label: "Display", value: "'Space Grotesk', system-ui, sans-serif" },
+  { label: "Handwritten", value: "'Caveat', 'Comic Sans MS', cursive" },
+];
+const TEXT_SIZES = [14, 18, 24, 32, 48, 72];
 
 interface Deliverable {
   id: string;
@@ -59,7 +72,7 @@ interface BoardElement {
   payload: any;
 }
 
-type Tool = "select" | "pan" | "pen" | "note";
+type Tool = "select" | "pan" | "pen" | "note" | "text";
 
 interface Props {
   projectId: string;
@@ -236,6 +249,29 @@ const ProjectBoardCanvas = ({ projectId, canManage, onAdd }: Props) => {
       setTool("select");
       return;
     }
+    if (tool === "text" && canManage) {
+      const wp = screenToWorld(e.clientX, e.clientY);
+      addElement({
+        kind: "shape",
+        x: wp.x - 120,
+        y: wp.y - 24,
+        width: 240,
+        height: 56,
+        rotation: 0,
+        color: TEXT_COLORS[0],
+        payload: {
+          type: "text",
+          text: "",
+          fontSize: 24,
+          fontFamily: TEXT_FONTS[0].value,
+          bold: false,
+          italic: false,
+          align: "left",
+        },
+      });
+      setTool("select");
+      return;
+    }
     if (tool === "pen" && canManage) {
       // pen handled in onPenDown
       return;
@@ -251,40 +287,62 @@ const ProjectBoardCanvas = ({ projectId, canManage, onAdd }: Props) => {
     setZoom((z) => Math.max(0.25, Math.min(3, z * (1 + delta))));
   };
 
-  // ───── pen tool ─────
-  const [drawing, setDrawing] = useState<{ pts: { x: number; y: number }[]; color: string; w: number } | null>(null);
+  // ───── pen tool (ref + rAF based to avoid lag) ─────
+  const drawingRef = useRef<{ pts: { x: number; y: number }[]; color: string; w: number } | null>(null);
+  const livePolylineRef = useRef<SVGPolylineElement>(null);
+  const [drawingVersion, setDrawingVersion] = useState(0); // only used to mount/unmount the overlay svg
+
   const onPenDown = (e: React.MouseEvent) => {
     if (tool !== "pen" || !canManage) return;
     e.preventDefault();
     const wp = screenToWorld(e.clientX, e.clientY);
-    setDrawing({ pts: [wp], color: penColor, w: penWidth });
+    drawingRef.current = { pts: [wp], color: penColor, w: penWidth };
+    setDrawingVersion((v) => v + 1);
+
+    let raf = 0;
+    let pending: { x: number; y: number } | null = null;
+    const flush = () => {
+      raf = 0;
+      const d = drawingRef.current;
+      const node = livePolylineRef.current;
+      if (!d || !node || !pending) return;
+      // Only push the point if it moved meaningfully (skip sub-pixel duplicates)
+      const last = d.pts[d.pts.length - 1];
+      if (!last || Math.hypot(pending.x - last.x, pending.y - last.y) > 0.75) {
+        d.pts.push(pending);
+        node.setAttribute("points", d.pts.map((p) => `${p.x},${p.y}`).join(" "));
+      }
+      pending = null;
+    };
+
     const move = (ev: MouseEvent) => {
-      const p = screenToWorld(ev.clientX, ev.clientY);
-      setDrawing((d) => d ? { ...d, pts: [...d.pts, p] } : d);
+      pending = screenToWorld(ev.clientX, ev.clientY);
+      if (!raf) raf = requestAnimationFrame(flush);
     };
     const up = async () => {
       document.removeEventListener("mousemove", move);
       document.removeEventListener("mouseup", up);
-      setDrawing((d) => {
-        if (!d || d.pts.length < 2) return null;
-        const xs = d.pts.map((p) => p.x); const ys = d.pts.map((p) => p.y);
-        const minX = Math.min(...xs), minY = Math.min(...ys);
-        const maxX = Math.max(...xs), maxY = Math.max(...ys);
-        const pad = d.w + 4;
-        const w = maxX - minX + pad * 2;
-        const h = maxY - minY + pad * 2;
-        const rel = d.pts.map((p) => ({ x: p.x - minX + pad, y: p.y - minY + pad }));
-        addElement({
-          kind: "drawing",
-          x: minX - pad,
-          y: minY - pad,
-          width: Math.max(20, w),
-          height: Math.max(20, h),
-          rotation: 0,
-          color: d.color,
-          payload: { points: rel, strokeWidth: d.w },
-        });
-        return null;
+      if (raf) cancelAnimationFrame(raf);
+      const d = drawingRef.current;
+      drawingRef.current = null;
+      setDrawingVersion((v) => v + 1);
+      if (!d || d.pts.length < 2) return;
+      const xs = d.pts.map((p) => p.x); const ys = d.pts.map((p) => p.y);
+      const minX = Math.min(...xs), minY = Math.min(...ys);
+      const maxX = Math.max(...xs), maxY = Math.max(...ys);
+      const pad = d.w + 4;
+      const w = maxX - minX + pad * 2;
+      const h = maxY - minY + pad * 2;
+      const rel = d.pts.map((p) => ({ x: p.x - minX + pad, y: p.y - minY + pad }));
+      addElement({
+        kind: "drawing",
+        x: minX - pad,
+        y: minY - pad,
+        width: Math.max(20, w),
+        height: Math.max(20, h),
+        rotation: 0,
+        color: d.color,
+        payload: { points: rel, strokeWidth: d.w },
       });
     };
     document.addEventListener("mousemove", move);
@@ -501,30 +559,117 @@ const ProjectBoardCanvas = ({ projectId, canManage, onAdd }: Props) => {
             />
           </svg>
         )}
+        {el.kind === "shape" && el.payload?.type === "text" && (
+          <TextBody
+            text={el.payload?.text ?? ""}
+            color={el.color ?? TEXT_COLORS[0]}
+            fontSize={el.payload?.fontSize ?? 24}
+            fontFamily={el.payload?.fontFamily ?? TEXT_FONTS[0].value}
+            bold={!!el.payload?.bold}
+            italic={!!el.payload?.italic}
+            align={el.payload?.align ?? "left"}
+            editable={canManage}
+            onChange={(text) => patchElement(el.id, { payload: { ...el.payload, text } } as any)}
+          />
+        )}
 
         {selected && canManage && (
           <>
-            <div className="absolute -top-10 left-0 flex items-center gap-1 bg-background border border-border rounded-lg shadow-lg px-1.5 py-1 z-30">
+            <div className="absolute -top-10 left-0 flex items-center gap-1 bg-background border border-border rounded-lg shadow-lg px-1.5 py-1 z-30 whitespace-nowrap">
               {el.kind === "note" && (
-                <>
-                  <div className="flex items-center gap-1 pr-1.5 border-r border-border">
-                    {NOTE_COLORS.map((c) => (
+                <div className="flex items-center gap-1 pr-1.5 border-r border-border">
+                  {NOTE_COLORS.map((c) => (
+                    <button
+                      key={c}
+                      title="Change color"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        patchElement(el.id, { color: c } as any);
+                        qc.invalidateQueries({ queryKey: ["project-board-elements", projectId] });
+                      }}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      className={`h-5 w-5 rounded-full border-2 ${el.color === c ? "border-foreground" : "border-transparent"}`}
+                      style={{ background: c }}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {el.kind === "shape" && el.payload?.type === "text" && (
+                <div className="flex items-center gap-1 pr-1.5 border-r border-border">
+                  <select
+                    title="Font"
+                    value={el.payload?.fontFamily ?? TEXT_FONTS[0].value}
+                    onChange={(e) => {
+                      patchElement(el.id, { payload: { ...el.payload, fontFamily: e.target.value } } as any);
+                      qc.invalidateQueries({ queryKey: ["project-board-elements", projectId] });
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={(e) => e.stopPropagation()}
+                    className="h-7 text-xs bg-transparent border border-border rounded px-1.5"
+                  >
+                    {TEXT_FONTS.map((f) => (
+                      <option key={f.value} value={f.value}>{f.label}</option>
+                    ))}
+                  </select>
+                  <select
+                    title="Size"
+                    value={el.payload?.fontSize ?? 24}
+                    onChange={(e) => {
+                      patchElement(el.id, { payload: { ...el.payload, fontSize: Number(e.target.value) } } as any);
+                      qc.invalidateQueries({ queryKey: ["project-board-elements", projectId] });
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={(e) => e.stopPropagation()}
+                    className="h-7 text-xs bg-transparent border border-border rounded px-1.5 tabular-nums"
+                  >
+                    {TEXT_SIZES.map((s) => (
+                      <option key={s} value={s}>{s}px</option>
+                    ))}
+                  </select>
+                  <button
+                    title="Bold"
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      patchElement(el.id, { payload: { ...el.payload, bold: !el.payload?.bold } } as any);
+                      qc.invalidateQueries({ queryKey: ["project-board-elements", projectId] });
+                    }}
+                    className={`h-7 w-7 grid place-items-center rounded ${el.payload?.bold ? "bg-foreground text-background" : "hover:bg-muted"}`}
+                  >
+                    <Bold className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    title="Italic"
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      patchElement(el.id, { payload: { ...el.payload, italic: !el.payload?.italic } } as any);
+                      qc.invalidateQueries({ queryKey: ["project-board-elements", projectId] });
+                    }}
+                    className={`h-7 w-7 grid place-items-center rounded ${el.payload?.italic ? "bg-foreground text-background" : "hover:bg-muted"}`}
+                  >
+                    <Italic className="h-3.5 w-3.5" />
+                  </button>
+                  <div className="flex items-center gap-1 pl-1.5 border-l border-border">
+                    {TEXT_COLORS.map((c) => (
                       <button
                         key={c}
-                        title="Change color"
+                        title="Text color"
+                        onMouseDown={(e) => e.stopPropagation()}
                         onClick={(e) => {
                           e.stopPropagation();
                           patchElement(el.id, { color: c } as any);
                           qc.invalidateQueries({ queryKey: ["project-board-elements", projectId] });
                         }}
-                        onMouseDown={(e) => e.stopPropagation()}
-                        className={`h-5 w-5 rounded-full border-2 ${el.color === c ? "border-foreground" : "border-transparent"}`}
+                        className={`h-5 w-5 rounded-full border ${el.color === c ? "border-foreground ring-2 ring-foreground/20" : "border-border"}`}
                         style={{ background: c }}
                       />
                     ))}
                   </div>
-                </>
+                </div>
               )}
+
               <button
                 title="Delete"
                 onClick={(e) => { e.stopPropagation(); deleteElement(el.id); setSelectedId(null); }}
@@ -548,7 +693,8 @@ const ProjectBoardCanvas = ({ projectId, canManage, onAdd }: Props) => {
   const cursor =
     tool === "pan" || spaceDown ? "grab" :
     tool === "pen" ? "crosshair" :
-    tool === "note" ? "copy" : "default";
+    tool === "note" || tool === "text" ? "copy" : "default";
+
 
   return (
     <div
@@ -569,13 +715,14 @@ const ProjectBoardCanvas = ({ projectId, canManage, onAdd }: Props) => {
         {positioned.map(renderDeliverable)}
         {(elements ?? []).map(renderElement)}
 
-        {drawing && (
-          <svg className="absolute inset-0 overflow-visible pointer-events-none" style={{ width: 1, height: 1 }}>
+        {drawingRef.current && (
+          <svg key={drawingVersion} className="absolute inset-0 overflow-visible pointer-events-none" style={{ width: 1, height: 1 }}>
             <polyline
-              points={drawing.pts.map((p) => `${p.x},${p.y}`).join(" ")}
+              ref={livePolylineRef}
+              points={drawingRef.current.pts.map((p) => `${p.x},${p.y}`).join(" ")}
               fill="none"
-              stroke={drawing.color}
-              strokeWidth={drawing.w}
+              stroke={drawingRef.current.color}
+              strokeWidth={drawingRef.current.w}
               strokeLinecap="round"
               strokeLinejoin="round"
             />
@@ -614,6 +761,7 @@ const ProjectBoardCanvas = ({ projectId, canManage, onAdd }: Props) => {
               </div>
             )}
           </div>
+          <ToolBtn icon={Type} label="Text" active={tool === "text"} onClick={() => setTool("text")} />
           <ToolBtn icon={ImageIcon} label="Add file" onClick={onAdd} />
           <div className="h-6 w-px bg-border mx-1" />
           <ToolBtn icon={Minus} label="Zoom out" onClick={() => setZoom((z) => Math.max(0.25, z - 0.1))} />
@@ -686,4 +834,55 @@ const NoteBody = ({ color, text, editable, onChange }: { color: string; text: st
   );
 };
 
+const TextBody = ({
+  text, color, fontSize, fontFamily, bold, italic, align, editable, onChange,
+}: {
+  text: string;
+  color: string;
+  fontSize: number;
+  fontFamily: string;
+  bold: boolean;
+  italic: boolean;
+  align: "left" | "center" | "right";
+  editable: boolean;
+  onChange: (t: string) => void;
+}) => {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(text);
+  useEffect(() => { setDraft(text); }, [text]);
+  const style: React.CSSProperties = {
+    color,
+    fontSize,
+    fontFamily,
+    fontWeight: bold ? 700 : 400,
+    fontStyle: italic ? "italic" : "normal",
+    textAlign: align,
+    lineHeight: 1.15,
+  };
+  return (
+    <div
+      className="w-full h-full p-2"
+      onDoubleClick={(e) => { e.stopPropagation(); if (editable) setEditing(true); }}
+    >
+      {editing ? (
+        <textarea
+          autoFocus
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={() => { setEditing(false); if (draft !== text) onChange(draft); }}
+          onMouseDown={(e) => e.stopPropagation()}
+          className="w-full h-full bg-transparent outline-none resize-none"
+          style={style}
+          placeholder="Type…"
+        />
+      ) : (
+        <div className="w-full h-full whitespace-pre-wrap break-words overflow-hidden" style={style}>
+          {text || <span style={{ ...style, opacity: 0.35 }}>Double-click to edit</span>}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default ProjectBoardCanvas;
+
