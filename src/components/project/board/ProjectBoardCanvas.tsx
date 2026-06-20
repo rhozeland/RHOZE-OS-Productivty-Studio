@@ -249,6 +249,29 @@ const ProjectBoardCanvas = ({ projectId, canManage, onAdd }: Props) => {
       setTool("select");
       return;
     }
+    if (tool === "text" && canManage) {
+      const wp = screenToWorld(e.clientX, e.clientY);
+      addElement({
+        kind: "shape",
+        x: wp.x - 120,
+        y: wp.y - 24,
+        width: 240,
+        height: 56,
+        rotation: 0,
+        color: TEXT_COLORS[0],
+        payload: {
+          type: "text",
+          text: "",
+          fontSize: 24,
+          fontFamily: TEXT_FONTS[0].value,
+          bold: false,
+          italic: false,
+          align: "left",
+        },
+      });
+      setTool("select");
+      return;
+    }
     if (tool === "pen" && canManage) {
       // pen handled in onPenDown
       return;
@@ -264,40 +287,62 @@ const ProjectBoardCanvas = ({ projectId, canManage, onAdd }: Props) => {
     setZoom((z) => Math.max(0.25, Math.min(3, z * (1 + delta))));
   };
 
-  // ───── pen tool ─────
-  const [drawing, setDrawing] = useState<{ pts: { x: number; y: number }[]; color: string; w: number } | null>(null);
+  // ───── pen tool (ref + rAF based to avoid lag) ─────
+  const drawingRef = useRef<{ pts: { x: number; y: number }[]; color: string; w: number } | null>(null);
+  const livePolylineRef = useRef<SVGPolylineElement>(null);
+  const [drawingVersion, setDrawingVersion] = useState(0); // only used to mount/unmount the overlay svg
+
   const onPenDown = (e: React.MouseEvent) => {
     if (tool !== "pen" || !canManage) return;
     e.preventDefault();
     const wp = screenToWorld(e.clientX, e.clientY);
-    setDrawing({ pts: [wp], color: penColor, w: penWidth });
+    drawingRef.current = { pts: [wp], color: penColor, w: penWidth };
+    setDrawingVersion((v) => v + 1);
+
+    let raf = 0;
+    let pending: { x: number; y: number } | null = null;
+    const flush = () => {
+      raf = 0;
+      const d = drawingRef.current;
+      const node = livePolylineRef.current;
+      if (!d || !node || !pending) return;
+      // Only push the point if it moved meaningfully (skip sub-pixel duplicates)
+      const last = d.pts[d.pts.length - 1];
+      if (!last || Math.hypot(pending.x - last.x, pending.y - last.y) > 0.75) {
+        d.pts.push(pending);
+        node.setAttribute("points", d.pts.map((p) => `${p.x},${p.y}`).join(" "));
+      }
+      pending = null;
+    };
+
     const move = (ev: MouseEvent) => {
-      const p = screenToWorld(ev.clientX, ev.clientY);
-      setDrawing((d) => d ? { ...d, pts: [...d.pts, p] } : d);
+      pending = screenToWorld(ev.clientX, ev.clientY);
+      if (!raf) raf = requestAnimationFrame(flush);
     };
     const up = async () => {
       document.removeEventListener("mousemove", move);
       document.removeEventListener("mouseup", up);
-      setDrawing((d) => {
-        if (!d || d.pts.length < 2) return null;
-        const xs = d.pts.map((p) => p.x); const ys = d.pts.map((p) => p.y);
-        const minX = Math.min(...xs), minY = Math.min(...ys);
-        const maxX = Math.max(...xs), maxY = Math.max(...ys);
-        const pad = d.w + 4;
-        const w = maxX - minX + pad * 2;
-        const h = maxY - minY + pad * 2;
-        const rel = d.pts.map((p) => ({ x: p.x - minX + pad, y: p.y - minY + pad }));
-        addElement({
-          kind: "drawing",
-          x: minX - pad,
-          y: minY - pad,
-          width: Math.max(20, w),
-          height: Math.max(20, h),
-          rotation: 0,
-          color: d.color,
-          payload: { points: rel, strokeWidth: d.w },
-        });
-        return null;
+      if (raf) cancelAnimationFrame(raf);
+      const d = drawingRef.current;
+      drawingRef.current = null;
+      setDrawingVersion((v) => v + 1);
+      if (!d || d.pts.length < 2) return;
+      const xs = d.pts.map((p) => p.x); const ys = d.pts.map((p) => p.y);
+      const minX = Math.min(...xs), minY = Math.min(...ys);
+      const maxX = Math.max(...xs), maxY = Math.max(...ys);
+      const pad = d.w + 4;
+      const w = maxX - minX + pad * 2;
+      const h = maxY - minY + pad * 2;
+      const rel = d.pts.map((p) => ({ x: p.x - minX + pad, y: p.y - minY + pad }));
+      addElement({
+        kind: "drawing",
+        x: minX - pad,
+        y: minY - pad,
+        width: Math.max(20, w),
+        height: Math.max(20, h),
+        rotation: 0,
+        color: d.color,
+        payload: { points: rel, strokeWidth: d.w },
       });
     };
     document.addEventListener("mousemove", move);
