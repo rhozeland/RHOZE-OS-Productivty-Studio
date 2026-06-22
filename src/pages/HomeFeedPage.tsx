@@ -9,7 +9,7 @@
  *   3. Flow Mode — full feed embedded directly.
  */
 import { Suspense, lazy, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Rocket, Coins, ArrowRight, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import FlowFeed from "@/components/creators/FlowFeed";
