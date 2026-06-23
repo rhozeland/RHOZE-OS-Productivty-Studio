@@ -7,6 +7,8 @@
  */
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { Link } from "react-router-dom";
+import { ArrowUpRight } from "lucide-react";
 import { REGIONS, type RegionMarket } from "@/lib/regions";
 import { cn } from "@/lib/utils";
 import type { FeaturedSlide } from "./useDiscoverFeatured";
