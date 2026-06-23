@@ -42,7 +42,7 @@ const HomeFeedPage = () => {
       <section className="px-0 pb-0 sm:px-4 lg:px-8">
         <div className="mx-auto max-w-6xl overflow-hidden rounded-t-[2rem] border-x border-t border-border/40 bg-background/80 shadow-[0_-24px_80px_-56px_hsl(var(--foreground)/0.45)]">
           <div className="h-[calc(100vh-520px)] min-h-[560px]">
-            <FlowModePage />
+            <FlowModePage embedded />
           </div>
         </div>
       </section>

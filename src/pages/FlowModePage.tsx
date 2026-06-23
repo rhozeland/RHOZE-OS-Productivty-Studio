@@ -1785,8 +1785,8 @@ const FlowModePage = ({ embedded = false }: FlowModePageProps) => {
             size="icon"
             className="rounded-full bg-card/60 backdrop-blur-sm hover:bg-card/80 h-9 w-9"
             onClick={handleExitFlow}
-            aria-label="Exit Flow Mode"
-            title="Exit Flow Mode"
+              aria-label={embedded ? "Expand Flow Mode" : "Exit Flow Mode"}
+              title={embedded ? "Expand Flow Mode" : "Exit Flow Mode"}
           >
               {embedded ? <Maximize2 className="h-4 w-4" /> : <X className="h-4 w-4" />}
           </Button>
