@@ -77,7 +77,7 @@ import BackedByRhozelandBadge from "@/components/concierge/BackedByRhozelandBadg
 import PublishReleaseCard from "@/components/project/PublishReleaseCard";
 import SignedAgreementCard from "@/components/proposals/SignedAgreementCard";
 import ProjectScopeReview from "@/components/project/ProjectScopeReview";
-import AiRoadmapDraftButton from "@/components/project/AiRoadmapDraftButton";
+// AiRoadmapDraftButton retired — manual roadmaps only.
 import ProjectRolloutTab from "@/components/project/ProjectRolloutTab";
 import AttachCoinToProjectCard from "@/components/project/AttachCoinToProjectCard";
 import RoadmapCopilot from "@/components/project/RoadmapCopilot";
