@@ -1,245 +1,228 @@
 /**
- * HomeFeedPage — `/home` (v11)
+ * HomeFeedPage — `/home` (v12 — project-first)
  *
- * Logged-in front door. Three stacked sections, all inline (no redirects):
- *   1. CTA Carousel — auto-rotating gradient slider for the two primary
- *      actions: "Start a Project" and "Launch a Coin". Sized to match the
- *      Creator Pass card (~aspect 21:9 hero).
- *   2. Discover globe + featured carousel — living map of artists/events/spaces.
- *   3. Flow Mode — full feed embedded directly.
+ * Two stacked zones:
+ *   1. Your Studio (signed-in only) — continue working + invites strip
+ *   2. Live Projects feed — recent activity across the network
+ *
+ * Tile grids (artists/spaces/events/opportunities) are gone. Discover is
+ * folded into here. /discover and /charts both redirect to /home.
  */
-import { Suspense, lazy, useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { Rocket, Coins, ArrowRight, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
-import FlowFeed from "@/components/creators/FlowFeed";
-import { useDiscoverFeatured } from "@/components/discover/useDiscoverFeatured";
-import type { RegionMarket } from "@/lib/regions";
-import StartProjectPicker from "@/components/project/StartProjectPicker";
+import { useMemo } from "react";
+import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { motion } from "framer-motion";
+import { Plus, ArrowRight, Loader2, Sparkles } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import ActiveProjectsLane from "@/components/discover/ActiveProjectsLane";
 
-const DiscoverGlobe = lazy(() => import("@/components/discover/DiscoverGlobe"));
-
-type Slide = {
+// ─────────────────────────────────────────────────────────────────────────────
+// Studio strip — your active projects + Start new
+// ─────────────────────────────────────────────────────────────────────────────
+type MyProject = {
   id: string;
-  eyebrow: string;
   title: string;
-  subtitle: string;
-  cta: string;
-  Icon: typeof Rocket;
-  gradient: string;
-  href: string;
-  onClick?: () => void;
+  cover_color: string | null;
+  cover_image_url: string | null;
+  is_public: boolean | null;
+  updated_at: string | null;
 };
 
-const HomeFeedPage = () => {
-  const navigate = useNavigate();
-  const [marketFilter, setMarketFilter] = useState<RegionMarket | "All">("All");
-  const { slides: featuredSlides } = useDiscoverFeatured(marketFilter);
-  const [pickerOpen, setPickerOpen] = useState(false);
+const StudioStrip = ({ userId }: { userId: string }) => {
+  const { data = [], isLoading } = useQuery({
+    queryKey: ["home-my-projects", userId],
+    staleTime: 30_000,
+    queryFn: async (): Promise<MyProject[]> => {
+      // Projects you own
+      const ownedRes = await supabase
+        .from("projects")
+        .select("id, title, cover_color, cover_image_url, is_public, updated_at, user_id")
+        .eq("user_id", userId)
+        .order("updated_at", { ascending: false })
+        .limit(6);
+      const owned = (ownedRes.data ?? []) as any[];
 
-  const startProject = () => {
-    setPickerOpen(true);
-  };
+      // Projects you collab on
+      const collabRes = await (supabase as any)
+        .from("project_collaborators")
+        .select("project_id")
+        .eq("user_id", userId);
+      const collabIds = ((collabRes.data ?? []) as any[]).map((c) => c.project_id);
+      const extraIds = collabIds.filter((id) => !owned.find((o) => o.id === id));
 
-  const ctaSlides: Slide[] = [
-    {
-      id: "project",
-      eyebrow: "Build in public",
-      title: "Start a Project",
-      subtitle: "Plan a release. Share the roadmap. Let fans back the work as you ship it.",
-      cta: "Start a Project",
-      Icon: Rocket,
-      gradient:
-        "linear-gradient(135deg, hsl(330 85% 60%) 0%, hsl(292 84% 61%) 50%, hsl(38 92% 55%) 100%)",
-      href: "#",
-      onClick: startProject,
+      let extras: any[] = [];
+      if (extraIds.length) {
+        const r = await supabase
+          .from("projects")
+          .select("id, title, cover_color, cover_image_url, is_public, updated_at")
+          .in("id", extraIds as string[])
+          .order("updated_at", { ascending: false })
+          .limit(6);
+        extras = r.data ?? [];
+      }
+
+      return [...owned, ...extras]
+        .sort((a, b) => (b.updated_at ?? "").localeCompare(a.updated_at ?? ""))
+        .slice(0, 8);
     },
-    {
-      id: "coin",
-      eyebrow: "Get backed",
-      title: "Launch a Coin",
-      subtitle: "Spin up your artist token on pump.fun. Turn supporters into co-owners.",
-      cta: "Launch a Coin",
-      Icon: Coins,
-      gradient:
-        "linear-gradient(135deg, hsl(200 90% 55%) 0%, hsl(260 80% 60%) 50%, hsl(170 80% 50%) 100%)",
-      href: "/studio?coin=1",
-    },
-  ];
-
-  const [idx, setIdx] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => setIdx((i) => (i + 1) % ctaSlides.length), 6000);
-    return () => clearInterval(t);
-  }, [ctaSlides.length]);
-
-  const slide = ctaSlides[idx];
+  });
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-3 pb-12 space-y-8">
-      {/* ─── 1. CTA Carousel ────────────────────────────────────────────── */}
-      <section className="relative">
-        <div className="relative w-full min-h-[300px] sm:min-h-[340px] md:aspect-[24/9] md:min-h-0 rounded-3xl overflow-hidden shadow-[0_30px_80px_-30px_hsl(var(--foreground)/0.4)]">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={slide.id}
-              initial={{ opacity: 0, scale: 1.04 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.98 }}
-              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-              className="absolute inset-0"
-              style={{ backgroundImage: slide.gradient }}
-            >
-              {/* Animated shimmer */}
-              <motion.div
-                aria-hidden
-                className="absolute inset-0 opacity-50"
-                style={{
-                  backgroundImage:
-                    "radial-gradient(circle at 20% 30%, hsl(0 0% 100% / 0.25), transparent 40%), radial-gradient(circle at 80% 70%, hsl(0 0% 100% / 0.18), transparent 45%)",
-                }}
-                animate={{ backgroundPosition: ["0% 0%", "100% 100%", "0% 0%"] }}
-                transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
-              />
-              {/* Floating orbs */}
-              <motion.div
-                aria-hidden
-                className="absolute -top-10 -right-10 h-48 w-48 rounded-full bg-white/20 blur-3xl"
-                animate={{ y: [0, 20, 0], x: [0, -10, 0] }}
-                transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-              />
-              <motion.div
-                aria-hidden
-                className="absolute -bottom-12 -left-12 h-56 w-56 rounded-full bg-white/15 blur-3xl"
-                animate={{ y: [0, -16, 0], x: [0, 12, 0] }}
-                transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-              />
-
-              {/* Content */}
-              <div className="relative h-full w-full p-5 sm:p-8 pb-10 sm:pb-12 flex flex-col justify-between gap-4 sm:gap-6 text-white">
-                <div className="flex items-center justify-between">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-md px-3 py-1 text-[10px] uppercase tracking-[0.2em] font-semibold">
-                    <slide.Icon className="h-3 w-3" />
-                    {slide.eyebrow}
-                  </span>
-                </div>
-
-                <div className="space-y-2 sm:space-y-3 max-w-xl">
-                  <h2 className="font-display text-2xl sm:text-4xl md:text-5xl font-bold leading-[1.05] drop-shadow-sm">
-                    {slide.title}
-                  </h2>
-                  <p className="text-xs sm:text-sm md:text-base opacity-95 leading-snug max-w-md">
-                    {slide.subtitle}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => (slide.onClick ? slide.onClick() : navigate(slide.href))}
-                    className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-white text-foreground px-4 py-2 text-xs sm:text-sm font-semibold shadow-lg hover:scale-[1.03] active:scale-[0.98] transition-transform"
-                  >
-                    {slide.cta}
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </AnimatePresence>
-
-          {/* Arrows */}
-          <button
-            onClick={() => setIdx((i) => (i - 1 + ctaSlides.length) % ctaSlides.length)}
-            className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-white/20 hover:bg-white/35 backdrop-blur-md text-white flex items-center justify-center transition"
-            aria-label="Previous"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => setIdx((i) => (i + 1) % ctaSlides.length)}
-            className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-white/20 hover:bg-white/35 backdrop-blur-md text-white flex items-center justify-center transition"
-            aria-label="Next"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
-
-          {/* Dots */}
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
-            {ctaSlides.map((s, i) => (
-              <button
-                key={s.id}
-                onClick={() => setIdx(i)}
-                aria-label={`Slide ${i + 1}`}
-                className={`h-1.5 rounded-full transition-all ${
-                  i === idx ? "w-6 bg-white" : "w-1.5 bg-white/50 hover:bg-white/70"
-                }`}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── 2. Live globe — featured worldwide ─────────────────────────── */}
-      <section>
-        <div className="mb-3 flex items-baseline justify-between">
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70 mb-0.5">
-              Featured worldwide
-            </p>
-            <h2 className="font-display text-lg sm:text-xl font-semibold text-foreground">
-              A living map of creative work
-            </h2>
-          </div>
-        </div>
-        <Suspense
-          fallback={
-            <div className="flex h-[380px] w-full items-center justify-center rounded-3xl border border-border/60 bg-card/40">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            </div>
-          }
-        >
-          <DiscoverGlobe
-            marketFilter={marketFilter}
-            onSelectMarket={setMarketFilter}
-            featuredSlides={featuredSlides}
-            height={380}
-          />
-        </Suspense>
-      </section>
-
-      {/* ─── 3. Flow Mode — swipeable launcher (NOT a tile grid) ───────── */}
-      <section className="pt-2">
-        <div className="mb-4">
-          <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70 mb-0.5">
-            Fresh from the network
+    <section className="space-y-3">
+      <div className="flex items-end justify-between gap-3">
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70 font-semibold mb-0.5">
+            Your studio
           </p>
           <h2 className="font-display text-lg sm:text-xl font-semibold text-foreground">
-            Flow
+            Continue building
           </h2>
         </div>
         <Link
-          to="/flow"
-          className="group relative block overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-fuchsia-500 via-rose-500 to-amber-400 p-6 md:p-8 text-white shadow-[0_30px_80px_-30px_hsl(330_85%_60%/0.6)] transition-transform hover:-translate-y-0.5"
+          to="/projects"
+          className="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5"
         >
-          <div className="relative z-10 flex items-center justify-between gap-6">
-            <div className="space-y-1.5">
-              <p className="text-[10px] uppercase tracking-[0.22em] text-white/80 font-semibold">
-                Swipeable feed
-              </p>
-              <h3 className="font-display text-2xl md:text-3xl leading-tight">
-                Open Flow →
-              </h3>
-              <p className="text-sm text-white/85 max-w-md">
-                Vertical swipe through fresh work from the network. Tap up for the artist, right to keep going.
-              </p>
-            </div>
-            <div className="hidden sm:flex flex-col gap-1.5 shrink-0">
-              <span className="block h-2 w-12 rounded-full bg-white/40" />
-              <span className="block h-3 w-12 rounded-full bg-white" />
-              <span className="block h-2 w-12 rounded-full bg-white/30" />
-            </div>
-          </div>
+          All projects <ArrowRight className="h-3 w-3" />
         </Link>
+      </div>
+
+      <div className="flex gap-3 overflow-x-auto scrollbar-none pb-1 -mx-1 px-1 snap-x">
+        {/* Start a project — always first */}
+        <Link
+          to="/projects?new=1"
+          className="snap-start shrink-0 w-[180px] h-[140px] rounded-2xl border-2 border-dashed border-border/70 hover:border-foreground/40 bg-card/30 hover:bg-card/60 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <div className="h-10 w-10 rounded-full bg-foreground text-background grid place-items-center">
+            <Plus className="h-5 w-5" />
+          </div>
+          <span className="text-xs font-semibold">Start a project</span>
+        </Link>
+
+        {isLoading && (
+          <div className="grid place-items-center w-[180px] h-[140px] rounded-2xl border border-border/60 bg-card/40">
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          </div>
+        )}
+
+        {!isLoading && data.length === 0 && (
+          <div className="grid place-items-center w-[260px] h-[140px] rounded-2xl border border-border/60 bg-card/40 px-4 text-center">
+            <p className="text-xs text-muted-foreground leading-snug">
+              No projects yet. Spin one up to start documenting your work in public.
+            </p>
+          </div>
+        )}
+
+        {data.map((p) => (
+          <Link
+            key={p.id}
+            to={`/projects/${p.id}`}
+            className="snap-start shrink-0 group w-[180px] h-[140px] rounded-2xl overflow-hidden border border-border/60 bg-card relative hover:-translate-y-0.5 hover:shadow-xl transition-all"
+            style={
+              p.cover_image_url
+                ? undefined
+                : {
+                    backgroundImage: `linear-gradient(135deg, ${p.cover_color ?? "hsl(292 84% 61%)"}, hsl(330 85% 60%))`,
+                  }
+            }
+          >
+            {p.cover_image_url && (
+              <img
+                src={p.cover_image_url}
+                alt={p.title}
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            )}
+            <div className="absolute inset-x-0 bottom-0 p-2.5 bg-gradient-to-t from-black/85 via-black/40 to-transparent">
+              <p className="text-xs font-bold text-white line-clamp-2 leading-tight drop-shadow">
+                {p.title}
+              </p>
+              {p.is_public && (
+                <span className="mt-1 inline-block text-[9px] uppercase tracking-wider font-bold text-emerald-300">
+                  Public
+                </span>
+              )}
+            </div>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Guest hero — sign in to start a project
+// ─────────────────────────────────────────────────────────────────────────────
+const GuestBanner = () => (
+  <motion.section
+    initial={{ opacity: 0, y: 8 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.4 }}
+    className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-fuchsia-500 via-rose-500 to-amber-400 p-6 md:p-8 text-white shadow-[0_30px_80px_-30px_hsl(330_85%_60%/0.6)]"
+  >
+    <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="space-y-1.5">
+        <p className="text-[10px] uppercase tracking-[0.22em] text-white/80 font-semibold">
+          Build in public
+        </p>
+        <h2 className="font-display text-2xl md:text-3xl font-bold leading-tight">
+          Watch projects come to life — or start your own.
+        </h2>
+        <p className="text-sm text-white/85 max-w-md">
+          Artists open projects, collaborators jump in, supporters back the work as it ships.
+        </p>
+      </div>
+      <Link
+        to="/auth"
+        className="self-start md:self-auto inline-flex items-center gap-1.5 rounded-full bg-white text-foreground px-4 py-2 text-sm font-semibold shadow-lg hover:scale-[1.03] active:scale-[0.98] transition-transform"
+      >
+        Sign in to start <ArrowRight className="h-4 w-4" />
+      </Link>
+    </div>
+  </motion.section>
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Page
+// ─────────────────────────────────────────────────────────────────────────────
+const HomeFeedPage = () => {
+  const { user } = useAuth();
+
+  return (
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-3 pb-12 space-y-8">
+      {/* 1. Studio strip (auth only) or guest banner */}
+      {user ? <StudioStrip userId={user.id} /> : <GuestBanner />}
+
+      {/* 2. Live Projects feed — public projects, sorted by activity */}
+      <section className="space-y-3">
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70 font-semibold mb-0.5">
+            Live across Rhozeland
+          </p>
+          <h2 className="font-display text-xl sm:text-2xl font-semibold text-foreground">
+            Projects in the open
+          </h2>
+        </div>
+        <ActiveProjectsLane limit={30} eyebrow="" title="" />
       </section>
 
-      <StartProjectPicker open={pickerOpen} onOpenChange={setPickerOpen} />
+      {/* 3. Quiet Flow launcher (small, end of page) */}
+      <Link
+        to="/flow"
+        className="group relative block overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-fuchsia-500 via-rose-500 to-amber-400 p-5 text-white shadow-md hover:-translate-y-0.5 transition-transform"
+      >
+        <div className="relative z-10 flex items-center justify-between gap-4">
+          <div className="space-y-0.5">
+            <p className="text-[10px] uppercase tracking-[0.22em] text-white/80 font-semibold">
+              Swipeable feed
+            </p>
+            <h3 className="font-display text-lg md:text-xl leading-tight inline-flex items-center gap-1.5">
+              <Sparkles className="h-4 w-4" /> Open Flow
+            </h3>
+          </div>
+          <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+        </div>
+      </Link>
     </div>
   );
 };
