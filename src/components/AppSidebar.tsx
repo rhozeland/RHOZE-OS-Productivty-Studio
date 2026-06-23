@@ -96,9 +96,10 @@ const AppSidebar = () => {
 
   const navItems = role === "creator" ? MUSICIAN_NAV : FAN_NAV;
 
-  // Placeholder badge counts — wired to zero by default; data sources can be
-  // attached without changing the UI shape.
-  const badgeCounts: Record<string, number> = {};
+  const { data: inboxUnread = 0 } = useInboxUnread();
+  const badgeCounts: Record<string, number> = {
+    inbox_unread: inboxUnread,
+  };
 
   const handleNavClick = () => {
     if (isMobile) setOpenMobile(false);
