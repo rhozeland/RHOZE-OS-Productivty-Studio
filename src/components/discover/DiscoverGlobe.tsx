@@ -146,7 +146,7 @@ type SpotlightMarker = FeaturedSlide & {
 
 const cx = 50;
 const cy = 50;
-const radius = 36;
+const radius = 44; // zoomed-in feel — pins read at city scale
 const marketByCode = new Map(REGIONS.map((region) => [region.code, region.market]));
 const typeColorMap = {
   artist: "hsl(330 81% 60%)",
