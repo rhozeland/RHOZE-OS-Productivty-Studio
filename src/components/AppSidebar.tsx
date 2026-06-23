@@ -1,5 +1,4 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useAuthGate } from "@/components/AuthGateDialog";
 
 import { cn } from "@/lib/utils";
 import {
@@ -37,12 +36,12 @@ import {
 import SidebarRoleSwitcher from "@/components/SidebarRoleSwitcher";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
-const InboxNavLink = ({ collapsed, onNavigate }: { collapsed: boolean; onNavigate: () => void }) => {
+// NOTE: Standalone InboxNavLink removed — "Connect" in the main nav is the
+// single entry point to /messages. The unread badge is wired into the
+// main render path via badgeKey="inbox_unread".
+const useInboxUnread = () => {
   const { user } = useAuth();
-  const location = useLocation();
-  const { requireAuth } = useAuthGate();
-  const active = location.pathname.startsWith("/messages");
-  const { data: unread = 0 } = useQuery({
+  return useQuery({
     queryKey: ["sidebar-inbox-unread", user?.id],
     enabled: !!user,
     refetchInterval: 30000,
@@ -57,45 +56,6 @@ const InboxNavLink = ({ collapsed, onNavigate }: { collapsed: boolean; onNavigat
       return (msgs.count ?? 0) + (inq.count ?? 0);
     },
   });
-
-  const handleClick = (e: React.MouseEvent) => {
-    if (!user) {
-      e.preventDefault();
-      requireAuth("Sign up to access your inbox and message creators.");
-      return;
-    }
-    onNavigate();
-  };
-
-  return (
-    <Link
-      to="/messages"
-      onClick={handleClick}
-      aria-current={active ? "page" : undefined}
-      className={cn(
-        "flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-250",
-        active
-          ? "sidebar-active-gradient text-foreground shadow-sm"
-          : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
-        collapsed && "justify-center px-2 py-2.5",
-      )}
-    >
-      <span className="relative flex items-center justify-center">
-        <MessageSquare className={cn("h-[18px] w-[18px] shrink-0", active && "text-primary")} />
-        {unread > 0 && (
-          <span
-            className={cn(
-              "absolute -top-1 -right-1 flex items-center justify-center rounded-full bg-primary text-primary-foreground",
-              unread > 9 ? "h-4 min-w-4 px-1 text-[9px] font-bold" : "h-2 w-2",
-            )}
-          >
-            {unread > 9 ? (unread > 99 ? "99+" : unread) : ""}
-          </span>
-        )}
-      </span>
-      {!collapsed && <span className="flex-1">Inbox</span>}
-    </Link>
-  );
 };
 
 
@@ -111,14 +71,14 @@ type NavSpec = {
 // Discover and Charts folded into Home. Profile via avatar.
 const FAN_NAV: NavSpec[] = [
   { icon: Home, label: "Home", description: "", path: "/home" },
-  { icon: MessageSquare, label: "Connect", description: "", path: "/messages" },
+  { icon: MessageSquare, label: "Connect", description: "", path: "/messages", badgeKey: "inbox_unread" },
   { icon: Layers, label: "Projects", description: "", path: "/my-projects", badgeKey: "milestones_due" },
   { icon: Gem, label: "Pass", description: "", path: "/credits" },
 ];
 
 const MUSICIAN_NAV: NavSpec[] = [
   { icon: Home, label: "Home", description: "", path: "/home" },
-  { icon: MessageSquare, label: "Connect", description: "", path: "/messages" },
+  { icon: MessageSquare, label: "Connect", description: "", path: "/messages", badgeKey: "inbox_unread" },
   { icon: Layers, label: "Projects", description: "", path: "/my-projects", badgeKey: "milestones_due" },
   { icon: Gem, label: "Pass", description: "", path: "/credits" },
 ];
@@ -136,9 +96,10 @@ const AppSidebar = () => {
 
   const navItems = role === "creator" ? MUSICIAN_NAV : FAN_NAV;
 
-  // Placeholder badge counts — wired to zero by default; data sources can be
-  // attached without changing the UI shape.
-  const badgeCounts: Record<string, number> = {};
+  const { data: inboxUnread = 0 } = useInboxUnread();
+  const badgeCounts: Record<string, number> = {
+    inbox_unread: inboxUnread,
+  };
 
   const handleNavClick = () => {
     if (isMobile) setOpenMobile(false);
@@ -227,23 +188,17 @@ const AppSidebar = () => {
           collapsed && "justify-center px-2",
         )}
       >
-        <img src={rhozelandLogo} alt="Rhozeland" className="h-8 w-8 shrink-0 object-contain" />
+        <img src={rhozelandLogo} alt="Rhoze" className="h-8 w-8 shrink-0 object-contain" />
         {!collapsed && (
-          <span className="font-body text-lg font-bold tracking-tight text-foreground">Rhozeland</span>
+          <span className="flex flex-col leading-none">
+            <span className="font-body text-lg font-bold tracking-tight text-foreground">Rhoze</span>
+            <span className="text-[9px] uppercase tracking-[0.22em] text-muted-foreground/70">by Rhozeland</span>
+          </span>
         )}
       </Link>
 
       <SidebarContent className="px-2 pt-2 space-y-2">
         {renderGroup(navItems)}
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu className="space-y-0.5">
-              <SidebarMenuItem className={cn(collapsed && "flex justify-center")}>
-                <InboxNavLink collapsed={collapsed} onNavigate={handleNavClick} />
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
 
         {personalItems.length > 0 && renderGroup(personalItems)}
       </SidebarContent>
