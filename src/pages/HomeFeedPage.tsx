@@ -17,7 +17,8 @@ type ActivityProject = {
   vision: string | null;
   updated_at: string | null;
   public_slug: string | null;
-  profiles?: { display_name: string | null; username: string | null } | null;
+  user_id: string | null;
+  ownerName?: string | null;
 };
 
 const RecentActivityList = () => {
@@ -27,12 +28,31 @@ const RecentActivityList = () => {
     queryFn: async (): Promise<ActivityProject[]> => {
       const { data, error } = await supabase
         .from("projects")
-        .select("id,title,vision,updated_at,public_slug,profiles:user_id(display_name,username)")
+        .select("id,title,vision,updated_at,public_slug,user_id")
         .eq("is_public", true)
         .order("updated_at", { ascending: false })
         .limit(8);
       if (error) throw error;
-      return (data ?? []) as ActivityProject[];
+
+      const rows = (data ?? []) as ActivityProject[];
+      const ownerIds = Array.from(new Set(rows.map((row) => row.user_id).filter(Boolean))) as string[];
+      if (!ownerIds.length) return rows;
+
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id,display_name,username")
+        .in("user_id", ownerIds);
+      const profileById = new Map(
+        (profiles ?? []).map((profile) => [
+          profile.user_id,
+          profile.display_name || profile.username || null,
+        ]),
+      );
+
+      return rows.map((row) => ({
+        ...row,
+        ownerName: row.user_id ? profileById.get(row.user_id) ?? null : null,
+      }));
     },
   });
 
@@ -49,7 +69,7 @@ const RecentActivityList = () => {
   return (
     <div className="divide-y divide-border/50">
       {projects.map((project) => {
-        const owner = project.profiles?.display_name || project.profiles?.username || "Rhozeland";
+        const owner = project.ownerName || "Rhozeland";
         const href = project.public_slug ? `/release/${project.public_slug}` : `/projects/${project.id}`;
         return (
           <Link
