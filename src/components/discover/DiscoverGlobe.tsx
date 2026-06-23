@@ -7,12 +7,18 @@
  */
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { Link } from "react-router-dom";
+import { ArrowUpRight } from "lucide-react";
 import { REGIONS, type RegionMarket } from "@/lib/regions";
 import { cn } from "@/lib/utils";
 import type { FeaturedSlide } from "./useDiscoverFeatured";
 import { todayGradient } from "@/lib/rhoze-gradients";
 import ArtistSpotlightCard from "./ArtistSpotlightCard";
 
+// City-level coordinates so pins land on real cities, not country centroids.
+// Defaults bias toward Toronto for early adopters — most Rhozeland creators
+// are based there for now. Unknown regions fall through to TORONTO below.
+const TORONTO = { lat: 43.6532, lng: -79.3832 };
 const REGION_COORDS: Record<string, { lat: number; lng: number }> = {
   KR: { lat: 37.55, lng: 126.99 },
   JP: { lat: 35.68, lng: 139.69 },
@@ -25,24 +31,32 @@ const REGION_COORDS: Record<string, { lat: number; lng: number }> = {
   VN: { lat: 21.03, lng: 105.85 },
   SG: { lat: 1.35, lng: 103.82 },
   MY: { lat: 3.14, lng: 101.69 },
-  US: { lat: 38.9, lng: -77.04 },
-  CA: { lat: 45.42, lng: -75.7 },
+  US: { lat: 40.71, lng: -74.0 },   // NYC
+  CA: TORONTO,                       // Toronto (was Ottawa) — most creators here
   GB: { lat: 51.51, lng: -0.13 },
   DE: { lat: 52.52, lng: 13.4 },
   FR: { lat: 48.86, lng: 2.35 },
   ES: { lat: 40.42, lng: -3.7 },
   IT: { lat: 41.9, lng: 12.5 },
   NL: { lat: 52.37, lng: 4.9 },
-  BR: { lat: -15.79, lng: -47.88 },
+  BR: { lat: -23.55, lng: -46.63 }, // São Paulo
   MX: { lat: 19.43, lng: -99.13 },
   AR: { lat: -34.6, lng: -58.38 },
   CL: { lat: -33.45, lng: -70.66 },
-  NG: { lat: 9.07, lng: 7.49 },
-  ZA: { lat: -25.75, lng: 28.19 },
+  NG: { lat: 6.45, lng: 3.4 },      // Lagos
+  ZA: { lat: -26.2, lng: 28.04 },   // Johannesburg
   KE: { lat: -1.29, lng: 36.82 },
   GH: { lat: 5.6, lng: -0.19 },
-  AU: { lat: -35.28, lng: 149.13 },
-  NZ: { lat: -41.29, lng: 174.78 },
+  AU: { lat: -33.87, lng: 151.21 }, // Sydney
+  NZ: { lat: -36.85, lng: 174.76 }, // Auckland
+};
+
+// Default any unmapped / missing region to Toronto so every featured creator
+// lands somewhere real on the globe instead of vanishing off-map.
+const coordsFor = (code?: string | null) => {
+  const upper = code?.toUpperCase();
+  if (upper && REGION_COORDS[upper]) return REGION_COORDS[upper];
+  return TORONTO;
 };
 
 // Low-poly continent outlines (lat, lng pairs). Hand-tuned to evoke real
@@ -134,7 +148,7 @@ type SpotlightMarker = FeaturedSlide & {
 
 const cx = 50;
 const cy = 50;
-const radius = 36;
+const radius = 44; // zoomed-in feel — pins read at city scale
 const marketByCode = new Map(REGIONS.map((region) => [region.code, region.market]));
 const typeColorMap = {
   artist: "hsl(330 81% 60%)",
@@ -240,6 +254,7 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
   const [hoveredCode, setHoveredCode] = useState<string | null>(null);
   const [activeSpotlightKey, setActiveSpotlightKey] = useState<string | null>(featuredSlides[0] ? `${featuredSlides[0].kind}-${featuredSlides[0].id}` : null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isHoveringCard, setIsHoveringCard] = useState(false);
 
   useEffect(() => {
     if (!featuredSlides.length) {
@@ -250,8 +265,10 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
     setActiveSpotlightKey((current) => current ?? `${featuredSlides[0].kind}-${featuredSlides[0].id}`);
   }, [featuredSlides]);
 
+  // Slower auto-cycle (9s) + pauses while user is dragging the globe or
+  // hovering the spotlight card, so the rotation never feels abrupt.
   useEffect(() => {
-    if (isDragging || featuredSlides.length < 2) return;
+    if (isDragging || isHoveringCard || featuredSlides.length < 2) return;
 
     const interval = window.setInterval(() => {
       setActiveSpotlightKey((current) => {
@@ -260,10 +277,10 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
         const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % items.length : 0;
         return items[nextIndex];
       });
-    }, 5200);
+    }, 9000);
 
     return () => window.clearInterval(interval);
-  }, [featuredSlides, isDragging]);
+  }, [featuredSlides, isDragging, isHoveringCard]);
 
   // Auto-spin to the active spotlight artist's longitude, so the globe
   // visually "lands on" whoever is being featured right now. Drag pauses
@@ -272,10 +289,10 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
     if (isDragging) return;
     const active = featuredSlides
       .map((s) => {
-        const c = s.region_code?.toUpperCase();
-        return c && REGION_COORDS[c] ? { key: `${s.kind}-${s.id}`, lng: REGION_COORDS[c].lng } : null;
+        const coords = coordsFor(s.region_code);
+        return { key: `${s.kind}-${s.id}`, lng: coords.lng };
       })
-      .find((m) => m && m.key === activeSpotlightKey);
+      .find((m) => m.key === activeSpotlightKey);
     const targetLng = active?.lng;
     const interval = window.setInterval(() => {
       setRotation((current) => {
@@ -295,16 +312,15 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
   const spotlightMarkers = useMemo<SpotlightMarker[]>(() => {
     return featuredSlides
       .map((slide) => {
-        const code = slide.region_code?.toUpperCase();
-        if (!code || !REGION_COORDS[code]) return null;
-
-        const projected = projectPoint(REGION_COORDS[code].lat, REGION_COORDS[code].lng, rotation);
+        const coords = coordsFor(slide.region_code);
+        const code = (slide.region_code?.toUpperCase() ?? "CA");
+        const projected = projectPoint(coords.lat, coords.lng, rotation);
         return {
           ...slide,
           key: `${slide.kind}-${slide.id}`,
           region_code: code,
-          lat: REGION_COORDS[code].lat,
-          lng: REGION_COORDS[code].lng,
+          lat: coords.lat,
+          lng: coords.lng,
           ...projected,
           market: marketByCode.get(code) ?? null,
           color: typeColorMap[slide.kind],
@@ -466,95 +482,100 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
                 </g>
               </svg>
 
-              {/* Active pin + anchored spotlight card hovering over the location */}
-              <div className="absolute inset-[4%] pointer-events-none">
-                {spotlightMarkers
-                  .filter((m) => m.key === activeSpotlight?.key)
-                  .map((marker) => {
-                    const front = marker.depth > -0.12;
-                    // Card anchors above-left of pin when pin is on right half, above-right when on left half.
-                    const cardOnLeft = marker.x > 50;
-                    return (
-                      <div key={marker.key}>
-                        {/* Pin */}
-                        <div
-                          className="absolute -translate-x-1/2 -translate-y-1/2"
-                          style={{ left: `${marker.x}%`, top: `${marker.y}%`, opacity: front ? 1 : 0.35, zIndex: 30 }}
+              {/* Active pin + compact spotlight chip — single AnimatePresence
+                  so pin, connector line and chip all crossfade together
+                  whenever the featured creator rotates. */}
+              <div className="absolute inset-[4%]">
+                <AnimatePresence mode="wait">
+                  {spotlightMarkers
+                    .filter((m) => m.key === activeSpotlight?.key)
+                    .map((marker) => {
+                      const front = marker.depth > -0.12;
+                      const cardOnLeft = marker.x > 50;
+                      const role = (marker as any).creator_roles?.[0] ?? (marker as any).mediums?.[0] ?? null;
+                      const avatar = (marker as any).avatar as string | null | undefined;
+                      return (
+                        <motion.div
+                          key={marker.key}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+                          className="absolute inset-0 pointer-events-none"
                         >
-                          <motion.span
-                            className="relative flex items-center gap-1.5 rounded-full border px-2.5 py-1 shadow-lg backdrop-blur-xl"
-                            animate={{ scale: [1, 1.08, 1] }}
-                            transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-                            style={{
-                              backgroundColor: "hsl(var(--background) / 0.94)",
-                              borderColor: marker.color,
-                            }}
+                          {/* Connector line from pin to chip */}
+                          <svg
+                            aria-hidden
+                            className="absolute inset-0 h-full w-full"
+                            viewBox="0 0 100 100"
+                            preserveAspectRatio="none"
+                            style={{ zIndex: 25, opacity: front ? 0.7 : 0.15 }}
                           >
-                            <span className="absolute inset-0 rounded-full blur-md opacity-60" style={{ backgroundColor: marker.color }} />
-                            <span className="relative h-2.5 w-2.5 rounded-full" style={{ backgroundColor: marker.color }} />
-                            <span className="relative max-w-[7rem] truncate text-[11px] font-semibold text-foreground">
-                              {marker.title}
-                            </span>
-                          </motion.span>
-                        </div>
-
-                        {/* Connector line from pin to card */}
-                        <svg
-                          aria-hidden
-                          className="absolute inset-0 h-full w-full"
-                          viewBox="0 0 100 100"
-                          preserveAspectRatio="none"
-                          style={{ zIndex: 25, opacity: front ? 0.7 : 0.2 }}
-                        >
-                          <line
-                            x1={marker.x}
-                            y1={marker.y}
-                            x2={cardOnLeft ? Math.max(marker.x - 18, 8) : Math.min(marker.x + 18, 92)}
-                            y2={Math.max(marker.y - 14, 6)}
-                            stroke={marker.color}
-                            strokeWidth="0.35"
-                            strokeDasharray="0.8 0.8"
-                          />
-                        </svg>
-
-                        {/* Hovering spotlight card anchored to pin */}
-                        <AnimatePresence mode="wait">
-                          <motion.div
-                            key={marker.key + "-card"}
-                            initial={{ opacity: 0, y: 6, scale: 0.96 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: -6, scale: 0.96 }}
-                            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                            className="absolute pointer-events-auto w-[260px] sm:w-[290px]"
-                            style={{
-                              // Position above the pin; nudge horizontally so card doesn't fall off panel.
-                              left: `${Math.min(Math.max(cardOnLeft ? marker.x - 32 : marker.x + 4, 2), 60)}%`,
-                              top: `${Math.max(marker.y - 38, 2)}%`,
-                              zIndex: 40,
-                            }}
-                          >
-                            <ArtistSpotlightCard
-                              id={activeSpotlight.id}
-                              href={activeSpotlight.href}
-                              title={activeSpotlight.title}
-                              subtitle={activeSpotlight.subtitle}
-                              avatar={activeSpotlight.avatar}
-                              region_code={activeSpotlight.region_code}
-                              creator_roles={activeSpotlight.creator_roles}
-                              mediums={activeSpotlight.mediums}
-                              verification_status={activeSpotlight.verification_status}
-                              works_count={activeSpotlight.works_count}
-                              followers_count={activeSpotlight.followers_count}
-                              coin={(activeSpotlight as any).coin ?? null}
-                              next_event={(activeSpotlight as any).next_event ?? null}
-                              hosted_space={(activeSpotlight as any).hosted_space ?? null}
-                              offerings_count={(activeSpotlight as any).offerings_count ?? 0}
+                            <line
+                              x1={marker.x}
+                              y1={marker.y}
+                              x2={cardOnLeft ? Math.max(marker.x - 12, 6) : Math.min(marker.x + 12, 94)}
+                              y2={Math.max(marker.y - 9, 4)}
+                              stroke={marker.color}
+                              strokeWidth="0.3"
+                              strokeDasharray="0.8 0.8"
                             />
-                          </motion.div>
-                        </AnimatePresence>
-                      </div>
-                    );
-                  })}
+                          </svg>
+
+                          {/* Pin (geo-anchored) */}
+                          <div
+                            className="absolute -translate-x-1/2 -translate-y-1/2"
+                            style={{ left: `${marker.x}%`, top: `${marker.y}%`, opacity: front ? 1 : 0.35, zIndex: 30 }}
+                          >
+                            <motion.span
+                              className="relative block h-2.5 w-2.5 rounded-full"
+                              animate={{ scale: [1, 1.5, 1] }}
+                              transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+                              style={{ backgroundColor: marker.color, boxShadow: `0 0 12px ${marker.color}` }}
+                            />
+                          </div>
+
+                          {/* Compact chip: avatar + name + role + arrow */}
+                          <Link
+                            to={activeSpotlight.href}
+                            onMouseEnter={() => setIsHoveringCard(true)}
+                            onMouseLeave={() => setIsHoveringCard(false)}
+                            className="group absolute pointer-events-auto flex items-center gap-2 rounded-full border border-border/60 bg-background/95 py-1 pl-1 pr-3 shadow-[0_8px_24px_-12px_hsl(var(--foreground)/0.35)] backdrop-blur-xl transition-colors hover:border-foreground/40"
+                            style={{
+                              left: `${Math.min(Math.max(cardOnLeft ? marker.x - 22 : marker.x + 2, 1), 70)}%`,
+                              top: `${Math.max(marker.y - 14, 1)}%`,
+                              zIndex: 40,
+                              maxWidth: "44%",
+                            }}
+                          >
+                            <span
+                              className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full text-[10px] font-semibold text-foreground"
+                              style={{
+                                background: avatar
+                                  ? undefined
+                                  : `linear-gradient(135deg, ${marker.color}, hsl(var(--background)))`,
+                              }}
+                            >
+                              {avatar ? (
+                                <img src={avatar} alt="" className="h-full w-full object-cover" />
+                              ) : (
+                                initials(marker.title)
+                              )}
+                            </span>
+                            <span className="flex min-w-0 flex-col leading-tight">
+                              <span className="truncate text-[12px] font-semibold text-foreground">{marker.title}</span>
+                              {role && (
+                                <span className="truncate text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                                  {role}
+                                </span>
+                              )}
+                            </span>
+                            <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-foreground" />
+                          </Link>
+                        </motion.div>
+                      );
+                    })}
+                </AnimatePresence>
               </div>
             </div>
           </div>
