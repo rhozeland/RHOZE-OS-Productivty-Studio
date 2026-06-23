@@ -1455,7 +1455,10 @@ const FlowModePage = ({ embedded = false }: FlowModePageProps) => {
   // ──── ONBOARDING ────
   if (!calibrated) {
     return (
-      <div className="relative flex items-center justify-center min-h-[calc(100vh-3.5rem)] -m-4 md:-m-8 overflow-hidden bg-gradient-to-br from-muted via-background to-muted/50">
+      <div className={cn(
+        "relative flex items-center justify-center overflow-hidden bg-gradient-to-br from-muted via-background to-muted/50",
+        embedded ? "h-full min-h-[520px]" : "min-h-[calc(100vh-3.5rem)] -m-4 md:-m-8",
+      )}>
         <div className="absolute top-20 left-1/4 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-20 right-1/4 w-72 h-72 bg-accent/5 rounded-full blur-3xl pointer-events-none" />
 
@@ -1507,7 +1510,13 @@ const FlowModePage = ({ embedded = false }: FlowModePageProps) => {
 
   // ──── MAIN SWIPE VIEW ────
   return (
-    <div ref={flowContentRef} className="relative flex flex-col min-h-[calc(100vh-3.5rem)] -m-4 md:-m-8">
+    <div
+      ref={flowContentRef}
+      className={cn(
+        "relative flex flex-col overflow-hidden",
+        embedded ? "h-full min-h-[520px]" : "min-h-[calc(100vh-3.5rem)] -m-4 md:-m-8",
+      )}
+    >
       {/* Dynamic background */}
       <FlowCardBackground
         fileUrl={currentItem?.file_url}
@@ -1779,7 +1788,7 @@ const FlowModePage = ({ embedded = false }: FlowModePageProps) => {
             aria-label="Exit Flow Mode"
             title="Exit Flow Mode"
           >
-            <X className="h-4 w-4" />
+              {embedded ? <Maximize2 className="h-4 w-4" /> : <X className="h-4 w-4" />}
           </Button>
         </div>
       </div>
