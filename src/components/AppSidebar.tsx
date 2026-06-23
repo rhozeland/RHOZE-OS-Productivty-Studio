@@ -37,12 +37,12 @@ import {
 import SidebarRoleSwitcher from "@/components/SidebarRoleSwitcher";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
 
-const InboxNavLink = ({ collapsed, onNavigate }: { collapsed: boolean; onNavigate: () => void }) => {
+// NOTE: Standalone InboxNavLink removed — "Connect" in the main nav is the
+// single entry point to /messages. The unread badge is wired into the
+// main render path via badgeKey="inbox_unread".
+const useInboxUnread = () => {
   const { user } = useAuth();
-  const location = useLocation();
-  const { requireAuth } = useAuthGate();
-  const active = location.pathname.startsWith("/messages");
-  const { data: unread = 0 } = useQuery({
+  return useQuery({
     queryKey: ["sidebar-inbox-unread", user?.id],
     enabled: !!user,
     refetchInterval: 30000,
@@ -57,45 +57,6 @@ const InboxNavLink = ({ collapsed, onNavigate }: { collapsed: boolean; onNavigat
       return (msgs.count ?? 0) + (inq.count ?? 0);
     },
   });
-
-  const handleClick = (e: React.MouseEvent) => {
-    if (!user) {
-      e.preventDefault();
-      requireAuth("Sign up to access your inbox and message creators.");
-      return;
-    }
-    onNavigate();
-  };
-
-  return (
-    <Link
-      to="/messages"
-      onClick={handleClick}
-      aria-current={active ? "page" : undefined}
-      className={cn(
-        "flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-250",
-        active
-          ? "sidebar-active-gradient text-foreground shadow-sm"
-          : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
-        collapsed && "justify-center px-2 py-2.5",
-      )}
-    >
-      <span className="relative flex items-center justify-center">
-        <MessageSquare className={cn("h-[18px] w-[18px] shrink-0", active && "text-primary")} />
-        {unread > 0 && (
-          <span
-            className={cn(
-              "absolute -top-1 -right-1 flex items-center justify-center rounded-full bg-primary text-primary-foreground",
-              unread > 9 ? "h-4 min-w-4 px-1 text-[9px] font-bold" : "h-2 w-2",
-            )}
-          >
-            {unread > 9 ? (unread > 99 ? "99+" : unread) : ""}
-          </span>
-        )}
-      </span>
-      {!collapsed && <span className="flex-1">Inbox</span>}
-    </Link>
-  );
 };
 
 
