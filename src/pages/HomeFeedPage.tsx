@@ -440,15 +440,9 @@ const HomeFeedPage = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -12 }}
               transition={{ duration: 0.35, ease: "easeOut" }}
-              drag="x"
-              dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.2}
-              onDragEnd={(_, info) => {
-                if (info.offset.x < -80) swipeTo(1);
-                else if (info.offset.x > 80) swipeTo(-1);
-              }}
               className="overflow-hidden rounded-[2rem] border border-border/50 bg-card/30 shadow-[0_24px_80px_-48px_hsl(var(--foreground)/0.35)]"
             >
+
               {mode === "globe" && (
                 <Suspense
                   fallback={
