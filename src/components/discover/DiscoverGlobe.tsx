@@ -13,6 +13,10 @@ import type { FeaturedSlide } from "./useDiscoverFeatured";
 import { todayGradient } from "@/lib/rhoze-gradients";
 import ArtistSpotlightCard from "./ArtistSpotlightCard";
 
+// City-level coordinates so pins land on real cities, not country centroids.
+// Defaults bias toward Toronto for early adopters — most Rhozeland creators
+// are based there for now. Unknown regions fall through to TORONTO below.
+const TORONTO = { lat: 43.6532, lng: -79.3832 };
 const REGION_COORDS: Record<string, { lat: number; lng: number }> = {
   KR: { lat: 37.55, lng: 126.99 },
   JP: { lat: 35.68, lng: 139.69 },
@@ -25,24 +29,32 @@ const REGION_COORDS: Record<string, { lat: number; lng: number }> = {
   VN: { lat: 21.03, lng: 105.85 },
   SG: { lat: 1.35, lng: 103.82 },
   MY: { lat: 3.14, lng: 101.69 },
-  US: { lat: 38.9, lng: -77.04 },
-  CA: { lat: 45.42, lng: -75.7 },
+  US: { lat: 40.71, lng: -74.0 },   // NYC
+  CA: TORONTO,                       // Toronto (was Ottawa) — most creators here
   GB: { lat: 51.51, lng: -0.13 },
   DE: { lat: 52.52, lng: 13.4 },
   FR: { lat: 48.86, lng: 2.35 },
   ES: { lat: 40.42, lng: -3.7 },
   IT: { lat: 41.9, lng: 12.5 },
   NL: { lat: 52.37, lng: 4.9 },
-  BR: { lat: -15.79, lng: -47.88 },
+  BR: { lat: -23.55, lng: -46.63 }, // São Paulo
   MX: { lat: 19.43, lng: -99.13 },
   AR: { lat: -34.6, lng: -58.38 },
   CL: { lat: -33.45, lng: -70.66 },
-  NG: { lat: 9.07, lng: 7.49 },
-  ZA: { lat: -25.75, lng: 28.19 },
+  NG: { lat: 6.45, lng: 3.4 },      // Lagos
+  ZA: { lat: -26.2, lng: 28.04 },   // Johannesburg
   KE: { lat: -1.29, lng: 36.82 },
   GH: { lat: 5.6, lng: -0.19 },
-  AU: { lat: -35.28, lng: 149.13 },
-  NZ: { lat: -41.29, lng: 174.78 },
+  AU: { lat: -33.87, lng: 151.21 }, // Sydney
+  NZ: { lat: -36.85, lng: 174.76 }, // Auckland
+};
+
+// Default any unmapped / missing region to Toronto so every featured creator
+// lands somewhere real on the globe instead of vanishing off-map.
+const coordsFor = (code?: string | null) => {
+  const upper = code?.toUpperCase();
+  if (upper && REGION_COORDS[upper]) return REGION_COORDS[upper];
+  return TORONTO;
 };
 
 // Low-poly continent outlines (lat, lng pairs). Hand-tuned to evoke real
