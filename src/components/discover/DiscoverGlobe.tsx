@@ -480,10 +480,8 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
                 </g>
               </svg>
 
-              {/* Active pin + anchored spotlight card hovering over the location */}
-              <div className="absolute inset-[4%] pointer-events-none">
               {/* Active pin + compact spotlight chip — single AnimatePresence
-                  so the pin, connector line and chip all crossfade together
+                  so pin, connector line and chip all crossfade together
                   whenever the featured creator rotates. */}
               <div className="absolute inset-[4%]">
                 <AnimatePresence mode="wait">
