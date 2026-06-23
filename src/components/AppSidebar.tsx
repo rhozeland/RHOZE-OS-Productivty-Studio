@@ -107,19 +107,19 @@ type NavSpec = {
   badgeKey?: string;
 };
 
+// v12: project-first. Sidebar collapsed to Home · Connect · Projects · Pass.
+// Discover and Charts folded into Home. Profile via avatar.
 const FAN_NAV: NavSpec[] = [
   { icon: Home, label: "Home", description: "", path: "/home" },
-  { icon: Compass, label: "Discover", description: "", path: "/discover" },
-  { icon: Layers, label: "Studio", description: "", path: "/my-projects", badgeKey: "milestones_due" },
-  { icon: TrendingUp, label: "Charts", description: "", path: "/charts" },
+  { icon: MessageSquare, label: "Connect", description: "", path: "/messages" },
+  { icon: Layers, label: "Projects", description: "", path: "/my-projects", badgeKey: "milestones_due" },
   { icon: Gem, label: "Pass", description: "", path: "/credits" },
 ];
 
 const MUSICIAN_NAV: NavSpec[] = [
   { icon: Home, label: "Home", description: "", path: "/home" },
-  { icon: Compass, label: "Discover", description: "", path: "/discover" },
-  { icon: Layers, label: "Studio", description: "", path: "/my-projects", badgeKey: "milestones_due" },
-  { icon: TrendingUp, label: "Charts", description: "", path: "/charts" },
+  { icon: MessageSquare, label: "Connect", description: "", path: "/messages" },
+  { icon: Layers, label: "Projects", description: "", path: "/my-projects", badgeKey: "milestones_due" },
   { icon: Gem, label: "Pass", description: "", path: "/credits" },
 ];
 
