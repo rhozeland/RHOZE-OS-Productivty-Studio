@@ -194,17 +194,7 @@ const HomeFeedPage = () => {
       {user ? <StudioStrip userId={user.id} /> : <GuestBanner />}
 
       {/* 2. Live Projects feed — public projects, sorted by activity */}
-      <section className="space-y-3">
-        <div>
-          <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70 font-semibold mb-0.5">
-            Live across Rhozeland
-          </p>
-          <h2 className="font-display text-xl sm:text-2xl font-semibold text-foreground">
-            Projects in the open
-          </h2>
-        </div>
-        <ActiveProjectsLane limit={30} eyebrow="" title="" />
-      </section>
+      <ActiveProjectsLane limit={30} eyebrow="Live across Rhozeland" title="Projects in the open" />
 
       {/* 3. Quiet Flow launcher (small, end of page) */}
       <Link
