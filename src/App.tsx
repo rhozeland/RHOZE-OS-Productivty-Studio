@@ -52,7 +52,7 @@ import MarketplacePage from "@/pages/MarketplacePage";
 import HomePage from "@/pages/HomePage";
 import HomeFeedPage from "@/pages/HomeFeedPage";
 import DiscoverPage from "@/pages/DiscoverPage";
-import ChartsPage from "@/pages/ChartsPage";
+// ChartsPage retired — /charts redirects to /home.
 import TreasuryPage from "@/pages/TreasuryPage";
 import CardPage from "@/pages/CardPage";
 
