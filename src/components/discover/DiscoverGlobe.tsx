@@ -252,6 +252,7 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
   const [hoveredCode, setHoveredCode] = useState<string | null>(null);
   const [activeSpotlightKey, setActiveSpotlightKey] = useState<string | null>(featuredSlides[0] ? `${featuredSlides[0].kind}-${featuredSlides[0].id}` : null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isHoveringCard, setIsHoveringCard] = useState(false);
 
   useEffect(() => {
     if (!featuredSlides.length) {
@@ -262,8 +263,10 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
     setActiveSpotlightKey((current) => current ?? `${featuredSlides[0].kind}-${featuredSlides[0].id}`);
   }, [featuredSlides]);
 
+  // Slower auto-cycle (9s) + pauses while user is dragging the globe or
+  // hovering the spotlight card, so the rotation never feels abrupt.
   useEffect(() => {
-    if (isDragging || featuredSlides.length < 2) return;
+    if (isDragging || isHoveringCard || featuredSlides.length < 2) return;
 
     const interval = window.setInterval(() => {
       setActiveSpotlightKey((current) => {
@@ -272,10 +275,10 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
         const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % items.length : 0;
         return items[nextIndex];
       });
-    }, 5200);
+    }, 9000);
 
     return () => window.clearInterval(interval);
-  }, [featuredSlides, isDragging]);
+  }, [featuredSlides, isDragging, isHoveringCard]);
 
   // Auto-spin to the active spotlight artist's longitude, so the globe
   // visually "lands on" whoever is being featured right now. Drag pauses
@@ -284,10 +287,10 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
     if (isDragging) return;
     const active = featuredSlides
       .map((s) => {
-        const c = s.region_code?.toUpperCase();
-        return c && REGION_COORDS[c] ? { key: `${s.kind}-${s.id}`, lng: REGION_COORDS[c].lng } : null;
+        const coords = coordsFor(s.region_code);
+        return { key: `${s.kind}-${s.id}`, lng: coords.lng };
       })
-      .find((m) => m && m.key === activeSpotlightKey);
+      .find((m) => m.key === activeSpotlightKey);
     const targetLng = active?.lng;
     const interval = window.setInterval(() => {
       setRotation((current) => {
@@ -307,16 +310,15 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
   const spotlightMarkers = useMemo<SpotlightMarker[]>(() => {
     return featuredSlides
       .map((slide) => {
-        const code = slide.region_code?.toUpperCase();
-        if (!code || !REGION_COORDS[code]) return null;
-
-        const projected = projectPoint(REGION_COORDS[code].lat, REGION_COORDS[code].lng, rotation);
+        const coords = coordsFor(slide.region_code);
+        const code = (slide.region_code?.toUpperCase() ?? "CA");
+        const projected = projectPoint(coords.lat, coords.lng, rotation);
         return {
           ...slide,
           key: `${slide.kind}-${slide.id}`,
           region_code: code,
-          lat: REGION_COORDS[code].lat,
-          lng: REGION_COORDS[code].lng,
+          lat: coords.lat,
+          lng: coords.lng,
           ...projected,
           market: marketByCode.get(code) ?? null,
           color: typeColorMap[slide.kind],
