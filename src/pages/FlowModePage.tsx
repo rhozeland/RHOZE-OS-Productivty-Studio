@@ -11,6 +11,7 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
+  Maximize2,
   Plus,
   Check,
   Upload,
@@ -114,7 +115,11 @@ const CATEGORY_UPLOAD_HINTS: Record<string, { accept: string; hint: string; link
 };
 
 
-const FlowModePage = () => {
+type FlowModePageProps = {
+  embedded?: boolean;
+};
+
+const FlowModePage = ({ embedded = false }: FlowModePageProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -1148,6 +1153,11 @@ const FlowModePage = () => {
   }, [pendingDeepLinkId]);
 
   const handleExitFlow = useCallback(() => {
+    if (embedded) {
+      navigate("/flow", { state: { from: `${location.pathname}${location.search}${location.hash}` } });
+      return;
+    }
+
     const fromState = (location.state as { from?: string } | null)?.from;
     const currentPath = `${location.pathname}${location.search}${location.hash}`;
 
@@ -1163,7 +1173,7 @@ const FlowModePage = () => {
     }
 
     navigate("/discover");
-  }, [location.hash, location.pathname, location.search, location.state, navigate]);
+  }, [embedded, location.hash, location.pathname, location.search, location.state, navigate]);
 
   // Batched coin lookup keyed by uploader (creator_id). Coins are now
   // profile-bound, so the "$TICKER → speculate" pill on a Flow card means
