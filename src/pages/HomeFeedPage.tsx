@@ -423,11 +423,8 @@ const HomeFeedPage = () => {
   const [mode, setMode] = useState<HomeMode>("globe");
   const { slides: featuredSlides } = useDiscoverFeatured(marketFilter);
 
-  const swipeTo = (dir: 1 | -1) => {
-    const idx = MODES.findIndex((m) => m.id === mode);
-    const next = (idx + dir + MODES.length) % MODES.length;
-    setMode(MODES[next].id);
-  };
+
+
 
   return (
     <main className="relative min-h-[calc(100vh-3.5rem)] overflow-hidden bg-background pb-28">
