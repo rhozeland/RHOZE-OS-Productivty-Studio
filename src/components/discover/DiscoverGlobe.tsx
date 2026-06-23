@@ -551,13 +551,13 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
                             <span
                               className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full text-[10px] font-semibold text-foreground"
                               style={{
-                                background: marker.avatar
+                                background: avatar
                                   ? undefined
                                   : `linear-gradient(135deg, ${marker.color}, hsl(var(--background)))`,
                               }}
                             >
-                              {marker.avatar ? (
-                                <img src={marker.avatar} alt="" className="h-full w-full object-cover" />
+                              {avatar ? (
+                                <img src={avatar} alt="" className="h-full w-full object-cover" />
                               ) : (
                                 initials(marker.title)
                               )}
