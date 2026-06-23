@@ -8,7 +8,7 @@
  * Tile grids (artists/spaces/events/opportunities) are gone. Discover is
  * folded into here. /discover and /charts both redirect to /home.
  */
-import { useMemo } from "react";
+
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
