@@ -492,7 +492,8 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
                     .map((marker) => {
                       const front = marker.depth > -0.12;
                       const cardOnLeft = marker.x > 50;
-                      const role = marker.creator_roles?.[0] ?? marker.mediums?.[0] ?? null;
+                      const role = (marker as any).creator_roles?.[0] ?? (marker as any).mediums?.[0] ?? null;
+                      const avatar = (marker as any).avatar as string | null | undefined;
                       return (
                         <motion.div
                           key={marker.key}
