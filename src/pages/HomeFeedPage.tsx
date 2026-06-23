@@ -9,7 +9,7 @@
  *   3. Flow Mode — full feed embedded directly.
  */
 import { Suspense, lazy, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Rocket, Coins, ArrowRight, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import FlowFeed from "@/components/creators/FlowFeed";
@@ -204,7 +204,7 @@ const HomeFeedPage = () => {
         </Suspense>
       </section>
 
-      {/* ─── 3. Flow Mode — feed inline ─────────────────────────────────── */}
+      {/* ─── 3. Flow Mode — swipeable launcher (NOT a tile grid) ───────── */}
       <section className="pt-2">
         <div className="mb-4">
           <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70 mb-0.5">
@@ -214,13 +214,29 @@ const HomeFeedPage = () => {
             Flow
           </h2>
         </div>
-        {/*
-          Embedded scrollable feed. Replaces the previous embedded FlowModePage
-          which broke scroll and surfaced its own filter row inside the card.
-        */}
-        <div className="rounded-3xl border border-border/60 bg-card/40 p-4 md:p-6">
-          <FlowFeed />
-        </div>
+        <Link
+          to="/flow"
+          className="group relative block overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-fuchsia-500 via-rose-500 to-amber-400 p-6 md:p-8 text-white shadow-[0_30px_80px_-30px_hsl(330_85%_60%/0.6)] transition-transform hover:-translate-y-0.5"
+        >
+          <div className="relative z-10 flex items-center justify-between gap-6">
+            <div className="space-y-1.5">
+              <p className="text-[10px] uppercase tracking-[0.22em] text-white/80 font-semibold">
+                Swipeable feed
+              </p>
+              <h3 className="font-display text-2xl md:text-3xl leading-tight">
+                Open Flow →
+              </h3>
+              <p className="text-sm text-white/85 max-w-md">
+                Vertical swipe through fresh work from the network. Tap up for the artist, right to keep going.
+              </p>
+            </div>
+            <div className="hidden sm:flex flex-col gap-1.5 shrink-0">
+              <span className="block h-2 w-12 rounded-full bg-white/40" />
+              <span className="block h-3 w-12 rounded-full bg-white" />
+              <span className="block h-2 w-12 rounded-full bg-white/30" />
+            </div>
+          </div>
+        </Link>
       </section>
 
       <StartProjectPicker open={pickerOpen} onOpenChange={setPickerOpen} />
