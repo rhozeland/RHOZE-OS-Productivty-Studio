@@ -399,8 +399,8 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
         }}
       />
 
-      <div className="relative grid gap-3 p-3 sm:p-4 sm:gap-4 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_320px] lg:items-stretch">
-        {/* ── Globe ─────────────────────────────────────────────── */}
+      <div className="relative p-3 sm:p-4">
+        {/* ── Globe (full-bleed) ────────────────────────────────── */}
         <div className="relative overflow-hidden rounded-[1.5rem] border border-border/50 bg-background/30 backdrop-blur-xl">
           <div
             aria-hidden
@@ -408,19 +408,19 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
             style={{ background: grad.surface }}
           />
 
-          <div className="relative flex min-h-[280px] items-center justify-center px-2 py-2 sm:px-3 lg:min-h-[420px]">
+          <div className="relative flex min-h-[420px] items-center justify-center px-2 py-2 sm:px-3 lg:min-h-[560px]">
             <div
-              className="relative aspect-square w-full max-w-[440px] touch-none select-none"
+              className="relative aspect-square w-full max-w-[640px] touch-none select-none"
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
               onPointerCancel={handlePointerUp}
             >
-              <div className="absolute inset-[7%] rounded-full border border-border/30 bg-background/15 shadow-[0_0_0_1px_hsl(var(--border)/0.12),0_28px_70px_hsl(var(--background)/0.55)] backdrop-blur-sm" />
-              <div className="absolute inset-[2%] rounded-full border border-border/20" />
-              <div className="absolute inset-[17%] rounded-full bg-[radial-gradient(circle_at_45%_30%,hsl(200_85%_60%/0.3),transparent_40%),radial-gradient(circle_at_60%_75%,hsl(220_70%_45%/0.25),transparent_40%)] blur-2xl" />
+              <div className="absolute inset-[4%] rounded-full border border-border/30 bg-background/15 shadow-[0_0_0_1px_hsl(var(--border)/0.12),0_28px_70px_hsl(var(--background)/0.55)] backdrop-blur-sm" />
+              <div className="absolute inset-[0%] rounded-full border border-border/20" />
+              <div className="absolute inset-[12%] rounded-full bg-[radial-gradient(circle_at_45%_30%,hsl(200_85%_60%/0.3),transparent_40%),radial-gradient(circle_at_60%_75%,hsl(220_70%_45%/0.25),transparent_40%)] blur-2xl" />
 
-              <svg viewBox="0 0 100 100" className="absolute inset-[8%] h-[84%] w-[84%] overflow-visible">
+              <svg viewBox="0 0 100 100" className="absolute inset-[4%] h-[92%] w-[92%] overflow-visible">
                 <defs>
                   <radialGradient id="discover-globe-ocean" cx="38%" cy="30%" r="78%">
                     <stop offset="0%"  stopColor="hsl(200 85% 72%)" />
@@ -466,33 +466,92 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
                 </g>
               </svg>
 
-              {/* Only the active featured artist's marker — no other dots. */}
-              <div className="absolute inset-[8%] pointer-events-none">
+              {/* Active pin + anchored spotlight card hovering over the location */}
+              <div className="absolute inset-[4%] pointer-events-none">
                 {spotlightMarkers
                   .filter((m) => m.key === activeSpotlight?.key)
                   .map((marker) => {
                     const front = marker.depth > -0.12;
+                    // Card anchors above-left of pin when pin is on right half, above-right when on left half.
+                    const cardOnLeft = marker.x > 50;
                     return (
-                      <div
-                        key={marker.key}
-                        className="absolute -translate-x-1/2 -translate-y-1/2"
-                        style={{ left: `${marker.x}%`, top: `${marker.y}%`, opacity: front ? 1 : 0.35, zIndex: 30 }}
-                      >
-                        <motion.span
-                          className="relative flex items-center gap-1.5 rounded-full border px-2.5 py-1 shadow-lg backdrop-blur-xl"
-                          animate={{ scale: [1, 1.06, 1], y: [0, -2, 0] }}
-                          transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-                          style={{
-                            backgroundColor: "hsl(var(--background) / 0.94)",
-                            borderColor: marker.color,
-                          }}
+                      <div key={marker.key}>
+                        {/* Pin */}
+                        <div
+                          className="absolute -translate-x-1/2 -translate-y-1/2"
+                          style={{ left: `${marker.x}%`, top: `${marker.y}%`, opacity: front ? 1 : 0.35, zIndex: 30 }}
                         >
-                          <span className="absolute inset-0 rounded-full blur-md opacity-60" style={{ backgroundColor: marker.color }} />
-                          <span className="relative h-2.5 w-2.5 rounded-full" style={{ backgroundColor: marker.color }} />
-                          <span className="relative max-w-[7rem] truncate text-[11px] font-semibold text-foreground">
-                            {marker.title}
-                          </span>
-                        </motion.span>
+                          <motion.span
+                            className="relative flex items-center gap-1.5 rounded-full border px-2.5 py-1 shadow-lg backdrop-blur-xl"
+                            animate={{ scale: [1, 1.08, 1] }}
+                            transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+                            style={{
+                              backgroundColor: "hsl(var(--background) / 0.94)",
+                              borderColor: marker.color,
+                            }}
+                          >
+                            <span className="absolute inset-0 rounded-full blur-md opacity-60" style={{ backgroundColor: marker.color }} />
+                            <span className="relative h-2.5 w-2.5 rounded-full" style={{ backgroundColor: marker.color }} />
+                            <span className="relative max-w-[7rem] truncate text-[11px] font-semibold text-foreground">
+                              {marker.title}
+                            </span>
+                          </motion.span>
+                        </div>
+
+                        {/* Connector line from pin to card */}
+                        <svg
+                          aria-hidden
+                          className="absolute inset-0 h-full w-full"
+                          viewBox="0 0 100 100"
+                          preserveAspectRatio="none"
+                          style={{ zIndex: 25, opacity: front ? 0.7 : 0.2 }}
+                        >
+                          <line
+                            x1={marker.x}
+                            y1={marker.y}
+                            x2={cardOnLeft ? Math.max(marker.x - 18, 8) : Math.min(marker.x + 18, 92)}
+                            y2={Math.max(marker.y - 14, 6)}
+                            stroke={marker.color}
+                            strokeWidth="0.35"
+                            strokeDasharray="0.8 0.8"
+                          />
+                        </svg>
+
+                        {/* Hovering spotlight card anchored to pin */}
+                        <AnimatePresence mode="wait">
+                          <motion.div
+                            key={marker.key + "-card"}
+                            initial={{ opacity: 0, y: 6, scale: 0.96 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -6, scale: 0.96 }}
+                            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                            className="absolute pointer-events-auto w-[260px] sm:w-[290px]"
+                            style={{
+                              // Position above the pin; nudge horizontally so card doesn't fall off panel.
+                              left: `${Math.min(Math.max(cardOnLeft ? marker.x - 32 : marker.x + 4, 2), 60)}%`,
+                              top: `${Math.max(marker.y - 38, 2)}%`,
+                              zIndex: 40,
+                            }}
+                          >
+                            <ArtistSpotlightCard
+                              id={activeSpotlight.id}
+                              href={activeSpotlight.href}
+                              title={activeSpotlight.title}
+                              subtitle={activeSpotlight.subtitle}
+                              avatar={activeSpotlight.avatar}
+                              region_code={activeSpotlight.region_code}
+                              creator_roles={activeSpotlight.creator_roles}
+                              mediums={activeSpotlight.mediums}
+                              verification_status={activeSpotlight.verification_status}
+                              works_count={activeSpotlight.works_count}
+                              followers_count={activeSpotlight.followers_count}
+                              coin={(activeSpotlight as any).coin ?? null}
+                              next_event={(activeSpotlight as any).next_event ?? null}
+                              hosted_space={(activeSpotlight as any).hosted_space ?? null}
+                              offerings_count={(activeSpotlight as any).offerings_count ?? 0}
+                            />
+                          </motion.div>
+                        </AnimatePresence>
                       </div>
                     );
                   })}
@@ -500,81 +559,11 @@ const DiscoverGlobe = ({ marketFilter, onSelectMarket, featuredSlides = [], heig
             </div>
           </div>
 
-          {/* Connector line from pin → spotlight card (desktop only) */}
-          {activeSpotlight && (
-            <div
-              aria-hidden
-              className="pointer-events-none absolute right-0 top-1/2 hidden h-px w-8 -translate-y-1/2 translate-x-full lg:block"
-              style={{
-                background: `linear-gradient(to right, ${(activeSpotlight as any).color ?? "hsl(var(--primary))"} 0%, transparent 100%)`,
-              }}
-            />
-          )}
-
-          {/* Dot pager moved into globe panel footer */}
-          {allSpotlights.length > 1 && (
-            <div className="absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-border/55 bg-background/82 px-2.5 py-1 backdrop-blur-md">
-              {allSpotlights.map((m: any) => {
-                const active = m.key === activeSpotlight?.key;
-                return (
-                  <button
-                    key={m.key}
-                    type="button"
-                    onClick={() => setActiveSpotlightKey(m.key)}
-                    aria-label={`Show ${m.title}`}
-                    className={cn(
-                      "h-1.5 rounded-full transition-all",
-                      active ? "w-5 bg-foreground" : "w-1.5 bg-foreground/25 hover:bg-foreground/45",
-                    )}
-                  />
-                );
-              })}
-            </div>
-          )}
-
           {isDragging && (
             <div className="absolute top-3 left-1/2 z-20 -translate-x-1/2 rounded-full border border-border/55 bg-background/82 px-3 py-1 text-[10px] uppercase tracking-[0.24em] text-muted-foreground backdrop-blur-md">
               Spin
             </div>
           )}
-        </div>
-
-        {/* ── Featured artist (synced to globe pin) ───────────── */}
-        <div className="relative flex min-h-0 lg:items-center">
-          <AnimatePresence mode="wait">
-            {activeSpotlight ? (
-              <motion.div
-                key={activeSpotlight.key}
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                className="w-full"
-              >
-                <ArtistSpotlightCard
-                  id={activeSpotlight.id}
-                  href={activeSpotlight.href}
-                  title={activeSpotlight.title}
-                  subtitle={activeSpotlight.subtitle}
-                  avatar={activeSpotlight.avatar}
-                  region_code={activeSpotlight.region_code}
-                  creator_roles={activeSpotlight.creator_roles}
-                  mediums={activeSpotlight.mediums}
-                  verification_status={activeSpotlight.verification_status}
-                  works_count={activeSpotlight.works_count}
-                  followers_count={activeSpotlight.followers_count}
-                  coin={(activeSpotlight as any).coin ?? null}
-                  next_event={(activeSpotlight as any).next_event ?? null}
-                  hosted_space={(activeSpotlight as any).hosted_space ?? null}
-                  offerings_count={(activeSpotlight as any).offerings_count ?? 0}
-                />
-              </motion.div>
-            ) : (
-              <div className="w-full rounded-[1.5rem] border border-dashed border-border/50 bg-card/35 p-6 text-sm text-muted-foreground">
-                Featured orbit is warming up.
-              </div>
-            )}
-          </AnimatePresence>
         </div>
       </div>
     </div>
