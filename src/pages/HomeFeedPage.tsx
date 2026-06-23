@@ -1,11 +1,85 @@
 import { Suspense, lazy, useState } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { formatDistanceToNow } from "date-fns";
+import { ArrowRight, Loader2 } from "lucide-react";
 import FlowModePage from "@/pages/FlowModePage";
 import { useDiscoverFeatured } from "@/components/discover/useDiscoverFeatured";
+import { supabase } from "@/integrations/supabase/client";
 import type { RegionMarket } from "@/lib/regions";
 
 const DiscoverGlobe = lazy(() => import("@/components/discover/DiscoverGlobe"));
+
+type ActivityProject = {
+  id: string;
+  title: string | null;
+  vision: string | null;
+  updated_at: string | null;
+  public_slug: string | null;
+  profiles?: { display_name: string | null; username: string | null } | null;
+};
+
+const RecentActivityList = () => {
+  const { data: projects = [], isLoading } = useQuery({
+    queryKey: ["home-recent-public-projects"],
+    staleTime: 60_000,
+    queryFn: async (): Promise<ActivityProject[]> => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("id,title,vision,updated_at,public_slug,profiles:user_id(display_name,username)")
+        .eq("is_public", true)
+        .order("updated_at", { ascending: false })
+        .limit(8);
+      if (error) throw error;
+      return (data ?? []) as ActivityProject[];
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-10 text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!projects.length) return null;
+
+  return (
+    <div className="divide-y divide-border/50">
+      {projects.map((project) => {
+        const owner = project.profiles?.display_name || project.profiles?.username || "Rhozeland";
+        const href = project.public_slug ? `/release/${project.public_slug}` : `/projects/${project.id}`;
+        return (
+          <Link
+            key={project.id}
+            to={href}
+            className="group flex items-center justify-between gap-4 py-4 transition-colors hover:bg-muted/30 sm:px-3"
+          >
+            <div className="min-w-0 space-y-1">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                <span>{owner}</span>
+                {project.updated_at && (
+                  <span>{formatDistanceToNow(new Date(project.updated_at), { addSuffix: true })}</span>
+                )}
+              </div>
+              <p className="truncate font-display text-base font-semibold text-foreground">
+                {project.title || "Untitled release"}
+              </p>
+              {project.vision && (
+                <p className="line-clamp-1 text-sm text-muted-foreground">
+                  {project.vision}
+                </p>
+              )}
+            </div>
+            <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-foreground" />
+          </Link>
+        );
+      })}
+    </div>
+  );
+};
 
 const HomeFeedPage = () => {
   const [marketFilter, setMarketFilter] = useState<RegionMarket | "All">("All");
@@ -44,6 +118,18 @@ const HomeFeedPage = () => {
           <div className="h-[calc(100vh-520px)] min-h-[560px]">
             <FlowModePage embedded />
           </div>
+        </div>
+      </section>
+
+      <section className="px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-3 flex items-end justify-between gap-4">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">Live activity</p>
+              <h2 className="font-display text-xl font-bold text-foreground">Recent releases</h2>
+            </div>
+          </div>
+          <RecentActivityList />
         </div>
       </section>
     </main>
