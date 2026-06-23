@@ -52,7 +52,7 @@ import MarketplacePage from "@/pages/MarketplacePage";
 import HomePage from "@/pages/HomePage";
 import HomeFeedPage from "@/pages/HomeFeedPage";
 import DiscoverPage from "@/pages/DiscoverPage";
-import ChartsPage from "@/pages/ChartsPage";
+// ChartsPage retired — /charts redirects to /home.
 import TreasuryPage from "@/pages/TreasuryPage";
 import CardPage from "@/pages/CardPage";
 
@@ -285,8 +285,8 @@ const App = () => (
                 <Route path="/market" element={<Navigate to="/discover" replace />} />
                 <Route path="/connect/match" element={<Navigate to="/discover" replace />} />
                 <Route path="/vault" element={<ProtectedRoute><VaultRoomPage /></ProtectedRoute>} />
-                <Route path="/discover" element={<DiscoverPage />} />
-                <Route path="/charts" element={<ChartsPage />} />
+                <Route path="/discover" element={<Navigate to="/home" replace />} />
+                <Route path="/charts" element={<Navigate to="/home" replace />} />
                 <Route path="/treasury" element={<TreasuryPage />} />
 
                 {/* v8: Hub/Stream retired — Discover is the unified front

@@ -77,7 +77,7 @@ import BackedByRhozelandBadge from "@/components/concierge/BackedByRhozelandBadg
 import PublishReleaseCard from "@/components/project/PublishReleaseCard";
 import SignedAgreementCard from "@/components/proposals/SignedAgreementCard";
 import ProjectScopeReview from "@/components/project/ProjectScopeReview";
-import AiRoadmapDraftButton from "@/components/project/AiRoadmapDraftButton";
+// AiRoadmapDraftButton retired — manual roadmaps only.
 import ProjectRolloutTab from "@/components/project/ProjectRolloutTab";
 import AttachCoinToProjectCard from "@/components/project/AttachCoinToProjectCard";
 import RoadmapCopilot from "@/components/project/RoadmapCopilot";
@@ -866,16 +866,7 @@ const ProjectDetailPage = () => {
             />
           )}
 
-          {isOwner && !isLocked && (goals?.filter((g: any) => !g.parent_id).length ?? 0) < 2 && (
-            <AiRoadmapDraftButton
-              projectId={id!}
-              projectTitle={project.title}
-              totalBudget={Number(project.total_budget ?? 0)}
-              clientId={(collaborators as any)?.find?.((c: any) => c.project_role === "client")?.user_id ?? null}
-              specialistId={(collaborators as any)?.find?.((c: any) => c.project_role === "specialist")?.user_id ?? project.user_id}
-              existingGoalCount={goals?.filter((g: any) => !g.parent_id).length ?? 0}
-            />
-          )}
+          {/* AI roadmap drafter removed — manual roadmaps only. */}
 
 
           <div className="grid gap-6 lg:grid-cols-3">
