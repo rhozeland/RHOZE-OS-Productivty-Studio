@@ -17,7 +17,7 @@ import { Flame } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 
-const HIDDEN_PREFIXES = ["/flow", "/auth", "/onboarding"];
+const HIDDEN_PREFIXES = ["/home", "/flow", "/auth", "/onboarding"];
 
 const FlowLauncher = () => {
   const { user } = useAuth();

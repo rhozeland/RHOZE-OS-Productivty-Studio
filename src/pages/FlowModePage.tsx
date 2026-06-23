@@ -11,6 +11,7 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
+  Maximize2,
   Plus,
   Check,
   Upload,
@@ -114,7 +115,11 @@ const CATEGORY_UPLOAD_HINTS: Record<string, { accept: string; hint: string; link
 };
 
 
-const FlowModePage = () => {
+type FlowModePageProps = {
+  embedded?: boolean;
+};
+
+const FlowModePage = ({ embedded = false }: FlowModePageProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -1148,6 +1153,11 @@ const FlowModePage = () => {
   }, [pendingDeepLinkId]);
 
   const handleExitFlow = useCallback(() => {
+    if (embedded) {
+      navigate("/flow", { state: { from: `${location.pathname}${location.search}${location.hash}` } });
+      return;
+    }
+
     const fromState = (location.state as { from?: string } | null)?.from;
     const currentPath = `${location.pathname}${location.search}${location.hash}`;
 
@@ -1163,7 +1173,7 @@ const FlowModePage = () => {
     }
 
     navigate("/discover");
-  }, [location.hash, location.pathname, location.search, location.state, navigate]);
+  }, [embedded, location.hash, location.pathname, location.search, location.state, navigate]);
 
   // Batched coin lookup keyed by uploader (creator_id). Coins are now
   // profile-bound, so the "$TICKER → speculate" pill on a Flow card means
@@ -1445,7 +1455,10 @@ const FlowModePage = () => {
   // ──── ONBOARDING ────
   if (!calibrated) {
     return (
-      <div className="relative flex items-center justify-center min-h-[calc(100vh-3.5rem)] -m-4 md:-m-8 overflow-hidden bg-gradient-to-br from-muted via-background to-muted/50">
+      <div className={cn(
+        "relative flex items-center justify-center overflow-hidden bg-gradient-to-br from-muted via-background to-muted/50",
+        embedded ? "h-full min-h-[520px]" : "min-h-[calc(100vh-3.5rem)] -m-4 md:-m-8",
+      )}>
         <div className="absolute top-20 left-1/4 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-20 right-1/4 w-72 h-72 bg-accent/5 rounded-full blur-3xl pointer-events-none" />
 
@@ -1497,7 +1510,13 @@ const FlowModePage = () => {
 
   // ──── MAIN SWIPE VIEW ────
   return (
-    <div ref={flowContentRef} className="relative flex flex-col min-h-[calc(100vh-3.5rem)] -m-4 md:-m-8">
+    <div
+      ref={flowContentRef}
+      className={cn(
+        "relative flex flex-col overflow-hidden",
+        embedded ? "h-full min-h-[520px]" : "min-h-[calc(100vh-3.5rem)] -m-4 md:-m-8",
+      )}
+    >
       {/* Dynamic background */}
       <FlowCardBackground
         fileUrl={currentItem?.file_url}
@@ -1766,10 +1785,10 @@ const FlowModePage = () => {
             size="icon"
             className="rounded-full bg-card/60 backdrop-blur-sm hover:bg-card/80 h-9 w-9"
             onClick={handleExitFlow}
-            aria-label="Exit Flow Mode"
-            title="Exit Flow Mode"
+              aria-label={embedded ? "Expand Flow Mode" : "Exit Flow Mode"}
+              title={embedded ? "Expand Flow Mode" : "Exit Flow Mode"}
           >
-            <X className="h-4 w-4" />
+              {embedded ? <Maximize2 className="h-4 w-4" /> : <X className="h-4 w-4" />}
           </Button>
         </div>
       </div>
