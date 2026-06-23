@@ -117,7 +117,7 @@ const HomeFeedPage = () => {
           >
             <Suspense
               fallback={
-                <div className="flex h-[420px] w-full items-center justify-center bg-card/40">
+                <div className="flex h-[560px] w-full items-center justify-center bg-card/40">
                   <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                 </div>
               }
@@ -126,7 +126,7 @@ const HomeFeedPage = () => {
                 marketFilter={marketFilter}
                 onSelectMarket={setMarketFilter}
                 featuredSlides={featuredSlides}
-                height={420}
+                height={560}
               />
             </Suspense>
           </motion.div>
