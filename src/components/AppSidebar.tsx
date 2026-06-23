@@ -188,9 +188,12 @@ const AppSidebar = () => {
           collapsed && "justify-center px-2",
         )}
       >
-        <img src={rhozelandLogo} alt="Rhozeland" className="h-8 w-8 shrink-0 object-contain" />
+        <img src={rhozelandLogo} alt="Rhoze" className="h-8 w-8 shrink-0 object-contain" />
         {!collapsed && (
-          <span className="font-body text-lg font-bold tracking-tight text-foreground">Rhozeland</span>
+          <span className="flex flex-col leading-none">
+            <span className="font-body text-lg font-bold tracking-tight text-foreground">Rhoze</span>
+            <span className="text-[9px] uppercase tracking-[0.22em] text-muted-foreground/70">by Rhozeland</span>
+          </span>
         )}
       </Link>
 
