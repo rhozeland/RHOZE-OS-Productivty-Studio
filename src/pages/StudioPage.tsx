@@ -808,19 +808,11 @@ const StudioPage = () => {
               />
             ) : null;
 
-            const sectionBacking = (backedProjects ?? []).length > 0 ? (
-              <BackingSection
-                key="backing"
-                projects={backedProjects ?? []}
-                goalsByProject={backedGoalsByProject}
-              />
-            ) : null;
-
             const sectionHolding = (holdings ?? []).length > 0 ? (
               <HoldingSection key="holding" holdings={holdings ?? []} />
             ) : null;
 
-            return [sectionBuilding, sectionBacking, sectionHolding].filter(Boolean);
+            return [sectionBuilding, sectionHolding].filter(Boolean);
           })()}
         </div>
       )}
