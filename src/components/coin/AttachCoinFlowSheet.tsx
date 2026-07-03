@@ -187,19 +187,12 @@ const AttachCoinFlowSheet = ({ open, onOpenChange, scope }: Props) => {
         linked_token_name: preview.name,
         linked_token_image_url: preview.imageUri,
       };
-      if (target === "project") {
-        const { error } = await supabase
-          .from("projects")
-          .update(payload)
-          .eq("id", pickedId);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("works")
-          .update(payload)
-          .eq("id", pickedId);
-        if (error) throw error;
-      }
+      const table = target === "project" ? "projects" : "works";
+      const { error } = await (supabase as any)
+        .from(table)
+        .update(payload)
+        .eq("id", pickedId);
+      if (error) throw error;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["projects"] });
