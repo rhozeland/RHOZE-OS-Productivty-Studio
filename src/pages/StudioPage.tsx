@@ -843,11 +843,10 @@ const StudioPage = () => {
         onOpenChange={setStartProjectOpen}
       />
 
-      {/* Launch a Coin — picker → 3-screen flow modal */}
-      <LaunchCoinFlowModal
+      {/* Attach a Coin — paste CA → pick target → celebrate */}
+      <AttachCoinFlowSheet
         open={coinSheetOpen}
         onOpenChange={setCoinSheetOpen}
-        project={null}
       />
 
       {/* Rhozeland A&R intake */}
