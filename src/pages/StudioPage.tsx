@@ -678,16 +678,19 @@ const StudioPage = () => {
             <h3 className="text-lg font-medium text-foreground mb-2">Rhozeland A&R</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
               {arIntent === "new"
-                ? "Get expert help planning and shipping your next drop."
-                : "Bring an existing track — we'll help you scale it."}
+                ? "Tell us the vision — we co-produce, market, and split the upside."
+                : "Bring an existing track — we scale reach and set a fair split."}
+            </p>
+            <p className="mt-2 text-[10px] font-mono uppercase tracking-widest text-muted-foreground/70">
+              Intake · budget · cut split
             </p>
           </div>
           <button
             type="button"
-            onClick={() => navigate(`/label-services?intent=${arIntent}`)}
+            onClick={() => setArSheetOpen(true)}
             className="mt-8 w-full py-3 border border-border text-xs font-mono uppercase tracking-wider text-foreground hover:bg-foreground hover:text-background transition-all"
           >
-            Apply Now
+            Open Intake
           </button>
         </div>
 
@@ -697,9 +700,12 @@ const StudioPage = () => {
             <span className="text-[10px] font-mono text-purple-500 border border-purple-500/40 px-2 py-0.5 mb-6 inline-block tracking-wider">
               LIQUIDITY
             </span>
-            <h3 className="text-lg font-medium text-foreground mb-2">Back with Coin</h3>
+            <h3 className="text-lg font-medium text-foreground mb-2">Attach a Coin</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Attach a pump.fun coin to a track — or let Rhozeland launch one with you.
+              Link a $coin to a project or a track. Every post inside inherits the coin — social proof + upside built in.
+            </p>
+            <p className="mt-2 text-[10px] font-mono uppercase tracking-widest text-muted-foreground/70">
+              Project · track · content
             </p>
           </div>
           <button
@@ -707,7 +713,7 @@ const StudioPage = () => {
             onClick={() => setCoinSheetOpen(true)}
             className="mt-8 w-full py-3 bg-purple-500/10 border border-purple-500/40 text-purple-600 dark:text-purple-300 text-xs font-mono uppercase tracking-wider hover:bg-purple-500 hover:text-white transition-all"
           >
-            Attach Asset
+            Link Coin
           </button>
         </div>
 
@@ -717,9 +723,12 @@ const StudioPage = () => {
             <span className="text-[10px] font-mono text-muted-foreground border border-border px-2 py-0.5 mb-6 inline-block tracking-wider">
               CREATE
             </span>
-            <h3 className="text-lg font-medium text-foreground mb-2">New Session</h3>
+            <h3 className="text-lg font-medium text-foreground mb-2">New Release</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Start a blank release. AI drafts a roadmap tailored to your style.
+              Spin up a fresh project — vision, milestones, files. AI drafts the roadmap around your style.
+            </p>
+            <p className="mt-2 text-[10px] font-mono uppercase tracking-widest text-muted-foreground/70">
+              Full project workspace
             </p>
           </div>
           <button
@@ -731,18 +740,18 @@ const StudioPage = () => {
           </button>
         </div>
 
-        {/* 4. Upload Audio */}
+        {/* 4. Post to Flow */}
         <button
           type="button"
-          onClick={() => navigate("/settings?upload=audio#provenance")}
+          onClick={() => navigate("/flow?share=1")}
           className="bg-card p-6 border-dashed border-2 border-border/50 flex flex-col items-center justify-center text-center group hover:border-emerald-500/50 hover:bg-muted/40 transition-all"
         >
           <div className="w-12 h-12 rounded-full border border-border flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
             <Rocket className="w-5 h-5 text-muted-foreground rotate-45" />
           </div>
-          <h3 className="text-sm font-medium text-foreground">Drop Audio</h3>
+          <h3 className="text-sm font-medium text-foreground">Post a Work</h3>
           <p className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground mt-1">
-            WAV · MP3 · FLAC
+            Audio · Video · Photo → Flow
           </p>
         </button>
       </section>
