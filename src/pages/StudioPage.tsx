@@ -612,119 +612,165 @@ const StudioPage = () => {
     },
   });
 
+  // Rhozeland A&R intake mode — "new" (fresh release) vs "grow" (existing work).
+  const [arIntent, setArIntent] = useState<"new" | "grow">("new");
+
   // ── render ─────────────────────────────────────────────────────────
   return (
-    <div className="max-w-5xl mx-auto pb-20 space-y-8">
-      {/* Header — gradient banner */}
-      <StudioHeroBox
-        totalActive={totalActive}
-        milestonesDueThisWeek={milestonesDueThisWeek}
-        draftCount={draftProjects.length}
-        completedCount={completedProjects.length}
-        emptyMode={!hasAnyActivity}
-      />
+    <div className="max-w-6xl mx-auto pb-20 space-y-12">
+      {/* Editorial header */}
+      <header className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 border-b border-border/60 pb-6">
+        <div>
+          <h1 className="font-display text-4xl font-light tracking-tight text-foreground">
+            Releases
+          </h1>
+          <p className="text-[11px] font-mono uppercase tracking-[0.22em] text-muted-foreground mt-2">
+            Artist Workspace / Rhoze
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="text-[11px] font-mono text-muted-foreground">
+            {totalActive} {totalActive === 1 ? "release" : "releases"} in motion
+            {milestonesDueThisWeek > 0 && ` · ${milestonesDueThisWeek} due this week`}
+          </span>
+        </div>
+      </header>
 
-      {/* Primary actions — role-adaptive */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {showDiscoverCtas ? (
-          <GradientCtaButton
-            onClick={() => navigate("/discover")}
-            Icon={Compass}
-            eyebrow="Build in public"
-            title="Discover Artists"
-            subtitle="Find creators worth backing."
-            gradient="linear-gradient(120deg, hsl(330 85% 60%) 0%, hsl(292 84% 61%) 25%, hsl(38 92% 55%) 50%, hsl(292 84% 61%) 75%, hsl(330 85% 60%) 100%)"
-          />
-        ) : (
-          <GradientCtaButton
-            onClick={() => setStartProjectOpen(true)}
-            Icon={Rocket}
-            eyebrow="Build in public"
-            title="Start a Project"
-            subtitle="Plan a release. Let fans back the work."
-            gradient="linear-gradient(120deg, hsl(330 85% 60%) 0%, hsl(292 84% 61%) 25%, hsl(38 92% 55%) 50%, hsl(292 84% 61%) 75%, hsl(330 85% 60%) 100%)"
-          />
-        )}
-        {showDiscoverCtas ? (
-          <GradientCtaButton
-            onClick={() => navigate("/discover?filter=projects")}
-            Icon={Heart}
-            eyebrow="Get backed"
-            title="Back a Project"
-            subtitle="Cheer on releases in motion."
-            gradient="linear-gradient(120deg, hsl(200 90% 55%) 0%, hsl(260 80% 60%) 25%, hsl(170 80% 50%) 50%, hsl(260 80% 60%) 75%, hsl(200 90% 55%) 100%)"
-          />
-        ) : (
-          <GradientCtaButton
+      {/* Core Actions Grid — 4 modular tiles */}
+      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-px bg-border/60 border border-border/60 rounded-sm overflow-hidden">
+        {/* 1. Rhozeland A&R */}
+        <div className="bg-card p-6 flex flex-col justify-between group hover:bg-muted/40 transition-colors">
+          <div>
+            <div className="flex justify-between items-start mb-6">
+              <span className="text-[10px] font-mono text-emerald-500 border border-emerald-500/40 px-2 py-0.5 tracking-wider">
+                STRATEGY
+              </span>
+              <div className="flex bg-background p-1 rounded border border-border/60">
+                <button
+                  type="button"
+                  onClick={() => setArIntent("new")}
+                  className={cn(
+                    "px-2 py-1 text-[9px] font-mono rounded transition-colors",
+                    arIntent === "new"
+                      ? "bg-foreground/10 text-foreground"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  NEW
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setArIntent("grow")}
+                  className={cn(
+                    "px-2 py-1 text-[9px] font-mono rounded transition-colors",
+                    arIntent === "grow"
+                      ? "bg-foreground/10 text-foreground"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  GROW
+                </button>
+              </div>
+            </div>
+            <h3 className="text-lg font-medium text-foreground mb-2">Rhozeland A&R</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {arIntent === "new"
+                ? "Get expert help planning and shipping your next drop."
+                : "Bring an existing track — we'll help you scale it."}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate(`/label-services?intent=${arIntent}`)}
+            className="mt-8 w-full py-3 border border-border text-xs font-mono uppercase tracking-wider text-foreground hover:bg-foreground hover:text-background transition-all"
+          >
+            Apply Now
+          </button>
+        </div>
+
+        {/* 2. Attach / Back with Coin */}
+        <div className="bg-card p-6 flex flex-col justify-between group hover:bg-muted/40 transition-colors">
+          <div>
+            <span className="text-[10px] font-mono text-purple-500 border border-purple-500/40 px-2 py-0.5 mb-6 inline-block tracking-wider">
+              LIQUIDITY
+            </span>
+            <h3 className="text-lg font-medium text-foreground mb-2">Back with Coin</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Attach a pump.fun coin to a track — or let Rhozeland launch one with you.
+            </p>
+          </div>
+          <button
+            type="button"
             onClick={() => setCoinSheetOpen(true)}
-            Icon={Coins}
-            eyebrow="Get backed"
-            title="Launch a Coin"
-            subtitle="Spin up your artist token on pump.fun."
-            gradient="linear-gradient(120deg, hsl(200 90% 55%) 0%, hsl(260 80% 60%) 25%, hsl(170 80% 50%) 50%, hsl(260 80% 60%) 75%, hsl(200 90% 55%) 100%)"
-          />
-        )}
+            className="mt-8 w-full py-3 bg-purple-500/10 border border-purple-500/40 text-purple-600 dark:text-purple-300 text-xs font-mono uppercase tracking-wider hover:bg-purple-500 hover:text-white transition-all"
+          >
+            Attach Asset
+          </button>
+        </div>
+
+        {/* 3. Start Blank */}
+        <div className="bg-card p-6 flex flex-col justify-between group hover:bg-muted/40 transition-colors">
+          <div>
+            <span className="text-[10px] font-mono text-muted-foreground border border-border px-2 py-0.5 mb-6 inline-block tracking-wider">
+              CREATE
+            </span>
+            <h3 className="text-lg font-medium text-foreground mb-2">New Session</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Start a blank release. AI drafts a roadmap tailored to your style.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setStartProjectOpen(true)}
+            className="mt-8 w-full py-3 border border-border text-xs font-mono uppercase tracking-wider text-foreground hover:bg-foreground hover:text-background transition-all"
+          >
+            Start Blank
+          </button>
+        </div>
+
+        {/* 4. Upload Audio */}
+        <button
+          type="button"
+          onClick={() => navigate("/settings?upload=audio#provenance")}
+          className="bg-card p-6 border-dashed border-2 border-border/50 flex flex-col items-center justify-center text-center group hover:border-emerald-500/50 hover:bg-muted/40 transition-all"
+        >
+          <div className="w-12 h-12 rounded-full border border-border flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+            <Rocket className="w-5 h-5 text-muted-foreground rotate-45" />
+          </div>
+          <h3 className="text-sm font-medium text-foreground">Drop Audio</h3>
+          <p className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground mt-1">
+            WAV · MP3 · FLAC
+          </p>
+        </button>
       </section>
 
-      {/* Live release banner — only if user owns a live public project */}
+      {/* Live release strip — subtle */}
       {featuredPublic && (
-        <div className="relative rounded-2xl overflow-hidden border border-border bg-foreground text-background dark:bg-card dark:text-foreground px-5 py-4">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <span className="inline-flex items-center gap-1 rounded-full bg-background/15 px-2 py-0.5 text-[9px] uppercase tracking-[0.2em] font-semibold mb-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Live release
-              </span>
-              <p className="text-sm font-semibold truncate">{featuredPublic.title}</p>
-              <p className="text-[11px] opacity-75 mt-0.5">
-                {supporterCounts?.[featuredPublic.id] ?? 0} supporter
-                {(supporterCounts?.[featuredPublic.id] ?? 0) === 1 ? "" : "s"} ·{" "}
-                {projectStats(featuredPublic).done} of {projectStats(featuredPublic).total} milestones
-              </p>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              {livePublicProjects.length > 1 ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="inline-flex items-center gap-1 text-xs font-medium hover:underline focus:outline-none">
-                    View release <ArrowUpRight className="h-3.5 w-3.5" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-72">
-                    <DropdownMenuLabel className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
-                      Your live releases ({livePublicProjects.length})
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {livePublicProjects.map((p) => {
-                      const stats = projectStats(p);
-                      const supporters = supporterCounts?.[p.id] ?? 0;
-                      return (
-                        <DropdownMenuItem key={p.id} asChild>
-                          <Link
-                            to={`/release/${p.public_slug}`}
-                            className="flex flex-col items-start gap-0.5 cursor-pointer"
-                          >
-                            <span className="text-sm font-medium truncate w-full">{p.title}</span>
-                            <span className="text-[11px] text-muted-foreground">
-                              {supporters} supporter{supporters === 1 ? "" : "s"} · {stats.done}/{stats.total} milestones
-                            </span>
-                          </Link>
-                        </DropdownMenuItem>
-                      );
-                    })}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <Link
-                  to={`/release/${featuredPublic.public_slug}`}
-                  className="inline-flex items-center gap-1 text-xs font-medium hover:underline"
-                >
-                  View release <ArrowUpRight className="h-3.5 w-3.5" />
-                </Link>
-              )}
-            </div>
-
+        <Link
+          to={`/release/${featuredPublic.public_slug}`}
+          className="group flex items-center justify-between gap-4 border-l-2 border-emerald-500 pl-4 py-2 hover:bg-muted/40 transition-colors"
+        >
+          <div className="min-w-0 flex items-center gap-3">
+            <span className="text-[10px] font-mono uppercase tracking-widest text-emerald-500">
+              Live
+            </span>
+            <span className="text-sm text-foreground font-medium truncate">
+              {featuredPublic.title}
+            </span>
+            <span className="hidden sm:inline text-[11px] font-mono text-muted-foreground">
+              · {supporterCounts?.[featuredPublic.id] ?? 0} supporter
+              {(supporterCounts?.[featuredPublic.id] ?? 0) === 1 ? "" : "s"}
+              {" · "}
+              {projectStats(featuredPublic).done}/{projectStats(featuredPublic).total} milestones
+            </span>
           </div>
-        </div>
+          <span className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground group-hover:text-foreground inline-flex items-center gap-1 shrink-0">
+            View <ArrowUpRight className="h-3 w-3" />
+          </span>
+        </Link>
       )}
+
 
       {/* Brand-new user empty state */}
       {!hasAnyActivity && !isLoading && (
