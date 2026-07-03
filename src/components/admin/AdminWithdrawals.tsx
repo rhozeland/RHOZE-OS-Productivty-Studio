@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -39,7 +39,7 @@ const AdminWithdrawals = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("withdrawal_requests" as any)
-        .select("*")
+        .select("id,user_id,amount,status,payout_method,admin_note,created_at")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as any[];
@@ -139,11 +139,8 @@ const AdminWithdrawals = () => {
                   <span>{format(new Date(r.created_at), "MMM d, yyyy h:mm a")}</span>
                 </div>
 
-                {r.payout_details && (
-                  <div className="text-xs text-muted-foreground bg-muted/30 rounded p-2">
-                    {renderPayoutDetails(r.payout_details)}
-                  </div>
-                )}
+                {/* payout_details are sensitive (bank/wallet info) and only fetched
+                    on-demand inside the Process dialog via a SECURITY DEFINER RPC. */}
 
                 {r.admin_note && (
                   <div className="rounded-md bg-muted/40 p-2">
@@ -179,6 +176,7 @@ const AdminWithdrawals = () => {
             <DialogTitle className="font-display">Process Withdrawal</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            {processDialog && <PayoutDetailsBlock requestId={processDialog.id} render={renderPayoutDetails} />}
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</label>
               <Select value={newStatus} onValueChange={setNewStatus}>
@@ -208,5 +206,26 @@ const AdminWithdrawals = () => {
     </div>
   );
 };
+
+function PayoutDetailsBlock({ requestId, render }: { requestId: string; render: (d: any) => React.ReactNode }) {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["withdrawal-payout-details", requestId],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_withdrawal_payout_details" as any, { _id: requestId });
+      if (error) throw error;
+      return data;
+    },
+  });
+  return (
+    <div className="space-y-1.5">
+      <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Payout details</label>
+      <div className="text-xs text-muted-foreground bg-muted/30 rounded p-2 min-h-[2.5rem]">
+        {isLoading ? <Loader2 className="h-3 w-3 animate-spin" /> :
+         error ? <span className="text-destructive">Unable to load</span> :
+         data ? render(data) : <span className="italic">None provided</span>}
+      </div>
+    </div>
+  );
+}
 
 export default AdminWithdrawals;

@@ -6081,6 +6081,7 @@ export type Database = {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
       }
+      email_queue_dispatch: { Args: never; Returns: undefined }
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
         Returns: number
@@ -6143,6 +6144,7 @@ export type Database = {
           ticket_count: number
         }[]
       }
+      get_host_payout_details: { Args: { _id: string }; Returns: Json }
       get_my_private_profile_fields: {
         Args: never
         Returns: {
@@ -6214,6 +6216,7 @@ export type Database = {
         Args: { _launch_id: string; _user_id: string }
         Returns: number
       }
+      get_withdrawal_payout_details: { Args: { _id: string }; Returns: Json }
       has_event_ticket: {
         Args: { _event_id: string; _user_id: string }
         Returns: boolean

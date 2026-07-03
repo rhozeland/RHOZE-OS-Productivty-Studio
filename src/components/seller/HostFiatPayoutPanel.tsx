@@ -54,7 +54,7 @@ const HostFiatPayoutPanel = () => {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("host_payout_requests")
-        .select("*")
+        .select("id,host_id,amount,currency_code,status,payout_method,admin_note,created_at,updated_at")
         .eq("host_id", user!.id)
         .order("created_at", { ascending: false })
         .limit(20);
