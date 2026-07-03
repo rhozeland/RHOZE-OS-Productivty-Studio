@@ -207,4 +207,25 @@ const AdminWithdrawals = () => {
   );
 };
 
+function PayoutDetailsBlock({ requestId, render }: { requestId: string; render: (d: any) => React.ReactNode }) {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["withdrawal-payout-details", requestId],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_withdrawal_payout_details" as any, { _id: requestId });
+      if (error) throw error;
+      return data;
+    },
+  });
+  return (
+    <div className="space-y-1.5">
+      <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Payout details</label>
+      <div className="text-xs text-muted-foreground bg-muted/30 rounded p-2 min-h-[2.5rem]">
+        {isLoading ? <Loader2 className="h-3 w-3 animate-spin" /> :
+         error ? <span className="text-destructive">Unable to load</span> :
+         data ? render(data) : <span className="italic">None provided</span>}
+      </div>
+    </div>
+  );
+}
+
 export default AdminWithdrawals;
