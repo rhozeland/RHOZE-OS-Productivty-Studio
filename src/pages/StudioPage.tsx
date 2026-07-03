@@ -77,6 +77,7 @@ import { fetchCreatorContext } from "@/lib/creator-context";
 import { composeMilestoneDescription, chainMilestoneDates, type DraftedMilestone, type AssetRef, type MilestonePhase, PHASE_ORDER, PHASE_LABELS } from "@/hooks/useAiRoadmapDraft";
 import StartProjectPicker from "@/components/project/StartProjectPicker";
 import LaunchCoinFlowModal from "@/components/launchpad/LaunchCoinFlowModal";
+import AttachCoinFlowSheet from "@/components/coin/AttachCoinFlowSheet";
 import { ConciergeIntakeSheet } from "@/components/concierge/ConciergeIntakeSheet";
 
 interface ProjectRow {
