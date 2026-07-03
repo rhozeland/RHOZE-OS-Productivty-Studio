@@ -72,14 +72,14 @@ type NavSpec = {
 const FAN_NAV: NavSpec[] = [
   { icon: Home, label: "Home", description: "", path: "/home" },
   { icon: MessageSquare, label: "Connect", description: "", path: "/messages", badgeKey: "inbox_unread" },
-  { icon: Layers, label: "Projects", description: "", path: "/my-projects", badgeKey: "milestones_due" },
+  { icon: Layers, label: "Releases", description: "", path: "/my-projects", badgeKey: "milestones_due" },
   { icon: Gem, label: "Pass", description: "", path: "/credits" },
 ];
 
 const MUSICIAN_NAV: NavSpec[] = [
   { icon: Home, label: "Home", description: "", path: "/home" },
   { icon: MessageSquare, label: "Connect", description: "", path: "/messages", badgeKey: "inbox_unread" },
-  { icon: Layers, label: "Projects", description: "", path: "/my-projects", badgeKey: "milestones_due" },
+  { icon: Layers, label: "Releases", description: "", path: "/my-projects", badgeKey: "milestones_due" },
   { icon: Gem, label: "Pass", description: "", path: "/credits" },
 ];
 
