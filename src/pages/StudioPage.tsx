@@ -615,6 +615,7 @@ const StudioPage = () => {
 
   // Rhozeland A&R intake mode — "new" (fresh release) vs "grow" (existing work).
   const [arIntent, setArIntent] = useState<"new" | "grow">("new");
+  const [arSheetOpen, setArSheetOpen] = useState(false);
 
   // ── render ─────────────────────────────────────────────────────────
   return (
