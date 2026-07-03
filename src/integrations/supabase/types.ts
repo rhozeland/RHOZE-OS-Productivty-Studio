@@ -4059,6 +4059,10 @@ export type Database = {
           is_estimate: boolean
           is_public: boolean
           linked_token_id: string | null
+          linked_token_image_url: string | null
+          linked_token_mint: string | null
+          linked_token_name: string | null
+          linked_token_ticker: string | null
           platform_fee_bps_override: number | null
           project_type: string | null
           public_slug: string | null
@@ -4092,6 +4096,10 @@ export type Database = {
           is_estimate?: boolean
           is_public?: boolean
           linked_token_id?: string | null
+          linked_token_image_url?: string | null
+          linked_token_mint?: string | null
+          linked_token_name?: string | null
+          linked_token_ticker?: string | null
           platform_fee_bps_override?: number | null
           project_type?: string | null
           public_slug?: string | null
@@ -4125,6 +4133,10 @@ export type Database = {
           is_estimate?: boolean
           is_public?: boolean
           linked_token_id?: string | null
+          linked_token_image_url?: string | null
+          linked_token_mint?: string | null
+          linked_token_name?: string | null
+          linked_token_ticker?: string | null
           platform_fee_bps_override?: number | null
           project_type?: string | null
           public_slug?: string | null
@@ -5667,7 +5679,10 @@ export type Database = {
           id: string
           is_unverified: boolean
           kind: string
+          linked_token_image_url: string | null
           linked_token_mint: string | null
+          linked_token_name: string | null
+          linked_token_ticker: string | null
           mime_type: string | null
           solana_signature: string | null
           thumbnail_url: string | null
@@ -5689,7 +5704,10 @@ export type Database = {
           id?: string
           is_unverified?: boolean
           kind?: string
+          linked_token_image_url?: string | null
           linked_token_mint?: string | null
+          linked_token_name?: string | null
+          linked_token_ticker?: string | null
           mime_type?: string | null
           solana_signature?: string | null
           thumbnail_url?: string | null
@@ -5711,7 +5729,10 @@ export type Database = {
           id?: string
           is_unverified?: boolean
           kind?: string
+          linked_token_image_url?: string | null
           linked_token_mint?: string | null
+          linked_token_name?: string | null
+          linked_token_ticker?: string | null
           mime_type?: string | null
           solana_signature?: string | null
           thumbnail_url?: string | null
@@ -6001,6 +6022,10 @@ export type Database = {
               is_estimate: boolean
               is_public: boolean
               linked_token_id: string | null
+              linked_token_image_url: string | null
+              linked_token_mint: string | null
+              linked_token_name: string | null
+              linked_token_ticker: string | null
               platform_fee_bps_override: number | null
               project_type: string | null
               public_slug: string | null
@@ -6052,6 +6077,10 @@ export type Database = {
               is_estimate: boolean
               is_public: boolean
               linked_token_id: string | null
+              linked_token_image_url: string | null
+              linked_token_mint: string | null
+              linked_token_name: string | null
+              linked_token_ticker: string | null
               platform_fee_bps_override: number | null
               project_type: string | null
               public_slug: string | null
