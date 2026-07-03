@@ -850,6 +850,14 @@ const StudioPage = () => {
         project={null}
       />
 
+      {/* Rhozeland A&R intake */}
+      <ConciergeIntakeSheet
+        open={arSheetOpen}
+        onOpenChange={setArSheetOpen}
+        initialTier="curated"
+      />
+
+
     </div>
   );
 };
