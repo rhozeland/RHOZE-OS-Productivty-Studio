@@ -1568,7 +1568,13 @@ function HoldingSection({ holdings }: { holdings: any[] }) {
 
   return (
     <section>
-      <SectionHeader icon={Coins} label="Holding" />
+      <div className="flex items-center gap-2 mb-1">
+        <Heart className="h-4 w-4 text-foreground/70" />
+        <h2 className="font-display text-lg font-semibold text-foreground">Backing</h2>
+      </div>
+      <p className="text-xs text-muted-foreground mb-3">
+        Coins you hold from artists you back. Holding unlocks their token-gated feed.
+      </p>
       <div className="-mx-1 px-1 overflow-x-auto">
         <div className="flex gap-3 pb-2 min-w-min">
           {cards.map((c) => {
