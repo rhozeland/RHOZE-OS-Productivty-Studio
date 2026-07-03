@@ -139,11 +139,8 @@ const AdminWithdrawals = () => {
                   <span>{format(new Date(r.created_at), "MMM d, yyyy h:mm a")}</span>
                 </div>
 
-                {r.payout_details && (
-                  <div className="text-xs text-muted-foreground bg-muted/30 rounded p-2">
-                    {renderPayoutDetails(r.payout_details)}
-                  </div>
-                )}
+                {/* payout_details are sensitive (bank/wallet info) and only fetched
+                    on-demand inside the Process dialog via a SECURITY DEFINER RPC. */}
 
                 {r.admin_note && (
                   <div className="rounded-md bg-muted/40 p-2">
