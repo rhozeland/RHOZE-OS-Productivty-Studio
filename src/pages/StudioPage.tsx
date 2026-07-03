@@ -901,111 +901,78 @@ const ProjectCard = ({
   return (
     <Link
       to={`/projects/${project.id}`}
-      className="group relative block overflow-hidden rounded-2xl border border-border/60 bg-card transition-all hover:-translate-y-0.5 hover:border-foreground/40 hover:shadow-[0_18px_40px_-22px_hsl(var(--foreground)/0.45)]"
+      className="group relative block bg-card border border-border/60 p-4 hover:bg-muted/40 hover:border-border transition-all"
     >
-      {/* blueprint dot grid */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.05] dark:opacity-[0.08]"
-        style={{
-          backgroundImage:
-            "radial-gradient(currentColor 1px, transparent 1px)",
-          backgroundSize: "14px 14px",
-        }}
-      />
-      {/* left accent stripe */}
-      <div
-        aria-hidden
-        className="absolute left-0 top-0 h-full w-1.5"
-        style={{ background: `linear-gradient(180deg, ${accent}, ${accent}88)` }}
-      />
-      {/* corner glow on hover */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -top-12 -right-12 h-32 w-32 rounded-full opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-30"
-        style={{ background: accent }}
-      />
-
-      <div className="relative p-5 pl-6">
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 mb-1.5">
-              <span
-                className="h-1.5 w-1.5 rounded-full"
-                style={{ background: accent }}
-              />
-              <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground/80 font-semibold">
-                {statusLabel}
-              </p>
-              {stats.dueThisWeek > 0 && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">
-                  {stats.dueThisWeek} due
-                </span>
-              )}
-            </div>
-            <h3 className="font-display text-[17px] leading-snug font-semibold text-foreground line-clamp-2 tracking-tight">
-              {project.title}
-            </h3>
+      <div className="flex items-start gap-4">
+        {/* Cover thumb */}
+        <div
+          className="w-14 h-14 shrink-0 relative overflow-hidden bg-muted"
+          style={{ backgroundColor: `${accent}22` }}
+        >
+          <div
+            className="absolute inset-0"
+            style={{ background: `linear-gradient(135deg, ${accent}55 0%, transparent 70%)` }}
+          />
+          <div className="absolute bottom-1 left-1 flex items-end gap-0.5 h-5">
+            <div className="w-0.5 bg-foreground/40 h-2" />
+            <div className="w-0.5 bg-foreground/40 h-4" />
+            <div className="w-0.5 bg-foreground/40 h-3" />
+            <div className="w-0.5 bg-foreground/40 h-5" />
           </div>
-          <span
-            className={cn(
-              "inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-medium shrink-0 border",
-              project.is_public
-                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                : "border-border/60 bg-muted/50 text-muted-foreground",
-            )}
-          >
-            {project.is_public ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
-            {project.is_public ? "Public" : "Private"}
-          </span>
         </div>
 
-        {/* Segmented stage progress */}
-        <div className="mb-3.5">
-          <div className="flex items-center justify-between text-[11px] mb-1.5">
-            <span className="text-muted-foreground tabular-nums font-medium">
-              Stage {stats.done} / {stats.total || "—"}
-            </span>
-            <span className="tabular-nums font-bold" style={{ color: accent }}>
+        <div className="flex-grow min-w-0">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h4 className="font-medium text-foreground truncate">{project.title}</h4>
+              <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mt-0.5 flex items-center gap-2">
+                <span>{statusLabel}</span>
+                {project.is_public ? (
+                  <span className="inline-flex items-center gap-1 text-emerald-500">
+                    <Eye className="h-2.5 w-2.5" /> Public
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1">
+                    <EyeOff className="h-2.5 w-2.5" /> Private
+                  </span>
+                )}
+                {stats.dueThisWeek > 0 && (
+                  <span className="text-amber-500">· {stats.dueThisWeek} due</span>
+                )}
+              </p>
+            </div>
+            <span className="text-[10px] font-mono tabular-nums text-muted-foreground shrink-0">
               {pct}%
             </span>
           </div>
-          <div className="flex gap-1">
-            {Array.from({ length: segments }).map((_, i) => {
-              const filled = i < stats.done;
-              return (
-                <div
-                  key={i}
-                  className="flex-1 h-1.5 rounded-full transition-colors"
-                  style={{
-                    background: filled ? accent : "hsl(var(--muted))",
-                  }}
-                />
-              );
-            })}
-          </div>
-        </div>
 
-        <div className="flex items-center justify-between gap-2 pt-3 border-t border-dashed border-border/60">
-          <div className="flex items-center gap-3 text-[10.5px] text-muted-foreground">
-            <span className="inline-flex items-center gap-1">
-              <CalendarDays className="h-3 w-3" /> {stats.days}d
-            </span>
-            {project.is_public && (
+          {/* Progress bar */}
+          <div className="mt-3 h-[3px] w-full bg-muted overflow-hidden">
+            <div
+              className="h-full transition-all"
+              style={{ width: `${pct}%`, background: accent }}
+            />
+          </div>
+
+          {/* Meta row */}
+          <div className="mt-3 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 text-[10px] font-mono text-muted-foreground">
               <span className="inline-flex items-center gap-1">
-                <Users className="h-3 w-3" /> {supporters}
+                <CalendarDays className="h-2.5 w-2.5" /> {stats.days}d
               </span>
-            )}
-            <span className="hidden sm:inline">
-              · {formatDistanceToNow(new Date(project.updated_at), { addSuffix: true })}
+              {project.is_public && (
+                <span className="inline-flex items-center gap-1">
+                  <Users className="h-2.5 w-2.5" /> {supporters}
+                </span>
+              )}
+              <span className="tabular-nums">
+                {stats.done}/{stats.total || "—"}
+              </span>
+            </div>
+            <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground group-hover:text-foreground inline-flex items-center gap-1">
+              Open <ArrowRight className="h-2.5 w-2.5" />
             </span>
           </div>
-          <span
-            className="inline-flex items-center gap-1 text-[11px] font-semibold text-foreground/80 group-hover:text-foreground transition-colors"
-          >
-            Open
-            <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
-          </span>
         </div>
       </div>
     </Link>
