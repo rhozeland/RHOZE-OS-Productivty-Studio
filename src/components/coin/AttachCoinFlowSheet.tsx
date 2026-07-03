@@ -151,7 +151,7 @@ const AttachCoinFlowSheet = ({ open, onOpenChange, scope }: Props) => {
     queryKey: ["attach-coin-projects", user?.id],
     enabled: open && step === "pick-project" && !!user?.id,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("projects")
         .select("id, title, description, cover_url, linked_token_mint, updated_at")
         .eq("owner_id", user!.id)
