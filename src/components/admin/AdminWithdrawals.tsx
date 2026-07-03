@@ -176,6 +176,7 @@ const AdminWithdrawals = () => {
             <DialogTitle className="font-display">Process Withdrawal</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            {processDialog && <PayoutDetailsBlock requestId={processDialog.id} render={renderPayoutDetails} />}
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</label>
               <Select value={newStatus} onValueChange={setNewStatus}>
