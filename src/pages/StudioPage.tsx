@@ -77,6 +77,7 @@ import { fetchCreatorContext } from "@/lib/creator-context";
 import { composeMilestoneDescription, chainMilestoneDates, type DraftedMilestone, type AssetRef, type MilestonePhase, PHASE_ORDER, PHASE_LABELS } from "@/hooks/useAiRoadmapDraft";
 import StartProjectPicker from "@/components/project/StartProjectPicker";
 import LaunchCoinFlowModal from "@/components/launchpad/LaunchCoinFlowModal";
+import AttachCoinFlowSheet from "@/components/coin/AttachCoinFlowSheet";
 import { ConciergeIntakeSheet } from "@/components/concierge/ConciergeIntakeSheet";
 
 interface ProjectRow {
@@ -843,11 +844,10 @@ const StudioPage = () => {
         onOpenChange={setStartProjectOpen}
       />
 
-      {/* Launch a Coin — picker → 3-screen flow modal */}
-      <LaunchCoinFlowModal
+      {/* Attach a Coin — paste CA → pick target → celebrate */}
+      <AttachCoinFlowSheet
         open={coinSheetOpen}
         onOpenChange={setCoinSheetOpen}
-        project={null}
       />
 
       {/* Rhozeland A&R intake */}
