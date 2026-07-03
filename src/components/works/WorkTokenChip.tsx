@@ -25,14 +25,33 @@ const WorkTokenChip = ({ mint, variant = "default", className }: Props) => {
     enabled: !!mint,
     staleTime: 5 * 60_000,
     queryFn: async () => {
-      const { data } = await supabase
+      // 1. Approved profile token slot (admin-gated)
+      const { data: profile } = await supabase
         .from("profiles")
         .select("token_ticker, show_token_chip")
         .eq("token_mint_address", mint!)
         .maybeSingle();
-      if (!data) return null;
-      if (data.show_token_chip === false) return null;
-      return { ticker: data.token_ticker ?? "TOKEN" };
+      if (profile && profile.show_token_chip !== false) {
+        return { ticker: profile.token_ticker ?? "TOKEN" };
+      }
+      // 2. Denormalized ticker from any work/project row that attached this coin.
+      const { data: workRow } = await (supabase as any)
+        .from("works")
+        .select("linked_token_ticker")
+        .eq("linked_token_mint", mint!)
+        .not("linked_token_ticker", "is", null)
+        .limit(1)
+        .maybeSingle();
+      if (workRow?.linked_token_ticker) return { ticker: workRow.linked_token_ticker };
+      const { data: projRow } = await (supabase as any)
+        .from("projects")
+        .select("linked_token_ticker")
+        .eq("linked_token_mint", mint!)
+        .not("linked_token_ticker", "is", null)
+        .limit(1)
+        .maybeSingle();
+      if (projRow?.linked_token_ticker) return { ticker: projRow.linked_token_ticker };
+      return null;
     },
   });
 
