@@ -39,7 +39,7 @@ const AdminWithdrawals = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("withdrawal_requests" as any)
-        .select("*")
+        .select("id,user_id,amount,status,payout_method,admin_note,created_at")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as any[];
