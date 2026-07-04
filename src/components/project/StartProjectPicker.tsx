@@ -139,7 +139,8 @@ const StartProjectPicker = ({ open, onOpenChange }: Props) => {
     onOpenChange(v);
   };
 
-  const { user } = useAuth();
+
+
 
   const createProject = async (opts: { aiPrompt?: string }) => {
     if (!user) return null;
