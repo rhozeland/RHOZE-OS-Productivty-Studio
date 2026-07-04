@@ -93,10 +93,44 @@ const StartProjectPicker = ({ open, onOpenChange }: Props) => {
   const [prompt, setPrompt] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  // Post-create invite state
+  const [createdProjectId, setCreatedProjectId] = useState<string | null>(null);
+  const [createdWasAi, setCreatedWasAi] = useState(false);
+  const [inviteSearch, setInviteSearch] = useState("");
+  const [inviteDebounced, setInviteDebounced] = useState("");
+  const [invitePicked, setInvitePicked] = useState<PickedUser[]>([]);
+  const [inviting, setInviting] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setInviteDebounced(inviteSearch.trim()), 250);
+    return () => clearTimeout(t);
+  }, [inviteSearch]);
+
+  const [searchResults, setSearchResults] = useState<PickedUser[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    if (inviteDebounced.length < 2) { setSearchResults([]); return; }
+    (async () => {
+      const { data, error } = await (supabase.rpc as any)("lookup_user_by_display_name", { _name: inviteDebounced });
+      if (cancelled || error) return;
+      const pickedIds = new Set(invitePicked.map((u) => u.user_id));
+      pickedIds.add(user?.id ?? "");
+      setSearchResults(((data ?? []) as PickedUser[]).filter((p) => !pickedIds.has(p.user_id)));
+    })();
+    return () => { cancelled = true; };
+  }, [inviteDebounced, invitePicked, user?.id]);
+
   const reset = () => {
     setPhase("pick");
     setPrompt("");
     setSubmitting(false);
+    setCreatedProjectId(null);
+    setCreatedWasAi(false);
+    setInviteSearch("");
+    setInviteDebounced("");
+    setInvitePicked([]);
+    setInviting(false);
+    setSearchResults([]);
   };
 
   const handleOpen = (v: boolean) => {
@@ -108,10 +142,6 @@ const StartProjectPicker = ({ open, onOpenChange }: Props) => {
 
   const createProject = async (opts: { aiPrompt?: string }) => {
     if (!user) return null;
-    // For the AI flow, call generate-project-title to get a punchy working
-    // title AND a clean 1-2 sentence description. The raw user prompt is
-    // NEVER stored as description/vision — it's stashed in sessionStorage
-    // for the roadmap drafter and discarded after.
     let title = "Untitled release";
     let description = "";
     if (opts.aiPrompt) {
@@ -162,9 +192,9 @@ const StartProjectPicker = ({ open, onOpenChange }: Props) => {
     const id = await createProject({});
     setSubmitting(false);
     if (!id) return;
-    handleOpen(false);
-    toast.success("Project created.");
-    navigate(`/projects/${id}`);
+    setCreatedProjectId(id);
+    setCreatedWasAi(false);
+    setPhase("invite");
   };
 
   const goToAi = () => {
@@ -183,9 +213,39 @@ const StartProjectPicker = ({ open, onOpenChange }: Props) => {
     const id = await createProject({ aiPrompt: text });
     setSubmitting(false);
     if (!id) return;
+    setCreatedProjectId(id);
+    setCreatedWasAi(true);
+    setPhase("invite");
+  };
+
+  const finishInvite = async () => {
+    const projectId = createdProjectId;
+    if (!projectId) return;
+    if (invitePicked.length > 0) {
+      setInviting(true);
+      const rows = invitePicked.map((u) => ({
+        project_id: projectId,
+        user_id: u.user_id,
+        invited_by: user!.id,
+        role: "member",
+        project_role: "collaborator",
+      }));
+      const { error } = await supabase.from("project_collaborators").insert(rows as any);
+      setInviting(false);
+      if (error) {
+        toast.error(error.message ?? "Could not invite everyone.");
+        return;
+      }
+      toast.success(
+        invitePicked.length === 1
+          ? `Invited ${invitePicked[0].display_name}.`
+          : `Invited ${invitePicked.length} collaborators.`,
+      );
+    } else {
+      toast.success(createdWasAi ? "Project created — drafting your roadmap…" : "Project created.");
+    }
     handleOpen(false);
-    toast.success("Project created — drafting your roadmap…");
-    navigate(`/projects/${id}`);
+    navigate(`/projects/${projectId}`);
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -194,6 +254,7 @@ const StartProjectPicker = ({ open, onOpenChange }: Props) => {
       submitAi();
     }
   };
+
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
