@@ -1,15 +1,11 @@
 /**
- * AttachCoinLauncher — v12 immersive fullscreen coin attach.
+ * AttachCoinLauncher — v12.1 lightbox coin attach.
  *
- * Replaces AttachCoinFlowSheet's right-side sheet with a Dialog that
- * takes over the entire viewport. Kinetic Bento styling: midnight
- * background, mint accent, Archivo Black display type.
+ * Compact centered Dialog (not fullscreen). Text-forward project tiles so
+ * empty projects don't look like sad purple boxes. Filters Flow-fallback
+ * rows out of the picker with a friendlier line explaining why.
  *
- * Flow: paste CA → live preview + target choice → thumbnail picker →
- * celebration. The picker prefetches `works` AND `projects` as soon
- * as the launcher opens (previous version only queried on step change,
- * which stranded users on a "No posts yet" empty state even when they
- * had works). Falls back to `flow_items` for legacy Flow-only posts.
+ * Flow: paste CA → live preview + target choice → picker → celebration.
  */
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -17,7 +13,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Check,
-  Coins,
   ExternalLink,
   FolderOpen,
   Image as ImageIcon,
@@ -94,7 +89,6 @@ const AttachCoinLauncher = ({ open, onOpenChange, scope }: Props) => {
     }
   }, [open]);
 
-  // ── Data: prefetch as soon as the launcher opens (fixes empty picker) ──
   const projectsQ = useQuery({
     queryKey: ["launcher-projects", user?.id],
     enabled: open && !!user?.id,
@@ -124,34 +118,6 @@ const AttachCoinLauncher = ({ open, onOpenChange, scope }: Props) => {
       return data ?? [];
     },
   });
-
-  // Fallback: legacy Flow items (some users only have flow_items rows).
-  const flowQ = useQuery({
-    queryKey: ["launcher-flow", user?.id],
-    enabled: open && !!user?.id && (worksQ.data?.length ?? 0) === 0 && !worksQ.isLoading,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("flow_items")
-        .select("id, title, category, file_url, link_url, created_at")
-        .eq("user_id", user!.id)
-        .order("created_at", { ascending: false })
-        .limit(60);
-      if (error) throw error;
-      return (data ?? []).map((r: any) => ({
-        id: r.id,
-        title: r.title,
-        kind: r.category ?? "post",
-        cover_url: r.file_url,
-        thumbnail_url: r.file_url,
-        file_url: r.file_url,
-        linked_token_mint: null,
-        created_at: r.created_at,
-        _isFlowFallback: true,
-      }));
-    },
-  });
-
-  const workRows = (worksQ.data?.length ?? 0) > 0 ? worksQ.data : (flowQ.data ?? []);
 
   const fetchPreview = async () => {
     const mint = ca.trim();
@@ -197,11 +163,6 @@ const AttachCoinLauncher = ({ open, onOpenChange, scope }: Props) => {
   const attach = useMutation({
     mutationFn: async () => {
       if (!preview || !target || !pickedId) throw new Error("Missing selection");
-      // Flow-fallback rows can't be attached (no linked_token_* columns on flow_items).
-      const isFlowFallback = target === "work" && (workRows.find((r: any) => r.id === pickedId) as any)?._isFlowFallback;
-      if (isFlowFallback) {
-        throw new Error("Post this as a Work first to attach a coin");
-      }
       const payload = {
         linked_token_mint: preview.mint,
         linked_token_ticker: preview.symbol,
@@ -226,14 +187,14 @@ const AttachCoinLauncher = ({ open, onOpenChange, scope }: Props) => {
     onError: (e: any) => toast.error(e?.message ?? "Could not attach coin"),
   });
 
-  const rows: any[] = target === "project" ? (projectsQ.data ?? []) : workRows;
+  const rows: any[] = target === "project" ? (projectsQ.data ?? []) : (worksQ.data ?? []);
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return rows;
     return rows.filter((r: any) => (r.title ?? "").toLowerCase().includes(q));
   }, [rows, search]);
 
-  const rowsLoading = target === "project" ? projectsQ.isLoading : (worksQ.isLoading || flowQ.isLoading);
+  const rowsLoading = target === "project" ? projectsQ.isLoading : worksQ.isLoading;
 
   const positive = (preview?.change24h ?? 0) >= 0;
   const changeStr =
@@ -242,272 +203,273 @@ const AttachCoinLauncher = ({ open, onOpenChange, scope }: Props) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="kinetic-theme p-0 gap-0 border-0 max-w-none w-screen h-screen sm:rounded-none bg-[var(--kb-bg)] overflow-hidden"
-        style={{ background: "var(--kb-bg)" }}
+        className="kinetic-theme p-0 gap-0 max-w-2xl w-[calc(100vw-2rem)] max-h-[85vh] overflow-hidden rounded-3xl border"
+        style={{ background: "var(--kb-bg)", borderColor: "var(--kb-border)" }}
       >
         <DialogTitle className="sr-only">Attach Coin</DialogTitle>
 
-        {/* Ambient glow */}
-        <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] rounded-full opacity-25 blur-[140px]"
-          style={{ background: "radial-gradient(circle, var(--kb-accent) 0%, transparent 60%)" }} />
+        {/* Back (inline, not floating) */}
+        {step !== "paste" && step !== "celebrate" && (
+          <button
+            type="button"
+            onClick={() => setStep(step === "pick" ? "target" : "paste")}
+            className="absolute top-4 left-4 z-10 inline-flex items-center gap-1.5 px-3 h-8 rounded-full text-[10px] uppercase tracking-widest font-bold hover:bg-black/5 transition-colors"
+            style={{ color: "var(--kb-fg-dim)" }}
+          >
+            <ArrowLeft className="h-3.5 w-3.5" /> Back
+          </button>
+        )}
 
         {/* Close */}
         <button
           type="button"
           onClick={() => onOpenChange(false)}
-          className="absolute top-6 right-6 z-50 w-11 h-11 rounded-full flex items-center justify-center border transition-colors"
-          style={{ borderColor: "var(--kb-border)", background: "rgba(255,255,255,0.03)" }}
+          className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full flex items-center justify-center hover:bg-black/5 transition-colors"
           aria-label="Close"
         >
-          <X className="h-5 w-5" style={{ color: "var(--kb-fg-dim)" }} />
+          <X className="h-4 w-4" style={{ color: "var(--kb-fg-dim)" }} />
         </button>
 
-        {/* Back */}
-        {step !== "paste" && step !== "celebrate" && (
-          <button
-            type="button"
-            onClick={() => setStep(step === "pick" ? "target" : "paste")}
-            className="absolute top-6 left-6 z-50 inline-flex items-center gap-2 px-4 h-11 rounded-full border text-xs uppercase tracking-widest font-semibold transition-colors"
-            style={{ borderColor: "var(--kb-border)", color: "var(--kb-fg-dim)" }}
-          >
-            <ArrowLeft className="h-4 w-4" /> Back
-          </button>
-        )}
+        <div className="relative overflow-y-auto max-h-[85vh] px-6 md:px-8 py-8 md:py-10">
 
-        <div className="relative z-10 w-full h-full overflow-y-auto flex items-start md:items-center justify-center p-6 md:p-12">
-          <div className="w-full max-w-5xl">
-
-            {/* STEP 1 — Paste CA */}
-            {step === "paste" && (
-              <div className="space-y-10 animate-fade-in">
-                <div className="text-center space-y-4">
-                  <div className="inline-flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: "var(--kb-accent)" }} />
-                    <span className="text-[10px] font-bold uppercase tracking-[0.3em]" style={{ color: "var(--kb-accent)" }}>
-                      Coin Attach Protocol
-                    </span>
-                  </div>
-                  <h1 className="kb-display text-5xl md:text-8xl leading-[0.85]">
-                    Attach <span style={{ color: "var(--kb-accent)" }}>Coin</span>
-                  </h1>
-                  <p className="text-lg max-w-lg mx-auto" style={{ color: "var(--kb-fg-dim)" }}>
-                    Paste your pump.fun contract address to link a token to your work.
-                  </p>
+          {/* STEP 1 — Paste CA */}
+          {step === "paste" && (
+            <div className="space-y-6 animate-fade-in">
+              <div className="text-center space-y-2">
+                <div className="inline-flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "var(--kb-accent)" }} />
+                  <span className="text-[10px] font-bold uppercase tracking-[0.25em]" style={{ color: "var(--kb-accent)" }}>
+                    Attach a coin
+                  </span>
                 </div>
-
-                <div className="relative group">
-                  <input
-                    autoFocus
-                    type="text"
-                    value={ca}
-                    onChange={(e) => setCa(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && !fetching && fetchPreview()}
-                    placeholder="Contract address (mint)…"
-                    className="kb-mono w-full rounded-2xl p-6 md:p-8 text-lg md:text-2xl outline-none transition-all border-2 placeholder:opacity-30"
-                    style={{
-                      background: "var(--kb-surface)",
-                      borderColor: ca && !isValidMint(ca) ? "#ef4444" : "var(--kb-border)",
-                      color: "var(--kb-fg)",
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={fetchPreview}
-                    disabled={fetching || !ca.trim()}
-                    className="kb-display absolute right-3 top-1/2 -translate-y-1/2 px-6 md:px-8 h-14 rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:scale-105"
-                    style={{ background: "var(--kb-accent)", color: "var(--kb-bg)" }}
-                  >
-                    {fetching ? <Loader2 className="h-5 w-5 animate-spin" /> : "Verify"}
-                  </button>
-                </div>
-
-                <p className="text-center text-xs" style={{ color: "var(--kb-fg-faint)" }}>
-                  Rhozeland never custodies or trades your token. Attaching a coin adds a chip to your work that deeplinks to pump.fun.
+                <h1 className="kb-display text-3xl md:text-4xl leading-tight">
+                  Paste the <span style={{ color: "var(--kb-accent)" }}>contract</span>
+                </h1>
+                <p className="text-sm max-w-md mx-auto" style={{ color: "var(--kb-fg-dim)" }}>
+                  Drop your pump.fun mint address — we'll pull the ticker, price, and market cap.
                 </p>
               </div>
-            )}
 
-            {/* STEP 2 — Target choice + live preview */}
-            {step === "target" && preview && (
-              <div className="space-y-8 animate-fade-in pt-14 md:pt-0">
-                <div className="text-center">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.3em]" style={{ color: "var(--kb-accent)" }}>
-                    Token Verified
-                  </span>
-                  <h2 className="kb-display text-4xl md:text-6xl mt-3">
-                    What gets <span style={{ color: "var(--kb-accent)" }}>${preview.symbol}</span>?
-                  </h2>
-                </div>
-
-                {/* Live preview */}
-                <div className="rounded-3xl p-6 md:p-7 border" style={{ background: "var(--kb-surface)", borderColor: "rgba(45,212,168,0.3)" }}>
-                  <div className="flex items-center gap-4 md:gap-6">
-                    {preview.imageUri ? (
-                      <img src={preview.imageUri} alt="" className="h-16 w-16 md:h-20 md:w-20 rounded-2xl object-cover" />
-                    ) : (
-                      <div className="h-16 w-16 md:h-20 md:w-20 rounded-2xl flex items-center justify-center kb-display text-2xl"
-                        style={{ background: "linear-gradient(135deg, var(--kb-accent), var(--kb-surface-2))", color: "var(--kb-bg)" }}>
-                        ${preview.symbol.slice(0, 1)}
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="kb-display text-2xl md:text-3xl">${preview.symbol}</div>
-                      <div className="text-sm truncate" style={{ color: "var(--kb-fg-dim)" }}>{preview.name}</div>
-                    </div>
-                    <div className="text-right hidden sm:block">
-                      <div className="kb-display text-2xl" style={{ color: "var(--kb-accent)" }}>{fmtUsd(preview.priceUsd)}</div>
-                      <div className="text-xs font-semibold inline-flex items-center gap-1"
-                        style={{ color: positive ? "var(--kb-accent)" : "#ef4444" }}>
-                        {positive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                        {changeStr}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t" style={{ borderColor: "var(--kb-border)" }}>
-                    <Stat label="Market Cap" value={fmtUsd(preview.marketCapUsd)} />
-                    <Stat label="Holders" value={preview.holderCount?.toLocaleString() ?? "—"} />
-                    <Stat label="24h" value={changeStr} positive={positive} />
-                  </div>
-                </div>
-
-                {/* Target tiles */}
-                <div className="grid md:grid-cols-2 gap-4">
-                  <TargetTile
-                    label="Release"
-                    sublabel="Every post inside inherits the coin"
-                    icon={FolderOpen}
-                    onClick={() => { setTarget("project"); setPickedId(null); setStep("pick"); }}
-                  />
-                  <TargetTile
-                    label="Track / Post"
-                    sublabel="Attach to a single Flow drop"
-                    icon={Music}
-                    onClick={() => { setTarget("work"); setPickedId(null); setStep("pick"); }}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* STEP 3 — Thumbnail picker */}
-            {step === "pick" && preview && target && (
-              <div className="space-y-6 animate-fade-in pt-14 md:pt-0">
-                <div>
-                  <span className="text-[10px] font-bold uppercase tracking-[0.3em]" style={{ color: "var(--kb-accent)" }}>
-                    Select target
-                  </span>
-                  <h2 className="kb-display text-3xl md:text-5xl mt-2">
-                    {target === "project" ? "Which release" : "Which track"} gets <span style={{ color: "var(--kb-accent)" }}>${preview.symbol}</span>?
-                  </h2>
-                </div>
-
-                <div className="relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "var(--kb-fg-faint)" }} />
-                  <input
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search…"
-                    className="w-full pl-11 pr-4 py-3 rounded-2xl border outline-none"
-                    style={{ background: "var(--kb-surface)", borderColor: "var(--kb-border)", color: "var(--kb-fg)" }}
-                  />
-                </div>
-
-                {rowsLoading ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                    {Array.from({ length: 8 }).map((_, i) => (
-                      <div key={i} className="aspect-square rounded-2xl animate-pulse" style={{ background: "var(--kb-surface)" }} />
-                    ))}
-                  </div>
-                ) : filtered.length === 0 ? (
-                  <div className="rounded-3xl p-10 text-center border" style={{ background: "var(--kb-surface)", borderColor: "var(--kb-border)" }}>
-                    <ImageIcon className="h-8 w-8 mx-auto mb-3" style={{ color: "var(--kb-fg-faint)" }} />
-                    <p style={{ color: "var(--kb-fg-dim)" }}>
-                      {target === "project"
-                        ? "No releases yet — start one on your Releases workspace."
-                        : "No posts yet — drop a work in Flow first."}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-[52vh] overflow-y-auto pr-2">
-                    {filtered.map((r: any) => (
-                      <PickTile
-                        key={r.id}
-                        row={r}
-                        target={target}
-                        active={pickedId === r.id}
-                        current={r.linked_token_mint === preview.mint}
-                        onClick={() => setPickedId(r.id)}
-                      />
-                    ))}
-                  </div>
-                )}
-
+              <div className="relative">
+                <input
+                  autoFocus
+                  type="text"
+                  value={ca}
+                  onChange={(e) => setCa(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && !fetching && fetchPreview()}
+                  placeholder="Contract address…"
+                  className="kb-mono w-full rounded-xl px-4 py-4 pr-28 text-sm outline-none transition-all border placeholder:opacity-40"
+                  style={{
+                    background: "var(--kb-surface-2)",
+                    borderColor: ca && !isValidMint(ca) ? "#ef4444" : "var(--kb-border)",
+                    color: "var(--kb-fg)",
+                  }}
+                />
                 <button
                   type="button"
-                  onClick={() => attach.mutate()}
-                  disabled={!pickedId || attach.isPending}
-                  className="kb-display w-full py-6 md:py-7 rounded-3xl text-xl md:text-2xl transition-all disabled:opacity-40 disabled:cursor-not-allowed enabled:hover:scale-[1.01] shadow-[0_20px_60px_-15px_rgba(45,212,168,0.5)]"
-                  style={{ background: "var(--kb-accent)", color: "var(--kb-bg)" }}
+                  onClick={fetchPreview}
+                  disabled={fetching || !ca.trim()}
+                  className="kb-display absolute right-2 top-1/2 -translate-y-1/2 px-5 h-10 rounded-lg text-xs transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ background: "var(--kb-accent)", color: "#fff" }}
                 >
-                  {attach.isPending ? "Attaching…" : `Attach $${preview.symbol}`}
+                  {fetching ? <Loader2 className="h-4 w-4 animate-spin" /> : "Verify"}
                 </button>
               </div>
-            )}
 
-            {/* STEP 4 — Celebrate */}
-            {step === "celebrate" && preview && (
-              <div className="text-center animate-fade-in space-y-6 py-8">
-                <div className="relative mx-auto h-32 w-32">
-                  <div className="absolute inset-0 rounded-full blur-2xl opacity-60" style={{ background: "var(--kb-accent)" }} />
-                  <div className="relative h-32 w-32 rounded-full flex items-center justify-center"
-                    style={{ background: "linear-gradient(135deg, var(--kb-accent), var(--kb-surface))" }}>
-                    <PartyPopper className="h-14 w-14" style={{ color: "var(--kb-bg)" }} />
+              <p className="text-center text-[11px]" style={{ color: "var(--kb-fg-faint)" }}>
+                Rhozeland never custodies or trades. The chip deep-links to pump.fun.
+              </p>
+            </div>
+          )}
+
+          {/* STEP 2 — Target choice + live preview */}
+          {step === "target" && preview && (
+            <div className="space-y-6 animate-fade-in pt-4">
+              <div className="text-center">
+                <span className="text-[10px] font-bold uppercase tracking-[0.25em]" style={{ color: "var(--kb-accent)" }}>
+                  Verified
+                </span>
+                <h2 className="kb-display text-2xl md:text-3xl mt-2">
+                  What gets <span style={{ color: "var(--kb-accent)" }}>${preview.symbol}</span>?
+                </h2>
+              </div>
+
+              {/* Preview card */}
+              <div className="rounded-2xl p-4 border" style={{ background: "var(--kb-surface-2)", borderColor: "var(--kb-border)" }}>
+                <div className="flex items-center gap-3">
+                  {preview.imageUri ? (
+                    <img src={preview.imageUri} alt="" className="h-12 w-12 rounded-xl object-cover" />
+                  ) : (
+                    <div className="h-12 w-12 rounded-xl flex items-center justify-center kb-display text-lg"
+                      style={{ background: "var(--kb-accent)", color: "#fff" }}>
+                      {preview.symbol.slice(0, 1)}
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="kb-display text-lg leading-none">${preview.symbol}</div>
+                    <div className="text-xs truncate mt-0.5" style={{ color: "var(--kb-fg-dim)" }}>{preview.name}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="kb-display text-base" style={{ color: "var(--kb-accent)" }}>{fmtUsd(preview.priceUsd)}</div>
+                    <div className="text-[10px] font-semibold inline-flex items-center gap-0.5"
+                      style={{ color: positive ? "var(--kb-accent)" : "#ef4444" }}>
+                      {positive ? <TrendingUp className="h-2.5 w-2.5" /> : <TrendingDown className="h-2.5 w-2.5" />}
+                      {changeStr}
+                    </div>
                   </div>
                 </div>
-
-                <div className="inline-flex items-center gap-2">
-                  <Sparkles className="h-4 w-4" style={{ color: "var(--kb-accent)" }} />
-                  <span className="text-[10px] font-bold uppercase tracking-[0.3em]" style={{ color: "var(--kb-accent)" }}>
-                    On-chain credibility unlocked
-                  </span>
-                </div>
-
-                <h2 className="kb-display text-5xl md:text-7xl">
-                  <span style={{ color: "var(--kb-accent)" }}>${preview.symbol}</span> attached
-                </h2>
-                <p className="max-w-lg mx-auto" style={{ color: "var(--kb-fg-dim)" }}>
-                  {target === "project"
-                    ? "Every post inside this release now carries the coin chip."
-                    : "This post now carries the coin chip. Holders see it on chain."}
-                </p>
-
-                <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const path = target === "project" ? `/projects/${pickedId}` : `/flow?item=${pickedId}`;
-                      onOpenChange(false);
-                      navigate(path);
-                    }}
-                    className="kb-display px-8 py-4 rounded-2xl text-lg transition-all hover:scale-[1.02]"
-                    style={{ background: "var(--kb-accent)", color: "var(--kb-bg)" }}
-                  >
-                    See it live
-                  </button>
-                  <a
-                    href={`https://pump.fun/coin/${preview.mint}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl border text-sm font-semibold transition-colors"
-                    style={{ borderColor: "var(--kb-border)", color: "var(--kb-fg)" }}
-                  >
-                    Open on pump.fun <ExternalLink className="h-4 w-4" />
-                  </a>
+                <div className="grid grid-cols-3 gap-3 mt-3 pt-3 border-t text-[11px]" style={{ borderColor: "var(--kb-border)" }}>
+                  <Stat label="MC" value={fmtUsd(preview.marketCapUsd)} />
+                  <Stat label="Holders" value={preview.holderCount?.toLocaleString() ?? "—"} />
+                  <Stat label="24h" value={changeStr} positive={positive} />
                 </div>
               </div>
-            )}
 
-          </div>
+              {/* Target tiles — compact side-by-side */}
+              <div className="grid grid-cols-2 gap-3">
+                <TargetTile
+                  label="Release"
+                  sublabel="A whole project"
+                  icon={FolderOpen}
+                  onClick={() => { setTarget("project"); setPickedId(null); setStep("pick"); }}
+                />
+                <TargetTile
+                  label="Track"
+                  sublabel="One post"
+                  icon={Music}
+                  onClick={() => { setTarget("work"); setPickedId(null); setStep("pick"); }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* STEP 3 — Picker */}
+          {step === "pick" && preview && target && (
+            <div className="space-y-4 animate-fade-in pt-4">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-[0.25em]" style={{ color: "var(--kb-accent)" }}>
+                  Pick target
+                </span>
+                <h2 className="kb-display text-2xl md:text-3xl mt-1">
+                  {target === "project" ? "Which release" : "Which track"} gets <span style={{ color: "var(--kb-accent)" }}>${preview.symbol}</span>?
+                </h2>
+              </div>
+
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5" style={{ color: "var(--kb-fg-faint)" }} />
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder={`Search ${target === "project" ? "releases" : "tracks"}…`}
+                  className="w-full pl-9 pr-3 py-2.5 rounded-xl border outline-none text-sm"
+                  style={{ background: "var(--kb-surface-2)", borderColor: "var(--kb-border)", color: "var(--kb-fg)" }}
+                />
+              </div>
+
+              {rowsLoading ? (
+                <div className="grid grid-cols-2 gap-2">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="h-20 rounded-xl animate-pulse" style={{ background: "var(--kb-surface-2)" }} />
+                  ))}
+                </div>
+              ) : filtered.length === 0 ? (
+                <div className="rounded-2xl p-8 text-center border" style={{ background: "var(--kb-surface-2)", borderColor: "var(--kb-border)" }}>
+                  {target === "project" ? (
+                    <>
+                      <FolderOpen className="h-6 w-6 mx-auto mb-2" style={{ color: "var(--kb-fg-faint)" }} />
+                      <p className="text-sm" style={{ color: "var(--kb-fg-dim)" }}>No releases yet.</p>
+                      <p className="text-xs mt-1" style={{ color: "var(--kb-fg-faint)" }}>Spin one up in your Releases workspace, then come back.</p>
+                    </>
+                  ) : (
+                    <>
+                      <Music className="h-6 w-6 mx-auto mb-2" style={{ color: "var(--kb-fg-faint)" }} />
+                      <p className="text-sm" style={{ color: "var(--kb-fg-dim)" }}>No tracks yet.</p>
+                      <p className="text-xs mt-1" style={{ color: "var(--kb-fg-faint)" }}>
+                        Flow posts show up here once you save them as Works from Settings › Verified IP.
+                      </p>
+                    </>
+                  )}
+                </div>
+              ) : (
+                <div className="max-h-[36vh] overflow-y-auto pr-1 -mr-1 space-y-1.5">
+                  {filtered.map((r: any) => (
+                    <PickRow
+                      key={r.id}
+                      row={r}
+                      target={target}
+                      active={pickedId === r.id}
+                      current={r.linked_token_mint === preview.mint}
+                      onClick={() => setPickedId(r.id)}
+                    />
+                  ))}
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={() => attach.mutate()}
+                disabled={!pickedId || attach.isPending}
+                className="kb-display w-full py-4 rounded-2xl text-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{ background: "var(--kb-accent)", color: "#fff" }}
+              >
+                {attach.isPending ? "Attaching…" : `Attach $${preview.symbol}`}
+              </button>
+            </div>
+          )}
+
+          {/* STEP 4 — Celebrate */}
+          {step === "celebrate" && preview && (
+            <div className="text-center animate-fade-in space-y-4 py-4">
+              <div className="relative mx-auto h-20 w-20">
+                <div className="absolute inset-0 rounded-full blur-2xl opacity-40" style={{ background: "var(--kb-accent)" }} />
+                <div className="relative h-20 w-20 rounded-full flex items-center justify-center"
+                  style={{ background: "var(--kb-accent)" }}>
+                  <PartyPopper className="h-9 w-9 text-white" />
+                </div>
+              </div>
+
+              <div className="inline-flex items-center gap-1.5">
+                <Sparkles className="h-3 w-3" style={{ color: "var(--kb-accent)" }} />
+                <span className="text-[10px] font-bold uppercase tracking-[0.25em]" style={{ color: "var(--kb-accent)" }}>
+                  On-chain credibility
+                </span>
+              </div>
+
+              <h2 className="kb-display text-3xl md:text-4xl">
+                <span style={{ color: "var(--kb-accent)" }}>${preview.symbol}</span> attached
+              </h2>
+              <p className="text-sm max-w-sm mx-auto" style={{ color: "var(--kb-fg-dim)" }}>
+                {target === "project"
+                  ? "Every post inside this release now carries the coin chip."
+                  : "This track now carries the coin chip. Holders see it on-chain."}
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-2 justify-center pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const path = target === "project" ? `/projects/${pickedId}` : `/flow?item=${pickedId}`;
+                    onOpenChange(false);
+                    navigate(path);
+                  }}
+                  className="kb-display px-5 py-2.5 rounded-xl text-xs transition-all"
+                  style={{ background: "var(--kb-accent)", color: "#fff" }}
+                >
+                  See it live
+                </button>
+                <a
+                  href={`https://pump.fun/coin/${preview.mint}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl border text-xs font-semibold transition-colors"
+                  style={{ borderColor: "var(--kb-border)", color: "var(--kb-fg)" }}
+                >
+                  pump.fun <ExternalLink className="h-3 w-3" />
+                </a>
+              </div>
+            </div>
+          )}
+
         </div>
       </DialogContent>
     </Dialog>
@@ -516,8 +478,8 @@ const AttachCoinLauncher = ({ open, onOpenChange, scope }: Props) => {
 
 const Stat = ({ label, value, positive }: { label: string; value: string; positive?: boolean }) => (
   <div>
-    <div className="text-[10px] uppercase tracking-widest mb-1" style={{ color: "var(--kb-fg-faint)" }}>{label}</div>
-    <div className="kb-display text-lg" style={{ color: positive === false ? "#ef4444" : "var(--kb-fg)" }}>{value}</div>
+    <div className="text-[9px] uppercase tracking-widest" style={{ color: "var(--kb-fg-faint)" }}>{label}</div>
+    <div className="kb-display text-xs mt-0.5" style={{ color: positive === false ? "#ef4444" : "var(--kb-fg)" }}>{value}</div>
   </div>
 );
 
@@ -525,21 +487,24 @@ const TargetTile = ({ label, sublabel, icon: Icon, onClick }: any) => (
   <button
     type="button"
     onClick={onClick}
-    className="text-left p-6 md:p-8 rounded-3xl border transition-all hover:-translate-y-1 group"
-    style={{ background: "var(--kb-surface)", borderColor: "var(--kb-border)" }}
+    className="text-left p-4 rounded-2xl border transition-all hover:-translate-y-0.5 group"
+    style={{ background: "var(--kb-surface-2)", borderColor: "var(--kb-border)" }}
   >
-    <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-colors group-hover:bg-[var(--kb-accent)] group-hover:text-[var(--kb-bg)]"
-      style={{ background: "rgba(45,212,168,0.15)", color: "var(--kb-accent)" }}>
-      <Icon className="h-5 w-5" />
+    <div className="w-9 h-9 rounded-lg flex items-center justify-center mb-3 transition-colors group-hover:bg-[var(--kb-accent)] group-hover:text-white"
+      style={{ background: "color-mix(in srgb, var(--kb-accent) 15%, transparent)", color: "var(--kb-accent)" }}>
+      <Icon className="h-4 w-4" />
     </div>
-    <div className="kb-display text-2xl md:text-3xl">{label}</div>
-    <div className="text-sm mt-2" style={{ color: "var(--kb-fg-dim)" }}>{sublabel}</div>
+    <div className="kb-display text-lg leading-none">{label}</div>
+    <div className="text-xs mt-1" style={{ color: "var(--kb-fg-dim)" }}>{sublabel}</div>
   </button>
 );
 
-const PickTile = ({ row, target, active, current, onClick }: any) => {
+/**
+ * PickRow — text-forward list row. No sad purple boxes for projects
+ * without covers; the title carries the tile.
+ */
+const PickRow = ({ row, target, active, current, onClick }: any) => {
   const cover = row.thumbnail_url || row.cover_url || row.cover_image_url;
-  const bg = !cover && row.cover_color ? row.cover_color : undefined;
   const isVideo = target === "work" && row.kind === "video";
   const isAudio = target === "work" && (row.kind === "audio" || row.kind === "music");
 
@@ -548,55 +513,58 @@ const PickTile = ({ row, target, active, current, onClick }: any) => {
       type="button"
       onClick={onClick}
       className={cn(
-        "relative aspect-square rounded-2xl overflow-hidden border-2 group text-left transition-all",
-        active ? "scale-[1.03]" : "hover:scale-[1.02]",
+        "w-full flex items-center gap-3 p-2.5 rounded-xl border transition-all text-left",
+        active ? "" : "hover:bg-[var(--kb-surface-2)]",
       )}
       style={{
+        background: active ? "color-mix(in srgb, var(--kb-accent) 10%, transparent)" : "transparent",
         borderColor: active ? "var(--kb-accent)" : "var(--kb-border)",
-        background: cover ? "var(--kb-surface-2)" : bg ?? "var(--kb-surface)",
-        boxShadow: active ? "0 0 0 4px rgba(45,212,168,0.15), 0 20px 40px -20px rgba(45,212,168,0.5)" : undefined,
       }}
       title={row.title || "Untitled"}
     >
-      {cover ? (
-        <img src={cover} alt="" className="absolute inset-0 h-full w-full object-cover" />
-      ) : (
-        <div className="absolute inset-0 flex items-center justify-center" style={{ color: "var(--kb-fg-faint)" }}>
-          {target === "project" ? <FolderOpen className="h-8 w-8" /> : <ImageIcon className="h-8 w-8" />}
-        </div>
-      )}
-
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
-
-      {/* Media badge */}
-      {(isVideo || isAudio) && (
-        <div className="absolute top-2 left-2 h-6 w-6 rounded-full flex items-center justify-center"
-          style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}>
-          {isVideo ? <Play className="h-3 w-3 fill-white text-white" /> : <Music className="h-3 w-3 text-white" />}
-        </div>
-      )}
-
-      {/* Current mint chip */}
-      {current && !active && (
-        <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider"
-          style={{ background: "var(--kb-accent)", color: "var(--kb-bg)" }}>
-          Linked
-        </div>
-      )}
-
-      {/* Active check */}
-      {active && (
-        <div className="absolute top-2 right-2 h-6 w-6 rounded-full flex items-center justify-center animate-scale-in"
-          style={{ background: "var(--kb-accent)" }}>
-          <Check className="h-3.5 w-3.5" style={{ color: "var(--kb-bg)" }} strokeWidth={4} />
-        </div>
-      )}
-
-      {/* Title */}
-      <div className="absolute bottom-0 left-0 right-0 p-3">
-        <div className="text-xs font-semibold text-white line-clamp-1">{row.title || "Untitled"}</div>
+      {/* Thumb / initial */}
+      <div className="relative h-12 w-12 rounded-lg overflow-hidden flex-shrink-0"
+        style={{ background: cover ? "var(--kb-surface-2)" : (row.cover_color || "var(--kb-surface-2)") }}>
+        {cover ? (
+          <img src={cover} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center kb-display text-lg" style={{ color: "var(--kb-fg-dim)" }}>
+            {(row.title || "·").slice(0, 1).toUpperCase()}
+          </div>
+        )}
+        {(isVideo || isAudio) && (
+          <div className="absolute bottom-0.5 right-0.5 h-4 w-4 rounded-full flex items-center justify-center"
+            style={{ background: "rgba(0,0,0,0.6)" }}>
+            {isVideo ? <Play className="h-2 w-2 fill-white text-white" /> : <Music className="h-2 w-2 text-white" />}
+          </div>
+        )}
       </div>
+
+      {/* Text */}
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-semibold truncate" style={{ color: "var(--kb-fg)" }}>
+          {row.title || "Untitled"}
+        </div>
+        <div className="text-[11px] truncate" style={{ color: "var(--kb-fg-faint)" }}>
+          {target === "project"
+            ? (row.description || "No description")
+            : (row.kind ? row.kind.toUpperCase() : "POST")}
+        </div>
+      </div>
+
+      {/* Right side */}
+      {current && !active && (
+        <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider"
+          style={{ background: "color-mix(in srgb, var(--kb-accent) 15%, transparent)", color: "var(--kb-accent)" }}>
+          Linked
+        </span>
+      )}
+      {active && (
+        <div className="h-6 w-6 rounded-full flex items-center justify-center flex-shrink-0"
+          style={{ background: "var(--kb-accent)" }}>
+          <Check className="h-3 w-3 text-white" strokeWidth={4} />
+        </div>
+      )}
     </button>
   );
 };
