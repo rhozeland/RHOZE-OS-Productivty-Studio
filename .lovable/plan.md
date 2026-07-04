@@ -1,94 +1,69 @@
-## What we're building
+# Kinetic Bento — Profile bottom half + immersive Coin Launcher
 
-Rhozeland becomes a **project-first** platform: artists open projects, collaborate, upload in real time, supporters watch and back. Spaces, events, charts, and the AI-build framing fold away. Tiles die.
+Scope stays inside the two surfaces you called out. Nothing above Reputation Signals changes (avatar, name, tier badge, Boost, Reputation Signals card all stay). Nav, sidebar, discover, flow — untouched.
 
----
+## 1. Design tokens (scoped, not app-wide)
 
-## 1. Home = "Studio + Live Projects feed" (replaces /discover as the landing destination)
+- Install `@fontsource/archivo-black` + `@fontsource/hind`, wire into Tailwind as `font-display` / `font-body`.
+- Add a **self-contained** `.kinetic-theme` class in `index.css` exposing the midnight/mint palette (`--kb-bg #0a0f1e`, `--kb-surface #141c33`, `--kb-accent #2dd4a8`, `--kb-fg #e8f0f8`). Only the two new surfaces opt in — the rest of the app keeps its current light theme, so nothing else breaks.
 
-Single page everyone lands on after auth. Two zones, stacked:
+## 2. Profile bottom half → Kinetic Bento canvas
 
-**Top — Your Studio** (compact, only if signed in)
-- "Continue working" row: your active projects (horizontal scroll, max 6) + one "Start a project" tile.
-- Pending invites strip (1 line each, Accept/Decline inline).
-- Quick stats line: active projects · supporters · pending payouts. No charts page, no chart widgets.
+Replace everything below the Reputation Signals card on `ProfileDetailPage` (the tab strip + tabs' worth of `<CreatorCoinsGallery />`, `<CreatorRewardsCard />`, projects grid, works grid, backing lane, services block, holdings, etc.) with a single **bento canvas** — no tab strip.
 
-**Below — Live Projects feed** (vertical, infinite)
-- Each row = one project update card: cover/upload, project title, owner + collabs, latest milestone, "X supporters · live now" pill, Back / Comment / Open buttons.
-- Sorted by recent activity (new upload, new milestone, new collab joined).
-- No tile grids. No artists row. No spaces/events row. No opportunities row.
-- Filter bar (sticky, minimal): All · Following · Music · Visual · Photo.
+Tile inventory:
 
-Guests see only the feed (no Studio zone) + a thin "Sign in to start a project" banner.
+- **Featured Release** (2×2): most-recent public project or top work, cinematic thumbnail, title in Archivo Black, mint accent subtitle. Owner sees inline "Attach coin" / "Start release" ghost buttons.
+- **Coin panel** (1×2): if a `creator_tokens` row exists → ticker + live sparkline (existing `useCreatorTokenMetrics`) + MC + rewards. If not and owner → "Attach a coin" CTA that opens the new launcher. Non-owner + no coin → tile hides.
+- **Backing** (1×1): mint accent card, total holders + 24h delta.
+- **Services** (1×2): the creator's `creator_roles` and top offering rows as a bulleted list.
+- **Flow strip** (2×1): last 6 works as a real thumbnail grid (image/video/audio), each clicks through to the Flow post. Uses actual `works` rows — this is what replaces the sad text placeholders.
+- **Investor Signal** (1×1): keeps the readiness number you like, condensed.
+- **Collaborators** (1×1): avatar stack + count.
 
-Routing: `/` and `/discover` both render this. `/home` redirects here. Sidebar "Home" + "Discover" collapse into a single "Home" entry.
+Deleted from public profile:
+- The "Backing" tab (holdings/subscriptions the current user has in *other* creators) — moved to `/my-projects` only. Not shown on public profiles anymore.
+- The full tabs strip (image / projects / megaphone / briefcase / heart icons).
 
----
+## 3. Immersive Coin Launcher (replaces `AttachCoinFlowSheet`)
 
-## 2. Project page — the atomic unit, rebuilt
+Convert the right-side Sheet into a fullscreen shadcn `Dialog` (`sm:max-w-none w-screen h-screen`) styled with the kinetic theme. Three steps in one canvas:
 
-Replace today's Overview/Roadmap/Timeline/Board/Story/Team tabs with **three** tabs:
+- **Step 1 — Paste CA**: giant centered `<input>`, big Archivo Black "ATTACH COIN" title, mint Verify button. Same edge fn (`creator-token-metrics`) fetches preview on paste.
+- **Step 2 — Live token card + Target picker**: token preview card (ticker, price, 24h delta, sparkline) on the left; two huge tiles on the right → "Attach to a Release" vs "Attach to a Track".
+- **Step 3 — Thumbnail picker**: 3-col grid of the user's actual `works` (image/video/audio thumbnails with play badge for AV), or `projects` covers. Selected tile gets mint ring + check.
+- **Step 4 — Celebration**: same as today but bigger — confetti burst, coin chip spring-flies onto a preview of the target card.
 
-**Build** (default)
-- Combined roadmap+timeline (the one we just redesigned — keep).
-- Below it: **Upload stream** — chronological feed of every file/note/link the team drops in. This is what supporters watch live. Owners + collabs can post inline (drag-drop file, paste link, type note). Each entry shows author avatar + timestamp + cheer/comment.
-- Board (mood/refs) folded in as a collapsible at the bottom of Build.
+### Track picker bug fix
 
-**Backers**
-- Supporters list, total backed, comments wall.
-- "Attach event/space" button → owner spins up an event or in-person session tied to this project. Supporters can buy tickets, splits auto to project collabs per the existing revenue_split_configs.
-- **ICO ramp card**: shows progress to qualification thresholds (e.g. ≥X supporters AND ≥$Y backed). When qualified, "Start tokenization with Rhozeland" CTA pings concierge. Until then: locked state showing what's needed.
+Root cause of "No posts yet": the current picker only queries when `step === "pick-work"` and doesn't preload. Combined with a stale `user` on first render, the query never fires. New launcher:
+- Prefetches `works` + `projects` on open (both `enabled: open && !!user?.id`).
+- Falls back to `flow_items` if works comes up empty (safety net).
+- Shows a skeleton grid while loading instead of the "No posts" copy — that empty label only shows after the query resolves with 0 rows.
 
-**Team & money**
-- Collaborators (invite by handle/email, accept flow, role).
-- Money toggle: Free · Paid · Mixed. Per-milestone price if Paid/Mixed. Rhozeland fee surfaces inline using existing platform-fee tiers.
-- Revenue splits editor (existing component).
+## 4. Files
 
-Remove: "Story" tab, separate "Timeline" tab, AI roadmap drafter button, "Build with AI" copy.
+**New**
+- `src/components/profile/bento/ProfileBentoCanvas.tsx` — the grid
+- `src/components/profile/bento/tiles/{FeaturedReleaseTile,CoinPanelTile,BackingTile,ServicesTile,FlowStripTile,InvestorSignalTile,CollaboratorsTile}.tsx`
+- `src/components/coin/AttachCoinLauncher.tsx` — fullscreen dialog (replaces `AttachCoinFlowSheet` at call sites)
 
----
+**Edited**
+- `src/pages/ProfileDetailPage.tsx` — swap tabs region for `<ProfileBentoCanvas />`
+- `src/pages/StudioPage.tsx` — swap `<AttachCoinFlowSheet />` → `<AttachCoinLauncher />`
+- Any other call sites of `AttachCoinFlowSheet` (grep first)
+- `src/index.css` — `.kinetic-theme` tokens + font-family utilities
+- `tailwind.config.ts` — register `font-display` / `font-body`
+- `src/main.tsx` (or app entry) — `@fontsource` imports
 
-## 3. Deletions (hard cuts)
+**Untouched**
+- Sidebar, Discover, Flow, Messages, Creator Pass, settings, admin
+- Everything on the profile *above* Reputation Signals
 
-- **`/charts`** route + ChartsPage + nav entry. Any coin signal that mattered → small "$TICKER · MC $X" chip on project cards when owner has an approved token.
-- **Standalone Spaces & Events as nav destinations**: remove from sidebar + ⌘K + Discover. `/spaces`, `/events`, `/studios` routes redirect to `/`. Spaces/events still exist *attached to a project* via the Backers tab. Existing detail routes (`/events/:id`, `/studios/:id`) stay mounted for direct links / tickets to keep working.
-- **Discover tile-grid sections**: Artists grid, Opportunities grid, Spaces grid, Coins-in-Motion lane → all removed. Replaced by the single Live Projects feed above.
-- **AI-build framing**: remove `<AiRoadmapDraftButton />` from project create + ProjectsPage. Remove copy mentioning "AI drafts your roadmap." Edge fn `draft-project-roadmap` stays on disk (no nav references) for possible later revival.
+## 5. Out of scope for this pass
 
----
+- Coin chip fly-into-thumbnail animation (basic confetti + spring-in only; layout animation is a follow-up).
+- Full mobile pass — desktop first at the 1440 prototype size, mobile falls back to a single-column stack of the same tiles.
+- Deleting the old `AttachCoinFlowSheet.tsx` file — kept on disk one pass for revert safety.
 
-## 4. Sidebar after cuts
-
-5 entries → **4**: **Home** · **Connect** (DMs + invites) · **Projects** (your project inbox) · **Creator Pass**. Profile via avatar.
-
----
-
-## Technical notes
-
-- New component: `src/components/home/LiveProjectsFeed.tsx` — pulls from `projects` joined with most-recent `project_deliverables`, `project_milestones`, `project_collaborators`. Sorted by `greatest(latest_upload_at, latest_milestone_at)`.
-- New component: `src/components/home/StudioStrip.tsx` — your active projects + invites.
-- New component: `src/components/project/UploadStream.tsx` — chronological feed inside Build tab; reads `project_deliverables` + a new lightweight `project_story_updates` row type for inline notes (table already exists).
-- New component: `src/components/project/IcoRampCard.tsx` — reads project supporter count + total backed, compares against threshold constants in `src/lib/ico-thresholds.ts` (new). When qualified, calls existing `claim_concierge_request` flow with `intake_tier='ico'`.
-- `src/App.tsx`: redirects for `/charts`, `/spaces`, `/events`, `/studios`, `/discover`, `/home`. Remove `<Route>`s for ChartsPage. Remove sidebar entries in `src/config/navigation.ts`.
-- ProjectDetailPage: replace tab list with Build / Backers / Team & money. Move existing Board, Story content into Build's collapsibles.
-- Keep `event_*` and `studio_*` tables/RLS untouched — only the *entry points* change.
-
----
-
-## Out of scope this pass
-
-- Visual redesign of cards (we'll do that next once structure lands — saves rework).
-- Tokenization wiring beyond a CTA into existing concierge flow.
-- Migrations: none needed. All structural changes are routing + component-level.
-- Mobile-specific tuning.
-
----
-
-## Order I'll ship in
-
-1. Cuts first (Charts page, sidebar entries, Discover tile sections, AI button) — fastest signal that the noise is gone.
-2. Live Projects feed + Studio strip on the new Home.
-3. Project page restructure (Build / Backers / Team & money) with Upload stream + ICO ramp card.
-4. Quick polish pass.
-
-Approve and I'll start with step 1.
+Confirm and I'll build in this order: fonts + theme → launcher (unblocks the coin flow bug) → bento canvas → wire call sites.
