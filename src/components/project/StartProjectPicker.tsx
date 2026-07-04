@@ -13,7 +13,7 @@
  * Branded to Rhozeland — uses the project's font-display, semantic tokens,
  * and todayGradient(). No search bar anywhere.
  */
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,6 +29,10 @@ import {
   Radio,
   Sparkles,
   Loader2,
+  UserPlus,
+  Search as SearchIcon,
+  X,
+  Check,
 } from "lucide-react";
 import {
   Dialog,
@@ -43,7 +47,9 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 
-type Phase = "pick" | "ai";
+type Phase = "pick" | "ai" | "invite";
+
+type PickedUser = { user_id: string; display_name: string; username?: string | null; avatar_url?: string | null };
 
 const SUGGESTIONS: { label: string; Icon: typeof Mic; prompt: string; tint: string }[] = [
   {
