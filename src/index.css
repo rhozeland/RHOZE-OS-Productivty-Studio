@@ -382,19 +382,20 @@
   display: none;
 }
 
-/* ─── Kinetic Bento theme ────────────────────────────────
-   Scoped midnight+mint palette for the profile bento canvas
-   and immersive coin launcher. Opt-in via `.kinetic-theme`. */
+/* ─── Kinetic (light) theme ───────────────────────────────
+   Scoped paper+mint palette for the profile bento canvas
+   and coin launcher. Matches the OG app light surface, keeps
+   the mint accent that reads as "on-chain / live". */
 .kinetic-theme {
-  --kb-bg: #0a0f1e;
-  --kb-surface: #141c33;
-  --kb-surface-2: #0d1428;
-  --kb-accent: #2dd4a8;
-  --kb-accent-strong: #3ce9bc;
-  --kb-fg: #e8f0f8;
-  --kb-fg-dim: rgba(232,240,248,0.6);
-  --kb-fg-faint: rgba(232,240,248,0.4);
-  --kb-border: rgba(232,240,248,0.08);
+  --kb-bg: hsl(var(--background));
+  --kb-surface: hsl(var(--card));
+  --kb-surface-2: hsl(var(--muted));
+  --kb-accent: #10b981;
+  --kb-accent-strong: #059669;
+  --kb-fg: hsl(var(--foreground));
+  --kb-fg-dim: hsl(var(--muted-foreground));
+  --kb-fg-faint: hsl(var(--muted-foreground) / 0.6);
+  --kb-border: hsl(var(--border));
   color: var(--kb-fg);
   font-family: "Hind", ui-sans-serif, system-ui, sans-serif;
 }
