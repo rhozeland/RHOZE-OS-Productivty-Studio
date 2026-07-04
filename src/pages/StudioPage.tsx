@@ -60,7 +60,10 @@ import {
   Pencil,
   Heart,
   Compass,
-
+  Play,
+  Music,
+  Image as ImageIcon,
+  Radio,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
