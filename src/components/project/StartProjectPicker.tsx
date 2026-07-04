@@ -13,7 +13,7 @@
  * Branded to Rhozeland — uses the project's font-display, semantic tokens,
  * and todayGradient(). No search bar anywhere.
  */
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,6 +29,10 @@ import {
   Radio,
   Sparkles,
   Loader2,
+  UserPlus,
+  Search as SearchIcon,
+  X,
+  Check,
 } from "lucide-react";
 import {
   Dialog,
@@ -43,7 +47,9 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 
-type Phase = "pick" | "ai";
+type Phase = "pick" | "ai" | "invite";
+
+type PickedUser = { user_id: string; display_name: string; username?: string | null; avatar_url?: string | null };
 
 const SUGGESTIONS: { label: string; Icon: typeof Mic; prompt: string; tint: string }[] = [
   {
@@ -82,15 +88,50 @@ const StartProjectPicker = ({ open, onOpenChange }: Props) => {
   const navigate = useNavigate();
   const { requireAuth } = useAuthGate();
   const grad = todayGradient();
+  const { user } = useAuth();
 
   const [phase, setPhase] = useState<Phase>("pick");
   const [prompt, setPrompt] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  // Post-create invite state
+  const [createdProjectId, setCreatedProjectId] = useState<string | null>(null);
+  const [createdWasAi, setCreatedWasAi] = useState(false);
+  const [inviteSearch, setInviteSearch] = useState("");
+  const [inviteDebounced, setInviteDebounced] = useState("");
+  const [invitePicked, setInvitePicked] = useState<PickedUser[]>([]);
+  const [inviting, setInviting] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setInviteDebounced(inviteSearch.trim()), 250);
+    return () => clearTimeout(t);
+  }, [inviteSearch]);
+
+  const [searchResults, setSearchResults] = useState<PickedUser[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    if (inviteDebounced.length < 2) { setSearchResults([]); return; }
+    (async () => {
+      const { data, error } = await (supabase.rpc as any)("lookup_user_by_display_name", { _name: inviteDebounced });
+      if (cancelled || error) return;
+      const pickedIds = new Set(invitePicked.map((u) => u.user_id));
+      pickedIds.add(user?.id ?? "");
+      setSearchResults(((data ?? []) as PickedUser[]).filter((p) => !pickedIds.has(p.user_id)));
+    })();
+    return () => { cancelled = true; };
+  }, [inviteDebounced, invitePicked, user?.id]);
+
   const reset = () => {
     setPhase("pick");
     setPrompt("");
     setSubmitting(false);
+    setCreatedProjectId(null);
+    setCreatedWasAi(false);
+    setInviteSearch("");
+    setInviteDebounced("");
+    setInvitePicked([]);
+    setInviting(false);
+    setSearchResults([]);
   };
 
   const handleOpen = (v: boolean) => {
@@ -98,14 +139,11 @@ const StartProjectPicker = ({ open, onOpenChange }: Props) => {
     onOpenChange(v);
   };
 
-  const { user } = useAuth();
+
+
 
   const createProject = async (opts: { aiPrompt?: string }) => {
     if (!user) return null;
-    // For the AI flow, call generate-project-title to get a punchy working
-    // title AND a clean 1-2 sentence description. The raw user prompt is
-    // NEVER stored as description/vision — it's stashed in sessionStorage
-    // for the roadmap drafter and discarded after.
     let title = "Untitled release";
     let description = "";
     if (opts.aiPrompt) {
@@ -156,9 +194,9 @@ const StartProjectPicker = ({ open, onOpenChange }: Props) => {
     const id = await createProject({});
     setSubmitting(false);
     if (!id) return;
-    handleOpen(false);
-    toast.success("Project created.");
-    navigate(`/projects/${id}`);
+    setCreatedProjectId(id);
+    setCreatedWasAi(false);
+    setPhase("invite");
   };
 
   const goToAi = () => {
@@ -177,9 +215,39 @@ const StartProjectPicker = ({ open, onOpenChange }: Props) => {
     const id = await createProject({ aiPrompt: text });
     setSubmitting(false);
     if (!id) return;
+    setCreatedProjectId(id);
+    setCreatedWasAi(true);
+    setPhase("invite");
+  };
+
+  const finishInvite = async () => {
+    const projectId = createdProjectId;
+    if (!projectId) return;
+    if (invitePicked.length > 0) {
+      setInviting(true);
+      const rows = invitePicked.map((u) => ({
+        project_id: projectId,
+        user_id: u.user_id,
+        invited_by: user!.id,
+        role: "member",
+        project_role: "collaborator",
+      }));
+      const { error } = await supabase.from("project_collaborators").insert(rows as any);
+      setInviting(false);
+      if (error) {
+        toast.error(error.message ?? "Could not invite everyone.");
+        return;
+      }
+      toast.success(
+        invitePicked.length === 1
+          ? `Invited ${invitePicked[0].display_name}.`
+          : `Invited ${invitePicked.length} collaborators.`,
+      );
+    } else {
+      toast.success(createdWasAi ? "Project created — drafting your roadmap…" : "Project created.");
+    }
     handleOpen(false);
-    toast.success("Project created — drafting your roadmap…");
-    navigate(`/projects/${id}`);
+    navigate(`/projects/${projectId}`);
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -188,6 +256,7 @@ const StartProjectPicker = ({ open, onOpenChange }: Props) => {
       submitAi();
     }
   };
+
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
@@ -316,6 +385,133 @@ const StartProjectPicker = ({ open, onOpenChange }: Props) => {
             <p className="relative mt-5 text-center text-[11px] text-muted-foreground/70">
               Press ⌘+Enter to generate.
             </p>
+          </div>
+        )}
+
+        {phase === "invite" && (
+          <div className="relative p-6 sm:p-8 space-y-4">
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0 opacity-40"
+              style={{ background: grad.surface }}
+            />
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-1">
+                <div
+                  className="h-8 w-8 rounded-full flex items-center justify-center text-white shadow-sm"
+                  style={{ background: grad.text }}
+                >
+                  <UserPlus className="h-4 w-4" />
+                </div>
+                <DialogTitle className="font-display text-xl tracking-tight">
+                  Bring in your team
+                </DialogTitle>
+              </div>
+              <p className="text-xs text-muted-foreground ml-10">
+                Add collaborators now, or skip and invite them from the project workspace later.
+              </p>
+            </div>
+
+            {/* Picked chips */}
+            {invitePicked.length > 0 && (
+              <div className="relative flex flex-wrap gap-1.5">
+                {invitePicked.map((u) => (
+                  <span
+                    key={u.user_id}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card pl-1.5 pr-2 py-1 text-xs"
+                  >
+                    {u.avatar_url ? (
+                      <img src={u.avatar_url} alt="" className="h-5 w-5 rounded-full object-cover" />
+                    ) : (
+                      <span className="h-5 w-5 rounded-full bg-muted grid place-items-center text-[10px] font-semibold">
+                        {(u.display_name || "?").slice(0, 1).toUpperCase()}
+                      </span>
+                    )}
+                    <span className="text-foreground">{u.display_name}</span>
+                    <button
+                      type="button"
+                      aria-label={`Remove ${u.display_name}`}
+                      onClick={() => setInvitePicked((p) => p.filter((x) => x.user_id !== u.user_id))}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* Search */}
+            <div className="relative">
+              <div className="relative">
+                <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <input
+                  autoFocus
+                  value={inviteSearch}
+                  onChange={(e) => setInviteSearch(e.target.value)}
+                  placeholder="Search by name or username…"
+                  className="w-full rounded-xl border border-border bg-background/80 pl-9 pr-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:border-foreground/40"
+                />
+              </div>
+
+              {inviteDebounced.length >= 2 && (
+                <div className="mt-2 max-h-56 overflow-y-auto rounded-xl border border-border bg-card divide-y divide-border/60">
+                  {searchResults.length === 0 && (
+                    <p className="px-3 py-6 text-center text-xs text-muted-foreground">
+                      No matches for "{inviteDebounced}".
+                    </p>
+                  )}
+                  {searchResults.map((r) => (
+                    <button
+                      key={r.user_id}
+                      type="button"
+                      onClick={() => {
+                        setInvitePicked((p) => [...p, r]);
+                        setInviteSearch("");
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-muted/60 transition-colors"
+                    >
+                      {r.avatar_url ? (
+                        <img src={r.avatar_url} alt="" className="h-8 w-8 rounded-full object-cover" />
+                      ) : (
+                        <span className="h-8 w-8 rounded-full bg-muted grid place-items-center text-xs font-semibold">
+                          {(r.display_name || "?").slice(0, 1).toUpperCase()}
+                        </span>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm text-foreground truncate">{r.display_name}</p>
+                        {r.username && (
+                          <p className="text-[11px] text-muted-foreground truncate">@{r.username}</p>
+                        )}
+                      </div>
+                      <Check className="h-3.5 w-3.5 text-muted-foreground" />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="relative flex items-center justify-between gap-2 pt-2">
+              <button
+                type="button"
+                onClick={finishInvite}
+                disabled={inviting}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Skip for now
+              </button>
+              <button
+                type="button"
+                onClick={finishInvite}
+                disabled={inviting}
+                className="inline-flex items-center gap-2 rounded-full bg-foreground text-background px-5 py-2 text-xs font-medium disabled:opacity-40 hover:scale-[1.02] active:scale-95 transition-transform"
+              >
+                {inviting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                {invitePicked.length > 0
+                  ? `Invite ${invitePicked.length} & open project`
+                  : "Open project"}
+              </button>
+            </div>
           </div>
         )}
       </DialogContent>
