@@ -1411,6 +1411,10 @@ function BuildingSection({
           </TabsTrigger>
           <TabsTrigger value="drafts">Drafts</TabsTrigger>
           <TabsTrigger value="completed">Completed</TabsTrigger>
+          <TabsTrigger value="flow" className="gap-1.5">
+            <Radio className="h-3 w-3" />
+            Flow
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="active">
           {activeProjects.length > 0 ? (
@@ -1454,8 +1458,136 @@ function BuildingSection({
             </p>
           )}
         </TabsContent>
+        <TabsContent value="flow">
+          <FlowDropsTab />
+        </TabsContent>
       </Tabs>
     </section>
+  );
+}
+
+/**
+ * FlowDropsTab — lets an artist scroll through everything they've
+ * dropped on Flow right inside the Studio, so projects and posts live
+ * side by side. Mirrors the profile Flow strip so the workspace feels
+ * like the same crate.
+ */
+function FlowDropsTab() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const worksQ = useQuery({
+    queryKey: ["studio-flow-works", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data } = await supabase.from("works")
+        .select("id, title, kind, cover_url, thumbnail_url, created_at")
+        .eq("user_id", user!.id)
+        .is("archived_at", null)
+        .order("created_at", { ascending: false })
+        .limit(24);
+      return data ?? [];
+    },
+  });
+
+  const flowQ = useQuery({
+    queryKey: ["studio-flow-items", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data } = await supabase.from("flow_items")
+        .select("id, title, category, file_url, created_at")
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: false })
+        .limit(24);
+      return data ?? [];
+    },
+  });
+
+  const items = useMemo(() => {
+    const w = (worksQ.data ?? []).map((r: any) => ({
+      id: r.id,
+      title: r.title,
+      kind: r.kind,
+      cover: r.thumbnail_url || r.cover_url,
+      href: `/works/${r.id}`,
+      created_at: r.created_at,
+    }));
+    const f = (flowQ.data ?? []).map((r: any) => ({
+      id: r.id,
+      title: r.title,
+      kind: r.category ?? "post",
+      cover: r.file_url,
+      href: `/flow?item=${r.id}`,
+      created_at: r.created_at,
+    }));
+    return [...w, ...f]
+      .sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""))
+      .slice(0, 24);
+  }, [worksQ.data, flowQ.data]);
+
+  if (worksQ.isLoading || flowQ.isLoading) {
+    return (
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+        {Array.from({ length: 12 }).map((_, i) => (
+          <div key={i} className="aspect-square rounded-xl bg-muted/60 animate-pulse" />
+        ))}
+      </div>
+    );
+  }
+
+  if (items.length === 0) {
+    return (
+      <div className="rounded-2xl border border-dashed border-border p-10 text-center">
+        <Radio className="h-5 w-5 mx-auto mb-2 text-muted-foreground" />
+        <p className="text-sm text-foreground">Nothing on Flow yet.</p>
+        <p className="text-xs text-muted-foreground mt-1">
+          Drop audio, visuals, or photos and they'll surface here alongside your releases.
+        </p>
+        <Button asChild variant="outline" size="sm" className="rounded-full mt-4">
+          <Link to="/settings#provenance">Post a work</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+      {items.map((item) => (
+        <button
+          key={item.id}
+          type="button"
+          onClick={() => navigate(item.href)}
+          className="group relative aspect-square rounded-xl overflow-hidden bg-muted"
+          title={item.title || "Untitled"}
+        >
+          {item.cover ? (
+            <img
+              src={item.cover}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover group-hover:scale-110 transition-transform duration-500"
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
+              {item.kind === "audio" || item.kind === "music" ? (
+                <Music className="h-4 w-4" />
+              ) : (
+                <ImageIcon className="h-4 w-4" />
+              )}
+            </div>
+          )}
+          {item.kind === "video" && (
+            <div className="absolute top-1.5 left-1.5 h-5 w-5 rounded-full bg-black/60 flex items-center justify-center">
+              <Play className="h-2.5 w-2.5 fill-white text-white" />
+            </div>
+          )}
+          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent px-2 py-1.5">
+            <span className="block text-[10px] font-medium text-white truncate">
+              {item.title || "Untitled"}
+            </span>
+          </div>
+        </button>
+      ))}
+    </div>
   );
 }
 
