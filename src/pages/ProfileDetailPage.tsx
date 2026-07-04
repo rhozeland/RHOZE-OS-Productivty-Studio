@@ -37,6 +37,7 @@ import ProfileProjectCard from "@/components/profile/ProfileProjectCard";
 import LaunchCoinFlowModal from "@/components/launchpad/LaunchCoinFlowModal";
 import StartProjectPicker from "@/components/project/StartProjectPicker";
 import FollowingDialog from "@/components/profile/FollowingDialog";
+import ProfileBentoCanvas from "@/components/profile/ProfileBentoCanvas";
 
 type TabKey = "projects" | "works" | "updates" | "reposts" | "supporting" | "opportunities";
 
