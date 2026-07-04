@@ -381,3 +381,28 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* ─── Kinetic Bento theme ────────────────────────────────
+   Scoped midnight+mint palette for the profile bento canvas
+   and immersive coin launcher. Opt-in via `.kinetic-theme`. */
+.kinetic-theme {
+  --kb-bg: #0a0f1e;
+  --kb-surface: #141c33;
+  --kb-surface-2: #0d1428;
+  --kb-accent: #2dd4a8;
+  --kb-accent-strong: #3ce9bc;
+  --kb-fg: #e8f0f8;
+  --kb-fg-dim: rgba(232,240,248,0.6);
+  --kb-fg-faint: rgba(232,240,248,0.4);
+  --kb-border: rgba(232,240,248,0.08);
+  color: var(--kb-fg);
+  font-family: "Hind", ui-sans-serif, system-ui, sans-serif;
+}
+.kinetic-theme .kb-display {
+  font-family: "Archivo Black", ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+.kinetic-theme .kb-mono {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
+}

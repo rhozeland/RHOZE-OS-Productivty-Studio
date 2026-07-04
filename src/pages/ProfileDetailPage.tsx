@@ -37,6 +37,7 @@ import ProfileProjectCard from "@/components/profile/ProfileProjectCard";
 import LaunchCoinFlowModal from "@/components/launchpad/LaunchCoinFlowModal";
 import StartProjectPicker from "@/components/project/StartProjectPicker";
 import FollowingDialog from "@/components/profile/FollowingDialog";
+import ProfileBentoCanvas from "@/components/profile/ProfileBentoCanvas";
 
 type TabKey = "projects" | "works" | "updates" | "reposts" | "supporting" | "opportunities";
 
@@ -434,28 +435,17 @@ const ProfileDetailPage = () => {
           reviewStats={reviewStats}
         />
 
-        {/* ─── Floating icon tabs (no bar, free-flowing) ─── */}
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            {TABS.map(({ key, label, Icon }) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => handleTabChange(key)}
-                aria-label={label}
-                title={label}
-                className={cn(
-                  "inline-flex items-center justify-center h-10 w-10 rounded-full transition-all",
-                  tab === key
-                    ? "bg-foreground text-background shadow-md scale-105"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/60",
-                )}
-              >
-                <Icon className="h-4 w-4" />
-              </button>
-            ))}
-          </div>
-          {isOwnProfile && (
+        {/* ─── Kinetic Bento canvas (replaces tabs + right rail) ─── */}
+        <ProfileBentoCanvas
+          userId={id!}
+          isOwnProfile={isOwnProfile}
+          displayName={p.display_name || p.username || "Creator"}
+          onStartProject={() => setStartProjectOpen(true)}
+        />
+
+        {/* Following link — owner only */}
+        {isOwnProfile && (
+          <div className="flex justify-end">
             <button
               type="button"
               onClick={() => setFollowingOpen(true)}
@@ -465,193 +455,8 @@ const ProfileDetailPage = () => {
               <Users className="h-3.5 w-3.5" />
               Following
             </button>
-          )}
-        </div>
-
-
-        {/* ─── 65/35 grid ─── */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1.85fr_1fr] gap-5">
-
-          {/* LEFT — Active Engine */}
-          <div className="space-y-4 min-w-0">
-            {/* Priority Tracker */}
-            {activeProject && totalMs > 0 && (
-              <Link
-                to={`/projects/${activeProject.id}`}
-                className="block rounded-2xl border border-border/60 bg-card/70 hover:bg-card transition-colors p-4 sm:p-5"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Priority release</p>
-                    <p className="font-display text-base font-semibold text-foreground mt-1 truncate">{activeProject.title}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {completedMs} of {totalMs} milestones completed
-                    </p>
-                  </div>
-                  <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
-                </div>
-                <div className="mt-3 h-1.5 rounded-full bg-muted/50 overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-primary to-fuchsia-500 transition-all"
-                    style={{ width: `${totalMs ? (completedMs / totalMs) * 100 : 0}%` }}
-                  />
-                </div>
-              </Link>
-            )}
-
-            {/* Tab content */}
-            {tab === "projects" && (
-              <section className="space-y-3">
-                {(buildingProjects?.length ?? 0) === 0 ? (
-                  <EmptyState icon={FolderKanban} title="No projects yet" description="Releases this creator is building will appear here." size="sm" />
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {(buildingProjects ?? []).map((pr: any) => (
-                      <ProfileProjectCard
-                        key={pr.id}
-                        project={pr}
-                        collaborators={projectCollaborators?.[pr.id] ?? []}
-                        onOpen={() => navigate(`/projects/${pr.id}`)}
-                        canDelete={isOwnProfile}
-                        onDelete={() => setDeleteProjectTarget({ id: pr.id, title: pr.title })}
-                      />
-                    ))}
-                  </div>
-                )}
-              </section>
-            )}
-
-            {tab === "works" && (
-              <section className="space-y-3">
-                <PostsGrid posts={flowPosts ?? []} isOwnProfile={isOwnProfile} navigate={navigate} />
-              </section>
-            )}
-
-            {tab === "updates" && (
-              <section className="space-y-3">
-                <AnnouncementsTab userId={id!} isOwnProfile={isOwnProfile} />
-              </section>
-            )}
-
-
-
-            {tab === "supporting" && (
-              <section className="space-y-3">
-                <SupportingTab userId={id!} isOwnProfile={isOwnProfile} />
-              </section>
-            )}
-
-            {tab === "reposts" && (
-              <section className="space-y-3">
-                <PostsGrid
-                  posts={repostedPosts ?? []}
-                  isOwnProfile={isOwnProfile}
-                  navigate={navigate}
-                  emptyTitle="No reposts yet"
-                  emptyDescription="Hit the repost button on any Flow card and it'll land here."
-                />
-              </section>
-            )}
-
-            {tab === "opportunities" && (
-              <section className="space-y-3">
-                {(opportunities?.length ?? 0) === 0 ? (
-                  <EmptyState icon={Briefcase} title="No opportunities yet" description="Active listings posted by this creator will appear here." size="sm" />
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {(opportunities ?? []).map((o: any) => {
-                      const cover = o.cover_url || o.image_url;
-                      const priceLabel = o.price
-                        ? `${o.currency || "USD"} ${Number(o.price).toLocaleString()}`
-                        : o.credits_price
-                          ? `${Number(o.credits_price).toLocaleString()} credits`
-                          : null;
-                      return (
-                        <Link
-                          key={o.id}
-                          to={`/listings/${o.id}`}
-                          className="group rounded-2xl border border-border/60 bg-card/70 hover:bg-card transition-colors overflow-hidden flex flex-col"
-                        >
-                          {cover ? (
-                            <div className="aspect-[16/10] w-full overflow-hidden bg-muted">
-                              <img src={cover} alt={o.title} className="h-full w-full object-cover group-hover:scale-[1.02] transition-transform" />
-                            </div>
-                          ) : (
-                            <div className="aspect-[16/10] w-full bg-gradient-to-br from-primary/20 to-fuchsia-500/20 flex items-center justify-center">
-                              <Briefcase className="h-8 w-8 text-muted-foreground" />
-                            </div>
-                          )}
-                          <div className="p-4 space-y-1.5">
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-                                {o.listing_type || o.category}
-                              </span>
-                            </div>
-                            <p className="font-display text-base font-semibold text-foreground line-clamp-1">{o.title}</p>
-                            {o.description && (
-                              <p className="text-xs text-muted-foreground line-clamp-2">{o.description}</p>
-                            )}
-                            {priceLabel && (
-                              <p className="text-sm font-medium text-foreground pt-1">{priceLabel}</p>
-                            )}
-                          </div>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
-              </section>
-            )}
-
           </div>
-
-          {/* RIGHT — Action & Utility Hub */}
-          <aside className="space-y-3 min-w-0">
-            {isOwnProfile ? (
-              <>
-                {/* Start a project */}
-                <button
-                  type="button"
-                  onClick={() => setStartProjectOpen(true)}
-                  className="w-full text-left rounded-2xl p-5 bg-gradient-to-br from-primary via-fuchsia-500 to-amber-500 text-primary-foreground shadow-lg hover:opacity-95 transition-opacity"
-                >
-                  <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] opacity-90">
-                    <Sparkles className="h-3.5 w-3.5" /> Build in public
-                  </div>
-                  <p className="font-display text-lg font-bold mt-2">Start a project</p>
-                  <p className="text-xs opacity-90 mt-1">Spin up a release with milestones, scope and collaborators.</p>
-                </button>
-
-                {/* Start a coin — rendered via <StartCoinCta /> elsewhere on this page */}
-              </>
-            ) : (
-              <>
-                {/* Support */}
-                <button
-                  type="button"
-                  onClick={() => user ? setSubscribeOpen(true) : navigate("/auth")}
-                  className="w-full text-left rounded-2xl p-5 bg-gradient-to-br from-primary via-fuchsia-500 to-amber-500 text-primary-foreground shadow-lg hover:opacity-95 transition-opacity"
-                >
-                  <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] opacity-90">
-                    <Heart className="h-3.5 w-3.5" /> Back this artist
-                  </div>
-                  <p className="font-display text-lg font-bold mt-2">Support {p.display_name || p.username}</p>
-                  <p className="text-xs opacity-90 mt-1">Subscribe, tip, or fund the next milestone.</p>
-                </button>
-
-                <VipDirectAccessButton creatorName={p.display_name || p.username || "this artist"} />
-              </>
-            )}
-
-            {/* Token / Coin — full chart panel (renders its own empty state) */}
-            <CreatorCoinsGallery
-              userId={p.user_id}
-              creatorName={p.display_name || p.username}
-              isOwner={isOwnProfile}
-              fallbackWallet={p.solana_wallet ?? null}
-            />
-          </aside>
-        </div>
+        )}
 
         {/* Sheets / dialogs */}
         {!isOwnProfile && id && (

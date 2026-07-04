@@ -77,7 +77,7 @@ import { fetchCreatorContext } from "@/lib/creator-context";
 import { composeMilestoneDescription, chainMilestoneDates, type DraftedMilestone, type AssetRef, type MilestonePhase, PHASE_ORDER, PHASE_LABELS } from "@/hooks/useAiRoadmapDraft";
 import StartProjectPicker from "@/components/project/StartProjectPicker";
 import LaunchCoinFlowModal from "@/components/launchpad/LaunchCoinFlowModal";
-import AttachCoinFlowSheet from "@/components/coin/AttachCoinFlowSheet";
+import AttachCoinLauncher from "@/components/coin/AttachCoinLauncher";
 import { ConciergeIntakeSheet } from "@/components/concierge/ConciergeIntakeSheet";
 
 interface ProjectRow {
@@ -845,7 +845,7 @@ const StudioPage = () => {
       />
 
       {/* Attach a Coin — paste CA → pick target → celebrate */}
-      <AttachCoinFlowSheet
+      <AttachCoinLauncher
         open={coinSheetOpen}
         onOpenChange={setCoinSheetOpen}
       />
