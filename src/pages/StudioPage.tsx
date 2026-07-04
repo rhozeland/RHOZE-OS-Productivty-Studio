@@ -893,6 +893,12 @@ const ProjectList = ({ projects, statsFor, supporterCounts, emptyLabel }: Projec
   );
 };
 
+/**
+ * ProjectCard — SoundCloud-style release row.
+ * Wide album-cover thumb (with waveform accent), title + status,
+ * a slim progress bar with % ticker and meta chips. Reads more like
+ * a record in a crate than a productivity task card.
+ */
 const ProjectCard = ({
   project,
   stats,
@@ -905,88 +911,111 @@ const ProjectCard = ({
   const pct = stats.total > 0 ? Math.round((stats.done / stats.total) * 100) : 0;
   const statusLabel =
     project.status === "completed"
-      ? "Completed"
+      ? "Shipped"
       : (project.is_public || stats.total > 0)
-        ? "Active"
-        : "Draft";
+        ? "Live"
+        : "Sketch";
   const accent = project.cover_color || "#111111";
-  const segments = Math.max(stats.total, 1);
+  const cover = (project as any).cover_image_url as string | undefined;
 
   return (
     <Link
       to={`/projects/${project.id}`}
-      className="group relative block bg-card border border-border/60 p-4 hover:bg-muted/40 hover:border-border transition-all"
+      className="group relative flex gap-3 items-stretch bg-card border border-border/60 rounded-2xl overflow-hidden hover:border-foreground/30 hover:-translate-y-0.5 hover:shadow-[0_16px_40px_-20px_hsl(var(--foreground)/0.2)] transition-all duration-300"
     >
-      <div className="flex items-start gap-4">
-        {/* Cover thumb */}
-        <div
-          className="w-14 h-14 shrink-0 relative overflow-hidden bg-muted"
-          style={{ backgroundColor: `${accent}22` }}
-        >
-          <div
-            className="absolute inset-0"
-            style={{ background: `linear-gradient(135deg, ${accent}55 0%, transparent 70%)` }}
-          />
-          <div className="absolute bottom-1 left-1 flex items-end gap-0.5 h-5">
-            <div className="w-0.5 bg-foreground/40 h-2" />
-            <div className="w-0.5 bg-foreground/40 h-4" />
-            <div className="w-0.5 bg-foreground/40 h-3" />
-            <div className="w-0.5 bg-foreground/40 h-5" />
-          </div>
-        </div>
-
-        <div className="flex-grow min-w-0">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h4 className="font-medium text-foreground truncate">{project.title}</h4>
-              <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mt-0.5 flex items-center gap-2">
-                <span>{statusLabel}</span>
-                {project.is_public ? (
-                  <span className="inline-flex items-center gap-1 text-emerald-500">
-                    <Eye className="h-2.5 w-2.5" /> Public
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1">
-                    <EyeOff className="h-2.5 w-2.5" /> Private
-                  </span>
-                )}
-                {stats.dueThisWeek > 0 && (
-                  <span className="text-amber-500">· {stats.dueThisWeek} due</span>
-                )}
-              </p>
+      {/* Album cover */}
+      <div
+        className="relative w-24 sm:w-28 shrink-0 overflow-hidden"
+        style={{ background: cover ? undefined : `linear-gradient(135deg, ${accent}, ${accent}88 55%, transparent)` }}
+      >
+        {cover ? (
+          <img src={cover} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        ) : (
+          <>
+            {/* Waveform sketch */}
+            <div className="absolute inset-x-0 bottom-3 flex items-end justify-center gap-[3px] h-10 opacity-70">
+              {[3, 6, 4, 8, 5, 9, 6, 4, 7, 3, 6, 8, 5].map((h, i) => (
+                <span key={i} className="w-[3px] bg-white/80 rounded-full" style={{ height: `${h * 3}px` }} />
+              ))}
             </div>
-            <span className="text-[10px] font-mono tabular-nums text-muted-foreground shrink-0">
-              {pct}%
-            </span>
-          </div>
+            <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-black/30" />
+          </>
+        )}
+        {/* Play affordance */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/25">
+          <span className="h-8 w-8 rounded-full bg-white flex items-center justify-center">
+            <Play className="h-3.5 w-3.5 fill-black text-black translate-x-[1px]" />
+          </span>
+        </div>
+      </div>
 
-          {/* Progress bar */}
-          <div className="mt-3 h-[3px] w-full bg-muted overflow-hidden">
-            <div
-              className="h-full transition-all"
-              style={{ width: `${pct}%`, background: accent }}
-            />
-          </div>
-
-          {/* Meta row */}
-          <div className="mt-3 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 text-[10px] font-mono text-muted-foreground">
-              <span className="inline-flex items-center gap-1">
-                <CalendarDays className="h-2.5 w-2.5" /> {stats.days}d
+      {/* Body */}
+      <div className="flex-grow min-w-0 py-3 pr-3">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h4 className="font-display text-base font-semibold text-foreground truncate leading-tight">
+              {project.title}
+            </h4>
+            <p className="text-[10px] font-mono uppercase tracking-[0.15em] text-muted-foreground mt-1 flex items-center gap-2">
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1",
+                  statusLabel === "Live" && "text-emerald-500",
+                  statusLabel === "Shipped" && "text-foreground/80",
+                )}
+              >
+                {statusLabel === "Live" && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />}
+                {statusLabel}
               </span>
-              {project.is_public && (
+              <span className="text-foreground/20">·</span>
+              {project.is_public ? (
                 <span className="inline-flex items-center gap-1">
-                  <Users className="h-2.5 w-2.5" /> {supporters}
+                  <Eye className="h-2.5 w-2.5" /> Public
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1">
+                  <EyeOff className="h-2.5 w-2.5" /> Private
                 </span>
               )}
-              <span className="tabular-nums">
-                {stats.done}/{stats.total || "—"}
+              {stats.dueThisWeek > 0 && (
+                <>
+                  <span className="text-foreground/20">·</span>
+                  <span className="text-amber-500">{stats.dueThisWeek} due</span>
+                </>
+              )}
+            </p>
+          </div>
+          <span className="text-[10px] font-mono tabular-nums text-muted-foreground shrink-0 mt-0.5">
+            {pct}%
+          </span>
+        </div>
+
+        {/* Progress bar */}
+        <div className="mt-2.5 h-[3px] w-full bg-muted/60 rounded-full overflow-hidden">
+          <div
+            className="h-full transition-all rounded-full"
+            style={{ width: `${pct}%`, background: accent }}
+          />
+        </div>
+
+        {/* Meta */}
+        <div className="mt-2.5 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5 text-[10px] font-mono text-muted-foreground">
+            <span className="inline-flex items-center gap-1">
+              <CalendarDays className="h-2.5 w-2.5" /> {stats.days}d
+            </span>
+            {project.is_public && (
+              <span className="inline-flex items-center gap-1">
+                <Users className="h-2.5 w-2.5" /> {supporters}
               </span>
-            </div>
-            <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground group-hover:text-foreground inline-flex items-center gap-1">
-              Open <ArrowRight className="h-2.5 w-2.5" />
+            )}
+            <span className="tabular-nums">
+              {stats.done}/{stats.total || "—"}
             </span>
           </div>
+          <span className="text-[10px] font-mono uppercase tracking-[0.15em] text-muted-foreground group-hover:text-foreground inline-flex items-center gap-1 transition-colors">
+            Open <ArrowRight className="h-2.5 w-2.5" />
+          </span>
         </div>
       </div>
     </Link>
