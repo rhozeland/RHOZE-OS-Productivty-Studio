@@ -60,7 +60,10 @@ import {
   Pencil,
   Heart,
   Compass,
-
+  Play,
+  Music,
+  Image as ImageIcon,
+  Radio,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -890,6 +893,12 @@ const ProjectList = ({ projects, statsFor, supporterCounts, emptyLabel }: Projec
   );
 };
 
+/**
+ * ProjectCard — SoundCloud-style release row.
+ * Wide album-cover thumb (with waveform accent), title + status,
+ * a slim progress bar with % ticker and meta chips. Reads more like
+ * a record in a crate than a productivity task card.
+ */
 const ProjectCard = ({
   project,
   stats,
@@ -902,88 +911,111 @@ const ProjectCard = ({
   const pct = stats.total > 0 ? Math.round((stats.done / stats.total) * 100) : 0;
   const statusLabel =
     project.status === "completed"
-      ? "Completed"
+      ? "Shipped"
       : (project.is_public || stats.total > 0)
-        ? "Active"
-        : "Draft";
+        ? "Live"
+        : "Sketch";
   const accent = project.cover_color || "#111111";
-  const segments = Math.max(stats.total, 1);
+  const cover = (project as any).cover_image_url as string | undefined;
 
   return (
     <Link
       to={`/projects/${project.id}`}
-      className="group relative block bg-card border border-border/60 p-4 hover:bg-muted/40 hover:border-border transition-all"
+      className="group relative flex gap-3 items-stretch bg-card border border-border/60 rounded-2xl overflow-hidden hover:border-foreground/30 hover:-translate-y-0.5 hover:shadow-[0_16px_40px_-20px_hsl(var(--foreground)/0.2)] transition-all duration-300"
     >
-      <div className="flex items-start gap-4">
-        {/* Cover thumb */}
-        <div
-          className="w-14 h-14 shrink-0 relative overflow-hidden bg-muted"
-          style={{ backgroundColor: `${accent}22` }}
-        >
-          <div
-            className="absolute inset-0"
-            style={{ background: `linear-gradient(135deg, ${accent}55 0%, transparent 70%)` }}
-          />
-          <div className="absolute bottom-1 left-1 flex items-end gap-0.5 h-5">
-            <div className="w-0.5 bg-foreground/40 h-2" />
-            <div className="w-0.5 bg-foreground/40 h-4" />
-            <div className="w-0.5 bg-foreground/40 h-3" />
-            <div className="w-0.5 bg-foreground/40 h-5" />
-          </div>
-        </div>
-
-        <div className="flex-grow min-w-0">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h4 className="font-medium text-foreground truncate">{project.title}</h4>
-              <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mt-0.5 flex items-center gap-2">
-                <span>{statusLabel}</span>
-                {project.is_public ? (
-                  <span className="inline-flex items-center gap-1 text-emerald-500">
-                    <Eye className="h-2.5 w-2.5" /> Public
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1">
-                    <EyeOff className="h-2.5 w-2.5" /> Private
-                  </span>
-                )}
-                {stats.dueThisWeek > 0 && (
-                  <span className="text-amber-500">· {stats.dueThisWeek} due</span>
-                )}
-              </p>
+      {/* Album cover */}
+      <div
+        className="relative w-24 sm:w-28 shrink-0 overflow-hidden"
+        style={{ background: cover ? undefined : `linear-gradient(135deg, ${accent}, ${accent}88 55%, transparent)` }}
+      >
+        {cover ? (
+          <img src={cover} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        ) : (
+          <>
+            {/* Waveform sketch */}
+            <div className="absolute inset-x-0 bottom-3 flex items-end justify-center gap-[3px] h-10 opacity-70">
+              {[3, 6, 4, 8, 5, 9, 6, 4, 7, 3, 6, 8, 5].map((h, i) => (
+                <span key={i} className="w-[3px] bg-white/80 rounded-full" style={{ height: `${h * 3}px` }} />
+              ))}
             </div>
-            <span className="text-[10px] font-mono tabular-nums text-muted-foreground shrink-0">
-              {pct}%
-            </span>
-          </div>
+            <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-black/30" />
+          </>
+        )}
+        {/* Play affordance */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/25">
+          <span className="h-8 w-8 rounded-full bg-white flex items-center justify-center">
+            <Play className="h-3.5 w-3.5 fill-black text-black translate-x-[1px]" />
+          </span>
+        </div>
+      </div>
 
-          {/* Progress bar */}
-          <div className="mt-3 h-[3px] w-full bg-muted overflow-hidden">
-            <div
-              className="h-full transition-all"
-              style={{ width: `${pct}%`, background: accent }}
-            />
-          </div>
-
-          {/* Meta row */}
-          <div className="mt-3 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 text-[10px] font-mono text-muted-foreground">
-              <span className="inline-flex items-center gap-1">
-                <CalendarDays className="h-2.5 w-2.5" /> {stats.days}d
+      {/* Body */}
+      <div className="flex-grow min-w-0 py-3 pr-3">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h4 className="font-display text-base font-semibold text-foreground truncate leading-tight">
+              {project.title}
+            </h4>
+            <p className="text-[10px] font-mono uppercase tracking-[0.15em] text-muted-foreground mt-1 flex items-center gap-2">
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1",
+                  statusLabel === "Live" && "text-emerald-500",
+                  statusLabel === "Shipped" && "text-foreground/80",
+                )}
+              >
+                {statusLabel === "Live" && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />}
+                {statusLabel}
               </span>
-              {project.is_public && (
+              <span className="text-foreground/20">·</span>
+              {project.is_public ? (
                 <span className="inline-flex items-center gap-1">
-                  <Users className="h-2.5 w-2.5" /> {supporters}
+                  <Eye className="h-2.5 w-2.5" /> Public
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1">
+                  <EyeOff className="h-2.5 w-2.5" /> Private
                 </span>
               )}
-              <span className="tabular-nums">
-                {stats.done}/{stats.total || "—"}
+              {stats.dueThisWeek > 0 && (
+                <>
+                  <span className="text-foreground/20">·</span>
+                  <span className="text-amber-500">{stats.dueThisWeek} due</span>
+                </>
+              )}
+            </p>
+          </div>
+          <span className="text-[10px] font-mono tabular-nums text-muted-foreground shrink-0 mt-0.5">
+            {pct}%
+          </span>
+        </div>
+
+        {/* Progress bar */}
+        <div className="mt-2.5 h-[3px] w-full bg-muted/60 rounded-full overflow-hidden">
+          <div
+            className="h-full transition-all rounded-full"
+            style={{ width: `${pct}%`, background: accent }}
+          />
+        </div>
+
+        {/* Meta */}
+        <div className="mt-2.5 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5 text-[10px] font-mono text-muted-foreground">
+            <span className="inline-flex items-center gap-1">
+              <CalendarDays className="h-2.5 w-2.5" /> {stats.days}d
+            </span>
+            {project.is_public && (
+              <span className="inline-flex items-center gap-1">
+                <Users className="h-2.5 w-2.5" /> {supporters}
               </span>
-            </div>
-            <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground group-hover:text-foreground inline-flex items-center gap-1">
-              Open <ArrowRight className="h-2.5 w-2.5" />
+            )}
+            <span className="tabular-nums">
+              {stats.done}/{stats.total || "—"}
             </span>
           </div>
+          <span className="text-[10px] font-mono uppercase tracking-[0.15em] text-muted-foreground group-hover:text-foreground inline-flex items-center gap-1 transition-colors">
+            Open <ArrowRight className="h-2.5 w-2.5" />
+          </span>
         </div>
       </div>
     </Link>
@@ -1379,6 +1411,10 @@ function BuildingSection({
           </TabsTrigger>
           <TabsTrigger value="drafts">Drafts</TabsTrigger>
           <TabsTrigger value="completed">Completed</TabsTrigger>
+          <TabsTrigger value="flow" className="gap-1.5">
+            <Radio className="h-3 w-3" />
+            Flow
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="active">
           {activeProjects.length > 0 ? (
@@ -1422,8 +1458,136 @@ function BuildingSection({
             </p>
           )}
         </TabsContent>
+        <TabsContent value="flow">
+          <FlowDropsTab />
+        </TabsContent>
       </Tabs>
     </section>
+  );
+}
+
+/**
+ * FlowDropsTab — lets an artist scroll through everything they've
+ * dropped on Flow right inside the Studio, so projects and posts live
+ * side by side. Mirrors the profile Flow strip so the workspace feels
+ * like the same crate.
+ */
+function FlowDropsTab() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const worksQ = useQuery({
+    queryKey: ["studio-flow-works", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data } = await supabase.from("works")
+        .select("id, title, kind, cover_url, thumbnail_url, created_at")
+        .eq("user_id", user!.id)
+        .is("archived_at", null)
+        .order("created_at", { ascending: false })
+        .limit(24);
+      return data ?? [];
+    },
+  });
+
+  const flowQ = useQuery({
+    queryKey: ["studio-flow-items", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data } = await supabase.from("flow_items")
+        .select("id, title, category, file_url, created_at")
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: false })
+        .limit(24);
+      return data ?? [];
+    },
+  });
+
+  const items = useMemo(() => {
+    const w = (worksQ.data ?? []).map((r: any) => ({
+      id: r.id,
+      title: r.title,
+      kind: r.kind,
+      cover: r.thumbnail_url || r.cover_url,
+      href: `/works/${r.id}`,
+      created_at: r.created_at,
+    }));
+    const f = (flowQ.data ?? []).map((r: any) => ({
+      id: r.id,
+      title: r.title,
+      kind: r.category ?? "post",
+      cover: r.file_url,
+      href: `/flow?item=${r.id}`,
+      created_at: r.created_at,
+    }));
+    return [...w, ...f]
+      .sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""))
+      .slice(0, 24);
+  }, [worksQ.data, flowQ.data]);
+
+  if (worksQ.isLoading || flowQ.isLoading) {
+    return (
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+        {Array.from({ length: 12 }).map((_, i) => (
+          <div key={i} className="aspect-square rounded-xl bg-muted/60 animate-pulse" />
+        ))}
+      </div>
+    );
+  }
+
+  if (items.length === 0) {
+    return (
+      <div className="rounded-2xl border border-dashed border-border p-10 text-center">
+        <Radio className="h-5 w-5 mx-auto mb-2 text-muted-foreground" />
+        <p className="text-sm text-foreground">Nothing on Flow yet.</p>
+        <p className="text-xs text-muted-foreground mt-1">
+          Drop audio, visuals, or photos and they'll surface here alongside your releases.
+        </p>
+        <Button asChild variant="outline" size="sm" className="rounded-full mt-4">
+          <Link to="/settings#provenance">Post a work</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+      {items.map((item) => (
+        <button
+          key={item.id}
+          type="button"
+          onClick={() => navigate(item.href)}
+          className="group relative aspect-square rounded-xl overflow-hidden bg-muted"
+          title={item.title || "Untitled"}
+        >
+          {item.cover ? (
+            <img
+              src={item.cover}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover group-hover:scale-110 transition-transform duration-500"
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
+              {item.kind === "audio" || item.kind === "music" ? (
+                <Music className="h-4 w-4" />
+              ) : (
+                <ImageIcon className="h-4 w-4" />
+              )}
+            </div>
+          )}
+          {item.kind === "video" && (
+            <div className="absolute top-1.5 left-1.5 h-5 w-5 rounded-full bg-black/60 flex items-center justify-center">
+              <Play className="h-2.5 w-2.5 fill-white text-white" />
+            </div>
+          )}
+          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent px-2 py-1.5">
+            <span className="block text-[10px] font-medium text-white truncate">
+              {item.title || "Untitled"}
+            </span>
+          </div>
+        </button>
+      ))}
+    </div>
   );
 }
 
