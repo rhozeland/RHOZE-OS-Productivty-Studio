@@ -145,15 +145,15 @@ export function ConciergeIntakeSheet({ open, onOpenChange, initialTier }: Props)
   };
 
   return (
-    <Sheet
+    <Dialog
       open={open}
       onOpenChange={(o) => {
         onOpenChange(o);
         if (!o) setTimeout(reset, 300);
       }}
     >
-      <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
-        <SheetHeader className="text-left">
+      <DialogContent className="max-w-lg w-[calc(100vw-2rem)] max-h-[85vh] overflow-y-auto rounded-3xl p-6">
+        <DialogHeader className="text-left">
           <div className="flex items-center gap-2 mb-1">
             <div className="h-9 w-9 rounded-full bg-foreground text-background flex items-center justify-center">
               <Sparkles className="h-4 w-4" />
@@ -162,15 +162,15 @@ export function ConciergeIntakeSheet({ open, onOpenChange, initialTier }: Props)
               Rhozeland A&R
             </span>
           </div>
-          <SheetTitle className="font-display text-2xl">
+          <DialogTitle className="font-display text-2xl">
             Have Rhozeland scope your release.
-          </SheetTitle>
-          <SheetDescription className="text-sm">
+          </DialogTitle>
+          <DialogDescription className="text-sm">
             Tell us the release you want to ship. We'll scope it, pick the
             right artists & collaborators, and run the project end-to-end.
             25% platform fee ($250 min). Response within 48 hours.
-          </SheetDescription>
-        </SheetHeader>
+          </DialogDescription>
+        </DialogHeader>
 
         {submitted ? (
           <div className="mt-8 space-y-4 text-center">
