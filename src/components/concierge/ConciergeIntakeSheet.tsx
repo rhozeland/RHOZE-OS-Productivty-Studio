@@ -368,7 +368,7 @@ export function ConciergeIntakeSheet({ open, onOpenChange, initialTier }: Props)
             </p>
           </div>
         )}
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }
