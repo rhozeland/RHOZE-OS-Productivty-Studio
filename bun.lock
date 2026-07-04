@@ -6,6 +6,8 @@
       "name": "vite_react_shadcn_ts",
       "dependencies": {
         "@coral-xyz/anchor": "^0.32.1",
+        "@fontsource/archivo-black": "^5.2.8",
+        "@fontsource/hind": "^5.2.8",
         "@hookform/resolvers": "^3.10.0",
         "@imgly/background-removal": "^1.7.0",
         "@livekit/components-react": "^2.9.20",
@@ -229,6 +231,10 @@
     "@floating-ui/react-dom": ["@floating-ui/react-dom@2.1.4", "", { "dependencies": { "@floating-ui/dom": "^1.7.2" }, "peerDependencies": { "react": ">=16.8.0", "react-dom": ">=16.8.0" } }, "sha512-JbbpPhp38UmXDDAu60RJmbeme37Jbgsm7NrHGgzYYFKmblzRUh6Pa641dII6LsjwF4XlScDrde2UAzDo/b9KPw=="],
 
     "@floating-ui/utils": ["@floating-ui/utils@0.2.10", "", {}, "sha512-aGTxbpbg8/b5JfU1HXSrbH3wXZuLPJcNEcZQFMxLs3oSzgtVu6nFPkbbGGUvBcUjKV2YyB9Wxxabo+HEH9tcRQ=="],
+
+    "@fontsource/archivo-black": ["@fontsource/archivo-black@5.2.8", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@fontsource/archivo-black/-/archivo-black-5.2.8.tgz", {}, "sha512-3zNj/o9LzWyDl/UEpY5IOHpAQyUtFr3hQaFS7NSKwCLLkXOfH/CMCt1L2b2Z+OF25OURtOYenCadgAebALz7/A=="],
+
+    "@fontsource/hind": ["@fontsource/hind@5.2.8", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@fontsource/hind/-/hind-5.2.8.tgz", {}, "sha512-eOX6GHobFtElzjnxvtPaHeZwVA/xrEsURcioklaKW5CBO6ic1wvCFJJ5JAN/jRGiTheEw8HI73kShNXd6SXtMg=="],
 
     "@hookform/resolvers": ["@hookform/resolvers@3.10.0", "", { "peerDependencies": { "react-hook-form": "^7.0.0" } }, "sha512-79Dv+3mDF7i+2ajj7SkypSKHhl1cbln1OGavqrsF7p6mbUv11xpqpacPsGDCTRvCSjEEIez2ef1NveSVL3b0Ag=="],
 
