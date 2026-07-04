@@ -1,0 +1,2 @@
+REVOKE SELECT (stripe_session_id, stripe_payment_intent) ON public.creator_tips FROM anon, authenticated;
+GRANT SELECT (stripe_session_id, stripe_payment_intent) ON public.creator_tips TO service_role;
