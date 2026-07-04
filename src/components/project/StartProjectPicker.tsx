@@ -387,6 +387,133 @@ const StartProjectPicker = ({ open, onOpenChange }: Props) => {
             </p>
           </div>
         )}
+
+        {phase === "invite" && (
+          <div className="relative p-6 sm:p-8 space-y-4">
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0 opacity-40"
+              style={{ background: grad.surface }}
+            />
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-1">
+                <div
+                  className="h-8 w-8 rounded-full flex items-center justify-center text-white shadow-sm"
+                  style={{ background: grad.text }}
+                >
+                  <UserPlus className="h-4 w-4" />
+                </div>
+                <DialogTitle className="font-display text-xl tracking-tight">
+                  Bring in your team
+                </DialogTitle>
+              </div>
+              <p className="text-xs text-muted-foreground ml-10">
+                Add collaborators now, or skip and invite them from the project workspace later.
+              </p>
+            </div>
+
+            {/* Picked chips */}
+            {invitePicked.length > 0 && (
+              <div className="relative flex flex-wrap gap-1.5">
+                {invitePicked.map((u) => (
+                  <span
+                    key={u.user_id}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card pl-1.5 pr-2 py-1 text-xs"
+                  >
+                    {u.avatar_url ? (
+                      <img src={u.avatar_url} alt="" className="h-5 w-5 rounded-full object-cover" />
+                    ) : (
+                      <span className="h-5 w-5 rounded-full bg-muted grid place-items-center text-[10px] font-semibold">
+                        {(u.display_name || "?").slice(0, 1).toUpperCase()}
+                      </span>
+                    )}
+                    <span className="text-foreground">{u.display_name}</span>
+                    <button
+                      type="button"
+                      aria-label={`Remove ${u.display_name}`}
+                      onClick={() => setInvitePicked((p) => p.filter((x) => x.user_id !== u.user_id))}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* Search */}
+            <div className="relative">
+              <div className="relative">
+                <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <input
+                  autoFocus
+                  value={inviteSearch}
+                  onChange={(e) => setInviteSearch(e.target.value)}
+                  placeholder="Search by name or username…"
+                  className="w-full rounded-xl border border-border bg-background/80 pl-9 pr-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:border-foreground/40"
+                />
+              </div>
+
+              {inviteDebounced.length >= 2 && (
+                <div className="mt-2 max-h-56 overflow-y-auto rounded-xl border border-border bg-card divide-y divide-border/60">
+                  {searchResults.length === 0 && (
+                    <p className="px-3 py-6 text-center text-xs text-muted-foreground">
+                      No matches for "{inviteDebounced}".
+                    </p>
+                  )}
+                  {searchResults.map((r) => (
+                    <button
+                      key={r.user_id}
+                      type="button"
+                      onClick={() => {
+                        setInvitePicked((p) => [...p, r]);
+                        setInviteSearch("");
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-muted/60 transition-colors"
+                    >
+                      {r.avatar_url ? (
+                        <img src={r.avatar_url} alt="" className="h-8 w-8 rounded-full object-cover" />
+                      ) : (
+                        <span className="h-8 w-8 rounded-full bg-muted grid place-items-center text-xs font-semibold">
+                          {(r.display_name || "?").slice(0, 1).toUpperCase()}
+                        </span>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm text-foreground truncate">{r.display_name}</p>
+                        {r.username && (
+                          <p className="text-[11px] text-muted-foreground truncate">@{r.username}</p>
+                        )}
+                      </div>
+                      <Check className="h-3.5 w-3.5 text-muted-foreground" />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="relative flex items-center justify-between gap-2 pt-2">
+              <button
+                type="button"
+                onClick={finishInvite}
+                disabled={inviting}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Skip for now
+              </button>
+              <button
+                type="button"
+                onClick={finishInvite}
+                disabled={inviting}
+                className="inline-flex items-center gap-2 rounded-full bg-foreground text-background px-5 py-2 text-xs font-medium disabled:opacity-40 hover:scale-[1.02] active:scale-95 transition-transform"
+              >
+                {inviting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                {invitePicked.length > 0
+                  ? `Invite ${invitePicked.length} & open project`
+                  : "Open project"}
+              </button>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
