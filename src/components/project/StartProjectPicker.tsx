@@ -88,6 +88,7 @@ const StartProjectPicker = ({ open, onOpenChange }: Props) => {
   const navigate = useNavigate();
   const { requireAuth } = useAuthGate();
   const grad = todayGradient();
+  const { user } = useAuth();
 
   const [phase, setPhase] = useState<Phase>("pick");
   const [prompt, setPrompt] = useState("");
