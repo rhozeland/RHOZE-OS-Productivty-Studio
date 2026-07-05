@@ -958,112 +958,77 @@ const ProjectCard = ({
       onDragLeave={onDragLeave}
       onDrop={onDrop}
       className={cn(
-        "group relative flex gap-3 items-stretch bg-card border border-border/60 rounded-2xl overflow-hidden hover:border-foreground/30 hover:-translate-y-0.5 hover:shadow-[0_16px_40px_-20px_hsl(var(--foreground)/0.2)] transition-all duration-300",
-        dragOver && "ring-2 ring-emerald-500 border-emerald-500/60 -translate-y-0.5",
+        "group relative flex items-center gap-4 px-4 sm:px-5 py-3.5 hover:bg-muted/40 transition-colors",
+        dragOver && "bg-emerald-500/10 ring-1 ring-inset ring-emerald-500/40",
       )}
     >
-      {dragOver && (
-        <div className="absolute inset-0 z-10 bg-emerald-500/10 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
-          <span className="text-[11px] font-mono uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400 bg-background/90 px-3 py-1.5 rounded-full border border-emerald-500/40">
-            Drop to attach
+      {/* Accent bar (release color) */}
+      <span
+        className="w-1 self-stretch rounded-full shrink-0"
+        style={{ background: accent }}
+      />
+
+      {/* Title + status */}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-baseline gap-2 min-w-0">
+          <h4 className="font-display text-[15px] font-semibold text-foreground truncate leading-tight">
+            {project.title}
+          </h4>
+          <span
+            className={cn(
+              "text-[10px] font-mono uppercase tracking-[0.15em] shrink-0 inline-flex items-center gap-1",
+              statusLabel === "Live" && "text-emerald-500",
+              statusLabel === "Shipped" && "text-foreground/70",
+              statusLabel === "Sketch" && "text-muted-foreground",
+            )}
+          >
+            {statusLabel === "Live" && (
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            )}
+            {statusLabel}
           </span>
         </div>
-      )}
-      {/* Album cover */}
-      <div
-        className="relative w-24 sm:w-28 shrink-0 overflow-hidden"
-        style={{ background: cover ? undefined : `linear-gradient(135deg, ${accent}, ${accent}88 55%, transparent)` }}
-      >
-        {cover ? (
-          <img src={cover} alt="" className="absolute inset-0 h-full w-full object-cover" />
-        ) : (
-          <>
-            {/* Waveform sketch */}
-            <div className="absolute inset-x-0 bottom-3 flex items-end justify-center gap-[3px] h-10 opacity-70">
-              {[3, 6, 4, 8, 5, 9, 6, 4, 7, 3, 6, 8, 5].map((h, i) => (
-                <span key={i} className="w-[3px] bg-white/80 rounded-full" style={{ height: `${h * 3}px` }} />
-              ))}
-            </div>
-            <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-black/30" />
-          </>
-        )}
-        {/* Play affordance */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/25">
-          <span className="h-8 w-8 rounded-full bg-white flex items-center justify-center">
-            <Play className="h-3.5 w-3.5 fill-black text-black translate-x-[1px]" />
+        <div className="mt-1.5 flex items-center gap-3 text-[11px] text-muted-foreground">
+          <span className="inline-flex items-center gap-1">
+            {project.is_public ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+            {project.is_public ? "Public" : "Private"}
           </span>
+          <span className="inline-flex items-center gap-1">
+            <CalendarDays className="h-3 w-3" /> {stats.days}d
+          </span>
+          <span className="tabular-nums">
+            {stats.done}/{stats.total || "—"}
+          </span>
+          {project.is_public && (
+            <span className="inline-flex items-center gap-1">
+              <Users className="h-3 w-3" /> {supporters}
+            </span>
+          )}
+          {stats.dueThisWeek > 0 && (
+            <span className="text-amber-500">{stats.dueThisWeek} due</span>
+          )}
         </div>
       </div>
 
-      {/* Body */}
-      <div className="flex-grow min-w-0 py-3 pr-3">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <h4 className="font-display text-base font-semibold text-foreground truncate leading-tight">
-              {project.title}
-            </h4>
-            <p className="text-[10px] font-mono uppercase tracking-[0.15em] text-muted-foreground mt-1 flex items-center gap-2">
-              <span
-                className={cn(
-                  "inline-flex items-center gap-1",
-                  statusLabel === "Live" && "text-emerald-500",
-                  statusLabel === "Shipped" && "text-foreground/80",
-                )}
-              >
-                {statusLabel === "Live" && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />}
-                {statusLabel}
-              </span>
-              <span className="text-foreground/20">·</span>
-              {project.is_public ? (
-                <span className="inline-flex items-center gap-1">
-                  <Eye className="h-2.5 w-2.5" /> Public
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1">
-                  <EyeOff className="h-2.5 w-2.5" /> Private
-                </span>
-              )}
-              {stats.dueThisWeek > 0 && (
-                <>
-                  <span className="text-foreground/20">·</span>
-                  <span className="text-amber-500">{stats.dueThisWeek} due</span>
-                </>
-              )}
-            </p>
-          </div>
-          <span className="text-[10px] font-mono tabular-nums text-muted-foreground shrink-0 mt-0.5">
-            {pct}%
-          </span>
-        </div>
-
-        {/* Progress bar */}
-        <div className="mt-2.5 h-[3px] w-full bg-muted/60 rounded-full overflow-hidden">
+      {/* Progress + open */}
+      <div className="hidden sm:flex items-center gap-4 shrink-0">
+        <div className="w-32 h-[3px] bg-muted rounded-full overflow-hidden">
           <div
             className="h-full transition-all rounded-full"
             style={{ width: `${pct}%`, background: accent }}
           />
         </div>
-
-        {/* Meta */}
-        <div className="mt-2.5 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2.5 text-[10px] font-mono text-muted-foreground">
-            <span className="inline-flex items-center gap-1">
-              <CalendarDays className="h-2.5 w-2.5" /> {stats.days}d
-            </span>
-            {project.is_public && (
-              <span className="inline-flex items-center gap-1">
-                <Users className="h-2.5 w-2.5" /> {supporters}
-              </span>
-            )}
-            <span className="tabular-nums">
-              {stats.done}/{stats.total || "—"}
-            </span>
-          </div>
-          <span className="text-[10px] font-mono uppercase tracking-[0.15em] text-muted-foreground group-hover:text-foreground inline-flex items-center gap-1 transition-colors">
-            Open <ArrowRight className="h-2.5 w-2.5" />
-          </span>
-        </div>
+        <span className="text-[11px] font-mono tabular-nums text-muted-foreground w-9 text-right">
+          {pct}%
+        </span>
       </div>
+      <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all shrink-0" />
+
+      {dragOver && (
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400 bg-background/90 px-2 py-1 rounded-full border border-emerald-500/40">
+          Drop to attach
+        </span>
+      )}
     </Link>
   );
 };
