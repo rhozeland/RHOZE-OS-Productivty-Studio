@@ -339,35 +339,6 @@ const AccessGatePage = () => {
           </div>
         </div>
 
-        {/* Visual centerpiece: rotating vinyl + demo hint */}
-        <div className="relative mb-24 flex flex-col items-center">
-          <div className="relative w-56 h-56 flex items-center justify-center">
-            <motion.div
-              animate={{ rotate: playing ? 360 : 0 }}
-              transition={{ duration: 6, repeat: playing ? Infinity : 0, ease: "linear" }}
-              className="absolute inset-0 rounded-full"
-              style={{
-                background:
-                  "repeating-radial-gradient(circle at center, rgba(255,255,255,0.06) 0 2px, transparent 2px 4px), radial-gradient(circle at 30% 30%, hsl(330 70% 40%), hsl(280 60% 15%) 70%, #000 100%)",
-                boxShadow: "0 20px 60px -20px rgba(236,72,153,0.25), inset 0 0 40px rgba(0,0,0,0.6)",
-              }}
-            />
-            <div className="absolute inset-[38%] rounded-full bg-gradient-to-br from-amber-400 to-rose-500 flex items-center justify-center">
-              <img src={rhozelandLogo} alt="" className="h-6 w-6 opacity-90" />
-            </div>
-            <button
-              onClick={() => setPlaying((p) => !p)}
-              className="absolute -bottom-2 -right-2 h-12 w-12 rounded-full bg-zinc-900 text-white flex items-center justify-center shadow-2xl hover:scale-110 transition-transform"
-              aria-label={playing ? "Pause" : "Play preview"}
-            >
-              {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 ml-0.5" />}
-            </button>
-          </div>
-          <p className="mt-6 text-[11px] uppercase tracking-[0.25em] text-zinc-500/50 text-center">
-            {playing ? "Now spinning · a taste of what's coming" : "Tap to preview the vibe"}
-          </p>
-        </div>
-
         {/* Lore / timeline — condensed */}
         <section className="mb-20">
           <div className="mb-6">
@@ -399,36 +370,73 @@ const AccessGatePage = () => {
           </p>
         </section>
 
-        {/* Visual demo — mock app screens */}
+        {/* Vibes — 6 tappable mini-vinyls; tap one to hear a taste. */}
         <section className="mb-24">
-          <div className="mb-6">
-            <p className="text-[10px] uppercase tracking-[0.28em] text-zinc-500/60 mb-1.5">What's inside</p>
-            <h2 className="font-display text-xl md:text-2xl italic text-zinc-900 leading-tight">
-              A quick look.
-            </h2>
+          <div className="mb-6 flex items-end justify-between">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.28em] text-zinc-500/60 mb-1.5">Discover</p>
+              <h2 className="font-display text-xl md:text-2xl italic text-zinc-900 leading-tight">
+                Tap a vibe. Hear the room.
+              </h2>
+            </div>
+            <span className="text-[10px] uppercase tracking-[0.22em] text-rose-500 flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" /> live
+            </span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {demos.map((d, i) => (
-              <motion.div
-                key={d.title}
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: i * 0.06 }}
-                className="rounded-xl border border-black/10 bg-white/80 overflow-hidden shadow-sm"
-              >
-                {/* Browser chrome */}
-                <div className="flex items-center gap-1 px-2.5 py-1.5 border-b border-black/5 bg-zinc-50/70">
-                  <span className="h-1.5 w-1.5 rounded-full bg-rose-300" />
-                  <span className="h-1.5 w-1.5 rounded-full bg-amber-300" />
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
-                  <span className="ml-2 text-[8px] text-zinc-400 tracking-wide">rhoze.app / {d.title.toLowerCase()}</span>
-                </div>
-                <d.Component />
-              </motion.div>
-            ))}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {vibes.map((v, i) => {
+              const isActive = activeVibe === i;
+              return (
+                <motion.button
+                  key={v.name}
+                  type="button"
+                  onClick={() => playVibe(i)}
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: i * 0.05 }}
+                  whileHover={{ y: -2 }}
+                  className="group relative aspect-square rounded-xl overflow-hidden shadow-sm border border-black/5 focus:outline-none focus:ring-2 focus:ring-rose-400/60"
+                  style={{ background: v.bg }}
+                  aria-label={`${isActive ? "Pause" : "Play"} ${v.name} vibe`}
+                >
+                  {/* Vinyl grooves — visible when playing */}
+                  <motion.div
+                    aria-hidden
+                    animate={{ rotate: isActive ? 360 : 0, opacity: isActive ? 0.65 : 0 }}
+                    transition={{
+                      rotate: { duration: 8, repeat: isActive ? Infinity : 0, ease: "linear" },
+                      opacity: { duration: 0.4 },
+                    }}
+                    className="absolute inset-0"
+                    style={{
+                      background:
+                        "repeating-radial-gradient(circle at 50% 50%, rgba(0,0,0,0.35) 0 2px, transparent 2px 5px)",
+                    }}
+                  />
+                  {/* Center label — Rhoze mark */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <motion.div
+                      animate={{ scale: isActive ? [1, 1.05, 1] : 1 }}
+                      transition={{ duration: 1.6, repeat: isActive ? Infinity : 0, ease: "easeInOut" }}
+                      className="h-14 w-14 rounded-full bg-white/90 backdrop-blur-sm shadow-lg flex items-center justify-center"
+                    >
+                      <img src={rhozelandLogo} alt="" className="h-7 w-7 opacity-90" />
+                    </motion.div>
+                  </div>
+                  {/* Play/Pause pill bottom-right */}
+                  <div className="absolute bottom-2 right-2 h-7 w-7 rounded-full bg-zinc-900/90 text-white flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+                    {isActive ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3 ml-0.5" />}
+                  </div>
+                  {/* Vibe name bottom-left */}
+                  <div className="absolute bottom-2 left-2.5 text-[10px] font-medium text-white/95 tracking-wide drop-shadow">
+                    {v.name}
+                  </div>
+                </motion.button>
+              );
+            })}
           </div>
-          <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-2">
             {features.map((f) => (
               <div key={f.title} className="flex items-start gap-2">
                 <f.icon className="h-3.5 w-3.5 text-zinc-900/60 mt-0.5 shrink-0" />
@@ -440,6 +448,7 @@ const AccessGatePage = () => {
             ))}
           </div>
         </section>
+
 
         {/* Whitepaper — expandable */}
         <section className="mb-20">
