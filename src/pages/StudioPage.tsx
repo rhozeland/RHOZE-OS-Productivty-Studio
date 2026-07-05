@@ -1635,15 +1635,11 @@ function FlowDropsSection({ userId, projects }: { userId: string; projects: Proj
     <section>
       <div className="mb-5 flex items-end justify-between gap-4">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.28em] text-muted-foreground/70 font-semibold mb-1.5 inline-flex items-center gap-2">
-            <span className="h-px w-6 bg-foreground/40" />
+          <h2 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight text-foreground leading-none">
             Your Flow
-          </p>
-          <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-foreground leading-none">
-            Fresh drops<span className="text-foreground/30">.</span>
           </h2>
           <p className="text-xs text-muted-foreground mt-1.5">
-            Everything you've posted — drag any tile onto a release below to attach it.
+            Everything you've posted — drag any tile onto a release to attach it.
           </p>
         </div>
         <Button asChild variant="outline" size="sm" className="rounded-full shrink-0">
