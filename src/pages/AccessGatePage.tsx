@@ -475,7 +475,18 @@ const AccessGatePage = () => {
           </p>
         </section>
 
-        <footer className="pt-8 border-t border-black/5 text-center space-y-2">
+        <footer className="pt-8 border-t border-black/5 text-center space-y-3">
+          <p className="text-[11px] text-zinc-500/70">
+            Looking for the label, press, or bookings?{" "}
+            <a
+              href="https://www.rhozeland.com"
+              target="_blank"
+              rel="noreferrer"
+              className="text-zinc-900 underline underline-offset-4 decoration-rose-400/60 hover:decoration-rose-500 transition-colors"
+            >
+              Visit rhozeland.com →
+            </a>
+          </p>
           <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-900/40">
             Rhoze · by Rhozeland
           </p>
