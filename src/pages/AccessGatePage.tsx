@@ -61,83 +61,9 @@ const features = [
   { icon: Users, title: "Back projects", desc: "Fund releases. Sign on-chain. No middlemen." },
 ];
 
-/** Tiny app "screenshots" — hand-built visual mocks (no external images). */
-const DemoDiscover = () => (
-  <div className="p-3 space-y-2 text-left">
-    <div className="flex items-center justify-between">
-      <span className="text-[9px] uppercase tracking-[0.22em] text-zinc-500">Discover</span>
-      <span className="text-[9px] text-rose-500">● live</span>
-    </div>
-    <div className="grid grid-cols-3 gap-1.5">
-      {[
-        "linear-gradient(135deg,#fda4af,#c084fc)",
-        "linear-gradient(135deg,#fcd34d,#fb7185)",
-        "linear-gradient(135deg,#a78bfa,#38bdf8)",
-        "linear-gradient(135deg,#f9a8d4,#fbbf24)",
-        "linear-gradient(135deg,#67e8f9,#a78bfa)",
-        "linear-gradient(135deg,#fda4af,#f97316)",
-      ].map((bg, i) => (
-        <div key={i} className="aspect-square rounded-md relative overflow-hidden" style={{ background: bg }}>
-          <div className="absolute bottom-0.5 left-1 text-[7px] text-white/90 font-medium">$RHZE</div>
-        </div>
-      ))}
-    </div>
-  </div>
-);
+/** No mocks here anymore — the "vibes" grid below is the demo. */
 
-const DemoVerifiedIp = () => (
-  <div className="p-3 space-y-2 text-left">
-    <span className="text-[9px] uppercase tracking-[0.22em] text-zinc-500">Verified IP</span>
-    <div className="flex items-center gap-2 p-2 rounded-md bg-zinc-50 border border-black/5">
-      <div className="h-8 w-8 rounded bg-gradient-to-br from-rose-400 to-fuchsia-500" />
-      <div className="flex-1 min-w-0">
-        <div className="text-[10px] text-zinc-900 truncate font-medium">midnight_bloom.wav</div>
-        <div className="text-[8px] text-emerald-600 flex items-center gap-1">
-          <Check className="h-2 w-2" /> Anchored · 0x7f…3a2c
-        </div>
-      </div>
-    </div>
-    <div className="text-[8px] font-mono text-zinc-400 truncate">SHA-256 · a9f3e2…b41d</div>
-  </div>
-);
 
-const DemoCoin = () => (
-  <div className="p-3 space-y-2 text-left">
-    <span className="text-[9px] uppercase tracking-[0.22em] text-zinc-500">Attach coin</span>
-    <div className="p-2 rounded-md bg-gradient-to-br from-amber-50 to-rose-50 border border-black/5">
-      <div className="flex items-center justify-between">
-        <span className="text-[10px] font-medium text-zinc-900">$BLOOM</span>
-        <span className="text-[9px] text-emerald-600">+18.4%</span>
-      </div>
-      <div className="text-[8px] text-zinc-500">MC $42.1k · 214 holders</div>
-      <svg viewBox="0 0 60 16" className="w-full h-4 mt-1">
-        <polyline fill="none" stroke="hsl(330 70% 55%)" strokeWidth="1"
-          points="0,12 8,10 16,11 24,7 32,8 40,4 48,5 60,2" />
-      </svg>
-    </div>
-  </div>
-);
-
-const DemoContract = () => (
-  <div className="p-3 space-y-2 text-left">
-    <span className="text-[9px] uppercase tracking-[0.22em] text-zinc-500">Sign on-chain</span>
-    <div className="p-2 rounded-md bg-zinc-50 border border-black/5 space-y-1.5">
-      <div className="text-[10px] text-zinc-900 font-medium">Release: Bloom EP</div>
-      <div className="flex items-center gap-1.5 text-[8px]">
-        <span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">You ✓</span>
-        <span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">Producer ✓</span>
-      </div>
-      <div className="text-[8px] text-zinc-500">Split 60 / 40 · escrow 2.4 SOL</div>
-    </div>
-  </div>
-);
-
-const demos = [
-  { title: "Discover", Component: DemoDiscover },
-  { title: "Verified IP", Component: DemoVerifiedIp },
-  { title: "Attach coin", Component: DemoCoin },
-  { title: "Contracts", Component: DemoContract },
-];
 
 const whitepaperSections = [
   {
