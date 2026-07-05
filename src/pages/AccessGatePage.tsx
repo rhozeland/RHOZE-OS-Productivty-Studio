@@ -9,7 +9,7 @@
  * came from, what we're shipping, and the whitepaper preview. Signed-in
  * users skip entirely.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,6 +20,23 @@ import {
   Coins, Users, Sparkles, FileText, Play, Pause,
 } from "lucide-react";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
+
+/** Six "vibes" — each a mini looping chord synthesized on the fly. */
+const vibes: {
+  name: string;
+  bg: string;
+  /** MIDI-ish note frequencies making a small chord/arpeggio. */
+  notes: number[];
+  /** Loop duration in seconds. */
+  loop: number;
+}[] = [
+  { name: "Bloom",    bg: "linear-gradient(135deg,#fda4af,#c084fc)",  notes: [220, 261.63, 329.63, 392], loop: 3.2 },
+  { name: "Sunrise",  bg: "linear-gradient(135deg,#fcd34d,#fb7185)",  notes: [196, 246.94, 293.66, 370], loop: 2.8 },
+  { name: "Drift",    bg: "linear-gradient(135deg,#a78bfa,#38bdf8)",  notes: [174.61, 220, 277.18, 329.63], loop: 3.6 },
+  { name: "Peach",    bg: "linear-gradient(135deg,#f9a8d4,#fbbf24)",  notes: [164.81, 207.65, 246.94, 311.13], loop: 3.0 },
+  { name: "Mint",     bg: "linear-gradient(135deg,#67e8f9,#a78bfa)",  notes: [146.83, 185, 220, 293.66], loop: 3.4 },
+  { name: "Ember",    bg: "linear-gradient(135deg,#fda4af,#f97316)",  notes: [130.81, 164.81, 196, 261.63], loop: 3.2 },
+];
 
 export const ACCESS_FLAG = "rhoze_access_ok";
 export const hasGateAccess = () => {
