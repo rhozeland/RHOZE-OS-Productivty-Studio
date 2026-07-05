@@ -1549,7 +1549,12 @@ function FlowTile({ item }: { item: FlowDropItem }) {
   const navigate = useNavigate();
   const [imgOk, setImgOk] = useState(true);
   const media = inferMedia(item.kind, item.cover ?? item.file_url);
-  const showImage = imgOk && item.cover && (media === "image" || media === "video");
+  // Show the actual thumbnail whenever we have one — audio posts often
+  // upload cover art too, and hiding it behind a purple waveform was the
+  // bug the user flagged.
+  const hasCover = !!item.cover && imgOk;
+  const isRasterCover =
+    hasCover && !AUDIO_EXT.test(item.cover!) && !VIDEO_EXT.test(item.cover!);
 
   const onDragStart = (e: React.DragEvent) => {
     e.dataTransfer.effectAllowed = "copy";
@@ -1572,40 +1577,33 @@ function FlowTile({ item }: { item: FlowDropItem }) {
       draggable
       onDragStart={onDragStart}
       onClick={() => navigate(item.href)}
-      className="group relative aspect-square rounded-xl overflow-hidden bg-muted/70 border border-border/60 hover:border-foreground/40 cursor-grab active:cursor-grabbing transition-colors"
+      className="group relative aspect-square rounded-xl overflow-hidden bg-muted border border-border/60 hover:border-foreground/40 cursor-grab active:cursor-grabbing transition-colors"
       title={`${item.title || "Untitled"} — drag onto a release to attach`}
     >
-      {showImage ? (
+      {isRasterCover ? (
         <img
           src={item.cover!}
           alt=""
           onError={() => setImgOk(false)}
           className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
-      ) : media === "audio" ? (
-        <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-500/80 via-purple-500/70 to-indigo-500/80 flex items-end justify-center pb-3">
-          <div className="flex items-end gap-[3px] h-10 opacity-80">
-            {[3, 6, 4, 8, 5, 9, 6, 4, 7, 3, 6, 8, 5].map((h, i) => (
-              <span key={i} className="w-[3px] bg-white/90 rounded-full" style={{ height: `${h * 3}px` }} />
-            ))}
-          </div>
-        </div>
       ) : (
-        <div className="absolute inset-0 bg-gradient-to-br from-muted to-muted/40 flex items-center justify-center text-muted-foreground">
-          {media === "video" ? <Play className="h-5 w-5" /> : <ImageIcon className="h-5 w-5" />}
+        <div className="absolute inset-0 bg-muted flex items-center justify-center text-muted-foreground/70">
+          {media === "audio" ? (
+            <Music className="h-5 w-5" />
+          ) : media === "video" ? (
+            <Play className="h-5 w-5" />
+          ) : (
+            <ImageIcon className="h-5 w-5" />
+          )}
         </div>
       )}
 
-      {media === "video" && (
+      {media === "video" && isRasterCover && (
         <div className="absolute inset-0 flex items-center justify-center">
           <span className="h-8 w-8 rounded-full bg-black/55 flex items-center justify-center">
             <Play className="h-3.5 w-3.5 fill-white text-white translate-x-[1px]" />
           </span>
-        </div>
-      )}
-      {media === "audio" && (
-        <div className="absolute top-1.5 left-1.5">
-          <Music className="h-3 w-3 text-white/90" />
         </div>
       )}
 
