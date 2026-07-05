@@ -12,6 +12,7 @@ import AppLayout from "@/components/AppLayout";
 import FlowAuthGuard from "@/components/FlowAuthGuard";
 import AuthPage from "@/pages/AuthPage";
 import LandingPage from "@/pages/LandingPage";
+import AccessGatePage, { hasGateAccess } from "@/pages/AccessGatePage";
 
 import ProjectsPage from "@/pages/ProjectsPage";
 import StudioPage from "@/pages/StudioPage";
@@ -215,11 +216,25 @@ const AuthGateWrapper = ({ children }: { children: React.ReactNode }) => {
 };
 
 /**
- * Root entry — `/`
- * Everyone (authed + guests) lands on Home. Landing page retired.
+ * Private-build gate — while Rhozeland is being built, only visitors with an
+ * access code (or a real signed-in account) can browse the app. Everyone else
+ * lands on the AccessGate.
+ *
+ * Allowlisted routes stay reachable so email/share/checkout links still work.
  */
-const RootEntry = () => {
-  const { loading } = useAuth();
+const GATE_ALLOWLIST = [
+  "/gate",
+  "/auth",
+  "/unsubscribe",
+  "/checkout/return",
+  "/card/",
+  "/release/",
+  "/spaces/events/", // public event detail pages
+];
+
+const PrivateBuildGate = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useAuth();
+  const path = typeof window !== "undefined" ? window.location.pathname : "/";
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -227,6 +242,28 @@ const RootEntry = () => {
       </div>
     );
   }
+  const allowed =
+    !!user ||
+    hasGateAccess() ||
+    GATE_ALLOWLIST.some((p) => (p.endsWith("/") ? path.startsWith(p) : path === p));
+  if (!allowed) return <Navigate to="/gate" replace />;
+  return <>{children}</>;
+};
+
+/**
+ * Root entry — `/`
+ * Everyone (authed + guests) lands on Home. Landing page retired.
+ */
+const RootEntry = () => {
+  const { user, loading } = useAuth();
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+  if (!user && !hasGateAccess()) return <Navigate to="/gate" replace />;
   return <Navigate to="/home" replace />;
 };
 
@@ -241,7 +278,11 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <AuthGateWrapper>
+            <PrivateBuildGate>
             <Routes>
+              {/* Private-build access gate — code entry + waitlist. */}
+              <Route path="/gate" element={<AccessGatePage />} />
+
               {/* Auth page — redirect to dashboard if already logged in */}
               <Route path="/auth" element={<PublicRoute><AuthPage /></PublicRoute>} />
               <Route path="/onboarding" element={<Navigate to="/welcome" replace />} />
@@ -397,6 +438,7 @@ const App = () => (
               <Route path="/boards/:id" element={<SmartboardPresentationPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </PrivateBuildGate>
           </AuthGateWrapper>
         </AuthProvider>
       </BrowserRouter>
