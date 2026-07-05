@@ -760,38 +760,19 @@ const StudioPage = () => {
         </button>
       </section>
 
-      {/* Live release strip — subtle */}
-      {featuredPublic && (
-        <Link
-          to={`/release/${featuredPublic.public_slug}`}
-          className="group flex items-center justify-between gap-4 border-l-2 border-emerald-500 pl-4 py-2 hover:bg-muted/40 transition-colors"
-        >
-          <div className="min-w-0 flex items-center gap-3">
-            <span className="text-[10px] font-mono uppercase tracking-widest text-emerald-500">
-              Live
-            </span>
-            <span className="text-sm text-foreground font-medium truncate">
-              {featuredPublic.title}
-            </span>
-            <span className="hidden sm:inline text-[11px] font-mono text-muted-foreground">
-              · {supporterCounts?.[featuredPublic.id] ?? 0} supporter
-              {(supporterCounts?.[featuredPublic.id] ?? 0) === 1 ? "" : "s"}
-              {" · "}
-              {projectStats(featuredPublic).done}/{projectStats(featuredPublic).total} milestones
-            </span>
-          </div>
-          <span className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground group-hover:text-foreground inline-flex items-center gap-1 shrink-0">
-            View <ArrowUpRight className="h-3 w-3" />
-          </span>
-        </Link>
-      )}
-
-
       {/* Brand-new user empty state */}
       {!hasAnyActivity && !isLoading && (
         <EmptyStudioCard
           onStart={() => setStartProjectOpen(true)}
           onDiscover={() => navigate("/discover")}
+        />
+      )}
+
+      {/* Flow drops — the artist's own uploaded content, scrollable + draggable */}
+      {user && (
+        <FlowDropsSection
+          userId={user.id}
+          projects={activeProjects}
         />
       )}
 
@@ -908,6 +889,9 @@ const ProjectCard = ({
   stats: { total: number; done: number; dueThisWeek: number; days: number };
   supporters: number;
 }) => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [dragOver, setDragOver] = useState(false);
   const pct = stats.total > 0 ? Math.round((stats.done / stats.total) * 100) : 0;
   const statusLabel =
     project.status === "completed"
@@ -918,11 +902,73 @@ const ProjectCard = ({
   const accent = project.cover_color || "#111111";
   const cover = (project as any).cover_image_url as string | undefined;
 
+  const onDragOver = (e: React.DragEvent) => {
+    if (!e.dataTransfer.types.includes("application/x-rhoze-flow")) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "copy";
+    if (!dragOver) setDragOver(true);
+  };
+  const onDragLeave = () => setDragOver(false);
+  const onDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const raw = e.dataTransfer.getData("application/x-rhoze-flow");
+    if (!raw || !user) return;
+    try {
+      const payload = JSON.parse(raw) as {
+        source: "work" | "flow";
+        id: string;
+        title: string;
+        file_url: string | null;
+        mime_type: string | null;
+      };
+
+      if (payload.source === "work") {
+        const { error } = await (supabase as any).from("work_attachments").insert({
+          work_id: payload.id,
+          target_type: "project",
+          target_id: project.id,
+          attached_by: user.id,
+          role: "reference",
+        });
+        if (error && !/duplicate/i.test(error.message)) throw error;
+      } else {
+        const { error } = await (supabase as any).from("project_deliverables").insert({
+          project_id: project.id,
+          user_id: user.id,
+          title: payload.title || "Untitled",
+          completed: false,
+          sort_order: 0,
+          file_url: payload.file_url,
+          mime_type: payload.mime_type,
+        });
+        if (error) throw error;
+      }
+      toast.success(`Attached to "${project.title}"`);
+      queryClient.invalidateQueries({ queryKey: ["studio-projects", user.id] });
+    } catch (err: any) {
+      toast.error(err?.message || "Couldn't attach that drop.");
+    }
+  };
+
   return (
     <Link
       to={`/projects/${project.id}`}
-      className="group relative flex gap-3 items-stretch bg-card border border-border/60 rounded-2xl overflow-hidden hover:border-foreground/30 hover:-translate-y-0.5 hover:shadow-[0_16px_40px_-20px_hsl(var(--foreground)/0.2)] transition-all duration-300"
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+      className={cn(
+        "group relative flex gap-3 items-stretch bg-card border border-border/60 rounded-2xl overflow-hidden hover:border-foreground/30 hover:-translate-y-0.5 hover:shadow-[0_16px_40px_-20px_hsl(var(--foreground)/0.2)] transition-all duration-300",
+        dragOver && "ring-2 ring-emerald-500 border-emerald-500/60 -translate-y-0.5",
+      )}
     >
+      {dragOver && (
+        <div className="absolute inset-0 z-10 bg-emerald-500/10 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
+          <span className="text-[11px] font-mono uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400 bg-background/90 px-3 py-1.5 rounded-full border border-emerald-500/40">
+            Drop to attach
+          </span>
+        </div>
+      )}
       {/* Album cover */}
       <div
         className="relative w-24 sm:w-28 shrink-0 overflow-hidden"
@@ -1411,10 +1457,6 @@ function BuildingSection({
           </TabsTrigger>
           <TabsTrigger value="drafts">Drafts</TabsTrigger>
           <TabsTrigger value="completed">Completed</TabsTrigger>
-          <TabsTrigger value="flow" className="gap-1.5">
-            <Radio className="h-3 w-3" />
-            Flow
-          </TabsTrigger>
         </TabsList>
         <TabsContent value="active">
           {activeProjects.length > 0 ? (
@@ -1458,9 +1500,6 @@ function BuildingSection({
             </p>
           )}
         </TabsContent>
-        <TabsContent value="flow">
-          <FlowDropsTab />
-        </TabsContent>
       </Tabs>
     </section>
   );
@@ -1472,122 +1511,213 @@ function BuildingSection({
  * side by side. Mirrors the profile Flow strip so the workspace feels
  * like the same crate.
  */
-function FlowDropsTab() {
-  const { user } = useAuth();
-  const navigate = useNavigate();
+/**
+ * FlowDropsSection — the artist's own Flow uploads shown as a
+ * scrollable dashboard strip. Each tile is draggable onto a project
+ * card in the Workshop below to attach it as a deliverable.
+ */
+export type FlowDropItem = {
+  source: "work" | "flow";
+  id: string;
+  title: string;
+  kind: string;
+  cover: string | null;
+  file_url: string | null;
+  mime_type: string | null;
+  href: string;
+  created_at: string;
+};
 
+const AUDIO_EXT = /\.(mp3|wav|m4a|flac|ogg|aac)(\?.*)?$/i;
+const VIDEO_EXT = /\.(mp4|mov|webm|m4v|avi|mkv)(\?.*)?$/i;
+const IMAGE_EXT = /\.(png|jpe?g|gif|webp|avif|svg)(\?.*)?$/i;
+
+function inferMedia(kind: string | null, url: string | null): "audio" | "video" | "image" | "other" {
+  const k = (kind ?? "").toLowerCase();
+  if (["audio", "music", "song", "track"].includes(k)) return "audio";
+  if (["video", "reel", "clip"].includes(k)) return "video";
+  if (["photo", "image", "visual", "design", "art"].includes(k)) return "image";
+  if (url) {
+    if (AUDIO_EXT.test(url)) return "audio";
+    if (VIDEO_EXT.test(url)) return "video";
+    if (IMAGE_EXT.test(url)) return "image";
+  }
+  return "other";
+}
+
+function FlowTile({ item }: { item: FlowDropItem }) {
+  const navigate = useNavigate();
+  const [imgOk, setImgOk] = useState(true);
+  const media = inferMedia(item.kind, item.cover ?? item.file_url);
+  const showImage = imgOk && item.cover && (media === "image" || media === "video");
+
+  const onDragStart = (e: React.DragEvent) => {
+    e.dataTransfer.effectAllowed = "copy";
+    e.dataTransfer.setData(
+      "application/x-rhoze-flow",
+      JSON.stringify({
+        source: item.source,
+        id: item.id,
+        title: item.title,
+        file_url: item.file_url,
+        mime_type: item.mime_type,
+      }),
+    );
+    e.dataTransfer.setData("text/plain", item.title || "Untitled");
+  };
+
+  return (
+    <button
+      type="button"
+      draggable
+      onDragStart={onDragStart}
+      onClick={() => navigate(item.href)}
+      className="group relative aspect-square rounded-xl overflow-hidden bg-muted/70 border border-border/60 hover:border-foreground/40 cursor-grab active:cursor-grabbing transition-colors"
+      title={`${item.title || "Untitled"} — drag onto a release to attach`}
+    >
+      {showImage ? (
+        <img
+          src={item.cover!}
+          alt=""
+          onError={() => setImgOk(false)}
+          className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+        />
+      ) : media === "audio" ? (
+        <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-500/80 via-purple-500/70 to-indigo-500/80 flex items-end justify-center pb-3">
+          <div className="flex items-end gap-[3px] h-10 opacity-80">
+            {[3, 6, 4, 8, 5, 9, 6, 4, 7, 3, 6, 8, 5].map((h, i) => (
+              <span key={i} className="w-[3px] bg-white/90 rounded-full" style={{ height: `${h * 3}px` }} />
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-br from-muted to-muted/40 flex items-center justify-center text-muted-foreground">
+          {media === "video" ? <Play className="h-5 w-5" /> : <ImageIcon className="h-5 w-5" />}
+        </div>
+      )}
+
+      {media === "video" && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="h-8 w-8 rounded-full bg-black/55 flex items-center justify-center">
+            <Play className="h-3.5 w-3.5 fill-white text-white translate-x-[1px]" />
+          </span>
+        </div>
+      )}
+      {media === "audio" && (
+        <div className="absolute top-1.5 left-1.5">
+          <Music className="h-3 w-3 text-white/90" />
+        </div>
+      )}
+
+      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-2 pt-4 pb-1.5">
+        <span className="block text-[10px] font-medium text-white truncate">
+          {item.title || "Untitled"}
+        </span>
+      </div>
+    </button>
+  );
+}
+
+function FlowDropsSection({ userId, projects }: { userId: string; projects: ProjectRow[] }) {
   const worksQ = useQuery({
-    queryKey: ["studio-flow-works", user?.id],
-    enabled: !!user?.id,
+    queryKey: ["studio-flow-works", userId],
     queryFn: async () => {
       const { data } = await supabase.from("works")
-        .select("id, title, kind, cover_url, thumbnail_url, created_at")
-        .eq("user_id", user!.id)
+        .select("id, title, kind, cover_url, thumbnail_url, file_url, mime_type, created_at")
+        .eq("user_id", userId)
         .is("archived_at", null)
         .order("created_at", { ascending: false })
-        .limit(24);
+        .limit(32);
       return data ?? [];
     },
   });
 
   const flowQ = useQuery({
-    queryKey: ["studio-flow-items", user?.id],
-    enabled: !!user?.id,
+    queryKey: ["studio-flow-items", userId],
     queryFn: async () => {
       const { data } = await supabase.from("flow_items")
-        .select("id, title, category, file_url, created_at")
-        .eq("user_id", user!.id)
+        .select("id, title, category, file_url, content_type, created_at")
+        .eq("user_id", userId)
         .order("created_at", { ascending: false })
-        .limit(24);
+        .limit(32);
       return data ?? [];
     },
   });
 
-  const items = useMemo(() => {
-    const w = (worksQ.data ?? []).map((r: any) => ({
+  const items: FlowDropItem[] = useMemo(() => {
+    const w = (worksQ.data ?? []).map((r: any): FlowDropItem => ({
+      source: "work",
       id: r.id,
       title: r.title,
       kind: r.kind,
-      cover: r.thumbnail_url || r.cover_url,
+      cover: r.thumbnail_url || r.cover_url || null,
+      file_url: r.file_url ?? null,
+      mime_type: r.mime_type ?? null,
       href: `/works/${r.id}`,
       created_at: r.created_at,
     }));
-    const f = (flowQ.data ?? []).map((r: any) => ({
+    const f = (flowQ.data ?? []).map((r: any): FlowDropItem => ({
+      source: "flow",
       id: r.id,
       title: r.title,
-      kind: r.category ?? "post",
-      cover: r.file_url,
+      kind: r.category ?? r.content_type ?? "post",
+      cover: r.file_url ?? null,
+      file_url: r.file_url ?? null,
+      mime_type: r.content_type ?? null,
       href: `/flow?item=${r.id}`,
       created_at: r.created_at,
     }));
     return [...w, ...f]
       .sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""))
-      .slice(0, 24);
+      .slice(0, 32);
   }, [worksQ.data, flowQ.data]);
 
-  if (worksQ.isLoading || flowQ.isLoading) {
-    return (
-      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
-        {Array.from({ length: 12 }).map((_, i) => (
-          <div key={i} className="aspect-square rounded-xl bg-muted/60 animate-pulse" />
-        ))}
-      </div>
-    );
-  }
-
-  if (items.length === 0) {
-    return (
-      <div className="rounded-2xl border border-dashed border-border p-10 text-center">
-        <Radio className="h-5 w-5 mx-auto mb-2 text-muted-foreground" />
-        <p className="text-sm text-foreground">Nothing on Flow yet.</p>
-        <p className="text-xs text-muted-foreground mt-1">
-          Drop audio, visuals, or photos and they'll surface here alongside your releases.
-        </p>
-        <Button asChild variant="outline" size="sm" className="rounded-full mt-4">
-          <Link to="/settings#provenance">Post a work</Link>
-        </Button>
-      </div>
-    );
-  }
+  const loading = worksQ.isLoading || flowQ.isLoading;
 
   return (
-    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
-      {items.map((item) => (
-        <button
-          key={item.id}
-          type="button"
-          onClick={() => navigate(item.href)}
-          className="group relative aspect-square rounded-xl overflow-hidden bg-muted"
-          title={item.title || "Untitled"}
-        >
-          {item.cover ? (
-            <img
-              src={item.cover}
-              alt=""
-              className="absolute inset-0 h-full w-full object-cover group-hover:scale-110 transition-transform duration-500"
-            />
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
-              {item.kind === "audio" || item.kind === "music" ? (
-                <Music className="h-4 w-4" />
-              ) : (
-                <ImageIcon className="h-4 w-4" />
-              )}
-            </div>
-          )}
-          {item.kind === "video" && (
-            <div className="absolute top-1.5 left-1.5 h-5 w-5 rounded-full bg-black/60 flex items-center justify-center">
-              <Play className="h-2.5 w-2.5 fill-white text-white" />
-            </div>
-          )}
-          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent px-2 py-1.5">
-            <span className="block text-[10px] font-medium text-white truncate">
-              {item.title || "Untitled"}
-            </span>
-          </div>
-        </button>
-      ))}
-    </div>
+    <section>
+      <div className="mb-5 flex items-end justify-between gap-4">
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.28em] text-muted-foreground/70 font-semibold mb-1.5 inline-flex items-center gap-2">
+            <span className="h-px w-6 bg-foreground/40" />
+            Your Flow
+          </p>
+          <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-foreground leading-none">
+            Fresh drops<span className="text-foreground/30">.</span>
+          </h2>
+          <p className="text-xs text-muted-foreground mt-1.5">
+            Everything you've posted — drag any tile onto a release below to attach it.
+          </p>
+        </div>
+        <Button asChild variant="outline" size="sm" className="rounded-full shrink-0">
+          <Link to="/settings#provenance">
+            <Plus className="h-3.5 w-3.5 mr-1" /> Post a work
+          </Link>
+        </Button>
+      </div>
+
+      {loading ? (
+        <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-8 gap-2">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="aspect-square rounded-xl bg-muted/60 animate-pulse" />
+          ))}
+        </div>
+      ) : items.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-border p-10 text-center">
+          <Radio className="h-5 w-5 mx-auto mb-2 text-muted-foreground" />
+          <p className="text-sm text-foreground">Nothing on Flow yet.</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Drop audio, visuals, or photos and they'll surface here alongside your releases.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-8 gap-2">
+          {items.map((item) => (
+            <FlowTile key={`${item.source}-${item.id}`} item={item} />
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
 
