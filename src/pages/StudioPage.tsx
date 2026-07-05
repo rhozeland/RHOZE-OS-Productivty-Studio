@@ -889,6 +889,9 @@ const ProjectCard = ({
   stats: { total: number; done: number; dueThisWeek: number; days: number };
   supporters: number;
 }) => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [dragOver, setDragOver] = useState(false);
   const pct = stats.total > 0 ? Math.round((stats.done / stats.total) * 100) : 0;
   const statusLabel =
     project.status === "completed"
@@ -899,11 +902,73 @@ const ProjectCard = ({
   const accent = project.cover_color || "#111111";
   const cover = (project as any).cover_image_url as string | undefined;
 
+  const onDragOver = (e: React.DragEvent) => {
+    if (!e.dataTransfer.types.includes("application/x-rhoze-flow")) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "copy";
+    if (!dragOver) setDragOver(true);
+  };
+  const onDragLeave = () => setDragOver(false);
+  const onDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const raw = e.dataTransfer.getData("application/x-rhoze-flow");
+    if (!raw || !user) return;
+    try {
+      const payload = JSON.parse(raw) as {
+        source: "work" | "flow";
+        id: string;
+        title: string;
+        file_url: string | null;
+        mime_type: string | null;
+      };
+
+      if (payload.source === "work") {
+        const { error } = await (supabase as any).from("work_attachments").insert({
+          work_id: payload.id,
+          target_type: "project",
+          target_id: project.id,
+          attached_by: user.id,
+          role: "reference",
+        });
+        if (error && !/duplicate/i.test(error.message)) throw error;
+      } else {
+        const { error } = await (supabase as any).from("project_deliverables").insert({
+          project_id: project.id,
+          user_id: user.id,
+          title: payload.title || "Untitled",
+          completed: false,
+          sort_order: 0,
+          file_url: payload.file_url,
+          mime_type: payload.mime_type,
+        });
+        if (error) throw error;
+      }
+      toast.success(`Attached to "${project.title}"`);
+      queryClient.invalidateQueries({ queryKey: ["studio-projects", user.id] });
+    } catch (err: any) {
+      toast.error(err?.message || "Couldn't attach that drop.");
+    }
+  };
+
   return (
     <Link
       to={`/projects/${project.id}`}
-      className="group relative flex gap-3 items-stretch bg-card border border-border/60 rounded-2xl overflow-hidden hover:border-foreground/30 hover:-translate-y-0.5 hover:shadow-[0_16px_40px_-20px_hsl(var(--foreground)/0.2)] transition-all duration-300"
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+      className={cn(
+        "group relative flex gap-3 items-stretch bg-card border border-border/60 rounded-2xl overflow-hidden hover:border-foreground/30 hover:-translate-y-0.5 hover:shadow-[0_16px_40px_-20px_hsl(var(--foreground)/0.2)] transition-all duration-300",
+        dragOver && "ring-2 ring-emerald-500 border-emerald-500/60 -translate-y-0.5",
+      )}
     >
+      {dragOver && (
+        <div className="absolute inset-0 z-10 bg-emerald-500/10 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
+          <span className="text-[11px] font-mono uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400 bg-background/90 px-3 py-1.5 rounded-full border border-emerald-500/40">
+            Drop to attach
+          </span>
+        </div>
+      )}
       {/* Album cover */}
       <div
         className="relative w-24 sm:w-28 shrink-0 overflow-hidden"
