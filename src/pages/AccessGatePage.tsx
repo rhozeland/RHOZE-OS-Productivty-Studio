@@ -96,7 +96,77 @@ const AccessGatePage = () => {
   const [busy, setBusy] = useState<"code" | "email" | null>(null);
   const [waitlisted, setWaitlisted] = useState(false);
   const [openPaper, setOpenPaper] = useState<number | null>(0);
-  const [playing, setPlaying] = useState(false);
+  const [activeVibe, setActiveVibe] = useState<number | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const activeNodesRef = useRef<{ osc: OscillatorNode; gain: GainNode }[]>([]);
+  const loopTimerRef = useRef<number | null>(null);
+
+  const stopVibe = () => {
+    if (loopTimerRef.current) {
+      window.clearTimeout(loopTimerRef.current);
+      loopTimerRef.current = null;
+    }
+    const ctx = audioCtxRef.current;
+    if (ctx) {
+      const now = ctx.currentTime;
+      activeNodesRef.current.forEach(({ osc, gain }) => {
+        try {
+          gain.gain.cancelScheduledValues(now);
+          gain.gain.setValueAtTime(gain.gain.value, now);
+          gain.gain.linearRampToValueAtTime(0, now + 0.15);
+          osc.stop(now + 0.2);
+        } catch { /* noop */ }
+      });
+    }
+    activeNodesRef.current = [];
+  };
+
+  const playVibe = (idx: number) => {
+    if (activeVibe === idx) {
+      stopVibe();
+      setActiveVibe(null);
+      return;
+    }
+    stopVibe();
+    try {
+      if (!audioCtxRef.current || audioCtxRef.current.state === "closed") {
+        audioCtxRef.current = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      }
+      const ctx = audioCtxRef.current!;
+      if (ctx.state === "suspended") ctx.resume();
+      const vibe = vibes[idx];
+      const now = ctx.currentTime;
+      const master = ctx.createGain();
+      master.gain.value = 0.08;
+      master.connect(ctx.destination);
+
+      vibe.notes.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        osc.type = i % 2 === 0 ? "sine" : "triangle";
+        osc.frequency.value = freq;
+        const gain = ctx.createGain();
+        const start = now + i * (vibe.loop / vibe.notes.length) * 0.5;
+        gain.gain.setValueAtTime(0, start);
+        gain.gain.linearRampToValueAtTime(0.7, start + 0.3);
+        gain.gain.linearRampToValueAtTime(0.4, start + vibe.loop * 0.7);
+        gain.gain.linearRampToValueAtTime(0, start + vibe.loop);
+        osc.connect(gain);
+        gain.connect(master);
+        osc.start(start);
+        osc.stop(start + vibe.loop + 0.1);
+        activeNodesRef.current.push({ osc, gain });
+      });
+
+      loopTimerRef.current = window.setTimeout(() => {
+        if (audioCtxRef.current) playVibe(idx);
+      }, vibe.loop * 1000);
+    } catch {
+      /* audio not available */
+    }
+    setActiveVibe(idx);
+  };
+
+  useEffect(() => () => stopVibe(), []);
 
   useEffect(() => {
     if (hasGateAccess()) navigate("/home", { replace: true });
