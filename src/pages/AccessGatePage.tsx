@@ -355,59 +355,75 @@ const AccessGatePage = () => {
           </p>
         </div>
 
-        {/* Lore / timeline */}
-        <section className="mb-24">
-          <div className="mb-8">
-            <p className="text-[10px] uppercase tracking-[0.28em] text-zinc-500/60 mb-2">The lore</p>
-            <h2 className="font-display text-2xl md:text-3xl italic text-zinc-900 leading-tight">
+        {/* Lore / timeline — condensed */}
+        <section className="mb-20">
+          <div className="mb-6">
+            <p className="text-[10px] uppercase tracking-[0.28em] text-zinc-500/60 mb-1.5">The lore</p>
+            <h2 className="font-display text-xl md:text-2xl italic text-zinc-900 leading-tight">
               Ten years in the making.
             </h2>
           </div>
-          <div className="space-y-6">
+          <div className="space-y-3">
             {timeline.map((t, i) => (
               <motion.div
                 key={t.year}
-                initial={{ opacity: 0, x: -20 }}
+                initial={{ opacity: 0, x: -12 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: i * 0.08 }}
-                className="grid grid-cols-[64px_1fr] gap-5 items-baseline"
+                transition={{ duration: 0.4, delay: i * 0.06 }}
+                className="grid grid-cols-[44px_1fr] gap-3 items-baseline"
               >
-                <div className="font-display text-xl text-zinc-900/80 tracking-tight">{t.year}</div>
-                <div className="border-l border-black/10 pl-5 pb-2">
-                  <div className="text-sm text-zinc-900 font-medium mb-1">{t.title}</div>
-                  <div className="text-xs text-zinc-500/70 leading-relaxed">{t.desc}</div>
+                <div className="font-display text-sm text-zinc-900/70 tracking-tight">{t.year}</div>
+                <div className="border-l border-black/10 pl-3">
+                  <span className="text-xs text-zinc-900 font-medium">{t.title}</span>
+                  <span className="text-xs text-zinc-500/70"> — {t.desc}</span>
                 </div>
               </motion.div>
             ))}
           </div>
-          <p className="mt-8 text-xs text-zinc-500/60 leading-relaxed italic border-l-2 border-rose-400/40 pl-4">
-            We got here because of the musicians and artists who backed us from day one. Rhoze is the platform they deserved all along.
+          <p className="mt-5 text-[11px] text-zinc-500/60 leading-relaxed italic border-l-2 border-rose-400/40 pl-3">
+            Built for the musicians and artists who backed us from day one.
           </p>
         </section>
 
-        {/* Features */}
+        {/* Visual demo — mock app screens */}
         <section className="mb-24">
-          <div className="mb-8">
-            <p className="text-[10px] uppercase tracking-[0.28em] text-zinc-500/60 mb-2">What's inside</p>
-            <h2 className="font-display text-2xl md:text-3xl italic text-zinc-900 leading-tight">
-              Built for artists who ship.
+          <div className="mb-6">
+            <p className="text-[10px] uppercase tracking-[0.28em] text-zinc-500/60 mb-1.5">What's inside</p>
+            <h2 className="font-display text-xl md:text-2xl italic text-zinc-900 leading-tight">
+              A quick look.
             </h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {features.map((f, i) => (
+            {demos.map((d, i) => (
               <motion.div
-                key={f.title}
-                initial={{ opacity: 0, y: 12 }}
+                key={d.title}
+                initial={{ opacity: 0, y: 10 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: i * 0.06 }}
-                className="p-5 rounded-xl border border-black/10 bg-white/60 hover:bg-white/90 hover:border-black/20 transition-all shadow-sm"
+                className="rounded-xl border border-black/10 bg-white/80 overflow-hidden shadow-sm"
               >
-                <f.icon className="h-4 w-4 text-zinc-900/70 mb-3" />
-                <div className="text-sm text-zinc-900 font-medium mb-1.5">{f.title}</div>
-                <div className="text-xs text-zinc-500/70 leading-relaxed">{f.desc}</div>
+                {/* Browser chrome */}
+                <div className="flex items-center gap-1 px-2.5 py-1.5 border-b border-black/5 bg-zinc-50/70">
+                  <span className="h-1.5 w-1.5 rounded-full bg-rose-300" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-300" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
+                  <span className="ml-2 text-[8px] text-zinc-400 tracking-wide">rhoze.app / {d.title.toLowerCase()}</span>
+                </div>
+                <d.Component />
               </motion.div>
+            ))}
+          </div>
+          <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {features.map((f) => (
+              <div key={f.title} className="flex items-start gap-2">
+                <f.icon className="h-3.5 w-3.5 text-zinc-900/60 mt-0.5 shrink-0" />
+                <div>
+                  <div className="text-[11px] text-zinc-900 font-medium leading-tight">{f.title}</div>
+                  <div className="text-[10px] text-zinc-500/70 leading-snug">{f.desc}</div>
+                </div>
+              </div>
             ))}
           </div>
         </section>
