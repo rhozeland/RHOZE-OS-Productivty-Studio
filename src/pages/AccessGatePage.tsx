@@ -116,16 +116,16 @@ const AccessGatePage = () => {
     (async () => {
       const { data } = await supabase
         .from("works")
-        .select("title, file_url, category")
+        .select("title, file_url")
         .not("file_url", "is", null)
         .order("created_at", { ascending: false })
         .limit(40);
       if (cancelled || !data) return;
       const picks: PreviewTrack[] = [];
-      for (const w of data) {
-        const url = (w as { file_url: string | null }).file_url;
+      for (const w of data as { title: string | null; file_url: string | null }[]) {
+        const url = w.file_url;
         if (url && AUDIO_EXT.test(url)) {
-          picks.push({ url, title: (w as { title: string }).title || "Untitled" });
+          picks.push({ url, title: w.title || "Untitled" });
           if (picks.length >= 6) break;
         }
       }
