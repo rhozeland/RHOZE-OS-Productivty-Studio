@@ -12,6 +12,7 @@ import AppLayout from "@/components/AppLayout";
 import FlowAuthGuard from "@/components/FlowAuthGuard";
 import AuthPage from "@/pages/AuthPage";
 import LandingPage from "@/pages/LandingPage";
+import AccessGatePage, { hasGateAccess } from "@/pages/AccessGatePage";
 
 import ProjectsPage from "@/pages/ProjectsPage";
 import StudioPage from "@/pages/StudioPage";
