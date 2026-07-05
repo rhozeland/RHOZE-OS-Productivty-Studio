@@ -220,15 +220,7 @@ const AttachCoinLauncher = ({ open, onOpenChange, scope }: Props) => {
           </button>
         )}
 
-        {/* Close */}
-        <button
-          type="button"
-          onClick={() => onOpenChange(false)}
-          className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full flex items-center justify-center hover:bg-black/5 transition-colors"
-          aria-label="Close"
-        >
-          <X className="h-4 w-4" style={{ color: "var(--kb-fg-dim)" }} />
-        </button>
+        {/* Close is provided by DialogContent's built-in button */}
 
         <div className="relative overflow-y-auto max-h-[85vh] px-6 md:px-8 py-8 md:py-10">
 
