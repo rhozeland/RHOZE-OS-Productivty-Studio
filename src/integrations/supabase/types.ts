@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      access_codes: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          max_uses: number | null
+          note: string | null
+          uses: number
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          max_uses?: number | null
+          note?: string | null
+          uses?: number
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          max_uses?: number | null
+          note?: string | null
+          uses?: number
+        }
+        Relationships: []
+      }
       artist_announcements: {
         Row: {
           body: string
@@ -6449,6 +6482,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      redeem_access_code: { Args: { _code: string }; Returns: boolean }
       redeem_referral_code: { Args: { _code: string }; Returns: Json }
       reject_pending_reward: {
         Args: { _admin_id: string; _note?: string; _reward_id: string }
