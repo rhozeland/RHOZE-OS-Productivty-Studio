@@ -760,38 +760,19 @@ const StudioPage = () => {
         </button>
       </section>
 
-      {/* Live release strip — subtle */}
-      {featuredPublic && (
-        <Link
-          to={`/release/${featuredPublic.public_slug}`}
-          className="group flex items-center justify-between gap-4 border-l-2 border-emerald-500 pl-4 py-2 hover:bg-muted/40 transition-colors"
-        >
-          <div className="min-w-0 flex items-center gap-3">
-            <span className="text-[10px] font-mono uppercase tracking-widest text-emerald-500">
-              Live
-            </span>
-            <span className="text-sm text-foreground font-medium truncate">
-              {featuredPublic.title}
-            </span>
-            <span className="hidden sm:inline text-[11px] font-mono text-muted-foreground">
-              · {supporterCounts?.[featuredPublic.id] ?? 0} supporter
-              {(supporterCounts?.[featuredPublic.id] ?? 0) === 1 ? "" : "s"}
-              {" · "}
-              {projectStats(featuredPublic).done}/{projectStats(featuredPublic).total} milestones
-            </span>
-          </div>
-          <span className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground group-hover:text-foreground inline-flex items-center gap-1 shrink-0">
-            View <ArrowUpRight className="h-3 w-3" />
-          </span>
-        </Link>
-      )}
-
-
       {/* Brand-new user empty state */}
       {!hasAnyActivity && !isLoading && (
         <EmptyStudioCard
           onStart={() => setStartProjectOpen(true)}
           onDiscover={() => navigate("/discover")}
+        />
+      )}
+
+      {/* Flow drops — the artist's own uploaded content, scrollable + draggable */}
+      {user && (
+        <FlowDropsSection
+          userId={user.id}
+          projects={activeProjects}
         />
       )}
 
