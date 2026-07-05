@@ -278,7 +278,11 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <AuthGateWrapper>
+            <PrivateBuildGate>
             <Routes>
+              {/* Private-build access gate — code entry + waitlist. */}
+              <Route path="/gate" element={<AccessGatePage />} />
+
               {/* Auth page — redirect to dashboard if already logged in */}
               <Route path="/auth" element={<PublicRoute><AuthPage /></PublicRoute>} />
               <Route path="/onboarding" element={<Navigate to="/welcome" replace />} />
