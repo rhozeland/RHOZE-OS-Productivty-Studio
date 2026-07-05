@@ -111,24 +111,27 @@ const AccessGatePage = () => {
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Fetch up to 6 real audio works from the site to power the tiles.
+  // Hydrate the 6 tiles with real audio uploads (works + flow_items).
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
-        .from("works")
-        .select("title, file_url")
-        .not("file_url", "is", null)
-        .order("created_at", { ascending: false })
-        .limit(40);
-      if (cancelled || !data) return;
+      const [worksRes, flowRes] = await Promise.all([
+        supabase.from("works").select("title, file_url").not("file_url", "is", null).order("created_at", { ascending: false }).limit(40),
+        supabase.from("flow_items").select("title, file_url").not("file_url", "is", null).order("created_at", { ascending: false }).limit(40),
+      ]);
+      if (cancelled) return;
+      const rows = [
+        ...((worksRes.data ?? []) as { title: string | null; file_url: string | null }[]),
+        ...((flowRes.data ?? []) as { title: string | null; file_url: string | null }[]),
+      ];
+      const seen = new Set<string>();
       const picks: PreviewTrack[] = [];
-      for (const w of data as { title: string | null; file_url: string | null }[]) {
-        const url = w.file_url;
-        if (url && AUDIO_EXT.test(url)) {
-          picks.push({ url, title: w.title || "Untitled" });
-          if (picks.length >= 6) break;
-        }
+      for (const r of rows) {
+        const url = r.file_url;
+        if (!url || !AUDIO_EXT.test(url) || seen.has(url)) continue;
+        seen.add(url);
+        picks.push({ url, title: r.title || "Untitled" });
+        if (picks.length >= 6) break;
       }
       const filled: (PreviewTrack | null)[] = Array(6).fill(null);
       picks.forEach((p, i) => { filled[i] = p; });
@@ -136,6 +139,7 @@ const AccessGatePage = () => {
     })();
     return () => { cancelled = true; };
   }, []);
+
 
   const stopAudio = () => {
     if (audioRef.current) {
