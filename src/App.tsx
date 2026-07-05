@@ -438,6 +438,7 @@ const App = () => (
               <Route path="/boards/:id" element={<SmartboardPresentationPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </PrivateBuildGate>
           </AuthGateWrapper>
         </AuthProvider>
       </BrowserRouter>
