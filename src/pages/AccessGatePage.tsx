@@ -1,13 +1,13 @@
 /**
- * AccessGatePage — v11.3 private-build gate.
+ * AccessGatePage — v11.4 private-build gate.
  *
  * First screen every unauthenticated visitor sees. Two paths in:
  *  1. Access code (primary) — `redeem_access_code` RPC → localStorage flag.
  *  2. Waitlist email (fallback) — insert into `public.waitlist`.
  *
- * Everything else on the page is context: what Rhoze is, where Rhozeland
- * came from, what we're shipping, and the whitepaper preview. Signed-in
- * users skip entirely.
+ * "What's inside · A quick look" = 4 browser-chrome cards
+ * (Discover / Verified IP / Attach Coin / Sign On-chain). Discover tiles play
+ * REAL audio pulled from `works` uploads; music only plays when tapped.
  */
 import { useEffect, useRef, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
@@ -17,26 +17,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import {
   Loader2, ArrowRight, Check, ChevronDown, Fingerprint,
-  Coins, Users, Sparkles, FileText, Play, Pause,
+  Coins, Users, Sparkles, FileText, Pause, Play,
 } from "lucide-react";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
-
-/** Six "vibes" — each a mini looping chord synthesized on the fly. */
-const vibes: {
-  name: string;
-  bg: string;
-  /** MIDI-ish note frequencies making a small chord/arpeggio. */
-  notes: number[];
-  /** Loop duration in seconds. */
-  loop: number;
-}[] = [
-  { name: "Bloom",    bg: "linear-gradient(135deg,#fda4af,#c084fc)",  notes: [220, 261.63, 329.63, 392], loop: 3.2 },
-  { name: "Sunrise",  bg: "linear-gradient(135deg,#fcd34d,#fb7185)",  notes: [196, 246.94, 293.66, 370], loop: 2.8 },
-  { name: "Drift",    bg: "linear-gradient(135deg,#a78bfa,#38bdf8)",  notes: [174.61, 220, 277.18, 329.63], loop: 3.6 },
-  { name: "Peach",    bg: "linear-gradient(135deg,#f9a8d4,#fbbf24)",  notes: [164.81, 207.65, 246.94, 311.13], loop: 3.0 },
-  { name: "Mint",     bg: "linear-gradient(135deg,#67e8f9,#a78bfa)",  notes: [146.83, 185, 220, 293.66], loop: 3.4 },
-  { name: "Ember",    bg: "linear-gradient(135deg,#fda4af,#f97316)",  notes: [130.81, 164.81, 196, 261.63], loop: 3.2 },
-];
 
 export const ACCESS_FLAG = "rhoze_access_ok";
 export const hasGateAccess = () => {
@@ -61,9 +44,20 @@ const features = [
   { icon: Users, title: "Back projects", desc: "Fund releases. Sign on-chain. No middlemen." },
 ];
 
-/** No mocks here anymore — the "vibes" grid below is the demo. */
+/** Six preview tiles. Gradient art only — audio source is filled from real
+ *  `works` uploads at mount time (falls back to gradient-only if none). */
+const tileGradients = [
+  "linear-gradient(135deg,#fda4af,#c084fc)",
+  "linear-gradient(135deg,#fbbf24,#fb7185)",
+  "linear-gradient(135deg,#818cf8,#38bdf8)",
+  "linear-gradient(135deg,#fbcfe8,#fda4af)",
+  "linear-gradient(135deg,#67e8f9,#a78bfa)",
+  "linear-gradient(135deg,#fdba74,#f97316)",
+];
 
+const AUDIO_EXT = /\.(mp3|wav|flac|aac|m4a|ogg|opus)(\?|$)/i;
 
+type PreviewTrack = { url: string; title: string };
 
 const whitepaperSections = [
   {
@@ -88,6 +82,22 @@ const whitepaperSections = [
   },
 ];
 
+/** Tiny browser-chrome frame used by every "What's inside" mock. */
+const Chrome = ({ path, badge, children }: { path: string; badge?: React.ReactNode; children: React.ReactNode }) => (
+  <div className="rounded-2xl border border-black/10 bg-white/75 backdrop-blur-sm shadow-sm overflow-hidden">
+    <div className="flex items-center gap-2 px-3 py-2 border-b border-black/5 bg-white/60">
+      <div className="flex items-center gap-1">
+        <span className="h-2 w-2 rounded-full bg-rose-300" />
+        <span className="h-2 w-2 rounded-full bg-amber-300" />
+        <span className="h-2 w-2 rounded-full bg-emerald-300" />
+      </div>
+      <span className="text-[10px] text-zinc-500/70 tracking-wide">{path}</span>
+      {badge && <div className="ml-auto">{badge}</div>}
+    </div>
+    <div className="p-4">{children}</div>
+  </div>
+);
+
 const AccessGatePage = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
@@ -96,77 +106,62 @@ const AccessGatePage = () => {
   const [busy, setBusy] = useState<"code" | "email" | null>(null);
   const [waitlisted, setWaitlisted] = useState(false);
   const [openPaper, setOpenPaper] = useState<number | null>(0);
-  const [activeVibe, setActiveVibe] = useState<number | null>(null);
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const activeNodesRef = useRef<{ osc: OscillatorNode; gain: GainNode }[]>([]);
-  const loopTimerRef = useRef<number | null>(null);
+  const [tracks, setTracks] = useState<(PreviewTrack | null)[]>(Array(6).fill(null));
+  const [activeIdx, setActiveIdx] = useState<number | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const stopVibe = () => {
-    if (loopTimerRef.current) {
-      window.clearTimeout(loopTimerRef.current);
-      loopTimerRef.current = null;
+  // Fetch up to 6 real audio works from the site to power the tiles.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("works")
+        .select("title, file_url")
+        .not("file_url", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(40);
+      if (cancelled || !data) return;
+      const picks: PreviewTrack[] = [];
+      for (const w of data as { title: string | null; file_url: string | null }[]) {
+        const url = w.file_url;
+        if (url && AUDIO_EXT.test(url)) {
+          picks.push({ url, title: w.title || "Untitled" });
+          if (picks.length >= 6) break;
+        }
+      }
+      const filled: (PreviewTrack | null)[] = Array(6).fill(null);
+      picks.forEach((p, i) => { filled[i] = p; });
+      setTracks(filled);
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const stopAudio = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = "";
+      audioRef.current = null;
     }
-    const ctx = audioCtxRef.current;
-    if (ctx) {
-      const now = ctx.currentTime;
-      activeNodesRef.current.forEach(({ osc, gain }) => {
-        try {
-          gain.gain.cancelScheduledValues(now);
-          gain.gain.setValueAtTime(gain.gain.value, now);
-          gain.gain.linearRampToValueAtTime(0, now + 0.15);
-          osc.stop(now + 0.2);
-        } catch { /* noop */ }
-      });
-    }
-    activeNodesRef.current = [];
+    setActiveIdx(null);
   };
 
-  const playVibe = (idx: number) => {
-    if (activeVibe === idx) {
-      stopVibe();
-      setActiveVibe(null);
+  const playTile = (idx: number) => {
+    if (activeIdx === idx) { stopAudio(); return; }
+    const track = tracks[idx];
+    if (!track) {
+      toast({ title: "No preview yet", description: "This tile will play a real drop once artists start uploading." });
       return;
     }
-    stopVibe();
-    try {
-      if (!audioCtxRef.current || audioCtxRef.current.state === "closed") {
-        audioCtxRef.current = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-      }
-      const ctx = audioCtxRef.current!;
-      if (ctx.state === "suspended") ctx.resume();
-      const vibe = vibes[idx];
-      const now = ctx.currentTime;
-      const master = ctx.createGain();
-      master.gain.value = 0.08;
-      master.connect(ctx.destination);
-
-      vibe.notes.forEach((freq, i) => {
-        const osc = ctx.createOscillator();
-        osc.type = i % 2 === 0 ? "sine" : "triangle";
-        osc.frequency.value = freq;
-        const gain = ctx.createGain();
-        const start = now + i * (vibe.loop / vibe.notes.length) * 0.5;
-        gain.gain.setValueAtTime(0, start);
-        gain.gain.linearRampToValueAtTime(0.7, start + 0.3);
-        gain.gain.linearRampToValueAtTime(0.4, start + vibe.loop * 0.7);
-        gain.gain.linearRampToValueAtTime(0, start + vibe.loop);
-        osc.connect(gain);
-        gain.connect(master);
-        osc.start(start);
-        osc.stop(start + vibe.loop + 0.1);
-        activeNodesRef.current.push({ osc, gain });
-      });
-
-      loopTimerRef.current = window.setTimeout(() => {
-        if (audioCtxRef.current) playVibe(idx);
-      }, vibe.loop * 1000);
-    } catch {
-      /* audio not available */
-    }
-    setActiveVibe(idx);
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    const el = new Audio(track.url);
+    el.volume = 0.7;
+    el.onended = () => setActiveIdx((cur) => (cur === idx ? null : cur));
+    el.play().catch(() => toast({ title: "Couldn't play preview", variant: "destructive" }));
+    audioRef.current = el;
+    setActiveIdx(idx);
   };
 
-  useEffect(() => () => stopVibe(), []);
+  useEffect(() => () => stopAudio(), []);
 
   useEffect(() => {
     if (hasGateAccess()) navigate("/home", { replace: true });
@@ -185,7 +180,7 @@ const AccessGatePage = () => {
       toast({ title: "Invalid code", description: "That access code isn't recognised.", variant: "destructive" });
       return;
     }
-    try { window.localStorage.setItem(ACCESS_FLAG, "1"); } catch {}
+    try { window.localStorage.setItem(ACCESS_FLAG, "1"); } catch { /* noop */ }
     navigate("/home", { replace: true });
   };
 
@@ -214,10 +209,7 @@ const AccessGatePage = () => {
       <div
         aria-hidden
         className="fixed inset-0 pointer-events-none"
-        style={{
-          background:
-            "linear-gradient(180deg, #ffffff 0%, #f4f4f6 40%, #f0eef4 100%)",
-        }}
+        style={{ background: "linear-gradient(180deg, #ffffff 0%, #f4f4f6 40%, #f0eef4 100%)" }}
       />
 
       {/* Aurora + grain background */}
@@ -241,13 +233,6 @@ const AccessGatePage = () => {
           animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
           transition={{ duration: 22, repeat: Infinity, ease: "easeInOut", delay: 6 }}
           className="absolute top-[10%] right-[40%] w-[35%] h-[40%] rounded-full bg-violet-300/20 blur-[120px]"
-        />
-        <div
-          className="absolute inset-0 opacity-[0.03] mix-blend-overlay"
-          style={{
-            backgroundImage:
-              "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
-          }}
         />
       </div>
 
@@ -275,12 +260,10 @@ const AccessGatePage = () => {
           </p>
         </div>
 
-        {/* Access forms — hero placement */}
+        {/* Access forms */}
         <div className="space-y-4 mb-20">
           <form onSubmit={submitCode} className="space-y-2">
-            <label className="block text-[10px] uppercase tracking-[0.22em] text-zinc-500/60 ml-1">
-              Insider access
-            </label>
+            <label className="block text-[10px] uppercase tracking-[0.22em] text-zinc-500/60 ml-1">Insider access</label>
             <div className="relative group">
               <div className="absolute -inset-px rounded-lg bg-gradient-to-r from-rose-400/30 via-fuchsia-400/30 to-amber-400/30 opacity-0 group-focus-within:opacity-100 transition-opacity blur-sm" />
               <div className="relative">
@@ -305,9 +288,7 @@ const AccessGatePage = () => {
           </form>
 
           <form onSubmit={submitEmail} className="space-y-2">
-            <label className="block text-[10px] uppercase tracking-[0.22em] text-zinc-500/60 ml-1">
-              Or join the waitlist
-            </label>
+            <label className="block text-[10px] uppercase tracking-[0.22em] text-zinc-500/60 ml-1">Or join the waitlist</label>
             <div className="relative">
               <input
                 type="email"
@@ -339,13 +320,11 @@ const AccessGatePage = () => {
           </div>
         </div>
 
-        {/* Lore / timeline — condensed */}
+        {/* Lore / timeline */}
         <section className="mb-20">
           <div className="mb-6">
             <p className="text-[10px] uppercase tracking-[0.28em] text-zinc-500/60 mb-1.5">The lore</p>
-            <h2 className="font-display text-xl md:text-2xl italic text-zinc-900 leading-tight">
-              Ten years in the making.
-            </h2>
+            <h2 className="font-display text-xl md:text-2xl italic text-zinc-900 leading-tight">Ten years in the making.</h2>
           </div>
           <div className="space-y-3">
             {timeline.map((t, i) => (
@@ -370,73 +349,124 @@ const AccessGatePage = () => {
           </p>
         </section>
 
-        {/* Vibes — 6 tappable mini-vinyls; tap one to hear a taste. */}
+        {/* What's inside — 4 browser-chrome mocks */}
         <section className="mb-24">
-          <div className="mb-6 flex items-end justify-between">
-            <div>
-              <p className="text-[10px] uppercase tracking-[0.28em] text-zinc-500/60 mb-1.5">Discover</p>
-              <h2 className="font-display text-xl md:text-2xl italic text-zinc-900 leading-tight">
-                Tap a vibe. Hear the room.
-              </h2>
-            </div>
-            <span className="text-[10px] uppercase tracking-[0.22em] text-rose-500 flex items-center gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" /> live
-            </span>
+          <div className="mb-6">
+            <p className="text-[10px] uppercase tracking-[0.28em] text-zinc-500/60 mb-1.5">What's inside</p>
+            <h2 className="font-display text-xl md:text-2xl italic text-zinc-900 leading-tight">A quick look.</h2>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {vibes.map((v, i) => {
-              const isActive = activeVibe === i;
-              return (
-                <motion.button
-                  key={v.name}
-                  type="button"
-                  onClick={() => playVibe(i)}
-                  initial={{ opacity: 0, y: 10 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: i * 0.05 }}
-                  whileHover={{ y: -2 }}
-                  className="group relative aspect-square rounded-xl overflow-hidden shadow-sm border border-black/5 focus:outline-none focus:ring-2 focus:ring-rose-400/60"
-                  style={{ background: v.bg }}
-                  aria-label={`${isActive ? "Pause" : "Play"} ${v.name} vibe`}
-                >
-                  {/* Vinyl grooves — visible when playing */}
-                  <motion.div
-                    aria-hidden
-                    animate={{ rotate: isActive ? 360 : 0, opacity: isActive ? 0.65 : 0 }}
-                    transition={{
-                      rotate: { duration: 8, repeat: isActive ? Infinity : 0, ease: "linear" },
-                      opacity: { duration: 0.4 },
-                    }}
-                    className="absolute inset-0"
-                    style={{
-                      background:
-                        "repeating-radial-gradient(circle at 50% 50%, rgba(0,0,0,0.35) 0 2px, transparent 2px 5px)",
-                    }}
-                  />
-                  {/* Center label — Rhoze mark */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <motion.div
-                      animate={{ scale: isActive ? [1, 1.05, 1] : 1 }}
-                      transition={{ duration: 1.6, repeat: isActive ? Infinity : 0, ease: "easeInOut" }}
-                      className="h-14 w-14 rounded-full bg-white/90 backdrop-blur-sm shadow-lg flex items-center justify-center"
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* DISCOVER — tappable $RHZE tiles playing real audio */}
+            <Chrome
+              path="rhoze.app / discover"
+              badge={
+                <span className="text-[10px] uppercase tracking-[0.2em] text-rose-500 flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" /> live
+                </span>
+              }
+            >
+              <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500/60 mb-3">Discover</p>
+              <div className="grid grid-cols-3 gap-2">
+                {tileGradients.map((bg, i) => {
+                  const isActive = activeIdx === i;
+                  const track = tracks[i];
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => playTile(i)}
+                      className="group relative aspect-square rounded-lg overflow-hidden shadow-sm border border-black/5 focus:outline-none focus:ring-2 focus:ring-rose-400/60"
+                      style={{ background: bg }}
+                      aria-label={track ? `${isActive ? "Pause" : "Play"} ${track.title}` : "Preview coming soon"}
                     >
-                      <img src={rhozelandLogo} alt="" className="h-7 w-7 opacity-90" />
-                    </motion.div>
+                      <motion.div
+                        aria-hidden
+                        animate={{ rotate: isActive ? 360 : 0, opacity: isActive ? 0.55 : 0 }}
+                        transition={{
+                          rotate: { duration: 8, repeat: isActive ? Infinity : 0, ease: "linear" },
+                          opacity: { duration: 0.3 },
+                        }}
+                        className="absolute inset-0"
+                        style={{
+                          background:
+                            "repeating-radial-gradient(circle at 50% 50%, rgba(0,0,0,0.35) 0 2px, transparent 2px 5px)",
+                        }}
+                      />
+                      <span className="absolute bottom-1.5 left-2 text-[9px] font-medium text-white/95 tracking-wide drop-shadow">
+                        $RHZE
+                      </span>
+                      <span
+                        className={`absolute top-1.5 right-1.5 h-5 w-5 rounded-full bg-zinc-900/85 text-white flex items-center justify-center shadow transition-opacity ${
+                          isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                        }`}
+                      >
+                        {isActive ? <Pause className="h-2.5 w-2.5" /> : <Play className="h-2.5 w-2.5 ml-[1px]" />}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-3 text-[10px] text-zinc-500/60 leading-snug">
+                {activeIdx !== null && tracks[activeIdx]
+                  ? <>Now playing · <span className="text-zinc-900/80">{tracks[activeIdx]?.title}</span></>
+                  : "Tap a tile to preview a real drop."}
+              </p>
+            </Chrome>
+
+            {/* VERIFIED IP */}
+            <Chrome path="rhoze.app / verified ip">
+              <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500/60 mb-3">Verified IP</p>
+              <div className="rounded-lg border border-black/10 bg-white/70 p-3 flex items-center gap-3">
+                <div className="h-11 w-11 rounded-md shrink-0" style={{ background: "linear-gradient(135deg,#f0abfc,#f472b6)" }} />
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs font-medium text-zinc-900 truncate">midnight_bloom.wav</div>
+                  <div className="text-[10px] text-emerald-600 flex items-center gap-1 mt-0.5">
+                    <Check className="h-2.5 w-2.5" /> Anchored · 0x7f…3a2c
                   </div>
-                  {/* Play/Pause pill bottom-right */}
-                  <div className="absolute bottom-2 right-2 h-7 w-7 rounded-full bg-zinc-900/90 text-white flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
-                    {isActive ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3 ml-0.5" />}
-                  </div>
-                  {/* Vibe name bottom-left */}
-                  <div className="absolute bottom-2 left-2.5 text-[10px] font-medium text-white/95 tracking-wide drop-shadow">
-                    {v.name}
-                  </div>
-                </motion.button>
-              );
-            })}
+                </div>
+              </div>
+              <p className="mt-3 text-[10px] text-zinc-500/60 tracking-wide">
+                SHA-256 · <span className="text-zinc-900/70">a9f3e2…b41d</span>
+              </p>
+            </Chrome>
+
+            {/* ATTACH COIN */}
+            <Chrome path="rhoze.app / attach coin">
+              <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500/60 mb-3">Attach coin</p>
+              <div className="rounded-lg border border-black/10 bg-amber-50/60 p-3">
+                <div className="flex items-baseline justify-between">
+                  <div className="text-sm font-semibold text-zinc-900">$BLOOM</div>
+                  <div className="text-[11px] text-emerald-600 font-medium">+18.4%</div>
+                </div>
+                <div className="text-[10px] text-zinc-500/70 mt-0.5">MC $42.1k · 214 holders</div>
+                <svg viewBox="0 0 120 30" className="mt-2 w-full h-6" aria-hidden>
+                  <polyline
+                    fill="none"
+                    stroke="hsl(330 85% 55%)"
+                    strokeWidth="1.5"
+                    points="0,22 15,18 30,20 45,14 60,16 75,10 90,12 105,6 120,8"
+                  />
+                </svg>
+              </div>
+            </Chrome>
+
+            {/* SIGN ON-CHAIN */}
+            <Chrome path="rhoze.app / contracts">
+              <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-500/60 mb-3">Sign on-chain</p>
+              <div className="rounded-lg border border-black/10 bg-white/70 p-3">
+                <div className="text-xs font-medium text-zinc-900">Release: Bloom EP</div>
+                <div className="mt-2 flex items-center gap-1.5">
+                  <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-700 text-[10px]">You ✓</span>
+                  <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-700 text-[10px]">Producer ✓</span>
+                </div>
+                <div className="mt-2 text-[10px] text-zinc-500/70">Split 60 / 40 · escrow 2.4 SOL</div>
+              </div>
+            </Chrome>
           </div>
-          <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-2">
+
+          {/* Feature legend */}
+          <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-2">
             {features.map((f) => (
               <div key={f.title} className="flex items-start gap-2">
                 <f.icon className="h-3.5 w-3.5 text-zinc-900/60 mt-0.5 shrink-0" />
@@ -449,15 +479,12 @@ const AccessGatePage = () => {
           </div>
         </section>
 
-
         {/* Whitepaper — expandable */}
         <section className="mb-20">
           <div className="mb-6 flex items-end justify-between">
             <div>
               <p className="text-[10px] uppercase tracking-[0.28em] text-zinc-500/60 mb-2">Reading material</p>
-              <h2 className="font-display text-2xl md:text-3xl italic text-zinc-900 leading-tight">
-                Whitepaper · v0.1
-              </h2>
+              <h2 className="font-display text-2xl md:text-3xl italic text-zinc-900 leading-tight">Whitepaper · v0.1</h2>
             </div>
             <FileText className="h-4 w-4 text-zinc-900/40" />
           </div>
@@ -482,9 +509,7 @@ const AccessGatePage = () => {
                         transition={{ duration: 0.25 }}
                         className="overflow-hidden"
                       >
-                        <p className="px-5 pb-5 text-xs text-zinc-500/70 leading-relaxed max-w-prose">
-                          {s.body}
-                        </p>
+                        <p className="px-5 pb-5 text-xs text-zinc-500/70 leading-relaxed max-w-prose">{s.body}</p>
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -509,12 +534,8 @@ const AccessGatePage = () => {
               Visit rhozeland.com →
             </a>
           </p>
-          <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-900/40">
-            Rhoze · by Rhozeland
-          </p>
-          <p className="text-[10px] text-zinc-500/40">
-            Built quietly. Shipping soon.
-          </p>
+          <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-900/40">Rhoze · by Rhozeland</p>
+          <p className="text-[10px] text-zinc-500/40">Built quietly. Shipping soon.</p>
         </footer>
       </div>
     </div>
