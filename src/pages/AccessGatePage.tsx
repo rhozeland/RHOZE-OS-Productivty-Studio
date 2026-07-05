@@ -1,5 +1,5 @@
 /**
- * AccessGatePage — v11.1 private-build gate.
+ * AccessGatePage — v11.2 private-build gate.
  *
  * First screen every unauthenticated visitor sees. Two paths in:
  *  1. Access code (primary) — `redeem_access_code` RPC → localStorage flag.
