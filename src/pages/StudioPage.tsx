@@ -861,7 +861,7 @@ const ProjectList = ({ projects, statsFor, supporterCounts, emptyLabel }: Projec
     );
   }
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div className="flex flex-col divide-y divide-border/60 rounded-2xl border border-border/60 overflow-hidden bg-card">
       {projects.map((p) => (
         <ProjectCard
           key={p.id}
