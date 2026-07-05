@@ -375,7 +375,6 @@ const AccessGatePage = () => {
               <div className="grid grid-cols-3 gap-2">
                 {vibes.map((v, i) => {
                   const isActive = activeIdx === i;
-                  const track = tracks[i];
                   return (
                     <button
                       key={v.name}
@@ -383,7 +382,7 @@ const AccessGatePage = () => {
                       onClick={() => playTile(i)}
                       className="group relative aspect-square rounded-lg overflow-hidden shadow-sm border border-black/5 focus:outline-none focus:ring-2 focus:ring-rose-400/60"
                       style={{ background: v.bg }}
-                      aria-label={`${isActive ? "Pause" : "Play"} ${v.name}${track ? ` · ${track.title}` : ""}`}
+                      aria-label={isActive ? "Pause preview" : "Play preview"}
                     >
                       {/* Vinyl grooves — visible when playing */}
                       <motion.div
@@ -409,10 +408,6 @@ const AccessGatePage = () => {
                           <img src={rhozelandLogo} alt="" className="h-5 w-5 opacity-90" />
                         </motion.div>
                       </div>
-                      {/* Vibe name */}
-                      <span className="absolute bottom-1.5 left-2 text-[10px] font-medium text-white/95 tracking-wide drop-shadow">
-                        {v.name}
-                      </span>
                       {/* Play / pause pill */}
                       <span className="absolute bottom-1.5 right-1.5 h-5 w-5 rounded-full bg-zinc-900/90 text-white flex items-center justify-center shadow">
                         {isActive ? <Pause className="h-2.5 w-2.5" /> : <Play className="h-2.5 w-2.5 ml-[1px]" />}
@@ -420,13 +415,6 @@ const AccessGatePage = () => {
                     </button>
                   );
                 })}
-              </div>
-
-              <p className="mt-3 text-[10px] text-zinc-500/60 leading-snug">
-                {activeIdx !== null && tracks[activeIdx]
-                  ? <>Now playing · <span className="text-zinc-900/80">{tracks[activeIdx]?.title}</span></>
-                  : "Tap a tile to preview a real drop."}
-              </p>
             </Chrome>
 
             {/* VERIFIED IP */}
