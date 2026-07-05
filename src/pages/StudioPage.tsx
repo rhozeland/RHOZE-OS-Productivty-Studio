@@ -1393,20 +1393,14 @@ function BuildingSection({
     <section>
       <div className="mb-5 flex items-end justify-between gap-4">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.28em] text-muted-foreground/70 font-semibold mb-1.5 inline-flex items-center gap-2">
-            <span className="h-px w-6 bg-foreground/40" />
-            Workshop
-          </p>
-          <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-foreground leading-none">
-            In&nbsp;the&nbsp;Studio
-            <span className="text-foreground/30">.</span>
+          <h2 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight text-foreground leading-none">
+            Releases
           </h2>
           <p className="text-xs text-muted-foreground mt-1.5">
-            Releases you're shaping — blueprints, drafts, and shipped work.
+            Drag any drop above onto a release to attach it.
           </p>
         </div>
-        <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-[11px] font-semibold text-foreground/80 shrink-0">
-          <Pencil className="h-3 w-3" />
+        <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-[11px] font-mono text-foreground/70 shrink-0">
           {activeProjects.length + draftProjects.length + completedProjects.length} total
         </span>
       </div>
