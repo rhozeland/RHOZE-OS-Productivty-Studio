@@ -9,7 +9,7 @@
  * came from, what we're shipping, and the whitepaper preview. Signed-in
  * users skip entirely.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,6 +20,23 @@ import {
   Coins, Users, Sparkles, FileText, Play, Pause,
 } from "lucide-react";
 import rhozelandLogo from "@/assets/rhozeland-logo.png";
+
+/** Six "vibes" — each a mini looping chord synthesized on the fly. */
+const vibes: {
+  name: string;
+  bg: string;
+  /** MIDI-ish note frequencies making a small chord/arpeggio. */
+  notes: number[];
+  /** Loop duration in seconds. */
+  loop: number;
+}[] = [
+  { name: "Bloom",    bg: "linear-gradient(135deg,#fda4af,#c084fc)",  notes: [220, 261.63, 329.63, 392], loop: 3.2 },
+  { name: "Sunrise",  bg: "linear-gradient(135deg,#fcd34d,#fb7185)",  notes: [196, 246.94, 293.66, 370], loop: 2.8 },
+  { name: "Drift",    bg: "linear-gradient(135deg,#a78bfa,#38bdf8)",  notes: [174.61, 220, 277.18, 329.63], loop: 3.6 },
+  { name: "Peach",    bg: "linear-gradient(135deg,#f9a8d4,#fbbf24)",  notes: [164.81, 207.65, 246.94, 311.13], loop: 3.0 },
+  { name: "Mint",     bg: "linear-gradient(135deg,#67e8f9,#a78bfa)",  notes: [146.83, 185, 220, 293.66], loop: 3.4 },
+  { name: "Ember",    bg: "linear-gradient(135deg,#fda4af,#f97316)",  notes: [130.81, 164.81, 196, 261.63], loop: 3.2 },
+];
 
 export const ACCESS_FLAG = "rhoze_access_ok";
 export const hasGateAccess = () => {
@@ -44,83 +61,9 @@ const features = [
   { icon: Users, title: "Back projects", desc: "Fund releases. Sign on-chain. No middlemen." },
 ];
 
-/** Tiny app "screenshots" — hand-built visual mocks (no external images). */
-const DemoDiscover = () => (
-  <div className="p-3 space-y-2 text-left">
-    <div className="flex items-center justify-between">
-      <span className="text-[9px] uppercase tracking-[0.22em] text-zinc-500">Discover</span>
-      <span className="text-[9px] text-rose-500">● live</span>
-    </div>
-    <div className="grid grid-cols-3 gap-1.5">
-      {[
-        "linear-gradient(135deg,#fda4af,#c084fc)",
-        "linear-gradient(135deg,#fcd34d,#fb7185)",
-        "linear-gradient(135deg,#a78bfa,#38bdf8)",
-        "linear-gradient(135deg,#f9a8d4,#fbbf24)",
-        "linear-gradient(135deg,#67e8f9,#a78bfa)",
-        "linear-gradient(135deg,#fda4af,#f97316)",
-      ].map((bg, i) => (
-        <div key={i} className="aspect-square rounded-md relative overflow-hidden" style={{ background: bg }}>
-          <div className="absolute bottom-0.5 left-1 text-[7px] text-white/90 font-medium">$RHZE</div>
-        </div>
-      ))}
-    </div>
-  </div>
-);
+/** No mocks here anymore — the "vibes" grid below is the demo. */
 
-const DemoVerifiedIp = () => (
-  <div className="p-3 space-y-2 text-left">
-    <span className="text-[9px] uppercase tracking-[0.22em] text-zinc-500">Verified IP</span>
-    <div className="flex items-center gap-2 p-2 rounded-md bg-zinc-50 border border-black/5">
-      <div className="h-8 w-8 rounded bg-gradient-to-br from-rose-400 to-fuchsia-500" />
-      <div className="flex-1 min-w-0">
-        <div className="text-[10px] text-zinc-900 truncate font-medium">midnight_bloom.wav</div>
-        <div className="text-[8px] text-emerald-600 flex items-center gap-1">
-          <Check className="h-2 w-2" /> Anchored · 0x7f…3a2c
-        </div>
-      </div>
-    </div>
-    <div className="text-[8px] font-mono text-zinc-400 truncate">SHA-256 · a9f3e2…b41d</div>
-  </div>
-);
 
-const DemoCoin = () => (
-  <div className="p-3 space-y-2 text-left">
-    <span className="text-[9px] uppercase tracking-[0.22em] text-zinc-500">Attach coin</span>
-    <div className="p-2 rounded-md bg-gradient-to-br from-amber-50 to-rose-50 border border-black/5">
-      <div className="flex items-center justify-between">
-        <span className="text-[10px] font-medium text-zinc-900">$BLOOM</span>
-        <span className="text-[9px] text-emerald-600">+18.4%</span>
-      </div>
-      <div className="text-[8px] text-zinc-500">MC $42.1k · 214 holders</div>
-      <svg viewBox="0 0 60 16" className="w-full h-4 mt-1">
-        <polyline fill="none" stroke="hsl(330 70% 55%)" strokeWidth="1"
-          points="0,12 8,10 16,11 24,7 32,8 40,4 48,5 60,2" />
-      </svg>
-    </div>
-  </div>
-);
-
-const DemoContract = () => (
-  <div className="p-3 space-y-2 text-left">
-    <span className="text-[9px] uppercase tracking-[0.22em] text-zinc-500">Sign on-chain</span>
-    <div className="p-2 rounded-md bg-zinc-50 border border-black/5 space-y-1.5">
-      <div className="text-[10px] text-zinc-900 font-medium">Release: Bloom EP</div>
-      <div className="flex items-center gap-1.5 text-[8px]">
-        <span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">You ✓</span>
-        <span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">Producer ✓</span>
-      </div>
-      <div className="text-[8px] text-zinc-500">Split 60 / 40 · escrow 2.4 SOL</div>
-    </div>
-  </div>
-);
-
-const demos = [
-  { title: "Discover", Component: DemoDiscover },
-  { title: "Verified IP", Component: DemoVerifiedIp },
-  { title: "Attach coin", Component: DemoCoin },
-  { title: "Contracts", Component: DemoContract },
-];
 
 const whitepaperSections = [
   {
@@ -153,7 +96,77 @@ const AccessGatePage = () => {
   const [busy, setBusy] = useState<"code" | "email" | null>(null);
   const [waitlisted, setWaitlisted] = useState(false);
   const [openPaper, setOpenPaper] = useState<number | null>(0);
-  const [playing, setPlaying] = useState(false);
+  const [activeVibe, setActiveVibe] = useState<number | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const activeNodesRef = useRef<{ osc: OscillatorNode; gain: GainNode }[]>([]);
+  const loopTimerRef = useRef<number | null>(null);
+
+  const stopVibe = () => {
+    if (loopTimerRef.current) {
+      window.clearTimeout(loopTimerRef.current);
+      loopTimerRef.current = null;
+    }
+    const ctx = audioCtxRef.current;
+    if (ctx) {
+      const now = ctx.currentTime;
+      activeNodesRef.current.forEach(({ osc, gain }) => {
+        try {
+          gain.gain.cancelScheduledValues(now);
+          gain.gain.setValueAtTime(gain.gain.value, now);
+          gain.gain.linearRampToValueAtTime(0, now + 0.15);
+          osc.stop(now + 0.2);
+        } catch { /* noop */ }
+      });
+    }
+    activeNodesRef.current = [];
+  };
+
+  const playVibe = (idx: number) => {
+    if (activeVibe === idx) {
+      stopVibe();
+      setActiveVibe(null);
+      return;
+    }
+    stopVibe();
+    try {
+      if (!audioCtxRef.current || audioCtxRef.current.state === "closed") {
+        audioCtxRef.current = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      }
+      const ctx = audioCtxRef.current!;
+      if (ctx.state === "suspended") ctx.resume();
+      const vibe = vibes[idx];
+      const now = ctx.currentTime;
+      const master = ctx.createGain();
+      master.gain.value = 0.08;
+      master.connect(ctx.destination);
+
+      vibe.notes.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        osc.type = i % 2 === 0 ? "sine" : "triangle";
+        osc.frequency.value = freq;
+        const gain = ctx.createGain();
+        const start = now + i * (vibe.loop / vibe.notes.length) * 0.5;
+        gain.gain.setValueAtTime(0, start);
+        gain.gain.linearRampToValueAtTime(0.7, start + 0.3);
+        gain.gain.linearRampToValueAtTime(0.4, start + vibe.loop * 0.7);
+        gain.gain.linearRampToValueAtTime(0, start + vibe.loop);
+        osc.connect(gain);
+        gain.connect(master);
+        osc.start(start);
+        osc.stop(start + vibe.loop + 0.1);
+        activeNodesRef.current.push({ osc, gain });
+      });
+
+      loopTimerRef.current = window.setTimeout(() => {
+        if (audioCtxRef.current) playVibe(idx);
+      }, vibe.loop * 1000);
+    } catch {
+      /* audio not available */
+    }
+    setActiveVibe(idx);
+  };
+
+  useEffect(() => () => stopVibe(), []);
 
   useEffect(() => {
     if (hasGateAccess()) navigate("/home", { replace: true });
@@ -326,35 +339,6 @@ const AccessGatePage = () => {
           </div>
         </div>
 
-        {/* Visual centerpiece: rotating vinyl + demo hint */}
-        <div className="relative mb-24 flex flex-col items-center">
-          <div className="relative w-56 h-56 flex items-center justify-center">
-            <motion.div
-              animate={{ rotate: playing ? 360 : 0 }}
-              transition={{ duration: 6, repeat: playing ? Infinity : 0, ease: "linear" }}
-              className="absolute inset-0 rounded-full"
-              style={{
-                background:
-                  "repeating-radial-gradient(circle at center, rgba(255,255,255,0.06) 0 2px, transparent 2px 4px), radial-gradient(circle at 30% 30%, hsl(330 70% 40%), hsl(280 60% 15%) 70%, #000 100%)",
-                boxShadow: "0 20px 60px -20px rgba(236,72,153,0.25), inset 0 0 40px rgba(0,0,0,0.6)",
-              }}
-            />
-            <div className="absolute inset-[38%] rounded-full bg-gradient-to-br from-amber-400 to-rose-500 flex items-center justify-center">
-              <img src={rhozelandLogo} alt="" className="h-6 w-6 opacity-90" />
-            </div>
-            <button
-              onClick={() => setPlaying((p) => !p)}
-              className="absolute -bottom-2 -right-2 h-12 w-12 rounded-full bg-zinc-900 text-white flex items-center justify-center shadow-2xl hover:scale-110 transition-transform"
-              aria-label={playing ? "Pause" : "Play preview"}
-            >
-              {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 ml-0.5" />}
-            </button>
-          </div>
-          <p className="mt-6 text-[11px] uppercase tracking-[0.25em] text-zinc-500/50 text-center">
-            {playing ? "Now spinning · a taste of what's coming" : "Tap to preview the vibe"}
-          </p>
-        </div>
-
         {/* Lore / timeline — condensed */}
         <section className="mb-20">
           <div className="mb-6">
@@ -386,36 +370,73 @@ const AccessGatePage = () => {
           </p>
         </section>
 
-        {/* Visual demo — mock app screens */}
+        {/* Vibes — 6 tappable mini-vinyls; tap one to hear a taste. */}
         <section className="mb-24">
-          <div className="mb-6">
-            <p className="text-[10px] uppercase tracking-[0.28em] text-zinc-500/60 mb-1.5">What's inside</p>
-            <h2 className="font-display text-xl md:text-2xl italic text-zinc-900 leading-tight">
-              A quick look.
-            </h2>
+          <div className="mb-6 flex items-end justify-between">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.28em] text-zinc-500/60 mb-1.5">Discover</p>
+              <h2 className="font-display text-xl md:text-2xl italic text-zinc-900 leading-tight">
+                Tap a vibe. Hear the room.
+              </h2>
+            </div>
+            <span className="text-[10px] uppercase tracking-[0.22em] text-rose-500 flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" /> live
+            </span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {demos.map((d, i) => (
-              <motion.div
-                key={d.title}
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: i * 0.06 }}
-                className="rounded-xl border border-black/10 bg-white/80 overflow-hidden shadow-sm"
-              >
-                {/* Browser chrome */}
-                <div className="flex items-center gap-1 px-2.5 py-1.5 border-b border-black/5 bg-zinc-50/70">
-                  <span className="h-1.5 w-1.5 rounded-full bg-rose-300" />
-                  <span className="h-1.5 w-1.5 rounded-full bg-amber-300" />
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
-                  <span className="ml-2 text-[8px] text-zinc-400 tracking-wide">rhoze.app / {d.title.toLowerCase()}</span>
-                </div>
-                <d.Component />
-              </motion.div>
-            ))}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {vibes.map((v, i) => {
+              const isActive = activeVibe === i;
+              return (
+                <motion.button
+                  key={v.name}
+                  type="button"
+                  onClick={() => playVibe(i)}
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: i * 0.05 }}
+                  whileHover={{ y: -2 }}
+                  className="group relative aspect-square rounded-xl overflow-hidden shadow-sm border border-black/5 focus:outline-none focus:ring-2 focus:ring-rose-400/60"
+                  style={{ background: v.bg }}
+                  aria-label={`${isActive ? "Pause" : "Play"} ${v.name} vibe`}
+                >
+                  {/* Vinyl grooves — visible when playing */}
+                  <motion.div
+                    aria-hidden
+                    animate={{ rotate: isActive ? 360 : 0, opacity: isActive ? 0.65 : 0 }}
+                    transition={{
+                      rotate: { duration: 8, repeat: isActive ? Infinity : 0, ease: "linear" },
+                      opacity: { duration: 0.4 },
+                    }}
+                    className="absolute inset-0"
+                    style={{
+                      background:
+                        "repeating-radial-gradient(circle at 50% 50%, rgba(0,0,0,0.35) 0 2px, transparent 2px 5px)",
+                    }}
+                  />
+                  {/* Center label — Rhoze mark */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <motion.div
+                      animate={{ scale: isActive ? [1, 1.05, 1] : 1 }}
+                      transition={{ duration: 1.6, repeat: isActive ? Infinity : 0, ease: "easeInOut" }}
+                      className="h-14 w-14 rounded-full bg-white/90 backdrop-blur-sm shadow-lg flex items-center justify-center"
+                    >
+                      <img src={rhozelandLogo} alt="" className="h-7 w-7 opacity-90" />
+                    </motion.div>
+                  </div>
+                  {/* Play/Pause pill bottom-right */}
+                  <div className="absolute bottom-2 right-2 h-7 w-7 rounded-full bg-zinc-900/90 text-white flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+                    {isActive ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3 ml-0.5" />}
+                  </div>
+                  {/* Vibe name bottom-left */}
+                  <div className="absolute bottom-2 left-2.5 text-[10px] font-medium text-white/95 tracking-wide drop-shadow">
+                    {v.name}
+                  </div>
+                </motion.button>
+              );
+            })}
           </div>
-          <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-2">
             {features.map((f) => (
               <div key={f.title} className="flex items-start gap-2">
                 <f.icon className="h-3.5 w-3.5 text-zinc-900/60 mt-0.5 shrink-0" />
@@ -427,6 +448,7 @@ const AccessGatePage = () => {
             ))}
           </div>
         </section>
+
 
         {/* Whitepaper — expandable */}
         <section className="mb-20">
