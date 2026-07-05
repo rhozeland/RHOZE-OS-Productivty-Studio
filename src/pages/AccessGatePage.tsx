@@ -44,20 +44,21 @@ const features = [
   { icon: Users, title: "Back projects", desc: "Fund releases. Sign on-chain. No middlemen." },
 ];
 
-/** Six preview tiles. Gradient art only — audio source is filled from real
- *  `works` uploads at mount time (falls back to gradient-only if none). */
-const tileGradients = [
-  "linear-gradient(135deg,#fda4af,#c084fc)",
-  "linear-gradient(135deg,#fbbf24,#fb7185)",
-  "linear-gradient(135deg,#818cf8,#38bdf8)",
-  "linear-gradient(135deg,#fbcfe8,#fda4af)",
-  "linear-gradient(135deg,#67e8f9,#a78bfa)",
-  "linear-gradient(135deg,#fdba74,#f97316)",
+/** Six named vibe tiles. Gradient + label are fixed; audio URL is hydrated
+ *  from real `works` + `flow_items` uploads at mount time. */
+const vibes = [
+  { name: "Bloom",   bg: "linear-gradient(135deg,#f9a8d4,#c084fc)" },
+  { name: "Sunrise", bg: "linear-gradient(135deg,#fcd34d,#fb7185)" },
+  { name: "Drift",   bg: "linear-gradient(135deg,#a78bfa,#60a5fa)" },
+  { name: "Peach",   bg: "linear-gradient(135deg,#fda4af,#fbbf24)" },
+  { name: "Mint",    bg: "linear-gradient(135deg,#67e8f9,#a78bfa)" },
+  { name: "Ember",   bg: "linear-gradient(135deg,#fda4af,#f97316)" },
 ];
 
 const AUDIO_EXT = /\.(mp3|wav|flac|aac|m4a|ogg|opus)(\?|$)/i;
 
 type PreviewTrack = { url: string; title: string };
+
 
 const whitepaperSections = [
   {
