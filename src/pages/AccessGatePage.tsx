@@ -415,6 +415,7 @@ const AccessGatePage = () => {
                     </button>
                   );
                 })}
+              </div>
             </Chrome>
 
             {/* VERIFIED IP */}
