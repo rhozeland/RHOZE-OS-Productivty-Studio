@@ -1392,10 +1392,6 @@ function BuildingSection({
           </TabsTrigger>
           <TabsTrigger value="drafts">Drafts</TabsTrigger>
           <TabsTrigger value="completed">Completed</TabsTrigger>
-          <TabsTrigger value="flow" className="gap-1.5">
-            <Radio className="h-3 w-3" />
-            Flow
-          </TabsTrigger>
         </TabsList>
         <TabsContent value="active">
           {activeProjects.length > 0 ? (
@@ -1438,9 +1434,6 @@ function BuildingSection({
               Nothing shipped yet — keep building.
             </p>
           )}
-        </TabsContent>
-        <TabsContent value="flow">
-          <FlowDropsTab />
         </TabsContent>
       </Tabs>
     </section>
