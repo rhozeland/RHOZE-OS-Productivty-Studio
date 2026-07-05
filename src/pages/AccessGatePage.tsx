@@ -1,5 +1,5 @@
 /**
- * AccessGatePage — v11.2 private-build gate.
+ * AccessGatePage — v11.3 private-build gate.
  *
  * First screen every unauthenticated visitor sees. Two paths in:
  *  1. Access code (primary) — `redeem_access_code` RPC → localStorage flag.
@@ -118,31 +118,41 @@ const AccessGatePage = () => {
   };
 
   return (
-    <div className="relative min-h-screen w-full bg-[#050505] text-white/90 overflow-x-hidden">
+    <div className="relative min-h-screen w-full bg-[#f4f4f6] text-zinc-900/90 overflow-x-hidden">
+      {/* Soft gradient wash */}
+      <div
+        aria-hidden
+        className="fixed inset-0 pointer-events-none"
+        style={{
+          background:
+            "linear-gradient(180deg, #ffffff 0%, #f4f4f6 40%, #f0eef4 100%)",
+        }}
+      />
+
       {/* Aurora + grain background */}
-      <div aria-hidden className="fixed inset-0 pointer-events-none">
+      <div aria-hidden className="fixed inset-0 pointer-events-none overflow-hidden">
         <motion.div
           animate={{ x: [0, 40, -20, 0], y: [0, -30, 20, 0] }}
           transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-[-15%] left-[-15%] w-[70%] h-[70%] rounded-full bg-rose-500/20 blur-[140px]"
+          className="absolute top-[-15%] left-[-15%] w-[70%] h-[70%] rounded-full bg-rose-300/30 blur-[140px]"
         />
         <motion.div
           animate={{ x: [0, -30, 40, 0], y: [0, 30, -20, 0] }}
           transition={{ duration: 30, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute bottom-[-15%] right-[-15%] w-[70%] h-[70%] rounded-full bg-fuchsia-500/20 blur-[140px]"
+          className="absolute bottom-[-15%] right-[-15%] w-[70%] h-[70%] rounded-full bg-fuchsia-300/25 blur-[140px]"
         />
         <motion.div
-          animate={{ scale: [1, 1.15, 1], opacity: [0.4, 0.7, 0.4] }}
+          animate={{ scale: [1, 1.15, 1], opacity: [0.6, 0.9, 0.6] }}
           transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-[30%] right-[15%] w-[40%] h-[50%] rounded-full bg-amber-500/10 blur-[120px]"
+          className="absolute top-[30%] right-[15%] w-[40%] h-[50%] rounded-full bg-amber-200/30 blur-[120px]"
         />
         <motion.div
-          animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
+          animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
           transition={{ duration: 22, repeat: Infinity, ease: "easeInOut", delay: 6 }}
-          className="absolute top-[10%] right-[40%] w-[35%] h-[40%] rounded-full bg-violet-500/15 blur-[120px]"
+          className="absolute top-[10%] right-[40%] w-[35%] h-[40%] rounded-full bg-violet-300/20 blur-[120px]"
         />
         <div
-          className="absolute inset-0 opacity-[0.08] mix-blend-overlay"
+          className="absolute inset-0 opacity-[0.03] mix-blend-overlay"
           style={{
             backgroundImage:
               "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
@@ -155,21 +165,21 @@ const AccessGatePage = () => {
         <div className="flex items-center justify-center gap-2.5 mb-16">
           <img src={rhozelandLogo} alt="Rhoze" className="h-8 w-8" />
           <div className="flex flex-col leading-none">
-            <span className="font-display text-lg tracking-tight text-white">Rhoze</span>
-            <span className="text-[9px] uppercase tracking-[0.28em] text-white/40 mt-0.5">by Rhozeland</span>
+            <span className="font-display text-lg tracking-tight text-zinc-900">Rhoze</span>
+            <span className="text-[9px] uppercase tracking-[0.28em] text-zinc-500/60 mt-0.5">by Rhozeland</span>
           </div>
         </div>
 
         {/* Hero */}
         <div className="text-center mb-14 space-y-5">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm">
-            <span className="h-1.5 w-1.5 rounded-full bg-rose-400 animate-pulse" />
-            <span className="text-[10px] uppercase tracking-[0.22em] text-white/60">Private build · Summer 2026</span>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-black/10 bg-white/60 backdrop-blur-sm shadow-sm">
+            <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" />
+            <span className="text-[10px] uppercase tracking-[0.22em] text-zinc-500/70">Private build · Summer 2026</span>
           </div>
-          <h1 className="font-display text-4xl md:text-6xl italic tracking-tight leading-[1.02] text-white">
+          <h1 className="font-display text-4xl md:text-6xl italic tracking-tight leading-[1.02] text-zinc-900">
             A home for music<br />that owns itself.
           </h1>
-          <p className="text-sm md:text-base text-white/50 max-w-md mx-auto leading-relaxed">
+          <p className="text-sm md:text-base text-zinc-500/70 max-w-md mx-auto leading-relaxed">
             Rhoze is our first product built for musicians — a place to prove your work, attach your economy, and let the people who love it own a piece.
           </p>
         </div>
@@ -177,11 +187,11 @@ const AccessGatePage = () => {
         {/* Access forms — hero placement */}
         <div className="space-y-4 mb-20">
           <form onSubmit={submitCode} className="space-y-2">
-            <label className="block text-[10px] uppercase tracking-[0.22em] text-white/40 ml-1">
+            <label className="block text-[10px] uppercase tracking-[0.22em] text-zinc-500/60 ml-1">
               Insider access
             </label>
             <div className="relative group">
-              <div className="absolute -inset-px rounded-lg bg-gradient-to-r from-rose-500/30 via-fuchsia-500/30 to-amber-500/30 opacity-0 group-focus-within:opacity-100 transition-opacity blur-sm" />
+              <div className="absolute -inset-px rounded-lg bg-gradient-to-r from-rose-400/30 via-fuchsia-400/30 to-amber-400/30 opacity-0 group-focus-within:opacity-100 transition-opacity blur-sm" />
               <div className="relative">
                 <input
                   type="text"
@@ -190,12 +200,12 @@ const AccessGatePage = () => {
                   placeholder="Enter access code"
                   autoComplete="off"
                   spellCheck={false}
-                  className="w-full bg-white/[0.04] border border-white/10 rounded-lg py-4 pl-5 pr-28 text-sm placeholder:text-white/25 focus:outline-none focus:border-white/30 focus:bg-white/[0.07] transition-all font-light tracking-wide"
+                  className="w-full bg-white/70 border border-black/10 rounded-lg py-4 pl-5 pr-28 text-sm placeholder:text-zinc-400 focus:outline-none focus:border-black/25 focus:bg-white transition-all font-light tracking-wide shadow-sm"
                 />
                 <button
                   type="submit"
                   disabled={!code.trim() || busy !== null}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 rounded-md bg-white text-black text-xs uppercase tracking-[0.15em] font-medium hover:bg-white/90 transition-all flex items-center gap-1.5 disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 rounded-md bg-zinc-900 text-white text-xs uppercase tracking-[0.15em] font-medium hover:bg-zinc-800 transition-all flex items-center gap-1.5 disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   {busy === "code" ? <Loader2 className="h-3 w-3 animate-spin" /> : <>Enter <ArrowRight className="h-3 w-3" /></>}
                 </button>
@@ -204,7 +214,7 @@ const AccessGatePage = () => {
           </form>
 
           <form onSubmit={submitEmail} className="space-y-2">
-            <label className="block text-[10px] uppercase tracking-[0.22em] text-white/40 ml-1">
+            <label className="block text-[10px] uppercase tracking-[0.22em] text-zinc-500/60 ml-1">
               Or join the waitlist
             </label>
             <div className="relative">
@@ -214,15 +224,15 @@ const AccessGatePage = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={waitlisted ? "You're on the list — talk soon." : "your@email.com"}
                 disabled={waitlisted}
-                className="w-full bg-transparent border border-white/[0.08] rounded-lg py-4 pl-5 pr-28 text-sm placeholder:text-white/25 focus:outline-none focus:border-white/20 transition-all font-light disabled:opacity-70"
+                className="w-full bg-white/40 border border-black/[0.08] rounded-lg py-4 pl-5 pr-28 text-sm placeholder:text-zinc-400 focus:outline-none focus:border-black/20 focus:bg-white/70 transition-all font-light disabled:opacity-70 shadow-sm"
               />
               <button
                 type="submit"
                 disabled={!email.trim() || busy !== null || waitlisted}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-xs uppercase tracking-[0.15em] text-white/40 hover:text-white/80 transition-colors flex items-center gap-1 disabled:opacity-40"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-xs uppercase tracking-[0.15em] text-zinc-500/60 hover:text-zinc-900 transition-colors flex items-center gap-1 disabled:opacity-40"
               >
                 {busy === "email" ? <Loader2 className="h-3 w-3 animate-spin" />
-                  : waitlisted ? <Check className="h-3 w-3 text-emerald-400" />
+                  : waitlisted ? <Check className="h-3 w-3 text-emerald-600" />
                   : "Submit"}
               </button>
             </div>
@@ -231,7 +241,7 @@ const AccessGatePage = () => {
           <div className="pt-2 text-center">
             <button
               onClick={() => navigate("/auth")}
-              className="text-[10px] uppercase tracking-[0.25em] text-white/30 hover:text-white/60 transition-colors"
+              className="text-[10px] uppercase tracking-[0.25em] text-zinc-500/50 hover:text-zinc-900 transition-colors"
             >
               Already have an account? Sign in
             </button>
@@ -248,7 +258,7 @@ const AccessGatePage = () => {
               style={{
                 background:
                   "repeating-radial-gradient(circle at center, rgba(255,255,255,0.06) 0 2px, transparent 2px 4px), radial-gradient(circle at 30% 30%, hsl(330 70% 40%), hsl(280 60% 15%) 70%, #000 100%)",
-                boxShadow: "0 20px 60px -20px rgba(236,72,153,0.4), inset 0 0 40px rgba(0,0,0,0.6)",
+                boxShadow: "0 20px 60px -20px rgba(236,72,153,0.25), inset 0 0 40px rgba(0,0,0,0.6)",
               }}
             />
             <div className="absolute inset-[38%] rounded-full bg-gradient-to-br from-amber-400 to-rose-500 flex items-center justify-center">
@@ -256,13 +266,13 @@ const AccessGatePage = () => {
             </div>
             <button
               onClick={() => setPlaying((p) => !p)}
-              className="absolute -bottom-2 -right-2 h-12 w-12 rounded-full bg-white text-black flex items-center justify-center shadow-2xl hover:scale-110 transition-transform"
+              className="absolute -bottom-2 -right-2 h-12 w-12 rounded-full bg-zinc-900 text-white flex items-center justify-center shadow-2xl hover:scale-110 transition-transform"
               aria-label={playing ? "Pause" : "Play preview"}
             >
               {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 ml-0.5" />}
             </button>
           </div>
-          <p className="mt-6 text-[11px] uppercase tracking-[0.25em] text-white/40 text-center">
+          <p className="mt-6 text-[11px] uppercase tracking-[0.25em] text-zinc-500/50 text-center">
             {playing ? "Now spinning · a taste of what's coming" : "Tap to preview the vibe"}
           </p>
         </div>
@@ -270,8 +280,8 @@ const AccessGatePage = () => {
         {/* Lore / timeline */}
         <section className="mb-24">
           <div className="mb-8">
-            <p className="text-[10px] uppercase tracking-[0.28em] text-white/40 mb-2">The lore</p>
-            <h2 className="font-display text-2xl md:text-3xl italic text-white leading-tight">
+            <p className="text-[10px] uppercase tracking-[0.28em] text-zinc-500/60 mb-2">The lore</p>
+            <h2 className="font-display text-2xl md:text-3xl italic text-zinc-900 leading-tight">
               Ten years in the making.
             </h2>
           </div>
@@ -285,15 +295,15 @@ const AccessGatePage = () => {
                 transition={{ duration: 0.5, delay: i * 0.08 }}
                 className="grid grid-cols-[64px_1fr] gap-5 items-baseline"
               >
-                <div className="font-display text-xl text-white/80 tracking-tight">{t.year}</div>
-                <div className="border-l border-white/10 pl-5 pb-2">
-                  <div className="text-sm text-white font-medium mb-1">{t.title}</div>
-                  <div className="text-xs text-white/50 leading-relaxed">{t.desc}</div>
+                <div className="font-display text-xl text-zinc-900/80 tracking-tight">{t.year}</div>
+                <div className="border-l border-black/10 pl-5 pb-2">
+                  <div className="text-sm text-zinc-900 font-medium mb-1">{t.title}</div>
+                  <div className="text-xs text-zinc-500/70 leading-relaxed">{t.desc}</div>
                 </div>
               </motion.div>
             ))}
           </div>
-          <p className="mt-8 text-xs text-white/40 leading-relaxed italic border-l-2 border-rose-400/40 pl-4">
+          <p className="mt-8 text-xs text-zinc-500/60 leading-relaxed italic border-l-2 border-rose-400/40 pl-4">
             We got here because of the musicians and artists who backed us from day one. Rhoze is the platform they deserved all along.
           </p>
         </section>
@@ -301,8 +311,8 @@ const AccessGatePage = () => {
         {/* Features */}
         <section className="mb-24">
           <div className="mb-8">
-            <p className="text-[10px] uppercase tracking-[0.28em] text-white/40 mb-2">What's inside</p>
-            <h2 className="font-display text-2xl md:text-3xl italic text-white leading-tight">
+            <p className="text-[10px] uppercase tracking-[0.28em] text-zinc-500/60 mb-2">What's inside</p>
+            <h2 className="font-display text-2xl md:text-3xl italic text-zinc-900 leading-tight">
               Built for artists who ship.
             </h2>
           </div>
@@ -314,11 +324,11 @@ const AccessGatePage = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: i * 0.06 }}
-                className="p-5 rounded-xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/20 transition-all"
+                className="p-5 rounded-xl border border-black/10 bg-white/60 hover:bg-white/90 hover:border-black/20 transition-all shadow-sm"
               >
-                <f.icon className="h-4 w-4 text-white/70 mb-3" />
-                <div className="text-sm text-white font-medium mb-1.5">{f.title}</div>
-                <div className="text-xs text-white/50 leading-relaxed">{f.desc}</div>
+                <f.icon className="h-4 w-4 text-zinc-900/70 mb-3" />
+                <div className="text-sm text-zinc-900 font-medium mb-1.5">{f.title}</div>
+                <div className="text-xs text-zinc-500/70 leading-relaxed">{f.desc}</div>
               </motion.div>
             ))}
           </div>
@@ -328,24 +338,24 @@ const AccessGatePage = () => {
         <section className="mb-20">
           <div className="mb-6 flex items-end justify-between">
             <div>
-              <p className="text-[10px] uppercase tracking-[0.28em] text-white/40 mb-2">Reading material</p>
-              <h2 className="font-display text-2xl md:text-3xl italic text-white leading-tight">
+              <p className="text-[10px] uppercase tracking-[0.28em] text-zinc-500/60 mb-2">Reading material</p>
+              <h2 className="font-display text-2xl md:text-3xl italic text-zinc-900 leading-tight">
                 Whitepaper · v0.1
               </h2>
             </div>
-            <FileText className="h-4 w-4 text-white/40" />
+            <FileText className="h-4 w-4 text-zinc-900/40" />
           </div>
-          <div className="rounded-xl border border-white/10 bg-white/[0.02] overflow-hidden divide-y divide-white/5">
+          <div className="rounded-xl border border-black/10 bg-white/50 overflow-hidden divide-y divide-black/5 shadow-sm">
             {whitepaperSections.map((s, i) => {
               const open = openPaper === i;
               return (
                 <div key={s.title}>
                   <button
                     onClick={() => setOpenPaper(open ? null : i)}
-                    className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-white/[0.03] transition-colors"
+                    className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-white/70 transition-colors"
                   >
-                    <span className="text-sm text-white/90 tracking-wide">{s.title}</span>
-                    <ChevronDown className={`h-3.5 w-3.5 text-white/40 transition-transform ${open ? "rotate-180" : ""}`} />
+                    <span className="text-sm text-zinc-900/90 tracking-wide">{s.title}</span>
+                    <ChevronDown className={`h-3.5 w-3.5 text-zinc-500/50 transition-transform ${open ? "rotate-180" : ""}`} />
                   </button>
                   <AnimatePresence initial={false}>
                     {open && (
@@ -356,7 +366,7 @@ const AccessGatePage = () => {
                         transition={{ duration: 0.25 }}
                         className="overflow-hidden"
                       >
-                        <p className="px-5 pb-5 text-xs text-white/55 leading-relaxed max-w-prose">
+                        <p className="px-5 pb-5 text-xs text-zinc-500/70 leading-relaxed max-w-prose">
                           {s.body}
                         </p>
                       </motion.div>
@@ -366,16 +376,16 @@ const AccessGatePage = () => {
               );
             })}
           </div>
-          <p className="mt-4 text-[10px] uppercase tracking-[0.25em] text-white/30 text-center">
+          <p className="mt-4 text-[10px] uppercase tracking-[0.25em] text-zinc-500/40 text-center">
             Full paper drops with public beta
           </p>
         </section>
 
-        <footer className="pt-8 border-t border-white/5 text-center space-y-2">
-          <p className="text-[10px] uppercase tracking-[0.3em] text-white/30">
+        <footer className="pt-8 border-t border-black/5 text-center space-y-2">
+          <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-900/40">
             Rhoze · by Rhozeland
           </p>
-          <p className="text-[10px] text-white/20">
+          <p className="text-[10px] text-zinc-500/40">
             Built quietly. Shipping soon.
           </p>
         </footer>
