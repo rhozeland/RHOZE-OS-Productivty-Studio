@@ -1514,6 +1514,13 @@ function FlowTile({ item }: { item: FlowDropItem }) {
   const hasCover = !!item.cover && imgOk;
   const isRasterCover =
     hasCover && !AUDIO_EXT.test(item.cover!) && !VIDEO_EXT.test(item.cover!);
+  // If the cover we have is actually the raw video/audio file, use the
+  // file_url directly to render an inline poster frame (videos) or a
+  // gradient waveform (audio).
+  const videoPoster =
+    media === "video" && item.file_url && VIDEO_EXT.test(item.file_url)
+      ? item.file_url
+      : null;
 
   const onDragStart = (e: React.DragEvent) => {
     e.dataTransfer.effectAllowed = "copy";
@@ -1546,20 +1553,33 @@ function FlowTile({ item }: { item: FlowDropItem }) {
           onError={() => setImgOk(false)}
           className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
+      ) : videoPoster ? (
+        <video
+          src={`${videoPoster}#t=0.1`}
+          muted
+          playsInline
+          preload="metadata"
+          onError={() => setImgOk(false)}
+          className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+        />
+      ) : media === "audio" ? (
+        <div
+          className="absolute inset-0 flex items-center justify-center"
+          style={{
+            background:
+              "radial-gradient(ellipse at 30% 20%, hsl(48 100% 70% / 0.35), transparent 55%), linear-gradient(135deg, hsl(282 70% 20%), hsl(330 85% 45%) 55%, hsl(18 100% 58%))",
+          }}
+        >
+          <Music className="h-5 w-5 text-white/90 drop-shadow" />
+        </div>
       ) : (
         <div className="absolute inset-0 bg-muted flex items-center justify-center text-muted-foreground/70">
-          {media === "audio" ? (
-            <Music className="h-5 w-5" />
-          ) : media === "video" ? (
-            <Play className="h-5 w-5" />
-          ) : (
-            <ImageIcon className="h-5 w-5" />
-          )}
+          {media === "video" ? <Play className="h-5 w-5" /> : <ImageIcon className="h-5 w-5" />}
         </div>
       )}
 
-      {media === "video" && isRasterCover && (
-        <div className="absolute inset-0 flex items-center justify-center">
+      {media === "video" && (isRasterCover || videoPoster) && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <span className="h-8 w-8 rounded-full bg-black/55 flex items-center justify-center">
             <Play className="h-3.5 w-3.5 fill-white text-white translate-x-[1px]" />
           </span>
