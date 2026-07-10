@@ -302,6 +302,99 @@ export type Database = {
           },
         ]
       }
+      canvas_cards: {
+        Row: {
+          contract_id: string | null
+          created_at: string
+          created_by: string
+          deliverable_id: string | null
+          goal_id: string | null
+          h: number
+          id: string
+          kind: string
+          lane: string
+          payload: Json
+          project_id: string
+          updated_at: string
+          w: number
+          work_attachment_id: string | null
+          x: number
+          y: number
+        }
+        Insert: {
+          contract_id?: string | null
+          created_at?: string
+          created_by?: string
+          deliverable_id?: string | null
+          goal_id?: string | null
+          h?: number
+          id?: string
+          kind: string
+          lane?: string
+          payload?: Json
+          project_id: string
+          updated_at?: string
+          w?: number
+          work_attachment_id?: string | null
+          x?: number
+          y?: number
+        }
+        Update: {
+          contract_id?: string | null
+          created_at?: string
+          created_by?: string
+          deliverable_id?: string | null
+          goal_id?: string | null
+          h?: number
+          id?: string
+          kind?: string
+          lane?: string
+          payload?: Json
+          project_id?: string
+          updated_at?: string
+          w?: number
+          work_attachment_id?: string | null
+          x?: number
+          y?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "canvas_cards_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "project_contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "canvas_cards_deliverable_id_fkey"
+            columns: ["deliverable_id"]
+            isOneToOne: false
+            referencedRelation: "project_deliverables"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "canvas_cards_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "project_goals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "canvas_cards_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "canvas_cards_work_attachment_id_fkey"
+            columns: ["work_attachment_id"]
+            isOneToOne: false
+            referencedRelation: "work_attachments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       capital_advance_events: {
         Row: {
           actor_id: string | null
