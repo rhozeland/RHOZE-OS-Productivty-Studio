@@ -35,8 +35,8 @@ const ProjectCanvasPage = () => {
   useEffect(() => {
     if (!id) return;
     (async () => {
-      const { data } = await supabase.from("projects").select("name,title").eq("id", id).maybeSingle();
-      const n = (data as any)?.name ?? (data as any)?.title ?? "Untitled release";
+      const { data } = await supabase.from("projects").select("title").eq("id", id).maybeSingle();
+      const n = (data as any)?.title ?? "Untitled release";
       setProjectName(n);
       setTitleDraft(n);
     })();
@@ -46,7 +46,7 @@ const ProjectCanvasPage = () => {
     const next = titleDraft.trim() || "Untitled release";
     if (next === projectName) return;
     setSavingTitle(true);
-    await supabase.from("projects").update({ name: next, title: next } as any).eq("id", id!);
+    await supabase.from("projects").update({ title: next } as any).eq("id", id!);
     setProjectName(next);
     setSavingTitle(false);
   };
