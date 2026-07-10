@@ -17,6 +17,7 @@ import AccessGatePage, { hasGateAccess } from "@/pages/AccessGatePage";
 import ProjectsPage from "@/pages/ProjectsPage";
 import StudioPage from "@/pages/StudioPage";
 import ProjectDetailPage from "@/pages/ProjectDetailPage";
+import ProjectCanvasPage from "@/pages/ProjectCanvasPage";
 import CalendarPage from "@/pages/CalendarPage";
 // FlowModePage is the public Verified-IP browser.
 
@@ -361,6 +362,7 @@ const App = () => (
                 <Route path="/studio" element={<StudioPage />} />
                 <Route path="/projects-legacy" element={<ProjectsPage />} />
                 <Route path="/projects/:id" element={<ProjectDetailPage />} />
+                <Route path="/projects/:id/canvas" element={<ProjectCanvasPage />} />
                 {/* v11 Tier 3: public "build in public" release page. Owner
                     flips is_public on the project to surface this URL. */}
                 <Route path="/release/:slug" element={<ReleasePage />} />
