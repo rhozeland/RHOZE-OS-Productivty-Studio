@@ -17,6 +17,7 @@ import AccessGatePage, { hasGateAccess } from "@/pages/AccessGatePage";
 import ProjectsPage from "@/pages/ProjectsPage";
 import StudioPage from "@/pages/StudioPage";
 import ProjectDetailPage from "@/pages/ProjectDetailPage";
+import ProjectCanvasPage from "@/pages/ProjectCanvasPage";
 import CalendarPage from "@/pages/CalendarPage";
 // FlowModePage is the public Verified-IP browser.
 
