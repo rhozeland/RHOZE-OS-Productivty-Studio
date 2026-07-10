@@ -1,17 +1,10 @@
 /**
- * StartProjectPicker — single entry point for "Start a Project" across
- * `/market`, `/home`, and `/studio`.
+ * StartProjectPicker — one-click "Start a Project" entry.
  *
- * Two phases:
- *   1. "pick" — Notion-style 2-card chooser: Build with AI · Empty page.
- *   2. "ai"   — Notion-style prompt sheet: textarea + music-native
- *               suggestion chips. On submit, stashes the brief in
- *               sessionStorage and routes to the new-project flow where
- *               NewProjectDialog auto-creates and AiRoadmapDraftButton
- *               auto-drafts using that brief.
- *
- * Branded to Rhozeland — uses the project's font-display, semantic tokens,
- * and todayGradient(). No search bar anywhere.
+ * v12 flow: no AI vs Blank fork. Clicking Start creates a project via
+ * `create_project_with_owner`, opens the collaborator-invite sheet, then
+ * routes the user into the FigJam-style canvas at `/projects/:id/canvas`.
+ * All roadmap/AI drafting happens inside the canvas via the AI Copilot dock.
  */
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
