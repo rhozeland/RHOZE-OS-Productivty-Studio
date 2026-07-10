@@ -40,7 +40,8 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 
-type Phase = "pick" | "ai" | "invite";
+type Phase = "creating" | "invite";
+
 
 type PickedUser = { user_id: string; display_name: string; username?: string | null; avatar_url?: string | null };
 
