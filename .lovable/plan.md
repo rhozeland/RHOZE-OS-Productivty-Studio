@@ -1,69 +1,146 @@
-# Kinetic Bento — Profile bottom half + immersive Coin Launcher
+# Release Canvas — v1
 
-Scope stays inside the two surfaces you called out. Nothing above Reputation Signals changes (avatar, name, tier badge, Boost, Reputation Signals card all stay). Nav, sidebar, discover, flow — untouched.
+Rebuild "open a project" as a **FigJam-lite board**: 4 lanes, freeform cards inside each, drop-anything ingestion, AI Copilot dock that acts on selection.
 
-## 1. Design tokens (scoped, not app-wide)
+## 1. Entry flow
 
-- Install `@fontsource/archivo-black` + `@fontsource/hind`, wire into Tailwind as `font-display` / `font-body`.
-- Add a **self-contained** `.kinetic-theme` class in `index.css` exposing the midnight/mint palette (`--kb-bg #0a0f1e`, `--kb-surface #141c33`, `--kb-accent #2dd4a8`, `--kb-fg #e8f0f8`). Only the two new surfaces opt in — the rest of the app keeps its current light theme, so nothing else breaks.
+- `PostMenuButton` "Start a Project" → **removes the AI vs Blank picker**.
+- One click creates a project via `create_project_with_owner` with `name = "Untitled release"` and navigates to `/projects/:id/canvas`.
+- Canvas top-left shows an inline-editable title (click to rename, blur to save → `projects.name`).
+- Old `StartProjectPicker` is kept but the AI/Blank fork collapses to a single "Create" primary; the invite step still runs after creation.
 
-## 2. Profile bottom half → Kinetic Bento canvas
+## 2. Canvas surface (`/projects/:id/canvas`)
 
-Replace everything below the Reputation Signals card on `ProfileDetailPage` (the tab strip + tabs' worth of `<CreatorCoinsGallery />`, `<CreatorRewardsCard />`, projects grid, works grid, backing lane, services block, holdings, etc.) with a single **bento canvas** — no tab strip.
+Structured board — 4 lanes, freeform cards inside each lane:
 
-Tile inventory:
+```text
+┌─────────────┬─────────────┬────────────────┬─────────────┐
+│  Ideas      │  In progress│  Review        │  Released   │
+│  (freeform  │  (freeform  │  (freeform     │  (freeform  │
+│   cards)    │   cards)    │   cards)       │   cards)    │
+└─────────────┴─────────────┴────────────────┴─────────────┘
+```
 
-- **Featured Release** (2×2): most-recent public project or top work, cinematic thumbnail, title in Archivo Black, mint accent subtitle. Owner sees inline "Attach coin" / "Start release" ghost buttons.
-- **Coin panel** (1×2): if a `creator_tokens` row exists → ticker + live sparkline (existing `useCreatorTokenMetrics`) + MC + rewards. If not and owner → "Attach a coin" CTA that opens the new launcher. Non-owner + no coin → tile hides.
-- **Backing** (1×1): mint accent card, total holders + 24h delta.
-- **Services** (1×2): the creator's `creator_roles` and top offering rows as a bulleted list.
-- **Flow strip** (2×1): last 6 works as a real thumbnail grid (image/video/audio), each clicks through to the Flow post. Uses actual `works` rows — this is what replaces the sad text placeholders.
-- **Investor Signal** (1×1): keeps the readiness number you like, condensed.
-- **Collaborators** (1×1): avatar stack + count.
+- Lanes are fixed columns (horizontal scroll on small screens).
+- Cards inside a lane have `{ x, y }` freeform positions (drag anywhere in the lane).
+- Drag a card across lanes → updates `lane`.
+- Marquee-select + multi-select with shift-click. Selected cards get a ring + are the target for the AI dock.
+- Toolbar (top): `+ Node ▾` (Media, Milestone, Moodboard, Sticky, Contract), Undo/Redo, Zoom hint, Share.
+- Drop zone: dragging files anywhere on the canvas creates a Media node at the drop point in the nearest lane.
 
-Deleted from public profile:
-- The "Backing" tab (holdings/subscriptions the current user has in *other* creators) — moved to `/my-projects` only. Not shown on public profiles anymore.
-- The full tabs strip (image / projects / megaphone / briefcase / heart icons).
+## 3. Node types (v1)
 
-## 3. Immersive Coin Launcher (replaces `AttachCoinFlowSheet`)
+| Type         | Renders as                                                             | Backed by                                                    |
+| ------------ | ---------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `media`      | Cover / waveform / play tile with filename + type badge                | `work_attachments` row + Supabase Storage `project-files`    |
+| `milestone`  | Title, phase pill, due date, progress bar, checklist count             | `project_goals` row (reuse existing schema)                  |
+| `moodboard`  | 2×2 image cluster + note                                               | `moodboard_items` rows grouped by `cluster_id` on the card   |
+| `sticky`     | Colored note, editable text                                            | new `canvas_cards.payload.text`                              |
+| `contract`   | Contract title + signed/pending chip → opens SignedAgreementCard sheet | `project_contracts` row link                                 |
+| `deliverable`| Title, status chip, attach button                                      | `project_deliverables` row                                   |
 
-Convert the right-side Sheet into a fullscreen shadcn `Dialog` (`sm:max-w-none w-screen h-screen`) styled with the kinetic theme. Three steps in one canvas:
+All cards share a single `canvas_cards` table (see Technical) that stores position + lane + reference to the domain row.
 
-- **Step 1 — Paste CA**: giant centered `<input>`, big Archivo Black "ATTACH COIN" title, mint Verify button. Same edge fn (`creator-token-metrics`) fetches preview on paste.
-- **Step 2 — Live token card + Target picker**: token preview card (ticker, price, 24h delta, sparkline) on the left; two huge tiles on the right → "Attach to a Release" vs "Attach to a Track".
-- **Step 3 — Thumbnail picker**: 3-col grid of the user's actual `works` (image/video/audio thumbnails with play badge for AV), or `projects` covers. Selected tile gets mint ring + check.
-- **Step 4 — Celebration**: same as today but bigger — confetti burst, coin chip spring-flies onto a preview of the target card.
+## 4. Ingestion — "just drop content in"
 
-### Track picker bug fix
+Three parallel paths, all end up as a `media` node on the board:
 
-Root cause of "No posts yet": the current picker only queries when `step === "pick-work"` and doesn't preload. Combined with a stale `user` on first render, the query never fires. New launcher:
-- Prefetches `works` + `projects` on open (both `enabled: open && !!user?.id`).
-- Falls back to `flow_items` if works comes up empty (safety net).
-- Shows a skeleton grid while loading instead of the "No posts" copy — that empty label only shows after the query resolves with 0 rows.
+1. **Drag-drop from OS** → upload to `project-files/<projectId>/…` → create `work_attachments` row → create `canvas_cards` row at drop point.
+2. **Toolbar → Upload** → same pipeline via file picker.
+3. **Toolbar → From gallery** → sheet listing the user's existing `works` + recent `flow_items` → tap to attach (creates a card that references the existing work, no re-upload).
 
-## 4. Files
+Progress + errors surface as a toast + a shimmer overlay on the placeholder card.
 
-**New**
-- `src/components/profile/bento/ProfileBentoCanvas.tsx` — the grid
-- `src/components/profile/bento/tiles/{FeaturedReleaseTile,CoinPanelTile,BackingTile,ServicesTile,FlowStripTile,InvestorSignalTile,CollaboratorsTile}.tsx`
-- `src/components/coin/AttachCoinLauncher.tsx` — fullscreen dialog (replaces `AttachCoinFlowSheet` at call sites)
+## 5. AI Copilot dock
 
-**Edited**
-- `src/pages/ProfileDetailPage.tsx` — swap tabs region for `<ProfileBentoCanvas />`
-- `src/pages/StudioPage.tsx` — swap `<AttachCoinFlowSheet />` → `<AttachCoinLauncher />`
-- Any other call sites of `AttachCoinFlowSheet` (grep first)
-- `src/index.css` — `.kinetic-theme` tokens + font-family utilities
-- `tailwind.config.ts` — register `font-display` / `font-body`
-- `src/main.tsx` (or app entry) — `@fontsource` imports
+Floating pill, bottom-right of the canvas:
 
-**Untouched**
-- Sidebar, Discover, Flow, Messages, Creator Pass, settings, admin
-- Everything on the profile *above* Reputation Signals
+- Collapsed: `✨ AI` button.
+- Expanded: small chat surface with quick actions that operate on **currently selected cards** (or the whole board if nothing selected):
+    - "Draft a rollout roadmap from these" → calls `draft-project-roadmap` edge fn with selected media titles/kinds → inserts `milestone` cards into the `In progress` lane, chained by `chainMilestoneDates`.
+    - "Summarize this board" → posts a Sticky in Ideas.
+    - "Suggest next milestone" → single milestone card.
+    - Free prompt → same edge fn, prompt appended.
+- Uses the existing `useAiRoadmapDraft` hook + `composeMilestoneDescription` helper — no new edge fn.
+- Errors (402/429) rendered inline in the dock, matching existing copy.
 
-## 5. Out of scope for this pass
+## 6. Reuse of existing tools
 
-- Coin chip fly-into-thumbnail animation (basic confetti + spring-in only; layout animation is a follow-up).
-- Full mobile pass — desktop first at the 1440 prototype size, mobile falls back to a single-column stack of the same tiles.
-- Deleting the old `AttachCoinFlowSheet.tsx` file — kept on disk one pass for revert safety.
+- **Roadmap** → `milestone` cards on the canvas. The existing `/projects/:id` Roadmap tab stays as a *list view* of the same rows (Kanban ↔ Canvas, same data).
+- **Smartboard** → the moodboard node uses `moodboard_items` primitives; the standalone `/smartboards/:id` route stays live.
+- **Drop Rooms** → surfaced as a "Rooms" chip in the toolbar that opens the existing sheet.
+- **Contracts / Deliverables** → reused as node types, no duplicate storage.
 
-Confirm and I'll build in this order: fonts + theme → launcher (unblocks the coin flow bug) → bento canvas → wire call sites.
+## 7. Routing + navigation
+
+- New route: `/projects/:id/canvas` (default landing after "Start a Project").
+- Existing `/projects/:id` Roadmap/Scope/Team tabs stay mounted; add a "Canvas" tab that deep-links to `/projects/:id/canvas`.
+- Sidebar Projects list rows: primary click → canvas.
+
+---
+
+## Technical details
+
+### New table
+
+```sql
+create table public.canvas_cards (
+  id uuid primary key default gen_random_uuid(),
+  project_id uuid not null references public.projects(id) on delete cascade,
+  lane text not null check (lane in ('ideas','in_progress','review','released')) default 'ideas',
+  x int not null default 0,
+  y int not null default 0,
+  w int not null default 240,
+  h int not null default 160,
+  kind text not null check (kind in ('media','milestone','moodboard','sticky','contract','deliverable')),
+  -- links to existing domain rows (nullable, one populated per kind)
+  work_attachment_id uuid references public.work_attachments(id) on delete cascade,
+  goal_id uuid references public.project_goals(id) on delete cascade,
+  contract_id uuid references public.project_contracts(id) on delete cascade,
+  deliverable_id uuid references public.project_deliverables(id) on delete cascade,
+  payload jsonb not null default '{}'::jsonb,   -- sticky text, moodboard cluster, etc.
+  created_by uuid not null default auth.uid(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+grant select, insert, update, delete on public.canvas_cards to authenticated;
+grant all on public.canvas_cards to service_role;
+alter table public.canvas_cards enable row level security;
+
+-- policies mirror projects visibility via project_member_role()
+create policy "members read canvas" on public.canvas_cards for select to authenticated
+  using (public.project_member_role(project_id, auth.uid()) is not null);
+create policy "members write canvas" on public.canvas_cards for all to authenticated
+  using (public.project_member_role(project_id, auth.uid()) is not null)
+  with check (public.project_member_role(project_id, auth.uid()) is not null);
+```
+
+Position updates batched via `updated_at` with a 300ms debounce from `useCanvasCards`.
+
+### New files
+
+- `src/pages/ProjectCanvasPage.tsx` — page shell, header w/ inline title, toolbar, dock.
+- `src/components/canvas/CanvasBoard.tsx` — 4-lane layout, drop handlers, marquee select.
+- `src/components/canvas/CanvasCard.tsx` — polymorphic renderer by `kind`.
+- `src/components/canvas/CanvasToolbar.tsx` — `+ Node`, Upload, From Gallery.
+- `src/components/canvas/AiCopilotDock.tsx` — floating dock, wraps `useAiRoadmapDraft`.
+- `src/components/canvas/GalleryPickerSheet.tsx` — pick from user's works/flow.
+- `src/hooks/useCanvasCards.ts` — CRUD + realtime for `canvas_cards`.
+- `supabase/migrations/<ts>_canvas_cards.sql` — schema above.
+
+### Edited files
+
+- `src/components/project/StartProjectPicker.tsx` — collapse AI/Blank fork into one primary create; navigate to canvas on success.
+- `src/App.tsx` — mount `/projects/:id/canvas`.
+- `src/pages/ProjectDetailPage.tsx` — add "Canvas" tab entry linking to the new route (no data changes).
+
+### Out of scope (deferred)
+
+- True infinite pan/zoom canvas (locked in as v2).
+- Connecting arrows between cards.
+- Realtime multi-user cursors.
+- Slash-command AI.
+- Voice input inside the dock (reuse existing mic in a later pass).
+
+Once you approve, I'll ship the migration + files in one pass.
