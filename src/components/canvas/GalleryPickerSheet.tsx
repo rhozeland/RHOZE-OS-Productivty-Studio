@@ -39,8 +39,8 @@ const GalleryPickerSheet = ({ open, onOpenChange, onPick }: Props) => {
     setLoading(true);
     (async () => {
       const [worksRes, flowRes] = await Promise.all([
-        supabase.from("works").select("id,title,file_url,mime_type,cover_url").eq("user_id", user.id).order("created_at", { ascending: false }).limit(24),
-        supabase.from("flow_items").select("id,title,media_url,media_type,thumbnail_url").eq("user_id", user.id).order("created_at", { ascending: false }).limit(24),
+        supabase.from("works").select("id,title,file_url,mime_type,thumbnail_url").eq("user_id", user.id).order("created_at", { ascending: false }).limit(24),
+        supabase.from("flow_items").select("id,title,file_url,content_type").eq("user_id", user.id).order("created_at", { ascending: false }).limit(24),
       ]);
       const mapped: Item[] = [];
       for (const w of (worksRes.data ?? []) as any[]) {
@@ -50,19 +50,20 @@ const GalleryPickerSheet = ({ open, onOpenChange, onPick }: Props) => {
           name: w.title ?? "Untitled",
           url: w.file_url,
           mime: w.mime_type ?? "application/octet-stream",
-          thumbnail_url: w.cover_url,
+          thumbnail_url: w.thumbnail_url,
           source: "work",
         });
       }
       for (const f of (flowRes.data ?? []) as any[]) {
-        if (!f.media_url) continue;
-        const mime = f.media_type === "audio" ? "audio/mpeg" : f.media_type === "video" ? "video/mp4" : "image/jpeg";
+        if (!f.file_url) continue;
+        const ct = (f.content_type ?? "").toLowerCase();
+        const mime = ct === "audio" ? "audio/mpeg" : ct === "video" ? "video/mp4" : ct === "photo" || ct === "image" ? "image/jpeg" : "application/octet-stream";
         mapped.push({
           id: `f-${f.id}`,
           name: f.title ?? "Flow post",
-          url: f.media_url,
+          url: f.file_url,
           mime,
-          thumbnail_url: f.thumbnail_url,
+          thumbnail_url: mime.startsWith("image/") ? f.file_url : null,
           source: "flow",
         });
       }
