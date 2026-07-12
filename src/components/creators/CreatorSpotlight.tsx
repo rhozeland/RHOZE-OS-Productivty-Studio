@@ -13,7 +13,7 @@ const CreatorSpotlight = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("*")
+        .select("id, user_id, display_name, username, avatar_url, banner_url, bio, headline, archetype, verification_status")
         .eq("is_public", true)
         .order("created_at", { ascending: false })
         .limit(8);
