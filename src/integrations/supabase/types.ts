@@ -6389,6 +6389,10 @@ export type Database = {
         Args: { _contract_id: string; _user_id: string }
         Returns: boolean
       }
+      is_drop_room_member: {
+        Args: { _room_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_event_host: {
         Args: { _event_id: string; _user_id: string }
         Returns: boolean

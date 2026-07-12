@@ -37,12 +37,11 @@ const RewardsLiveSections = () => {
   const { data: profile } = useQuery({
     queryKey: ["rewards-profile-verify", user?.id],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("wallet_address, wallet_locked")
-        .eq("user_id", user!.id)
-        .maybeSingle();
-      return data;
+      const { data } = await (supabase as any).rpc("get_my_private_profile_fields");
+      const row = Array.isArray(data) ? data[0] : data;
+      return row
+        ? { wallet_address: row.wallet_address as string | null, wallet_locked: !!row.wallet_locked }
+        : null;
     },
     enabled: !!user,
   });

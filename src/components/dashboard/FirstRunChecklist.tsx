@@ -45,12 +45,16 @@ const FirstRunChecklist = () => {
   const { data: profile } = useQuery({
     queryKey: ["firstrun-profile", user?.id],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("avatar_url, bio, display_name, wallet_address")
-        .eq("user_id", user!.id)
-        .maybeSingle();
-      return data;
+      const [{ data }, { data: priv }] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("avatar_url, bio, display_name")
+          .eq("user_id", user!.id)
+          .maybeSingle(),
+        (supabase as any).rpc("get_my_private_profile_fields"),
+      ]);
+      const privRow = Array.isArray(priv) ? priv[0] : priv;
+      return { ...(data ?? {}), wallet_address: privRow?.wallet_address ?? null } as any;
     },
     enabled: !!user,
   });
