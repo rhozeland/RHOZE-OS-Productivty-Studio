@@ -220,7 +220,7 @@ const ListingDetailPage = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("*")
+        .select("id, user_id, display_name, username, avatar_url, headline")
         .eq("user_id", listing!.user_id)
         .single();
       if (error) throw error;
