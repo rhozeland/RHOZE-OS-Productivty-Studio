@@ -79,6 +79,7 @@ import { cn } from "@/lib/utils";
 import { fetchCreatorContext } from "@/lib/creator-context";
 import { composeMilestoneDescription, chainMilestoneDates, type DraftedMilestone, type AssetRef, type MilestonePhase, PHASE_ORDER, PHASE_LABELS } from "@/hooks/useAiRoadmapDraft";
 import StartProjectPicker from "@/components/project/StartProjectPicker";
+import InlineNewReleasePanel from "@/components/project/InlineNewReleasePanel";
 import LaunchCoinFlowModal from "@/components/launchpad/LaunchCoinFlowModal";
 import AttachCoinLauncher from "@/components/coin/AttachCoinLauncher";
 import { ConciergeIntakeSheet } from "@/components/concierge/ConciergeIntakeSheet";
