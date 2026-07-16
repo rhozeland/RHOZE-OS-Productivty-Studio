@@ -845,11 +845,7 @@ const StudioPage = () => {
       )}
 
 
-      {/* Start a Project picker (v11 Pillar 9 — AI prompt or empty page) */}
-      <StartProjectPicker
-        open={startProjectOpen}
-        onOpenChange={setStartProjectOpen}
-      />
+      {/* New Release now renders as an inline expanding panel above (see AnimatePresence). */}
 
       {/* Attach a Coin — paste CA → pick target → celebrate */}
       <AttachCoinLauncher
