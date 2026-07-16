@@ -1,146 +1,92 @@
-# Release Canvas — v1
+# Releases + Build-in-Public rework
 
-Rebuild "open a project" as a **FigJam-lite board**: 4 lanes, freeform cards inside each, drop-anything ingestion, AI Copilot dock that acts on selection.
+Two concrete moves. First one is fast and visible. Second is the real workspace lift.
 
-## 1. Entry flow
+## 1. Kill the pop-up chain on /my-projects
 
-- `PostMenuButton` "Start a Project" → **removes the AI vs Blank picker**.
-- One click creates a project via `create_project_with_owner` with `name = "Untitled release"` and navigates to `/projects/:id/canvas`.
-- Canvas top-left shows an inline-editable title (click to rename, blur to save → `projects.name`).
-- Old `StartProjectPicker` is kept but the AI/Blank fork collapses to a single "Create" primary; the invite step still runs after creation.
+Right now clicking **New Release → Start Blank** stacks three modals: Pick → Create → Invite. That's what the first two screenshots complain about.
 
-## 2. Canvas surface (`/projects/:id/canvas`)
-
-Structured board — 4 lanes, freeform cards inside each lane:
+Replace with an **inline expanding panel** anchored to the "New Release" tile (like screenshot 3, but the tile itself grows in place):
 
 ```text
-┌─────────────┬─────────────┬────────────────┬─────────────┐
-│  Ideas      │  In progress│  Review        │  Released   │
-│  (freeform  │  (freeform  │  (freeform     │  (freeform  │
-│   cards)    │   cards)    │   cards)       │   cards)    │
-└─────────────┴─────────────┴────────────────┴─────────────┘
+┌──────────────────────────────────────┐
+│  CREATE                              │
+│  New Release                         │
+│  Spin up a fresh project…            │
+│  ─────────────────────────────       │
+│  ▸ Name your release  [_________]    │
+│  ▸ Accent  ● ● ● ● ●                 │
+│  ▸ Invite  [search collaborators]    │
+│  ▸ (optional) Attach a $coin ▾       │
+│                                      │
+│  [ Skip & open canvas ]  [ Create → ]│
+└──────────────────────────────────────┘
 ```
 
-- Lanes are fixed columns (horizontal scroll on small screens).
-- Cards inside a lane have `{ x, y }` freeform positions (drag anywhere in the lane).
-- Drag a card across lanes → updates `lane`.
-- Marquee-select + multi-select with shift-click. Selected cards get a ring + are the target for the AI dock.
-- Toolbar (top): `+ Node ▾` (Media, Milestone, Moodboard, Sticky, Contract), Undo/Redo, Zoom hint, Share.
-- Drop zone: dragging files anywhere on the canvas creates a Media node at the drop point in the nearest lane.
+- No overlay dim, no z-index stack. Framer-motion height/opacity transition.
+- Same panel handles rename, color, invites, coin attach — all optional.
+- Clicking Create writes the project row, fires invites in the background, then slides the whole page into the workspace (no route jump feels — use a soft cross-fade to `/projects/:id`).
+- "Bring in your team" (screenshot 2) becomes a section *inside* this panel, not a second modal.
 
-## 3. Node types (v1)
+## 2. Rework the release workspace into a build-in-public hub
 
-| Type         | Renders as                                                             | Backed by                                                    |
-| ------------ | ---------------------------------------------------------------------- | ------------------------------------------------------------ |
-| `media`      | Cover / waveform / play tile with filename + type badge                | `work_attachments` row + Supabase Storage `project-files`    |
-| `milestone`  | Title, phase pill, due date, progress bar, checklist count             | `project_goals` row (reuse existing schema)                  |
-| `moodboard`  | 2×2 image cluster + note                                               | `moodboard_items` rows grouped by `cluster_id` on the card   |
-| `sticky`     | Colored note, editable text                                            | new `canvas_cards.payload.text`                              |
-| `contract`   | Contract title + signed/pending chip → opens SignedAgreementCard sheet | `project_contracts` row link                                 |
-| `deliverable`| Title, status chip, attach button                                      | `project_deliverables` row                                   |
+The current `/projects/:id/canvas` is a 4-lane board. The user wants the depth of the previous project system (roadmap, smartboards, drop rooms, disputes, activity, messaging) fused with the fun/wow of the canvas, framed around **fans watching artists build in public**.
 
-All cards share a single `canvas_cards` table (see Technical) that stores position + lane + reference to the domain row.
+New shape at `/projects/:id` (canvas becomes one of several modes, not a separate URL):
 
-## 4. Ingestion — "just drop content in"
-
-Three parallel paths, all end up as a `media` node on the board:
-
-1. **Drag-drop from OS** → upload to `project-files/<projectId>/…` → create `work_attachments` row → create `canvas_cards` row at drop point.
-2. **Toolbar → Upload** → same pipeline via file picker.
-3. **Toolbar → From gallery** → sheet listing the user's existing `works` + recent `flow_items` → tap to attach (creates a card that references the existing work, no re-upload).
-
-Progress + errors surface as a toast + a shimmer overlay on the placeholder card.
-
-## 5. AI Copilot dock
-
-Floating pill, bottom-right of the canvas:
-
-- Collapsed: `✨ AI` button.
-- Expanded: small chat surface with quick actions that operate on **currently selected cards** (or the whole board if nothing selected):
-    - "Draft a rollout roadmap from these" → calls `draft-project-roadmap` edge fn with selected media titles/kinds → inserts `milestone` cards into the `In progress` lane, chained by `chainMilestoneDates`.
-    - "Summarize this board" → posts a Sticky in Ideas.
-    - "Suggest next milestone" → single milestone card.
-    - Free prompt → same edge fn, prompt appended.
-- Uses the existing `useAiRoadmapDraft` hook + `composeMilestoneDescription` helper — no new edge fn.
-- Errors (402/429) rendered inline in the dock, matching existing copy.
-
-## 6. Reuse of existing tools
-
-- **Roadmap** → `milestone` cards on the canvas. The existing `/projects/:id` Roadmap tab stays as a *list view* of the same rows (Kanban ↔ Canvas, same data).
-- **Smartboard** → the moodboard node uses `moodboard_items` primitives; the standalone `/smartboards/:id` route stays live.
-- **Drop Rooms** → surfaced as a "Rooms" chip in the toolbar that opens the existing sheet.
-- **Contracts / Deliverables** → reused as node types, no duplicate storage.
-
-## 7. Routing + navigation
-
-- New route: `/projects/:id/canvas` (default landing after "Start a Project").
-- Existing `/projects/:id` Roadmap/Scope/Team tabs stay mounted; add a "Canvas" tab that deep-links to `/projects/:id/canvas`.
-- Sidebar Projects list rows: primary click → canvas.
-
----
-
-## Technical details
-
-### New table
-
-```sql
-create table public.canvas_cards (
-  id uuid primary key default gen_random_uuid(),
-  project_id uuid not null references public.projects(id) on delete cascade,
-  lane text not null check (lane in ('ideas','in_progress','review','released')) default 'ideas',
-  x int not null default 0,
-  y int not null default 0,
-  w int not null default 240,
-  h int not null default 160,
-  kind text not null check (kind in ('media','milestone','moodboard','sticky','contract','deliverable')),
-  -- links to existing domain rows (nullable, one populated per kind)
-  work_attachment_id uuid references public.work_attachments(id) on delete cascade,
-  goal_id uuid references public.project_goals(id) on delete cascade,
-  contract_id uuid references public.project_contracts(id) on delete cascade,
-  deliverable_id uuid references public.project_deliverables(id) on delete cascade,
-  payload jsonb not null default '{}'::jsonb,   -- sticky text, moodboard cluster, etc.
-  created_by uuid not null default auth.uid(),
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
-
-grant select, insert, update, delete on public.canvas_cards to authenticated;
-grant all on public.canvas_cards to service_role;
-alter table public.canvas_cards enable row level security;
-
--- policies mirror projects visibility via project_member_role()
-create policy "members read canvas" on public.canvas_cards for select to authenticated
-  using (public.project_member_role(project_id, auth.uid()) is not null);
-create policy "members write canvas" on public.canvas_cards for all to authenticated
-  using (public.project_member_role(project_id, auth.uid()) is not null)
-  with check (public.project_member_role(project_id, auth.uid()) is not null);
+```text
+┌─── Release header (accent bar, cover, title, status pill, cheer count) ───┐
+│  Owner · collaborators · $TICKER chip · Publish toggle · Share            │
+├────────────────────────────────────────────────────────────────────────────┤
+│  Mode tabs:  Canvas · Roadmap · Vault · Room · Activity                    │
+├────────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│  <selected mode renders here — no page jumps, framer transitions>          │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+                   ┌──────────────────────────────────┐
+                   │  Floating AI Copilot (existing)  │
+                   └──────────────────────────────────┘
 ```
 
-Position updates batched via `updated_at` with a 300ms debounce from `useCanvasCards`.
+### Modes
 
-### New files
+- **Canvas** — the existing FigJam-lite board (Ideas / In progress / Review / Released). Drag media in, AI drafts milestones. Untouched functionally.
+- **Roadmap** — reuses `StageRoadmap` + `MilestoneTracker` + `ProgressChart` + `AiRoadmapDraftButton`. Signed agreement card stays at the top. This is where the *technical* project management lives.
+- **Vault** — `ProjectScopeDeliverables` + Verified IP anchoring. File spine.
+- **Room** — merged Drop Room + Smartboard + project messages in one column: pinned smartboards on the left, live chat on the right. Uses existing `DropRoomLauncher` + `chat_group_messages` under the hood.
+- **Activity** — story updates (`StoryUpdates`), cheers, backer joins, milestone approvals, disputes (`ProjectDisputes`) — one reverse-chronological feed. This is what public fans see when the release is published.
 
-- `src/pages/ProjectCanvasPage.tsx` — page shell, header w/ inline title, toolbar, dock.
-- `src/components/canvas/CanvasBoard.tsx` — 4-lane layout, drop handlers, marquee select.
-- `src/components/canvas/CanvasCard.tsx` — polymorphic renderer by `kind`.
-- `src/components/canvas/CanvasToolbar.tsx` — `+ Node`, Upload, From Gallery.
-- `src/components/canvas/AiCopilotDock.tsx` — floating dock, wraps `useAiRoadmapDraft`.
-- `src/components/canvas/GalleryPickerSheet.tsx` — pick from user's works/flow.
-- `src/hooks/useCanvasCards.ts` — CRUD + realtime for `canvas_cards`.
-- `supabase/migrations/<ts>_canvas_cards.sql` — schema above.
+### Build-in-public layer
 
-### Edited files
+For any release with `is_public=true`:
 
-- `src/components/project/StartProjectPicker.tsx` — collapse AI/Blank fork into one primary create; navigate to canvas on success.
-- `src/App.tsx` — mount `/projects/:id/canvas`.
-- `src/pages/ProjectDetailPage.tsx` — add "Canvas" tab entry linking to the new route (no data changes).
+- The public `/release/:slug` page (already exists) gets a new **Live feed** section pulling from Activity — same rows, read-only.
+- **Cheer** stays. Add a lightweight **"Should this become a coin?"** vote widget (thumbs up counter on the release row, no new token, just a signal). When it crosses a threshold the owner sees a "Ready to tokenize" nudge inside Activity that deep-links to the existing pump.fun start-a-coin flow.
+- Fans see: cover, vision, roadmap milestones (public ones only), latest activity, cheer + vote, owner chip, $TICKER if attached.
 
-### Out of scope (deferred)
+### What we're NOT doing this pass
 
-- True infinite pan/zoom canvas (locked in as v2).
-- Connecting arrows between cards.
-- Realtime multi-user cursors.
-- Slash-command AI.
-- Voice input inside the dock (reuse existing mic in a later pass).
+- No new messaging surface — Room reuses existing chat tables.
+- No new dispute engine — surfacing the existing one inside Activity.
+- No changes to Connect / DMs / notifications globally.
+- No schema migrations required — everything above rides existing tables (`projects`, `project_goals`, `project_milestones`, `project_story_updates`, `project_cheers`, `project_deliverables`, `drop_rooms`, `chat_group_messages`, `project_disputes`, `canvas_cards`).
 
-Once you approve, I'll ship the migration + files in one pass.
+## Technical notes
+
+- New file: `src/components/project/InlineNewReleasePanel.tsx` — replaces the modal chain from `StartProjectPicker`.
+- Rework `ProjectDetailPage.tsx` (existing) to host the 5-mode tab shell; move canvas rendering out of the separate `/projects/:id/canvas` route into a Canvas tab. Old route redirects to `/projects/:id?mode=canvas`.
+- New `src/components/project/ReleaseActivityFeed.tsx` aggregates cheers + story updates + milestone events + disputes into one list.
+- New `src/components/project/CoinVoteWidget.tsx` — a single column on `projects` (`coin_vote_count int`) + a `project_coin_votes` table (user_id, project_id, unique). One migration.
+- Public `ReleasePage` gets a new `<PublicActivityStream />` section reading the same feed with `is_public` filter.
+
+## Order of work
+
+1. Ship the inline New Release panel (removes the pop-up complaint immediately).
+2. Ship the 5-mode workspace shell around existing components (no new features, just fusion).
+3. Add the Activity feed + public stream on `/release/:slug`.
+4. Add the coin-vote widget + migration.
+
+Steps 1 and 2 are the visible wins. 3 and 4 are the build-in-public payoff.
+
+Want me to start with step 1 only, or run 1 → 2 in the same pass?
