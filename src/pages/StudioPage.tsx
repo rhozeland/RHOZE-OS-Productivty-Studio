@@ -644,122 +644,144 @@ const StudioPage = () => {
         </div>
       </header>
 
-      {/* Core Actions Grid — 4 modular tiles */}
-      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-px bg-border/60 border border-border/60 rounded-sm overflow-hidden">
-        {/* 1. Rhozeland A&R */}
-        <div className="bg-card p-6 flex flex-col justify-between group hover:bg-muted/40 transition-colors">
-          <div>
-            <div className="flex justify-between items-start mb-6">
-              <span className="text-[10px] font-mono text-emerald-500 border border-emerald-500/40 px-2 py-0.5 tracking-wider">
-                STRATEGY
-              </span>
-              <div className="flex bg-background p-1 rounded border border-border/60">
-                <button
-                  type="button"
-                  onClick={() => setArIntent("new")}
-                  className={cn(
-                    "px-2 py-1 text-[9px] font-mono rounded transition-colors",
-                    arIntent === "new"
-                      ? "bg-foreground/10 text-foreground"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  NEW
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setArIntent("grow")}
-                  className={cn(
-                    "px-2 py-1 text-[9px] font-mono rounded transition-colors",
-                    arIntent === "grow"
-                      ? "bg-foreground/10 text-foreground"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  GROW
-                </button>
+      {/* Core Actions — either the 4 modular tiles OR the inline New Release panel */}
+      <AnimatePresence mode="wait" initial={false}>
+        {startProjectOpen ? (
+          <motion.div
+            key="new-release-panel"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <InlineNewReleasePanel onClose={() => setStartProjectOpen(false)} />
+          </motion.div>
+        ) : (
+          <motion.section
+            key="core-actions"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-px bg-border/60 border border-border/60 rounded-sm overflow-hidden"
+          >
+            {/* 1. Rhozeland A&R */}
+            <div className="bg-card p-6 flex flex-col justify-between group hover:bg-muted/40 transition-colors">
+              <div>
+                <div className="flex justify-between items-start mb-6">
+                  <span className="text-[10px] font-mono text-emerald-500 border border-emerald-500/40 px-2 py-0.5 tracking-wider">
+                    STRATEGY
+                  </span>
+                  <div className="flex bg-background p-1 rounded border border-border/60">
+                    <button
+                      type="button"
+                      onClick={() => setArIntent("new")}
+                      className={cn(
+                        "px-2 py-1 text-[9px] font-mono rounded transition-colors",
+                        arIntent === "new"
+                          ? "bg-foreground/10 text-foreground"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      NEW
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setArIntent("grow")}
+                      className={cn(
+                        "px-2 py-1 text-[9px] font-mono rounded transition-colors",
+                        arIntent === "grow"
+                          ? "bg-foreground/10 text-foreground"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      GROW
+                    </button>
+                  </div>
+                </div>
+                <h3 className="text-lg font-medium text-foreground mb-2">Rhozeland A&R</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {arIntent === "new"
+                    ? "Tell us the vision — we co-produce, market, and split the upside."
+                    : "Bring an existing track — we scale reach and set a fair split."}
+                </p>
+                <p className="mt-2 text-[10px] font-mono uppercase tracking-widest text-muted-foreground/70">
+                  Intake · budget · cut split
+                </p>
               </div>
+              <button
+                type="button"
+                onClick={() => setArSheetOpen(true)}
+                className="mt-8 w-full py-3 border border-border text-xs font-mono uppercase tracking-wider text-foreground hover:bg-foreground hover:text-background transition-all"
+              >
+                Open Intake
+              </button>
             </div>
-            <h3 className="text-lg font-medium text-foreground mb-2">Rhozeland A&R</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              {arIntent === "new"
-                ? "Tell us the vision — we co-produce, market, and split the upside."
-                : "Bring an existing track — we scale reach and set a fair split."}
-            </p>
-            <p className="mt-2 text-[10px] font-mono uppercase tracking-widest text-muted-foreground/70">
-              Intake · budget · cut split
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setArSheetOpen(true)}
-            className="mt-8 w-full py-3 border border-border text-xs font-mono uppercase tracking-wider text-foreground hover:bg-foreground hover:text-background transition-all"
-          >
-            Open Intake
-          </button>
-        </div>
 
-        {/* 2. Attach / Back with Coin */}
-        <div className="bg-card p-6 flex flex-col justify-between group hover:bg-muted/40 transition-colors">
-          <div>
-            <span className="text-[10px] font-mono text-purple-500 border border-purple-500/40 px-2 py-0.5 mb-6 inline-block tracking-wider">
-              LIQUIDITY
-            </span>
-            <h3 className="text-lg font-medium text-foreground mb-2">Attach a Coin</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Link a $coin to a project or a track. Every post inside inherits the coin — social proof + upside built in.
-            </p>
-            <p className="mt-2 text-[10px] font-mono uppercase tracking-widest text-muted-foreground/70">
-              Project · track · content
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setCoinSheetOpen(true)}
-            className="mt-8 w-full py-3 bg-purple-500/10 border border-purple-500/40 text-purple-600 dark:text-purple-300 text-xs font-mono uppercase tracking-wider hover:bg-purple-500 hover:text-white transition-all"
-          >
-            Link Coin
-          </button>
-        </div>
+            {/* 2. Attach / Back with Coin */}
+            <div className="bg-card p-6 flex flex-col justify-between group hover:bg-muted/40 transition-colors">
+              <div>
+                <span className="text-[10px] font-mono text-purple-500 border border-purple-500/40 px-2 py-0.5 mb-6 inline-block tracking-wider">
+                  LIQUIDITY
+                </span>
+                <h3 className="text-lg font-medium text-foreground mb-2">Attach a Coin</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Link a $coin to a project or a track. Every post inside inherits the coin — social proof + upside built in.
+                </p>
+                <p className="mt-2 text-[10px] font-mono uppercase tracking-widest text-muted-foreground/70">
+                  Project · track · content
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCoinSheetOpen(true)}
+                className="mt-8 w-full py-3 bg-purple-500/10 border border-purple-500/40 text-purple-600 dark:text-purple-300 text-xs font-mono uppercase tracking-wider hover:bg-purple-500 hover:text-white transition-all"
+              >
+                Link Coin
+              </button>
+            </div>
 
-        {/* 3. Start Blank */}
-        <div className="bg-card p-6 flex flex-col justify-between group hover:bg-muted/40 transition-colors">
-          <div>
-            <span className="text-[10px] font-mono text-muted-foreground border border-border px-2 py-0.5 mb-6 inline-block tracking-wider">
-              CREATE
-            </span>
-            <h3 className="text-lg font-medium text-foreground mb-2">New Release</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Spin up a fresh project — vision, milestones, files. AI drafts the roadmap around your style.
-            </p>
-            <p className="mt-2 text-[10px] font-mono uppercase tracking-widest text-muted-foreground/70">
-              Full project workspace
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setStartProjectOpen(true)}
-            className="mt-8 w-full py-3 border border-border text-xs font-mono uppercase tracking-wider text-foreground hover:bg-foreground hover:text-background transition-all"
-          >
-            Start Blank
-          </button>
-        </div>
+            {/* 3. Start Blank — inline expand */}
+            <div className="bg-card p-6 flex flex-col justify-between group hover:bg-muted/40 transition-colors">
+              <div>
+                <span className="text-[10px] font-mono text-muted-foreground border border-border px-2 py-0.5 mb-6 inline-block tracking-wider">
+                  CREATE
+                </span>
+                <h3 className="text-lg font-medium text-foreground mb-2">New Release</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Spin up a fresh project — vision, milestones, files. AI drafts the roadmap around your style.
+                </p>
+                <p className="mt-2 text-[10px] font-mono uppercase tracking-widest text-muted-foreground/70">
+                  Full project workspace
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setStartProjectOpen(true)}
+                className="mt-8 w-full py-3 border border-border text-xs font-mono uppercase tracking-wider text-foreground hover:bg-foreground hover:text-background transition-all"
+              >
+                Start Blank
+              </button>
+            </div>
 
-        {/* 4. Post to Flow */}
-        <button
-          type="button"
-          onClick={() => navigate("/flow?share=1")}
-          className="bg-card p-6 border-dashed border-2 border-border/50 flex flex-col items-center justify-center text-center group hover:border-emerald-500/50 hover:bg-muted/40 transition-all"
-        >
-          <div className="w-12 h-12 rounded-full border border-border flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-            <Rocket className="w-5 h-5 text-muted-foreground rotate-45" />
-          </div>
-          <h3 className="text-sm font-medium text-foreground">Post a Work</h3>
-          <p className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground mt-1">
-            Audio · Video · Photo → Flow
-          </p>
-        </button>
-      </section>
+            {/* 4. Post to Flow */}
+            <button
+              type="button"
+              onClick={() => navigate("/flow?share=1")}
+              className="bg-card p-6 border-dashed border-2 border-border/50 flex flex-col items-center justify-center text-center group hover:border-emerald-500/50 hover:bg-muted/40 transition-all"
+            >
+              <div className="w-12 h-12 rounded-full border border-border flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <Rocket className="w-5 h-5 text-muted-foreground rotate-45" />
+              </div>
+              <h3 className="text-sm font-medium text-foreground">Post a Work</h3>
+              <p className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground mt-1">
+                Audio · Video · Photo → Flow
+              </p>
+            </button>
+          </motion.section>
+        )}
+      </AnimatePresence>
+
 
       {/* Brand-new user empty state */}
       {!hasAnyActivity && !isLoading && (
