@@ -849,12 +849,6 @@ const ProjectDetailPage = () => {
           <SignedAgreementCard projectId={id!} contractId={contract?.id} />
 
 
-          {isOwner && (
-            <AttachCoinToProjectCard
-              projectId={project.id}
-              linkedTokenId={(project as any).linked_token_id ?? null}
-            />
-          )}
 
           {isOwner && <RoadmapCopilot projectId={id!} />}
 
