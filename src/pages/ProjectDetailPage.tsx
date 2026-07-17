@@ -86,7 +86,9 @@ import EditorSideRail from "@/components/project/shared/EditorSideRail";
 import ProjectFeaturedVisual from "@/components/project/ProjectFeaturedVisual";
 import ProjectCoinLiveCard from "@/components/project/shared/ProjectCoinLiveCard";
 import SupportProjectCard from "@/components/project/shared/SupportProjectCard";
+import ReleaseActivityFeed from "@/components/project/ReleaseActivityFeed";
 import { Progress } from "@/components/ui/progress";
+import { Sparkles as CanvasIcon, Activity as ActivityIcon } from "lucide-react";
 
 const SMARTBOARD_CAP_BY_TIER: Record<string, number> = {
   spark: 2,
