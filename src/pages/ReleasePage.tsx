@@ -20,6 +20,7 @@ import MilestoneTrack from "@/components/project/shared/MilestoneTrack";
 import BoardMasonry from "@/components/project/shared/BoardMasonry";
 import SupportersStrip from "@/components/project/shared/SupportersStrip";
 import StoryFeed from "@/components/project/shared/StoryFeed";
+import ReleaseActivityFeed from "@/components/project/ReleaseActivityFeed";
 import TokenizeBottomCta from "@/components/project/shared/TokenizeBottomCta";
 import ProjectCoinLiveCard from "@/components/project/shared/ProjectCoinLiveCard";
 import { computeProjectStatus } from "@/components/project/shared/projectStatus";
