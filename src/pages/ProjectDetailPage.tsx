@@ -623,7 +623,7 @@ const ProjectDetailPage = () => {
           />
         </div>
       )}
-      <ProjectCoinLiveCard linkedTokenId={(project as any).linked_token_id ?? null} />
+      <ProjectCoinPanel projectId={id!} isOwner={isOwner} project={project} />
 
       {/* TABS — now full-width */}
       <div className="mt-6">
