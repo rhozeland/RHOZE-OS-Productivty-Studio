@@ -1014,6 +1014,33 @@ const ProjectDetailPage = () => {
           </div>
         </TabsContent>
 
+        {/* CANVAS — FigJam-lite workspace (mounted on its own route so it can go full-height) */}
+        <TabsContent value="canvas" className="space-y-4">
+          <button
+            onClick={() => navigate(`/projects/${id}/canvas`)}
+            className="group block w-full text-left rounded-2xl border border-border bg-gradient-to-br from-primary/10 via-card to-fuchsia-500/5 p-8 transition-all hover:border-primary/40 hover:shadow-lg"
+          >
+            <div className="flex items-center gap-3 mb-2">
+              <CanvasIcon className="h-4 w-4 text-primary" />
+              <span className="text-[10px] uppercase tracking-[0.14em] font-semibold text-primary">Canvas</span>
+            </div>
+            <h3 className="font-display text-2xl font-bold text-foreground">Open the release canvas →</h3>
+            <p className="mt-2 text-sm text-muted-foreground max-w-xl">
+              Drop media, sketch milestones and let the AI copilot draft a roadmap from anything on the board. Opens full-screen.
+            </p>
+          </button>
+        </TabsContent>
+
+        {/* ACTIVITY — build-in-public timeline */}
+        <TabsContent value="activity" className="space-y-4">
+          <div className="max-w-3xl">
+            <div className="flex items-center gap-2 mb-4 text-[10px] uppercase tracking-[0.14em] font-semibold text-muted-foreground">
+              <ActivityIcon className="h-3 w-3" /> Live activity
+            </div>
+            <ReleaseActivityFeed projectId={id!} contractId={contract?.id} />
+          </div>
+        </TabsContent>
+
         {/* TEAM */}
         <TabsContent value="team" className="space-y-8">
           <Collaborators projectId={id!} isCollaborative={project.project_type === "collaborative"} />
