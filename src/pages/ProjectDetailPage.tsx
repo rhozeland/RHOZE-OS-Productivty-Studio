@@ -634,9 +634,11 @@ const ProjectDetailPage = () => {
           >
             <TabsTrigger value="overview" className={TAB_TRIGGER}>Overview</TabsTrigger>
             <TabsTrigger value="roadmap" className={TAB_TRIGGER}>Roadmap</TabsTrigger>
+            <TabsTrigger value="canvas" className={TAB_TRIGGER}>Canvas</TabsTrigger>
             <TabsTrigger value="rollout" className={TAB_TRIGGER}>Rollout</TabsTrigger>
             <TabsTrigger value="board" className={TAB_TRIGGER}>Board</TabsTrigger>
             <TabsTrigger value="story" className={TAB_TRIGGER}>Story</TabsTrigger>
+            <TabsTrigger value="activity" className={TAB_TRIGGER}>Activity</TabsTrigger>
             <TabsTrigger value="team" className={TAB_TRIGGER}>Team</TabsTrigger>
             {isPaid && <TabsTrigger value="budget" className={TAB_TRIGGER}>Budget</TabsTrigger>}
           </TabsList>
