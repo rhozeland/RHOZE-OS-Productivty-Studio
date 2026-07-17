@@ -84,7 +84,7 @@ import RoadmapCopilot from "@/components/project/RoadmapCopilot";
 import TokenizeProjectCta from "@/components/project/TokenizeProjectCta";
 import EditorSideRail from "@/components/project/shared/EditorSideRail";
 import ProjectFeaturedVisual from "@/components/project/ProjectFeaturedVisual";
-import ProjectCoinLiveCard from "@/components/project/shared/ProjectCoinLiveCard";
+import ProjectCoinPanel from "@/components/project/ProjectCoinPanel";
 import SupportProjectCard from "@/components/project/shared/SupportProjectCard";
 import ReleaseActivityFeed from "@/components/project/ReleaseActivityFeed";
 import { Progress } from "@/components/ui/progress";
