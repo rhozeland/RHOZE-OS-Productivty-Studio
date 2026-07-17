@@ -79,7 +79,7 @@ import SignedAgreementCard from "@/components/proposals/SignedAgreementCard";
 import ProjectScopeReview from "@/components/project/ProjectScopeReview";
 // AiRoadmapDraftButton retired — manual roadmaps only.
 import ProjectRolloutTab from "@/components/project/ProjectRolloutTab";
-import AttachCoinToProjectCard from "@/components/project/AttachCoinToProjectCard";
+
 import RoadmapCopilot from "@/components/project/RoadmapCopilot";
 import TokenizeProjectCta from "@/components/project/TokenizeProjectCta";
 import EditorSideRail from "@/components/project/shared/EditorSideRail";
