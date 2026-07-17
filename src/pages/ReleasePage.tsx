@@ -543,6 +543,17 @@ const ReleasePage = () => {
             </TabsContent>
 
 
+            {/* ACTIVITY — public build-in-public stream */}
+            <TabsContent value="activity" className="space-y-6">
+              <div className="max-w-3xl">
+                <ReleaseActivityFeed
+                  projectId={project.id}
+                  contractId={contract?.id}
+                  publicOnly
+                />
+              </div>
+            </TabsContent>
+
             {/* TEAM */}
             <TabsContent value="team" className="space-y-6">
               <SupportersStrip
