@@ -79,12 +79,12 @@ import SignedAgreementCard from "@/components/proposals/SignedAgreementCard";
 import ProjectScopeReview from "@/components/project/ProjectScopeReview";
 // AiRoadmapDraftButton retired — manual roadmaps only.
 import ProjectRolloutTab from "@/components/project/ProjectRolloutTab";
-import AttachCoinToProjectCard from "@/components/project/AttachCoinToProjectCard";
+
 import RoadmapCopilot from "@/components/project/RoadmapCopilot";
 import TokenizeProjectCta from "@/components/project/TokenizeProjectCta";
 import EditorSideRail from "@/components/project/shared/EditorSideRail";
 import ProjectFeaturedVisual from "@/components/project/ProjectFeaturedVisual";
-import ProjectCoinLiveCard from "@/components/project/shared/ProjectCoinLiveCard";
+import ProjectCoinPanel from "@/components/project/ProjectCoinPanel";
 import SupportProjectCard from "@/components/project/shared/SupportProjectCard";
 import ReleaseActivityFeed from "@/components/project/ReleaseActivityFeed";
 import { Progress } from "@/components/ui/progress";
@@ -623,7 +623,7 @@ const ProjectDetailPage = () => {
           />
         </div>
       )}
-      <ProjectCoinLiveCard linkedTokenId={(project as any).linked_token_id ?? null} />
+      <ProjectCoinPanel projectId={id!} isOwner={isOwner} project={project} />
 
       {/* TABS — now full-width */}
       <div className="mt-6">
@@ -849,12 +849,6 @@ const ProjectDetailPage = () => {
           <SignedAgreementCard projectId={id!} contractId={contract?.id} />
 
 
-          {isOwner && (
-            <AttachCoinToProjectCard
-              projectId={project.id}
-              linkedTokenId={(project as any).linked_token_id ?? null}
-            />
-          )}
 
           {isOwner && <RoadmapCopilot projectId={id!} />}
 
