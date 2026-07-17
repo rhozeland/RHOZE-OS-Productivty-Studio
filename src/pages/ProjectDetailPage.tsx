@@ -86,7 +86,9 @@ import EditorSideRail from "@/components/project/shared/EditorSideRail";
 import ProjectFeaturedVisual from "@/components/project/ProjectFeaturedVisual";
 import ProjectCoinLiveCard from "@/components/project/shared/ProjectCoinLiveCard";
 import SupportProjectCard from "@/components/project/shared/SupportProjectCard";
+import ReleaseActivityFeed from "@/components/project/ReleaseActivityFeed";
 import { Progress } from "@/components/ui/progress";
+import { Sparkles as CanvasIcon, Activity as ActivityIcon } from "lucide-react";
 
 const SMARTBOARD_CAP_BY_TIER: Record<string, number> = {
   spark: 2,
@@ -632,9 +634,11 @@ const ProjectDetailPage = () => {
           >
             <TabsTrigger value="overview" className={TAB_TRIGGER}>Overview</TabsTrigger>
             <TabsTrigger value="roadmap" className={TAB_TRIGGER}>Roadmap</TabsTrigger>
+            <TabsTrigger value="canvas" className={TAB_TRIGGER}>Canvas</TabsTrigger>
             <TabsTrigger value="rollout" className={TAB_TRIGGER}>Rollout</TabsTrigger>
             <TabsTrigger value="board" className={TAB_TRIGGER}>Board</TabsTrigger>
             <TabsTrigger value="story" className={TAB_TRIGGER}>Story</TabsTrigger>
+            <TabsTrigger value="activity" className={TAB_TRIGGER}>Activity</TabsTrigger>
             <TabsTrigger value="team" className={TAB_TRIGGER}>Team</TabsTrigger>
             {isPaid && <TabsTrigger value="budget" className={TAB_TRIGGER}>Budget</TabsTrigger>}
           </TabsList>
@@ -1007,6 +1011,33 @@ const ProjectDetailPage = () => {
               canManage={canManageProject}
             />
             <StoryUpdates projectId={id!} canManage={canManageProject} isOwner={isOwner} />
+          </div>
+        </TabsContent>
+
+        {/* CANVAS — FigJam-lite workspace (mounted on its own route so it can go full-height) */}
+        <TabsContent value="canvas" className="space-y-4">
+          <button
+            onClick={() => navigate(`/projects/${id}/canvas`)}
+            className="group block w-full text-left rounded-2xl border border-border bg-gradient-to-br from-primary/10 via-card to-fuchsia-500/5 p-8 transition-all hover:border-primary/40 hover:shadow-lg"
+          >
+            <div className="flex items-center gap-3 mb-2">
+              <CanvasIcon className="h-4 w-4 text-primary" />
+              <span className="text-[10px] uppercase tracking-[0.14em] font-semibold text-primary">Canvas</span>
+            </div>
+            <h3 className="font-display text-2xl font-bold text-foreground">Open the release canvas →</h3>
+            <p className="mt-2 text-sm text-muted-foreground max-w-xl">
+              Drop media, sketch milestones and let the AI copilot draft a roadmap from anything on the board. Opens full-screen.
+            </p>
+          </button>
+        </TabsContent>
+
+        {/* ACTIVITY — build-in-public timeline */}
+        <TabsContent value="activity" className="space-y-4">
+          <div className="max-w-3xl">
+            <div className="flex items-center gap-2 mb-4 text-[10px] uppercase tracking-[0.14em] font-semibold text-muted-foreground">
+              <ActivityIcon className="h-3 w-3" /> Live activity
+            </div>
+            <ReleaseActivityFeed projectId={id!} contractId={contract?.id} />
           </div>
         </TabsContent>
 
