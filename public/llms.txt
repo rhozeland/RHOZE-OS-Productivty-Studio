@@ -6,7 +6,7 @@ Rhozeland is a creator-first platform where artists, builders, and influencers g
 
 ## Pages
 
-- [Home](/): Landing page introducing Rhozeland and how it works.
+- [Home](/home): Main feed — releases, artists, and flow.
 - [Discover](/discover): Browse featured creators, events, and spaces by archetype (Artist, Builder, Influencer).
 - [Profiles](/profiles): Directory of creators on Rhozeland.
 - [Flow](/flow): Swipeable feed of creator works.
