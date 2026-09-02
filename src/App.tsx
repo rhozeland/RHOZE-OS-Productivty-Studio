@@ -217,37 +217,10 @@ const AuthGateWrapper = ({ children }: { children: React.ReactNode }) => {
 };
 
 /**
- * Private-build gate — while Rhozeland is being built, only visitors with an
- * access code (or a real signed-in account) can browse the app. Everyone else
- * lands on the AccessGate.
- *
- * Allowlisted routes stay reachable so email/share/checkout links still work.
+ * Private-build gate — DISABLED. The app now opens straight to Home for
+ * everyone; the AccessGate page stays mounted at /gate for easy revert.
  */
-const GATE_ALLOWLIST = [
-  "/gate",
-  "/auth",
-  "/unsubscribe",
-  "/checkout/return",
-  "/card/",
-  "/release/",
-  "/spaces/events/", // public event detail pages
-];
-
 const PrivateBuildGate = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuth();
-  const path = typeof window !== "undefined" ? window.location.pathname : "/";
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-      </div>
-    );
-  }
-  const allowed =
-    !!user ||
-    hasGateAccess() ||
-    GATE_ALLOWLIST.some((p) => (p.endsWith("/") ? path.startsWith(p) : path === p));
-  if (!allowed) return <Navigate to="/gate" replace />;
   return <>{children}</>;
 };
 
@@ -256,15 +229,6 @@ const PrivateBuildGate = ({ children }: { children: React.ReactNode }) => {
  * Everyone (authed + guests) lands on Home. Landing page retired.
  */
 const RootEntry = () => {
-  const { user, loading } = useAuth();
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-      </div>
-    );
-  }
-  if (!user && !hasGateAccess()) return <Navigate to="/gate" replace />;
   return <Navigate to="/home" replace />;
 };
 
