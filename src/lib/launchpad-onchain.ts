@@ -25,11 +25,12 @@ import {
   loadLaunchpadIdl,
   getOverrideProgramId,
 } from "./launchpad-idl-store";
+import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 
 const ENV_PROGRAM_ID = (import.meta.env.VITE_LAUNCHPAD_PROGRAM_ID as string | undefined)?.trim();
 
-export const LAUNCHPAD_NETWORK: "devnet" | "mainnet-beta" =
-  (import.meta.env.VITE_LAUNCHPAD_NETWORK as "devnet" | "mainnet-beta" | undefined) ?? "devnet";
+export const LAUNCHPAD_NETWORK: WalletAdapterNetwork =
+  (import.meta.env.VITE_LAUNCHPAD_NETWORK as WalletAdapterNetwork | undefined) ?? WalletAdapterNetwork.Devnet;
 
 const SOL_LAMPORTS = 1_000_000_000;
 const TOKEN_DECIMALS_DEFAULT = 6;
