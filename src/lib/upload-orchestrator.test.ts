@@ -176,6 +176,7 @@ describe("runUploadWithRollback — upload throws", () => {
 
   it("falls back to a friendly default when the thrown error has no message", async () => {
     const { result, setters } = await run({
+      // TODO: Resolve ESLint error
       // eslint-disable-next-line @typescript-eslint/no-throw-literal
       uploadImpl: async () => {
         throw {}; // weird non-Error throw

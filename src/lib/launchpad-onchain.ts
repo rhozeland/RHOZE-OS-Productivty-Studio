@@ -185,6 +185,7 @@ export const onChainCreateLaunch = async (args: {
 
   try {
     const sig = await (program.methods as Record<string, (...a: unknown[]) => { rpc: () => Promise<string> }>)
+      // TODO: Resolve ESLint error
       [ixName](args.ticker, args.name, args.uri, new BN(args.lpLockMonths))
       .rpc();
     return { enabled: true, ok: true, data: { signature: sig, launchPda: launchPda.toBase58() } };
@@ -210,6 +211,7 @@ export const onChainBuy = async (args: {
     const lamportsIn = new BN(Math.floor(args.solIn * SOL_LAMPORTS));
     const minOut = new BN(Math.floor(args.minTokensOut * TOKEN_BASE_DEFAULT));
     const sig = await (program.methods as Record<string, (...a: unknown[]) => { rpc: () => Promise<string> }>)
+      // TODO: Resolve ESLint error
       [ixName](lamportsIn, minOut)
       .rpc();
     return { enabled: true, ok: true, data: { signature: sig } };
@@ -235,6 +237,7 @@ export const onChainSell = async (args: {
     const tokensIn = new BN(Math.floor(args.tokensIn * TOKEN_BASE_DEFAULT));
     const minOut = new BN(Math.floor(args.minSolOut * SOL_LAMPORTS));
     const sig = await (program.methods as Record<string, (...a: unknown[]) => { rpc: () => Promise<string> }>)
+    // TODO: Resolve ESLint error
       [ixName](tokensIn, minOut)
       .rpc();
     return { enabled: true, ok: true, data: { signature: sig } };

@@ -204,7 +204,8 @@ const AuthenticatedMessagesPage = ({ user }: { user: NonNullable<ReturnType<type
     if (inquiryParam) setActiveInquiryId(inquiryParam);
 
     // Check if we have the profile already, if not fetch it
-    let targetProfile = partnerProfiles.find((p) => p.user_id === toUserId);
+    // TODO: Resolve ESLint error
+    const targetProfile = partnerProfiles.find((p) => p.user_id === toUserId);
     if (!targetProfile) {
       // Fetch the profile via RPC
       supabase.rpc("get_profiles_by_ids", { _ids: [toUserId] }).then(({ data }) => {

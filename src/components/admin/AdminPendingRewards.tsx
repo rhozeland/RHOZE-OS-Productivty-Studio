@@ -105,6 +105,7 @@ const AdminPendingRewards = () => {
   const toggleSelect = (id: string) => {
     setSelected((prev) => {
       const next = new Set(prev);
+      // TODO: Resolve ESLint error
       next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });

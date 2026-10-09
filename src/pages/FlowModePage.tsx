@@ -680,6 +680,7 @@ const FlowModePage = ({ embedded = false }: FlowModePageProps) => {
   // Upload one pending file with real progress/stall/timeout tracking.
   // Updates `pendingFiles[id]` directly. Resolves with the public URL.
   const uploadPendingFile = (pf: PendingFile, path: string): Promise<string> => {
+    // TODO: Resolve ESLint error
     return new Promise(async (resolve, reject) => {
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData.session?.access_token;

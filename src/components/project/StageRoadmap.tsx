@@ -275,6 +275,7 @@ const StageRoadmap = ({ goals, projectId, projectTitle, contract, milestones, co
   const toggleExpand = (id: string) => {
     setExpandedStages((prev) => {
       const next = new Set(prev);
+      // TODO: Resolve ESLint error
       next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });

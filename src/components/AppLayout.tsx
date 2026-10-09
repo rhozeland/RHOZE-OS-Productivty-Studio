@@ -635,7 +635,7 @@ const AppLayout = () => {
       </CommandDialog>
       
       {/* v9.9: RoomsBottomNav retired — sidebar is the only primary nav. */}
-      {false && user && <RoomsBottomNav />}
+      {/* TODO: Resolve ESLint error */ false && user && <RoomsBottomNav />}
       </CelebrationProvider>
     </SidebarProvider>
   );
