@@ -109,9 +109,9 @@ const CATEGORY_ICONS: Record<string, { Icon: typeof Palette; label: string; tint
 };
 
 const CATEGORY_UPLOAD_HINTS: Record<string, { accept: string; hint: string; linkPlaceholder: string }> = {
-  music: { accept: "audio/*,.mp3,.wav,.flac,.aac", hint: "Drop an audio file",        linkPlaceholder: "Or paste Spotify, Apple Music, or SoundCloud link" },
-  video: { accept: "video/*,.mp4,.mov,.webm",      hint: "Drop a video file",         linkPlaceholder: "Or paste a YouTube or Vimeo link" },
-  photo: { accept: "image/*,.raw,.cr2,.nef",       hint: "Drop a photo",              linkPlaceholder: "Or paste an Instagram or Pinterest link" },
+  music: { accept: "audio/*,.mp3,.wav,.flac,.aac", hint: "Drop an audio file", linkPlaceholder: "Or paste Spotify, Apple Music, or SoundCloud link" },
+  video: { accept: "video/*,.mp4,.mov,.webm", hint: "Drop a video file", linkPlaceholder: "Or paste a YouTube or Vimeo link" },
+  photo: { accept: "image/*,.raw,.cr2,.nef", hint: "Drop a photo", linkPlaceholder: "Or paste an Instagram or Pinterest link" },
 };
 
 
@@ -375,7 +375,7 @@ const FlowModePage = ({ embedded = false }: FlowModePageProps) => {
   // Remove a pending file: abort any in-flight xhr, revoke its blob URL, drop from list.
   const removePendingFile = (id: string) => {
     const xhr = xhrMapRef.current.get(id);
-    if (xhr) { try { xhr.abort(); } catch {} xhrMapRef.current.delete(id); }
+    if (xhr) { try { xhr.abort(); } catch { } xhrMapRef.current.delete(id); }
     const stall = stallTimerMapRef.current.get(id);
     if (stall) { clearInterval(stall); stallTimerMapRef.current.delete(id); }
     const hard = hardTimeoutMapRef.current.get(id);
@@ -383,15 +383,15 @@ const FlowModePage = ({ embedded = false }: FlowModePageProps) => {
     lastProgressMapRef.current.delete(id);
     setPendingFiles((prev) => {
       const target = prev.find((p) => p.id === id);
-      if (target) { try { URL.revokeObjectURL(target.previewUrl); } catch {} }
+      if (target) { try { URL.revokeObjectURL(target.previewUrl); } catch { } }
       return prev.filter((p) => p.id !== id);
     });
   };
 
   // Reset everything related to the current pending file batch (used on dialog close & after success).
   const resetPendingFiles = () => {
-    pendingFiles.forEach((p) => { try { URL.revokeObjectURL(p.previewUrl); } catch {} });
-    xhrMapRef.current.forEach((xhr) => { try { xhr.abort(); } catch {} });
+    pendingFiles.forEach((p) => { try { URL.revokeObjectURL(p.previewUrl); } catch { } });
+    xhrMapRef.current.forEach((xhr) => { try { xhr.abort(); } catch { } });
     xhrMapRef.current.clear();
     stallTimerMapRef.current.forEach((t) => clearInterval(t));
     stallTimerMapRef.current.clear();
@@ -648,7 +648,7 @@ const FlowModePage = ({ embedded = false }: FlowModePageProps) => {
 
   // Cancel every in-flight per-file upload + clear watchdogs. Used on dialog close.
   const cancelUpload = () => {
-    xhrMapRef.current.forEach((xhr) => { try { xhr.abort(); } catch {} });
+    xhrMapRef.current.forEach((xhr) => { try { xhr.abort(); } catch { } });
     xhrMapRef.current.clear();
     stallTimerMapRef.current.forEach((t) => clearInterval(t));
     stallTimerMapRef.current.clear();
@@ -665,7 +665,7 @@ const FlowModePage = ({ embedded = false }: FlowModePageProps) => {
     );
     setPublishingIndex(null);
     // Legacy single-upload cleanup (defensive — UI no longer uses it).
-    if (xhrRef.current) { try { xhrRef.current.abort(); } catch {} xhrRef.current = null; }
+    if (xhrRef.current) { try { xhrRef.current.abort(); } catch { } xhrRef.current = null; }
     clearUploadTimers();
     setUploadStage("idle");
     setUploadProgress(0);
@@ -680,13 +680,13 @@ const FlowModePage = ({ embedded = false }: FlowModePageProps) => {
   // Upload one pending file with real progress/stall/timeout tracking.
   // Updates `pendingFiles[id]` directly. Resolves with the public URL.
   const uploadPendingFile = (pf: PendingFile, path: string): Promise<string> => {
-    return new Promise(async (resolve, reject) => {
+    const upload = async (): Promise<string> => {
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData.session?.access_token;
+
       if (!accessToken) {
         patchPendingFile(pf.id, { status: "error", error: "Not authenticated" });
-        reject(new Error("Not authenticated"));
-        return;
+        throw new Error("Not authenticated");
       }
 
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
@@ -700,79 +700,117 @@ const FlowModePage = ({ embedded = false }: FlowModePageProps) => {
       lastProgressMapRef.current.set(pf.id, Date.now());
       patchPendingFile(pf.id, { status: "uploading", progress: 0, error: null });
 
-      const stallTimer = setInterval(() => {
-        const last = lastProgressMapRef.current.get(pf.id) || Date.now();
-        if (Date.now() - last > STALL_MS) {
-          patchPendingFile(pf.id, { status: "stalled" });
-        }
-      }, 1000);
-      stallTimerMapRef.current.set(pf.id, stallTimer);
+      return new Promise<string>((resolve, reject) => {
+        const stallTimer = setInterval(() => {
+          const last = lastProgressMapRef.current.get(pf.id) || Date.now();
+          if (Date.now() - last > STALL_MS) {
+            patchPendingFile(pf.id, { status: "stalled" });
+          }
+        }, 1000);
+        stallTimerMapRef.current.set(pf.id, stallTimer);
 
-      const hardTimer = setTimeout(() => {
-        try { xhr.abort(); } catch {}
-        clearInterval(stallTimer);
-        stallTimerMapRef.current.delete(pf.id);
-        hardTimeoutMapRef.current.delete(pf.id);
-        patchPendingFile(pf.id, { status: "error", error: "Upload timed out. Check your connection." });
-        reject(new Error("Upload timed out"));
-      }, HARD_TIMEOUT_MS);
-      hardTimeoutMapRef.current.set(pf.id, hardTimer);
+        const hardTimer = setTimeout(() => {
+          try {
+            xhr.abort();
+          } catch { }
+          clearInterval(stallTimer);
+          stallTimerMapRef.current.delete(pf.id);
+          hardTimeoutMapRef.current.delete(pf.id);
+          patchPendingFile(pf.id, {
+            status: "error",
+            error: "Upload timed out. Check your connection.",
+          });
+          reject(new Error("Upload timed out"));
+        }, HARD_TIMEOUT_MS);
+        hardTimeoutMapRef.current.set(pf.id, hardTimer);
 
-      const cleanupTimers = () => {
-        clearInterval(stallTimer);
-        clearTimeout(hardTimer);
-        stallTimerMapRef.current.delete(pf.id);
-        hardTimeoutMapRef.current.delete(pf.id);
-        xhrMapRef.current.delete(pf.id);
-      };
+        const cleanupTimers = () => {
+          clearInterval(stallTimer);
+          clearTimeout(hardTimer);
+          stallTimerMapRef.current.delete(pf.id);
+          hardTimeoutMapRef.current.delete(pf.id);
+          xhrMapRef.current.delete(pf.id);
+        };
 
-      xhr.upload.onprogress = (evt) => {
-        if (!evt.lengthComputable) return;
-        lastProgressMapRef.current.set(pf.id, Date.now());
-        const pct = Math.round((evt.loaded / evt.total) * 100);
-        // Recover from stalled if data started flowing again.
-        setPendingFiles((prev) =>
-          prev.map((p) =>
-            p.id === pf.id
-              ? { ...p, progress: pct, status: p.status === "stalled" ? "uploading" : p.status }
-              : p,
-          ),
+        xhr.upload.onprogress = (evt) => {
+          if (!evt.lengthComputable) return;
+          lastProgressMapRef.current.set(pf.id, Date.now());
+          const pct = Math.round((evt.loaded / evt.total) * 100);
+
+          // Recover from stalled if data started flowing again.
+          setPendingFiles((prev) =>
+            prev.map((p) =>
+              p.id === pf.id
+                ? {
+                  ...p,
+                  progress: pct,
+                  status: p.status === "stalled" ? "uploading" : p.status,
+                }
+                : p,
+            ),
+          );
+        };
+
+        xhr.onload = () => {
+          cleanupTimers();
+
+          if (xhr.status >= 200 && xhr.status < 300) {
+            const { data: urlData } = supabase.storage
+              .from("flow-uploads")
+              .getPublicUrl(path);
+
+            patchPendingFile(pf.id, {
+              status: "done",
+              progress: 100,
+              uploadedUrl: urlData.publicUrl,
+              error: null,
+            });
+            resolve(urlData.publicUrl);
+          } else {
+            let msg = `Upload failed (${xhr.status})`;
+
+            try {
+              const body = JSON.parse(xhr.responseText);
+              if (body?.message) msg = body.message;
+            } catch { }
+
+            patchPendingFile(pf.id, { status: "error", error: msg });
+            reject(new Error(msg));
+          }
+        };
+
+        xhr.onerror = () => {
+          cleanupTimers();
+          patchPendingFile(pf.id, {
+            status: "error",
+            error: "Network error during upload.",
+          });
+          reject(new Error("Network error"));
+        };
+
+        xhr.onabort = () => {
+          cleanupTimers();
+          // Don't overwrite a status the caller may have set; just resolve as cancelled.
+          reject(new Error("Upload cancelled"));
+        };
+
+        xhr.open("POST", url, true);
+        xhr.setRequestHeader("Authorization", `Bearer ${accessToken}`);
+        xhr.setRequestHeader(
+          "apikey",
+          import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string,
         );
-      };
+        xhr.setRequestHeader("x-upsert", "false");
 
-      xhr.onload = () => {
-        cleanupTimers();
-        if (xhr.status >= 200 && xhr.status < 300) {
-          const { data: urlData } = supabase.storage.from("flow-uploads").getPublicUrl(path);
-          patchPendingFile(pf.id, { status: "done", progress: 100, uploadedUrl: urlData.publicUrl, error: null });
-          resolve(urlData.publicUrl);
-        } else {
-          let msg = `Upload failed (${xhr.status})`;
-          try { const body = JSON.parse(xhr.responseText); if (body?.message) msg = body.message; } catch {}
-          patchPendingFile(pf.id, { status: "error", error: msg });
-          reject(new Error(msg));
+        if (pf.file.type) {
+          xhr.setRequestHeader("Content-Type", pf.file.type);
         }
-      };
 
-      xhr.onerror = () => {
-        cleanupTimers();
-        patchPendingFile(pf.id, { status: "error", error: "Network error during upload." });
-        reject(new Error("Network error"));
-      };
+        xhr.send(pf.file);
+      });
+    };
 
-      xhr.onabort = () => {
-        cleanupTimers();
-        // Don't overwrite a status the caller may have set; just resolve as cancelled.
-        reject(new Error("Upload cancelled"));
-      };
-
-      xhr.open("POST", url, true);
-      xhr.setRequestHeader("Authorization", `Bearer ${accessToken}`);
-      xhr.setRequestHeader("apikey", import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string);
-      xhr.setRequestHeader("x-upsert", "false");
-      if (pf.file.type) xhr.setRequestHeader("Content-Type", pf.file.type);
-      xhr.send(pf.file);
-    });
+    return upload();
   };
 
   // Retry a single failed/cancelled file. Independent of the publish loop so the user
@@ -848,20 +886,20 @@ const FlowModePage = ({ embedded = false }: FlowModePageProps) => {
       const rows = latest.length === 0
         ? [{ ...baseRow, file_url: null, content_type: newLink ? "link" : "text", content_hash: null }]
         : latest.map((pf) => ({
-            ...baseRow,
-            file_url: pf.uploadedUrl,
-            content_type: pf.file.type.startsWith("image")
-              ? "image"
-              : pf.file.type.startsWith("video")
+          ...baseRow,
+          file_url: pf.uploadedUrl,
+          content_type: pf.file.type.startsWith("image")
+            ? "image"
+            : pf.file.type.startsWith("video")
               ? "video"
               : pf.file.type.startsWith("audio")
-              ? "audio"
-              : "file",
-            // SHA-256 fingerprint computed during acceptance. Will usually be
-            // ready by the time we publish; if hashing failed (rare) we still
-            // ship the row and let the creator request verification later.
-            content_hash: pf.contentHash,
-          }));
+                ? "audio"
+                : "file",
+          // SHA-256 fingerprint computed during acceptance. Will usually be
+          // ready by the time we publish; if hashing failed (rare) we still
+          // ship the row and let the creator request verification later.
+          content_hash: pf.contentHash,
+        }));
 
       const { data: inserted, error } = await supabase.from("flow_items").insert(rows as any).select("id");
       if (error) throw error;
@@ -932,7 +970,7 @@ const FlowModePage = ({ embedded = false }: FlowModePageProps) => {
   //   • "creators"  → hire/services rows mapped into FlowCard shape
   // For non-"all" filters we feed mapped Connect rows into the SAME swipe
   // deck so the UI stays identical — only the underlying items change.
-  const hireRowsQ  = useHireRows(surfaceFilter === "creators");
+  const hireRowsQ = useHireRows(surfaceFilter === "creators");
 
   // Map a ConnectRow into the minimal flow_items-compatible shape FlowCard
   // consumes. Cover image → file_url (rendered via the image branch); detail
@@ -1358,7 +1396,7 @@ const FlowModePage = ({ embedded = false }: FlowModePageProps) => {
           if (r.status === "awarded" && r.amount > 0) {
             toast.success(`+${r.amount} $RHOZE`, { description: "Thanks for the love" });
           }
-        }).catch(() => {});
+        }).catch(() => { });
       }
       return;
     }
@@ -1785,10 +1823,10 @@ const FlowModePage = ({ embedded = false }: FlowModePageProps) => {
             size="icon"
             className="rounded-full bg-card/60 backdrop-blur-sm hover:bg-card/80 h-9 w-9"
             onClick={handleExitFlow}
-              aria-label={embedded ? "Expand Flow Mode" : "Exit Flow Mode"}
-              title={embedded ? "Expand Flow Mode" : "Exit Flow Mode"}
+            aria-label={embedded ? "Expand Flow Mode" : "Exit Flow Mode"}
+            title={embedded ? "Expand Flow Mode" : "Exit Flow Mode"}
           >
-              {embedded ? <Maximize2 className="h-4 w-4" /> : <X className="h-4 w-4" />}
+            {embedded ? <Maximize2 className="h-4 w-4" /> : <X className="h-4 w-4" />}
           </Button>
         </div>
       </div>
@@ -1820,141 +1858,141 @@ const FlowModePage = ({ embedded = false }: FlowModePageProps) => {
               isRetrying={flowItemsFetching}
             />
           ) : (
-          <div className="relative w-full flex items-center justify-center">
-            {/* Card stack — dimmed during a refresh so the loader overlay
+            <div className="relative w-full flex items-center justify-center">
+              {/* Card stack — dimmed during a refresh so the loader overlay
                 reads as "this content is updating" rather than "the app
                 hung". `pointer-events-none` while refreshing prevents a
                 stray swipe from queueing a stale-card interaction. */}
-            <motion.div
-              className="w-full flex items-center justify-center"
-              animate={{ opacity: isFeedRefreshing ? 0.35 : 1 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              style={{ pointerEvents: isFeedRefreshing ? "none" : "auto" }}
-            >
-              <AnimatePresence mode="wait">
-                {currentItem ? (
-                  <motion.div
-                    key={`${currentItem.id}-${currentIndex}`}
-                    className={cn(
-                      "w-full max-w-xs md:max-w-sm will-change-transform relative",
-                      swipeLocked ? "cursor-default" : "cursor-grab active:cursor-grabbing",
-                    )}
-                    drag={!swipeLocked}
-                    dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-                    dragElastic={0.5}
-                    dragTransition={{ bounceStiffness: 400, bounceDamping: 30 }}
-                    onDragEnd={handleDragEnd}
-                    style={{ x, y, rotateZ, opacity: cardOpacity, scale: cardScale, boxShadow: shadowIntensity }}
-                    initial={{ opacity: 0, scale: 0.97, y: 10 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.12, ease: "easeOut" } }}
-                    transition={{ duration: 0.22, ease: [0.25, 0.1, 0.25, 1] }}
-                    whileTap={{ scale: 0.99 }}
-                  >
-                    <FlowCard
-                      item={currentItem}
-                      expanded={expandedCard}
-                      disableMediaInteractions
-                      onToggleExpand={() => setExpandedCard(!expandedCard)}
-                      onLike={() => performAction("like")}
-                      onComment={() => performAction("comment")}
-                      onShare={() => performAction("share")}
-                      liked={engagement?.liked.has(currentItem.id)}
-                      likeCount={engagement?.likes.get(currentItem.id) ?? 0}
-                      commentCount={engagement?.comments.get(currentItem.id) ?? 0}
-                      onDelete={() => deleteFlowItem.mutate(currentItem.id)}
-                      isOwner={currentItem.user_id === user?.id}
-                      isAdmin={isAdmin}
-                      profilesLoading={flowItemsFetching}
-                      coin={(currentItem as any).user_id ? coinByCreator?.get((currentItem as any).user_id) ?? null : null}
-                    />
-                    {/* Heart-burst overlay — celebratory feedback when the
+              <motion.div
+                className="w-full flex items-center justify-center"
+                animate={{ opacity: isFeedRefreshing ? 0.35 : 1 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                style={{ pointerEvents: isFeedRefreshing ? "none" : "auto" }}
+              >
+                <AnimatePresence mode="wait">
+                  {currentItem ? (
+                    <motion.div
+                      key={`${currentItem.id}-${currentIndex}`}
+                      className={cn(
+                        "w-full max-w-xs md:max-w-sm will-change-transform relative",
+                        swipeLocked ? "cursor-default" : "cursor-grab active:cursor-grabbing",
+                      )}
+                      drag={!swipeLocked}
+                      dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+                      dragElastic={0.5}
+                      dragTransition={{ bounceStiffness: 400, bounceDamping: 30 }}
+                      onDragEnd={handleDragEnd}
+                      style={{ x, y, rotateZ, opacity: cardOpacity, scale: cardScale, boxShadow: shadowIntensity }}
+                      initial={{ opacity: 0, scale: 0.97, y: 10 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.12, ease: "easeOut" } }}
+                      transition={{ duration: 0.22, ease: [0.25, 0.1, 0.25, 1] }}
+                      whileTap={{ scale: 0.99 }}
+                    >
+                      <FlowCard
+                        item={currentItem}
+                        expanded={expandedCard}
+                        disableMediaInteractions
+                        onToggleExpand={() => setExpandedCard(!expandedCard)}
+                        onLike={() => performAction("like")}
+                        onComment={() => performAction("comment")}
+                        onShare={() => performAction("share")}
+                        liked={engagement?.liked.has(currentItem.id)}
+                        likeCount={engagement?.likes.get(currentItem.id) ?? 0}
+                        commentCount={engagement?.comments.get(currentItem.id) ?? 0}
+                        onDelete={() => deleteFlowItem.mutate(currentItem.id)}
+                        isOwner={currentItem.user_id === user?.id}
+                        isAdmin={isAdmin}
+                        profilesLoading={flowItemsFetching}
+                        coin={(currentItem as any).user_id ? coinByCreator?.get((currentItem as any).user_id) ?? null : null}
+                      />
+                      {/* Heart-burst overlay — celebratory feedback when the
                         user likes the visible card. Re-keys per-tap so the
                         animation replays on rapid taps. Pointer-events off
                         so it never blocks subsequent gestures. */}
-                    <AnimatePresence>
-                      {heartBurst && heartBurst.itemId === currentItem.id && (
-                        <motion.div
-                          key={heartBurst.key}
-                          className="pointer-events-none absolute inset-0 flex items-center justify-center"
-                          initial={{ opacity: 0, scale: 0.4 }}
-                          animate={{ opacity: [0, 1, 1, 0], scale: [0.4, 1.3, 1.15, 1.4] }}
-                          exit={{ opacity: 0 }}
-                          transition={{ duration: 0.9, times: [0, 0.2, 0.6, 1], ease: "easeOut" }}
-                          onAnimationComplete={() => setHeartBurst(null)}
-                        >
-                          <svg viewBox="0 0 24 24" fill="currentColor" className="h-32 w-32 text-rose-500 drop-shadow-[0_8px_30px_rgba(244,63,94,0.6)]">
-                            <path d="M12 21s-7-4.35-9.5-9.05C.84 8.36 2.4 4.5 6.05 4.5c2.05 0 3.49 1.05 4.45 2.5C11.46 5.55 12.9 4.5 14.95 4.5c3.65 0 5.21 3.86 3.55 7.45C19 16.65 12 21 12 21z"/>
-                          </svg>
-                          {/* Floating "+1" sparkles */}
-                          {[0, 1, 2, 3, 4].map((i) => (
-                            <motion.span
-                              key={i}
-                              className="absolute text-rose-500 font-bold text-sm"
-                              initial={{ opacity: 0, x: 0, y: 0, scale: 0.5 }}
-                              animate={{
-                                opacity: [0, 1, 0],
-                                x: Math.cos((i / 5) * Math.PI * 2) * 80,
-                                y: Math.sin((i / 5) * Math.PI * 2) * 80 - 20,
-                                scale: [0.5, 1, 0.7],
-                              }}
-                              transition={{ duration: 0.8, delay: 0.05 * i, ease: "easeOut" }}
-                            >
-                              ♥
-                            </motion.span>
-                          ))}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </motion.div>
-                ) : isFeedRefreshing ? (
-                  // Suppress the "Nothing here yet" CTA while a refresh is
-                  // in flight — otherwise users briefly see an empty-state
-                  // pitch that disappears as soon as the new feed lands.
-                  <div className="h-72 w-full max-w-xs md:max-w-sm" aria-hidden="true" />
-                ) : (
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center px-4">
-                    <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-card/60 backdrop-blur-sm">
-                      <Sparkles className="h-8 w-8 text-primary" />
-                    </div>
-                    <h2 className="mb-2 font-display text-xl font-bold text-foreground">Nothing here yet</h2>
-                    <p className="mx-auto mb-6 max-w-xs text-sm text-muted-foreground">Be the first to share your work.</p>
-                    <Button onClick={() => setAddOpen(true)} className="rounded-full px-6">
-                      <Plus className="mr-2 h-4 w-4" />
-                      Share Your Work
-                    </Button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
+                      <AnimatePresence>
+                        {heartBurst && heartBurst.itemId === currentItem.id && (
+                          <motion.div
+                            key={heartBurst.key}
+                            className="pointer-events-none absolute inset-0 flex items-center justify-center"
+                            initial={{ opacity: 0, scale: 0.4 }}
+                            animate={{ opacity: [0, 1, 1, 0], scale: [0.4, 1.3, 1.15, 1.4] }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.9, times: [0, 0.2, 0.6, 1], ease: "easeOut" }}
+                            onAnimationComplete={() => setHeartBurst(null)}
+                          >
+                            <svg viewBox="0 0 24 24" fill="currentColor" className="h-32 w-32 text-rose-500 drop-shadow-[0_8px_30px_rgba(244,63,94,0.6)]">
+                              <path d="M12 21s-7-4.35-9.5-9.05C.84 8.36 2.4 4.5 6.05 4.5c2.05 0 3.49 1.05 4.45 2.5C11.46 5.55 12.9 4.5 14.95 4.5c3.65 0 5.21 3.86 3.55 7.45C19 16.65 12 21 12 21z" />
+                            </svg>
+                            {/* Floating "+1" sparkles */}
+                            {[0, 1, 2, 3, 4].map((i) => (
+                              <motion.span
+                                key={i}
+                                className="absolute text-rose-500 font-bold text-sm"
+                                initial={{ opacity: 0, x: 0, y: 0, scale: 0.5 }}
+                                animate={{
+                                  opacity: [0, 1, 0],
+                                  x: Math.cos((i / 5) * Math.PI * 2) * 80,
+                                  y: Math.sin((i / 5) * Math.PI * 2) * 80 - 20,
+                                  scale: [0.5, 1, 0.7],
+                                }}
+                                transition={{ duration: 0.8, delay: 0.05 * i, ease: "easeOut" }}
+                              >
+                                ♥
+                              </motion.span>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
+                  ) : isFeedRefreshing ? (
+                    // Suppress the "Nothing here yet" CTA while a refresh is
+                    // in flight — otherwise users briefly see an empty-state
+                    // pitch that disappears as soon as the new feed lands.
+                    <div className="h-72 w-full max-w-xs md:max-w-sm" aria-hidden="true" />
+                  ) : (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center px-4">
+                      <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-card/60 backdrop-blur-sm">
+                        <Sparkles className="h-8 w-8 text-primary" />
+                      </div>
+                      <h2 className="mb-2 font-display text-xl font-bold text-foreground">Nothing here yet</h2>
+                      <p className="mx-auto mb-6 max-w-xs text-sm text-muted-foreground">Be the first to share your work.</p>
+                      <Button onClick={() => setAddOpen(true)} className="rounded-full px-6">
+                        <Plus className="mr-2 h-4 w-4" />
+                        Share Your Work
+                      </Button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
 
-            {/* Centered fade loader — appears whenever the feed is mid-
+              {/* Centered fade loader — appears whenever the feed is mid-
                 refresh (scope flip or active query fetch). Sits above the
                 dimmed cards so users immediately see *why* the stack just
                 stopped responding. */}
-            <AnimatePresence>
-              {isFeedRefreshing && (
-                <motion.div
-                  key="scope-fade-loader"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
-                  className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                  role="status"
-                  aria-live="polite"
-                  aria-label="Refreshing feed"
-                >
-                  <div className="flex items-center gap-2 rounded-full bg-card/80 backdrop-blur-md border border-border/40 px-4 py-2 shadow-md">
-                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                    <span className="text-xs font-body font-medium text-foreground">
-                      Refreshing feed…
-                    </span>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+              <AnimatePresence>
+                {isFeedRefreshing && (
+                  <motion.div
+                    key="scope-fade-loader"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                    role="status"
+                    aria-live="polite"
+                    aria-label="Refreshing feed"
+                  >
+                    <div className="flex items-center gap-2 rounded-full bg-card/80 backdrop-blur-md border border-border/40 px-4 py-2 shadow-md">
+                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                      <span className="text-xs font-body font-medium text-foreground">
+                        Refreshing feed…
+                      </span>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           )}
         </div>
       )}
@@ -1990,7 +2028,7 @@ const FlowModePage = ({ embedded = false }: FlowModePageProps) => {
                         <FlowCard
                           item={item}
                           expanded={false}
-                          onToggleExpand={() => {}}
+                          onToggleExpand={() => { }}
                           onLike={() => performAction("like", undefined, item)}
                           onComment={() => performAction("comment", undefined, item)}
                           onShare={() => performAction("share", undefined, item)}
@@ -2210,271 +2248,91 @@ const FlowModePage = ({ embedded = false }: FlowModePageProps) => {
       }}>
         <DialogContent className="w-[calc(100vw-1rem)] max-w-[640px] max-h-[90vh] overflow-hidden p-0 gap-0 !flex flex-col">
           <div className="flex min-h-0 flex-1 flex-col bg-background">
-          {/* Sticky header with stepper */}
-          <div className="sticky top-0 z-20 bg-background/95 backdrop-blur border-b border-border px-5 pt-5 pb-3">
-            <DialogHeader className="space-y-1">
-              <DialogTitle className="text-lg">
-                {shareStep === "pick" && "Share to Flow"}
-                {shareStep === "caption" && "Title & caption"}
-                {shareStep === "confirm" && "Review"}
-              </DialogTitle>
-              <DialogDescription className="sr-only">Share a work to your Flow feed.</DialogDescription>
-            </DialogHeader>
-            {/* 3-dot stepper */}
-            <div className="flex items-center gap-1.5 mt-3" role="tablist" aria-label="Share progress">
-              {(["pick", "caption", "confirm"] as const).map((s, i) => {
-                const idx = ["pick", "caption", "confirm"].indexOf(shareStep);
-                const active = i === idx;
-                const done = i < idx;
-                return (
-                  <span
-                    key={s}
-                    className={cn(
-                      "h-1 rounded-full transition-all",
-                      active ? "w-8 bg-primary" : done ? "w-4 bg-primary/60" : "w-4 bg-muted"
-                    )}
-                  />
-                );
-              })}
+            {/* Sticky header with stepper */}
+            <div className="sticky top-0 z-20 bg-background/95 backdrop-blur border-b border-border px-5 pt-5 pb-3">
+              <DialogHeader className="space-y-1">
+                <DialogTitle className="text-lg">
+                  {shareStep === "pick" && "Share to Flow"}
+                  {shareStep === "caption" && "Title & caption"}
+                  {shareStep === "confirm" && "Review"}
+                </DialogTitle>
+                <DialogDescription className="sr-only">Share a work to your Flow feed.</DialogDescription>
+              </DialogHeader>
+              {/* 3-dot stepper */}
+              <div className="flex items-center gap-1.5 mt-3" role="tablist" aria-label="Share progress">
+                {(["pick", "caption", "confirm"] as const).map((s, i) => {
+                  const idx = ["pick", "caption", "confirm"].indexOf(shareStep);
+                  const active = i === idx;
+                  const done = i < idx;
+                  return (
+                    <span
+                      key={s}
+                      className={cn(
+                        "h-1 rounded-full transition-all",
+                        active ? "w-8 bg-primary" : done ? "w-4 bg-primary/60" : "w-4 bg-muted"
+                      )}
+                    />
+                  );
+                })}
+              </div>
             </div>
-          </div>
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-5 pt-4">
+            <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-5 pt-4">
 
-          {(() => {
-            // ---- Validation summary ----
-            const trimmedTitle = newTitle.trim();
-            const trimmedLinkRaw = newLink.trim();
-            const linkProvided = trimmedLinkRaw.length > 0;
-            let linkValid = true;
-            if (linkProvided) {
-              try {
-                const u = new URL(/^https?:\/\//i.test(trimmedLinkRaw) ? trimmedLinkRaw : `https://${trimmedLinkRaw}`);
-                linkValid = !!u.hostname && u.hostname.includes(".");
-              } catch {
-                linkValid = false;
-              }
-            }
-            const fileCount = pendingFiles.length;
-            const hasMedia = fileCount > 0 || linkProvided;
-            const filesUploading = pendingFiles.some((f) => f.status === "uploading" || f.status === "stalled");
-            const filesErrored = pendingFiles.filter((f) => f.status === "error");
-            const noFileErrors = filesErrored.length === 0;
-            const checks = [
-              { ok: hasMedia, label: fileCount > 1 ? `${fileCount} files attached` : "File or link attached" },
-              { ok: noFileErrors, label: filesErrored.length > 0 ? `Resolve ${filesErrored.length} file error${filesErrored.length > 1 ? "s" : ""}` : "All files uploaded cleanly" },
-              { ok: !linkProvided || linkValid, label: linkProvided ? "Link looks valid" : "Link looks valid (optional)" },
-              { ok: !filesUploading, label: "No active uploads" },
-            ];
-            const allValid = checks.every((c) => c.ok);
-            const canPublish = allValid && !createFlowItem.isPending;
-            const captionLen = newDesc.length;
-            const captionWithinLimit = captionLen <= CAPTION_LIMIT;
-            const titleValid = newTitle.trim().length > 0 && newTitle.length <= 80;
-            // Step gating: pick needs media + no errors; caption needs a title + caption within limit.
-            const pickValid = hasMedia && noFileErrors && !filesUploading;
-            const captionValid = titleValid && captionWithinLimit;
+              {(() => {
+                // ---- Validation summary ----
+                const trimmedTitle = newTitle.trim();
+                const trimmedLinkRaw = newLink.trim();
+                const linkProvided = trimmedLinkRaw.length > 0;
+                let linkValid = true;
+                if (linkProvided) {
+                  try {
+                    const u = new URL(/^https?:\/\//i.test(trimmedLinkRaw) ? trimmedLinkRaw : `https://${trimmedLinkRaw}`);
+                    linkValid = !!u.hostname && u.hostname.includes(".");
+                  } catch {
+                    linkValid = false;
+                  }
+                }
+                const fileCount = pendingFiles.length;
+                const hasMedia = fileCount > 0 || linkProvided;
+                const filesUploading = pendingFiles.some((f) => f.status === "uploading" || f.status === "stalled");
+                const filesErrored = pendingFiles.filter((f) => f.status === "error");
+                const noFileErrors = filesErrored.length === 0;
+                const checks = [
+                  { ok: hasMedia, label: fileCount > 1 ? `${fileCount} files attached` : "File or link attached" },
+                  { ok: noFileErrors, label: filesErrored.length > 0 ? `Resolve ${filesErrored.length} file error${filesErrored.length > 1 ? "s" : ""}` : "All files uploaded cleanly" },
+                  { ok: !linkProvided || linkValid, label: linkProvided ? "Link looks valid" : "Link looks valid (optional)" },
+                  { ok: !filesUploading, label: "No active uploads" },
+                ];
+                const allValid = checks.every((c) => c.ok);
+                const canPublish = allValid && !createFlowItem.isPending;
+                const captionLen = newDesc.length;
+                const captionWithinLimit = captionLen <= CAPTION_LIMIT;
+                const titleValid = newTitle.trim().length > 0 && newTitle.length <= 80;
+                // Step gating: pick needs media + no errors; caption needs a title + caption within limit.
+                const pickValid = hasMedia && noFileErrors && !filesUploading;
+                const captionValid = titleValid && captionWithinLimit;
 
-            const goNext = () => {
-              if (shareStep === "pick" && pickValid) setShareStep("caption");
-              else if (shareStep === "caption" && captionValid) setShareStep("confirm");
-              else if (shareStep === "confirm" && canPublish) createFlowItem.mutate();
-            };
+                const goNext = () => {
+                  if (shareStep === "pick" && pickValid) setShareStep("caption");
+                  else if (shareStep === "caption" && captionValid) setShareStep("confirm");
+                  else if (shareStep === "confirm" && canPublish) createFlowItem.mutate();
+                };
 
-            return (
-              <form
-                onSubmit={(e) => { e.preventDefault(); goNext(); }}
-                className="space-y-4"
-              >
+                return (
+                  <form
+                    onSubmit={(e) => { e.preventDefault(); goNext(); }}
+                    className="space-y-4"
+                  >
 
-                {/* Pre-publish checks moved below the preview as a collapsible reminder. */}
+                    {/* Pre-publish checks moved below the preview as a collapsible reminder. */}
 
-                {/* Live embed preview for later steps when no file is attached. */}
-                {shareStep !== "pick" && fileCount === 0 && newLink.trim() && (
-                  <MediaLinkPreview url={newLink} />
-                )}
-
-                {/* Full-size media preview — used for later steps; step one has its own preview panel. */}
-                {shareStep !== "pick" && fileCount > 0 && (
-                  <div className="space-y-2" role="list" aria-label="Files to share">
-                    {pendingFiles.map((pf) => {
-                      const isImg = pf.file.type.startsWith("image/");
-                      const isVid = pf.file.type.startsWith("video/");
-                      const isAud = pf.file.type.startsWith("audio/");
-                      const showProgress = pf.status === "uploading" || pf.status === "stalled" || (pf.status === "done" && pf.progress > 0 && pf.progress < 100);
-                      return (
-                        <div
-                          key={pf.id}
-                          role="listitem"
-                          className={cn(
-                            "relative rounded-xl overflow-hidden border bg-background/40 group",
-                            pf.status === "error" ? "border-destructive/40 bg-destructive/5" : "border-border",
-                          )}
-                        >
-                          {isImg ? (
-                            <img src={pf.previewUrl} alt="" className="w-full max-h-[420px] object-contain bg-background" />
-                          ) : isVid ? (
-                            <video src={pf.previewUrl} className="w-full max-h-[420px] bg-background" controls playsInline />
-                          ) : isAud ? (
-                            <div className="px-4 py-5 bg-muted/30">
-                              <audio src={pf.previewUrl} controls className="w-full" />
-                            </div>
-                          ) : (
-                            <div className="aspect-video flex items-center justify-center bg-muted/40 text-muted-foreground text-xs font-medium uppercase">
-                              {pf.file.name.split(".").pop()?.slice(0, 6) || "FILE"}
-                            </div>
-                          )}
-
-                          {/* Floating remove button */}
-                          <div className="absolute top-2 right-2 flex items-center gap-1">
-                            {(pf.status === "error" || pf.status === "stalled") && (
-                              <Button
-                                type="button"
-                                size="icon"
-                                variant="secondary"
-                                className="h-7 w-7 rounded-full bg-background/80 backdrop-blur"
-                                aria-label="Retry"
-                                onClick={() => retryPendingFile(pf.id)}
-                              >
-                                <RotateCcw className="h-3.5 w-3.5" />
-                              </Button>
-                            )}
-                            <Button
-                              type="button"
-                              size="icon"
-                              variant="secondary"
-                              className="h-7 w-7 rounded-full bg-background/80 backdrop-blur hover:bg-destructive hover:text-destructive-foreground"
-                              aria-label="Remove file"
-                              disabled={createFlowItem.isPending}
-                              onClick={() => removePendingFile(pf.id)}
-                            >
-                              <X className="h-3.5 w-3.5" />
-                            </Button>
-                          </div>
-
-                          {/* Upload progress overlay */}
-                          {showProgress && (
-                            <div className="absolute inset-x-0 bottom-0 px-3 py-2 bg-gradient-to-t from-background/90 to-transparent">
-                              <Progress value={pf.progress} className="h-1" />
-                            </div>
-                          )}
-                          {pf.status === "error" && pf.error && (
-                            <p className="absolute inset-x-0 bottom-0 px-3 py-1.5 text-[11px] text-destructive-foreground bg-destructive/90" role="alert">{pf.error}</p>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {shareStep === "pick" && (
-                  <div className="space-y-4">
-                    {/* Visual icon picker — pick a vibe (music · video · photo) */}
-                    <div>
-                      <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium mb-2 px-0.5">
-                        Pick a vibe
-                      </p>
-                      <div className="grid grid-cols-3 gap-2">
-                        {CATEGORIES.map((cat) => {
-                          const meta = CATEGORY_ICONS[cat];
-                          const Icon = meta.Icon;
-                          const active = newCategory === cat;
-                          return (
-                            <button
-                              key={cat}
-                              type="button"
-                              onClick={() => { setNewCategory(cat); resetPendingFiles(); }}
-                              aria-pressed={active}
-                              aria-label={meta.label}
-                              className={cn(
-                                "group flex min-h-20 flex-col items-center justify-center gap-1.5 rounded-2xl px-3 py-3 transition-all",
-                                "border bg-gradient-to-br text-center",
-                                active
-                                  ? `border-primary/60 ${meta.tint} shadow-sm scale-[1.02]`
-                                  : "border-border bg-muted/30 hover:bg-muted/60 text-muted-foreground"
-                              )}
-                            >
-                              <Icon className="h-5 w-5 transition-transform group-hover:scale-110" strokeWidth={active ? 2.25 : 1.75} />
-                              <span className="text-[11px] font-medium capitalize">{meta.label}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Upload area — only when no link is being used as the primary embed */}
-                    {!newLink.trim() && (
-                      <div>
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          multiple
-                          accept={CATEGORY_UPLOAD_HINTS[newCategory]?.accept || "*/*"}
-                          className="hidden"
-                          onChange={(e) => { addPendingFiles(e.target.files); e.target.value = ""; }}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => fileInputRef.current?.click()}
-                          onDragEnter={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            dragCounterRef.current += 1;
-                            if (e.dataTransfer.types.includes("Files")) setIsDragging(true);
-                          }}
-                          onDragOver={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            e.dataTransfer.dropEffect = "copy";
-                          }}
-                          onDragLeave={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            dragCounterRef.current -= 1;
-                            if (dragCounterRef.current <= 0) {
-                              dragCounterRef.current = 0;
-                              setIsDragging(false);
-                            }
-                          }}
-                          onDrop={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            dragCounterRef.current = 0;
-                            setIsDragging(false);
-                            addPendingFiles(e.dataTransfer.files);
-                          }}
-                          aria-label="Upload files or drop here"
-                          className={cn(
-                            "w-full border-2 border-dashed rounded-2xl p-8 text-center transition-all",
-                            isDragging
-                              ? "border-primary bg-primary/5 scale-[1.01]"
-                              : fileError
-                              ? "border-destructive/60 hover:border-destructive"
-                              : "border-border hover:border-primary/30"
-                          )}
-                        >
-                          {isDragging ? (
-                            <>
-                              <Upload className="h-7 w-7 text-primary mx-auto mb-2 animate-pulse" />
-                              <p className="text-sm text-primary font-medium">Drop files to upload</p>
-                            </>
-                          ) : (
-                            <>
-                              <Upload className="h-7 w-7 text-muted-foreground mx-auto mb-2" />
-                              <p className="text-sm text-foreground font-medium">
-                                {fileCount > 0 ? "Add more files" : (CATEGORY_UPLOAD_HINTS[newCategory]?.hint || "Upload files")}
-                              </p>
-                              <p className="text-[11px] text-muted-foreground/70 mt-1">Click or drag &amp; drop · multiple allowed</p>
-                            </>
-                          )}
-                        </button>
-                        {fileError && (
-                          <p className="text-xs text-destructive mt-1.5 px-1" role="alert">{fileError}</p>
-                        )}
-                      </div>
+                    {/* Live embed preview for later steps when no file is attached. */}
+                    {shareStep !== "pick" && fileCount === 0 && newLink.trim() && (
+                      <MediaLinkPreview url={newLink} />
                     )}
 
-                    {/* File preview list — appears as soon as files are added */}
-                    {fileCount > 0 && (
+                    {/* Full-size media preview — used for later steps; step one has its own preview panel. */}
+                    {shareStep !== "pick" && fileCount > 0 && (
                       <div className="space-y-2" role="list" aria-label="Files to share">
                         {pendingFiles.map((pf) => {
                           const isImg = pf.file.type.startsWith("image/");
@@ -2491,9 +2349,9 @@ const FlowModePage = ({ embedded = false }: FlowModePageProps) => {
                               )}
                             >
                               {isImg ? (
-                                <img src={pf.previewUrl} alt="" className="w-full max-h-[360px] object-contain bg-background" />
+                                <img src={pf.previewUrl} alt="" className="w-full max-h-[420px] object-contain bg-background" />
                               ) : isVid ? (
-                                <video src={pf.previewUrl + "#t=0.1"} className="w-full max-h-[360px] bg-background" controls playsInline preload="metadata" />
+                                <video src={pf.previewUrl} className="w-full max-h-[420px] bg-background" controls playsInline />
                               ) : isAud ? (
                                 <div className="px-4 py-5 bg-muted/30">
                                   <audio src={pf.previewUrl} controls className="w-full" />
@@ -2504,6 +2362,7 @@ const FlowModePage = ({ embedded = false }: FlowModePageProps) => {
                                 </div>
                               )}
 
+                              {/* Floating remove button */}
                               <div className="absolute top-2 right-2 flex items-center gap-1">
                                 {(pf.status === "error" || pf.status === "stalled") && (
                                   <Button
@@ -2530,6 +2389,7 @@ const FlowModePage = ({ embedded = false }: FlowModePageProps) => {
                                 </Button>
                               </div>
 
+                              {/* Upload progress overlay */}
                               {showProgress && (
                                 <div className="absolute inset-x-0 bottom-0 px-3 py-2 bg-gradient-to-t from-background/90 to-transparent">
                                   <Progress value={pf.progress} className="h-1" />
@@ -2544,24 +2404,281 @@ const FlowModePage = ({ embedded = false }: FlowModePageProps) => {
                       </div>
                     )}
 
-                    {/* Link / embed option — paste a Spotify / SoundCloud / Apple Music / YouTube / Vimeo URL */}
-                    {fileCount === 0 && (
-                      !showLinkField ? (
-                        <button
-                          type="button"
-                          onClick={() => setShowLinkField(true)}
-                          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors px-3 py-1.5 rounded-full border border-dashed border-border hover:border-primary/40"
-                        >
-                          <LinkIcon className="h-3 w-3" />
-                          Or paste a link
-                        </button>
-                      ) : (
-                        <div className="space-y-2">
+                    {shareStep === "pick" && (
+                      <div className="space-y-4">
+                        {/* Visual icon picker — pick a vibe (music · video · photo) */}
+                        <div>
+                          <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium mb-2 px-0.5">
+                            Pick a vibe
+                          </p>
+                          <div className="grid grid-cols-3 gap-2">
+                            {CATEGORIES.map((cat) => {
+                              const meta = CATEGORY_ICONS[cat];
+                              const Icon = meta.Icon;
+                              const active = newCategory === cat;
+                              return (
+                                <button
+                                  key={cat}
+                                  type="button"
+                                  onClick={() => { setNewCategory(cat); resetPendingFiles(); }}
+                                  aria-pressed={active}
+                                  aria-label={meta.label}
+                                  className={cn(
+                                    "group flex min-h-20 flex-col items-center justify-center gap-1.5 rounded-2xl px-3 py-3 transition-all",
+                                    "border bg-gradient-to-br text-center",
+                                    active
+                                      ? `border-primary/60 ${meta.tint} shadow-sm scale-[1.02]`
+                                      : "border-border bg-muted/30 hover:bg-muted/60 text-muted-foreground"
+                                  )}
+                                >
+                                  <Icon className="h-5 w-5 transition-transform group-hover:scale-110" strokeWidth={active ? 2.25 : 1.75} />
+                                  <span className="text-[11px] font-medium capitalize">{meta.label}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Upload area — only when no link is being used as the primary embed */}
+                        {!newLink.trim() && (
+                          <div>
+                            <input
+                              ref={fileInputRef}
+                              type="file"
+                              multiple
+                              accept={CATEGORY_UPLOAD_HINTS[newCategory]?.accept || "*/*"}
+                              className="hidden"
+                              onChange={(e) => { addPendingFiles(e.target.files); e.target.value = ""; }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => fileInputRef.current?.click()}
+                              onDragEnter={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                dragCounterRef.current += 1;
+                                if (e.dataTransfer.types.includes("Files")) setIsDragging(true);
+                              }}
+                              onDragOver={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                e.dataTransfer.dropEffect = "copy";
+                              }}
+                              onDragLeave={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                dragCounterRef.current -= 1;
+                                if (dragCounterRef.current <= 0) {
+                                  dragCounterRef.current = 0;
+                                  setIsDragging(false);
+                                }
+                              }}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                dragCounterRef.current = 0;
+                                setIsDragging(false);
+                                addPendingFiles(e.dataTransfer.files);
+                              }}
+                              aria-label="Upload files or drop here"
+                              className={cn(
+                                "w-full border-2 border-dashed rounded-2xl p-8 text-center transition-all",
+                                isDragging
+                                  ? "border-primary bg-primary/5 scale-[1.01]"
+                                  : fileError
+                                    ? "border-destructive/60 hover:border-destructive"
+                                    : "border-border hover:border-primary/30"
+                              )}
+                            >
+                              {isDragging ? (
+                                <>
+                                  <Upload className="h-7 w-7 text-primary mx-auto mb-2 animate-pulse" />
+                                  <p className="text-sm text-primary font-medium">Drop files to upload</p>
+                                </>
+                              ) : (
+                                <>
+                                  <Upload className="h-7 w-7 text-muted-foreground mx-auto mb-2" />
+                                  <p className="text-sm text-foreground font-medium">
+                                    {fileCount > 0 ? "Add more files" : (CATEGORY_UPLOAD_HINTS[newCategory]?.hint || "Upload files")}
+                                  </p>
+                                  <p className="text-[11px] text-muted-foreground/70 mt-1">Click or drag &amp; drop · multiple allowed</p>
+                                </>
+                              )}
+                            </button>
+                            {fileError && (
+                              <p className="text-xs text-destructive mt-1.5 px-1" role="alert">{fileError}</p>
+                            )}
+                          </div>
+                        )}
+
+                        {/* File preview list — appears as soon as files are added */}
+                        {fileCount > 0 && (
+                          <div className="space-y-2" role="list" aria-label="Files to share">
+                            {pendingFiles.map((pf) => {
+                              const isImg = pf.file.type.startsWith("image/");
+                              const isVid = pf.file.type.startsWith("video/");
+                              const isAud = pf.file.type.startsWith("audio/");
+                              const showProgress = pf.status === "uploading" || pf.status === "stalled" || (pf.status === "done" && pf.progress > 0 && pf.progress < 100);
+                              return (
+                                <div
+                                  key={pf.id}
+                                  role="listitem"
+                                  className={cn(
+                                    "relative rounded-xl overflow-hidden border bg-background/40 group",
+                                    pf.status === "error" ? "border-destructive/40 bg-destructive/5" : "border-border",
+                                  )}
+                                >
+                                  {isImg ? (
+                                    <img src={pf.previewUrl} alt="" className="w-full max-h-[360px] object-contain bg-background" />
+                                  ) : isVid ? (
+                                    <video src={pf.previewUrl + "#t=0.1"} className="w-full max-h-[360px] bg-background" controls playsInline preload="metadata" />
+                                  ) : isAud ? (
+                                    <div className="px-4 py-5 bg-muted/30">
+                                      <audio src={pf.previewUrl} controls className="w-full" />
+                                    </div>
+                                  ) : (
+                                    <div className="aspect-video flex items-center justify-center bg-muted/40 text-muted-foreground text-xs font-medium uppercase">
+                                      {pf.file.name.split(".").pop()?.slice(0, 6) || "FILE"}
+                                    </div>
+                                  )}
+
+                                  <div className="absolute top-2 right-2 flex items-center gap-1">
+                                    {(pf.status === "error" || pf.status === "stalled") && (
+                                      <Button
+                                        type="button"
+                                        size="icon"
+                                        variant="secondary"
+                                        className="h-7 w-7 rounded-full bg-background/80 backdrop-blur"
+                                        aria-label="Retry"
+                                        onClick={() => retryPendingFile(pf.id)}
+                                      >
+                                        <RotateCcw className="h-3.5 w-3.5" />
+                                      </Button>
+                                    )}
+                                    <Button
+                                      type="button"
+                                      size="icon"
+                                      variant="secondary"
+                                      className="h-7 w-7 rounded-full bg-background/80 backdrop-blur hover:bg-destructive hover:text-destructive-foreground"
+                                      aria-label="Remove file"
+                                      disabled={createFlowItem.isPending}
+                                      onClick={() => removePendingFile(pf.id)}
+                                    >
+                                      <X className="h-3.5 w-3.5" />
+                                    </Button>
+                                  </div>
+
+                                  {showProgress && (
+                                    <div className="absolute inset-x-0 bottom-0 px-3 py-2 bg-gradient-to-t from-background/90 to-transparent">
+                                      <Progress value={pf.progress} className="h-1" />
+                                    </div>
+                                  )}
+                                  {pf.status === "error" && pf.error && (
+                                    <p className="absolute inset-x-0 bottom-0 px-3 py-1.5 text-[11px] text-destructive-foreground bg-destructive/90" role="alert">{pf.error}</p>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        {/* Link / embed option — paste a Spotify / SoundCloud / Apple Music / YouTube / Vimeo URL */}
+                        {fileCount === 0 && (
+                          !showLinkField ? (
+                            <button
+                              type="button"
+                              onClick={() => setShowLinkField(true)}
+                              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors px-3 py-1.5 rounded-full border border-dashed border-border hover:border-primary/40"
+                            >
+                              <LinkIcon className="h-3 w-3" />
+                              Or paste a link
+                            </button>
+                          ) : (
+                            <div className="space-y-2">
+                              <div className="relative">
+                                <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60" />
+                                <Input
+                                  autoFocus
+                                  placeholder={CATEGORY_UPLOAD_HINTS[newCategory]?.linkPlaceholder || "Paste a link"}
+                                  value={newLink}
+                                  onChange={(e) => setNewLink(e.target.value)}
+                                  className="rounded-xl pl-9 pr-9 text-sm"
+                                />
+                                <button
+                                  type="button"
+                                  aria-label="Remove link"
+                                  onClick={() => { setNewLink(""); setShowLinkField(false); }}
+                                  className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 inline-flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted"
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+                              {newLink.trim() && <MediaLinkPreview url={newLink} />}
+                            </div>
+                          )
+                        )}
+                      </div>
+                    )}
+
+                    {shareStep === "caption" && (
+                      <div className="space-y-3">
+                        {/* Title — name of the content */}
+                        <div className="space-y-1.5">
+                          <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
+                            Title
+                          </label>
+                          <Input
+                            autoFocus
+                            placeholder="Name your post"
+                            value={newTitle}
+                            onChange={(e) => setNewTitle(e.target.value.slice(0, 80))}
+                            maxLength={80}
+                            className="rounded-xl text-sm"
+                          />
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] text-muted-foreground">Required · shows as the post title</span>
+                            <span className="text-[10px] tabular-nums text-muted-foreground">{newTitle.length}/80</span>
+                          </div>
+                        </div>
+
+                        {/* Comment-bubble caption — this becomes the first comment on the post */}
+                        <div className="relative rounded-2xl rounded-tl-sm border border-primary/30 bg-primary/5 p-3.5 shadow-sm">
+                          <div className="absolute -top-2 left-3 px-1.5 py-0.5 rounded-md bg-background border border-primary/30 text-[10px] uppercase tracking-wider text-primary font-medium">
+                            Your first comment
+                          </div>
+                          <Textarea
+                            placeholder="Say something about it… a vibe, a story, a credit."
+                            value={newDesc}
+                            onChange={(e) => setNewDesc(e.target.value.slice(0, CAPTION_LIMIT))}
+                            rows={4}
+                            maxLength={CAPTION_LIMIT}
+                            className="border-0 bg-transparent p-0 resize-none focus-visible:ring-0 text-sm shadow-none"
+                          />
+                          <div className="flex items-center justify-between pt-1">
+                            <span className="text-[10px] text-muted-foreground">Optional · shows as a comment bubble in Flow</span>
+                            <span className={cn(
+                              "text-[10px] tabular-nums",
+                              captionLen > CAPTION_LIMIT - 30 ? "text-amber-500" : "text-muted-foreground"
+                            )}>{captionLen}/{CAPTION_LIMIT}</span>
+                          </div>
+                        </div>
+
+                        {/* Optional link toggle — hidden behind a chip so it stays minimal */}
+                        {!showLinkField ? (
+                          <button
+                            type="button"
+                            onClick={() => setShowLinkField(true)}
+                            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors px-2.5 py-1.5 rounded-full border border-dashed border-border hover:border-primary/40"
+                          >
+                            <LinkIcon className="h-3 w-3" />
+                            Add a link
+                          </button>
+                        ) : (
                           <div className="relative">
                             <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60" />
                             <Input
                               autoFocus
-                              placeholder={CATEGORY_UPLOAD_HINTS[newCategory]?.linkPlaceholder || "Paste a link"}
+                              placeholder="https://…"
                               value={newLink}
                               onChange={(e) => setNewLink(e.target.value)}
                               className="rounded-xl pl-9 pr-9 text-sm"
@@ -2575,282 +2692,203 @@ const FlowModePage = ({ embedded = false }: FlowModePageProps) => {
                               <X className="h-3.5 w-3.5" />
                             </button>
                           </div>
-                          {newLink.trim() && <MediaLinkPreview url={newLink} />}
-                        </div>
-                      )
-                    )}
-                  </div>
-                )}
+                        )}
 
-                {shareStep === "caption" && (
-                  <div className="space-y-3">
-                    {/* Title — name of the content */}
-                    <div className="space-y-1.5">
-                      <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
-                        Title
-                      </label>
-                      <Input
-                        autoFocus
-                        placeholder="Name your post"
-                        value={newTitle}
-                        onChange={(e) => setNewTitle(e.target.value.slice(0, 80))}
-                        maxLength={80}
-                        className="rounded-xl text-sm"
-                      />
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] text-muted-foreground">Required · shows as the post title</span>
-                        <span className="text-[10px] tabular-nums text-muted-foreground">{newTitle.length}/80</span>
-                      </div>
-                    </div>
-
-                    {/* Comment-bubble caption — this becomes the first comment on the post */}
-                    <div className="relative rounded-2xl rounded-tl-sm border border-primary/30 bg-primary/5 p-3.5 shadow-sm">
-                      <div className="absolute -top-2 left-3 px-1.5 py-0.5 rounded-md bg-background border border-primary/30 text-[10px] uppercase tracking-wider text-primary font-medium">
-                        Your first comment
-                      </div>
-                      <Textarea
-                        placeholder="Say something about it… a vibe, a story, a credit."
-                        value={newDesc}
-                        onChange={(e) => setNewDesc(e.target.value.slice(0, CAPTION_LIMIT))}
-                        rows={4}
-                        maxLength={CAPTION_LIMIT}
-                        className="border-0 bg-transparent p-0 resize-none focus-visible:ring-0 text-sm shadow-none"
-                      />
-                      <div className="flex items-center justify-between pt-1">
-                        <span className="text-[10px] text-muted-foreground">Optional · shows as a comment bubble in Flow</span>
-                        <span className={cn(
-                          "text-[10px] tabular-nums",
-                          captionLen > CAPTION_LIMIT - 30 ? "text-amber-500" : "text-muted-foreground"
-                        )}>{captionLen}/{CAPTION_LIMIT}</span>
-                      </div>
-                    </div>
-
-                    {/* Optional link toggle — hidden behind a chip so it stays minimal */}
-                    {!showLinkField ? (
-                      <button
-                        type="button"
-                        onClick={() => setShowLinkField(true)}
-                        className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors px-2.5 py-1.5 rounded-full border border-dashed border-border hover:border-primary/40"
-                      >
-                        <LinkIcon className="h-3 w-3" />
-                        Add a link
-                      </button>
-                    ) : (
-                      <div className="relative">
-                        <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60" />
-                        <Input
-                          autoFocus
-                          placeholder="https://…"
-                          value={newLink}
-                          onChange={(e) => setNewLink(e.target.value)}
-                          className="rounded-xl pl-9 pr-9 text-sm"
-                        />
-                        <button
-                          type="button"
-                          aria-label="Remove link"
-                          onClick={() => { setNewLink(""); setShowLinkField(false); }}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 inline-flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted"
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Collaborators — comma- or space-separated @handles.
+                        {/* Collaborators — comma- or space-separated @handles.
                         Appended to the description as "with @x @y" at publish time. */}
-                    <div className="space-y-1.5">
-                      <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
-                        Collaborators
-                      </label>
-                      <Input
-                        placeholder="@handle, @handle"
-                        value={collaborators}
-                        onChange={(e) => setCollaborators(e.target.value)}
-                        className="rounded-xl text-sm"
-                      />
-                      <span className="text-[10px] text-muted-foreground">Optional · up to 5 · they're credited on the post</span>
-                    </div>
-                  </div>
-                )}
+                        <div className="space-y-1.5">
+                          <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
+                            Collaborators
+                          </label>
+                          <Input
+                            placeholder="@handle, @handle"
+                            value={collaborators}
+                            onChange={(e) => setCollaborators(e.target.value)}
+                            className="rounded-xl text-sm"
+                          />
+                          <span className="text-[10px] text-muted-foreground">Optional · up to 5 · they're credited on the post</span>
+                        </div>
+                      </div>
+                    )}
 
-                {shareStep === "confirm" && (
-                  <div className="rounded-xl border border-border bg-background/40 p-3 space-y-2">
-                    <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Post details</p>
-                    <div className="space-y-1.5 text-sm">
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-muted-foreground text-xs w-20 shrink-0">Title</span>
-                        <span className="text-foreground font-medium break-words">{newTitle.trim() || <span className="text-muted-foreground italic">— (untitled)</span>}</span>
-                      </div>
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-muted-foreground text-xs w-20 shrink-0">Caption</span>
-                        <span className="text-foreground break-words">{newDesc.trim() || <span className="text-muted-foreground italic">— (no comment)</span>}</span>
-                      </div>
-                      {newCreatorName.trim() && (
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-muted-foreground text-xs w-20 shrink-0">Creator</span>
-                          <span className="text-foreground break-words">{newCreatorName.trim()}</span>
+                    {shareStep === "confirm" && (
+                      <div className="rounded-xl border border-border bg-background/40 p-3 space-y-2">
+                        <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Post details</p>
+                        <div className="space-y-1.5 text-sm">
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-muted-foreground text-xs w-20 shrink-0">Title</span>
+                            <span className="text-foreground font-medium break-words">{newTitle.trim() || <span className="text-muted-foreground italic">— (untitled)</span>}</span>
+                          </div>
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-muted-foreground text-xs w-20 shrink-0">Caption</span>
+                            <span className="text-foreground break-words">{newDesc.trim() || <span className="text-muted-foreground italic">— (no comment)</span>}</span>
+                          </div>
+                          {newCreatorName.trim() && (
+                            <div className="flex items-baseline gap-2">
+                              <span className="text-muted-foreground text-xs w-20 shrink-0">Creator</span>
+                              <span className="text-foreground break-words">{newCreatorName.trim()}</span>
+                            </div>
+                          )}
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-muted-foreground text-xs w-20 shrink-0">Category</span>
+                            <span className="text-foreground capitalize">{newCategory}</span>
+                          </div>
+                          {fileCount > 0 && (
+                            <div className="flex items-baseline gap-2">
+                              <span className="text-muted-foreground text-xs w-20 shrink-0">Files</span>
+                              <span className="text-foreground">
+                                {fileCount} item{fileCount > 1 ? "s" : ""} · publishes one Flow card per file
+                              </span>
+                            </div>
+                          )}
+                          {newLink.trim() && (
+                            <div className="flex items-baseline gap-2">
+                              <span className="text-muted-foreground text-xs w-20 shrink-0">Link</span>
+                              <span className="text-foreground break-all">{newLink.trim()}</span>
+                            </div>
+                          )}
                         </div>
-                      )}
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-muted-foreground text-xs w-20 shrink-0">Category</span>
-                        <span className="text-foreground capitalize">{newCategory}</span>
-                      </div>
-                      {fileCount > 0 && (
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-muted-foreground text-xs w-20 shrink-0">Files</span>
-                          <span className="text-foreground">
-                            {fileCount} item{fileCount > 1 ? "s" : ""} · publishes one Flow card per file
-                          </span>
-                        </div>
-                      )}
-                      {newLink.trim() && (
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-muted-foreground text-xs w-20 shrink-0">Link</span>
-                          <span className="text-foreground break-all">{newLink.trim()}</span>
-                        </div>
-                      )}
-                    </div>
 
-                    {/* Verified IP opt-in — toggling this publishes the row
+                        {/* Verified IP opt-in — toggling this publishes the row
                         with verification_status='pending' so an admin can
                         review + anchor it on Solana. Keeping the toggle here
                         (vs. forcing it on every post) keeps the share UX one-click. */}
-                    <div className="mt-3 flex items-start gap-3 rounded-xl border border-border bg-muted/20 p-3">
-                      <Switch
-                        id="request-verify"
-                        checked={requestVerify}
-                        onCheckedChange={setRequestVerify}
-                        className="mt-0.5"
-                      />
-                      <Label htmlFor="request-verify" className="flex-1 cursor-pointer space-y-0.5">
-                        <span className="flex items-center gap-1.5 text-sm font-medium text-foreground">
-                          <Check className="h-3.5 w-3.5 text-emerald-500" />
-                          Anchor as Verified IP
-                        </span>
-                        <span className="block text-[11px] leading-snug text-muted-foreground">
-                          Submits this work for admin review. Once approved it's hashed and recorded on Solana so you can prove authorship publicly.
-                        </span>
-                      </Label>
-                    </div>
-                  </div>
-                )}
-
-                {/* Pre-publish checks — collapsed by default. Surfaces a warning chip when something fails. */}
-                {shareStep === "confirm" && (
-                  <details className="group rounded-xl border border-border bg-muted/20 [&_summary::-webkit-details-marker]:hidden" open={!allValid}>
-                    <summary className="flex items-center justify-between gap-2 px-3 py-2 cursor-pointer list-none rounded-xl hover:bg-muted/40 transition-colors">
-                      <div className="flex items-center gap-2 text-xs">
-                        <span className={cn(
-                          "h-4 w-4 rounded-full flex items-center justify-center shrink-0",
-                          allValid ? "bg-primary/15 text-primary" : "bg-amber-500/15 text-amber-600 dark:text-amber-400"
-                        )}>
-                          {allValid ? <Check className="h-2.5 w-2.5" strokeWidth={3} /> : <X className="h-2.5 w-2.5" strokeWidth={3} />}
-                        </span>
-                        <span className="font-medium text-foreground">
-                          {allValid ? "Ready to publish" : "Needs your attention"}
-                        </span>
-                        <span className="text-muted-foreground">· {checks.filter((c) => c.ok).length}/{checks.length} checks</span>
-                      </div>
-                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground group-open:hidden">Show</span>
-                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground hidden group-open:inline">Hide</span>
-                    </summary>
-                    <div className="px-3 pb-3 pt-1 space-y-1.5">
-                      {checks.map((c) => (
-                        <div key={c.label} className="flex items-center gap-2 text-sm">
-                          <span className={cn(
-                            "h-4 w-4 rounded-full flex items-center justify-center shrink-0",
-                            c.ok ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
-                          )}>
-                            {c.ok ? <Check className="h-2.5 w-2.5" strokeWidth={3} /> : <X className="h-2.5 w-2.5" strokeWidth={3} />}
-                          </span>
-                          <span className={c.ok ? "text-foreground" : "text-muted-foreground"}>{c.label}</span>
+                        <div className="mt-3 flex items-start gap-3 rounded-xl border border-border bg-muted/20 p-3">
+                          <Switch
+                            id="request-verify"
+                            checked={requestVerify}
+                            onCheckedChange={setRequestVerify}
+                            className="mt-0.5"
+                          />
+                          <Label htmlFor="request-verify" className="flex-1 cursor-pointer space-y-0.5">
+                            <span className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+                              <Check className="h-3.5 w-3.5 text-emerald-500" />
+                              Anchor as Verified IP
+                            </span>
+                            <span className="block text-[11px] leading-snug text-muted-foreground">
+                              Submits this work for admin review. Once approved it's hashed and recorded on Solana so you can prove authorship publicly.
+                            </span>
+                          </Label>
                         </div>
-                      ))}
-                      {!allValid && (
-                        <p className="text-[11px] text-muted-foreground pt-1">Go back to fix the items above before publishing.</p>
-                      )}
-                    </div>
-                  </details>
-                )}
-
-                {/* Aggregate publish progress (visible during the publish loop) */}
-                {publishingIndex && (
-                  <div className="rounded-xl border border-border bg-muted/40 p-3" role="status" aria-live="polite">
-                    <div className="flex items-center gap-2 text-xs text-foreground font-medium">
-                      <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
-                      <span>Publishing file {publishingIndex.current} of {publishingIndex.total}…</span>
-                    </div>
-                  </div>
-                )}
-
-                {(() => {
-                  const stepDisabled =
-                    (shareStep === "pick" && !pickValid) ||
-                    (shareStep === "caption" && !captionValid) ||
-                    (shareStep === "confirm" && !canPublish) ||
-                    createFlowItem.isPending;
-                  const primaryLabel =
-                    shareStep === "pick"
-                      ? "Next"
-                      : shareStep === "caption"
-                      ? "Review"
-                      : createFlowItem.isPending
-                      ? (publishingIndex
-                          ? `Publishing ${publishingIndex.current}/${publishingIndex.total}…`
-                          : "Publishing…")
-                      : fileCount > 1
-                      ? `Publish ${fileCount} items`
-                      : "Publish to Flow";
-                  const back =
-                    shareStep === "caption" ? "pick" : shareStep === "confirm" ? "caption" : null;
-                  return (
-                    <div className="sticky bottom-0 -mx-5 mt-6 border-t border-border bg-background/95 px-5 pb-1 pt-4 backdrop-blur">
-                      <div className="flex items-center gap-2">
-                      {back && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="rounded-full"
-                          disabled={createFlowItem.isPending}
-                          onClick={() => setShareStep(back)}
-                        >
-                          Back
-                        </Button>
-                      )}
-                      <Button
-                        type="submit"
-                        className="flex-1 rounded-full"
-                        disabled={stepDisabled}
-                        aria-disabled={stepDisabled}
-                      >
-                        {primaryLabel}
-                      </Button>
-                      {shareStep === "pick" && (
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              type="button"
-                              size="icon"
-                              variant="ghost"
-                              className="h-9 w-9 rounded-full text-primary"
-                              aria-label="Reward info"
-                            >
-                              <Sparkles className="h-4 w-4" />
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent side="top" align="end" className="w-60 text-xs">
-                            Earn <strong className="text-primary">+1 $RHOZE</strong> per share — adds to your XP and Creator Pass progress.
-                          </PopoverContent>
-                        </Popover>
-                      )}
                       </div>
-                    </div>
-                  );
-                })()}
-              </form>
-            );
-          })()}
-          </div>
+                    )}
+
+                    {/* Pre-publish checks — collapsed by default. Surfaces a warning chip when something fails. */}
+                    {shareStep === "confirm" && (
+                      <details className="group rounded-xl border border-border bg-muted/20 [&_summary::-webkit-details-marker]:hidden" open={!allValid}>
+                        <summary className="flex items-center justify-between gap-2 px-3 py-2 cursor-pointer list-none rounded-xl hover:bg-muted/40 transition-colors">
+                          <div className="flex items-center gap-2 text-xs">
+                            <span className={cn(
+                              "h-4 w-4 rounded-full flex items-center justify-center shrink-0",
+                              allValid ? "bg-primary/15 text-primary" : "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                            )}>
+                              {allValid ? <Check className="h-2.5 w-2.5" strokeWidth={3} /> : <X className="h-2.5 w-2.5" strokeWidth={3} />}
+                            </span>
+                            <span className="font-medium text-foreground">
+                              {allValid ? "Ready to publish" : "Needs your attention"}
+                            </span>
+                            <span className="text-muted-foreground">· {checks.filter((c) => c.ok).length}/{checks.length} checks</span>
+                          </div>
+                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground group-open:hidden">Show</span>
+                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground hidden group-open:inline">Hide</span>
+                        </summary>
+                        <div className="px-3 pb-3 pt-1 space-y-1.5">
+                          {checks.map((c) => (
+                            <div key={c.label} className="flex items-center gap-2 text-sm">
+                              <span className={cn(
+                                "h-4 w-4 rounded-full flex items-center justify-center shrink-0",
+                                c.ok ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
+                              )}>
+                                {c.ok ? <Check className="h-2.5 w-2.5" strokeWidth={3} /> : <X className="h-2.5 w-2.5" strokeWidth={3} />}
+                              </span>
+                              <span className={c.ok ? "text-foreground" : "text-muted-foreground"}>{c.label}</span>
+                            </div>
+                          ))}
+                          {!allValid && (
+                            <p className="text-[11px] text-muted-foreground pt-1">Go back to fix the items above before publishing.</p>
+                          )}
+                        </div>
+                      </details>
+                    )}
+
+                    {/* Aggregate publish progress (visible during the publish loop) */}
+                    {publishingIndex && (
+                      <div className="rounded-xl border border-border bg-muted/40 p-3" role="status" aria-live="polite">
+                        <div className="flex items-center gap-2 text-xs text-foreground font-medium">
+                          <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                          <span>Publishing file {publishingIndex.current} of {publishingIndex.total}…</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {(() => {
+                      const stepDisabled =
+                        (shareStep === "pick" && !pickValid) ||
+                        (shareStep === "caption" && !captionValid) ||
+                        (shareStep === "confirm" && !canPublish) ||
+                        createFlowItem.isPending;
+                      const primaryLabel =
+                        shareStep === "pick"
+                          ? "Next"
+                          : shareStep === "caption"
+                            ? "Review"
+                            : createFlowItem.isPending
+                              ? (publishingIndex
+                                ? `Publishing ${publishingIndex.current}/${publishingIndex.total}…`
+                                : "Publishing…")
+                              : fileCount > 1
+                                ? `Publish ${fileCount} items`
+                                : "Publish to Flow";
+                      const back =
+                        shareStep === "caption" ? "pick" : shareStep === "confirm" ? "caption" : null;
+                      return (
+                        <div className="sticky bottom-0 -mx-5 mt-6 border-t border-border bg-background/95 px-5 pb-1 pt-4 backdrop-blur">
+                          <div className="flex items-center gap-2">
+                            {back && (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                className="rounded-full"
+                                disabled={createFlowItem.isPending}
+                                onClick={() => setShareStep(back)}
+                              >
+                                Back
+                              </Button>
+                            )}
+                            <Button
+                              type="submit"
+                              className="flex-1 rounded-full"
+                              disabled={stepDisabled}
+                              aria-disabled={stepDisabled}
+                            >
+                              {primaryLabel}
+                            </Button>
+                            {shareStep === "pick" && (
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button
+                                    type="button"
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-9 w-9 rounded-full text-primary"
+                                    aria-label="Reward info"
+                                  >
+                                    <Sparkles className="h-4 w-4" />
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent side="top" align="end" className="w-60 text-xs">
+                                  Earn <strong className="text-primary">+1 $RHOZE</strong> per share — adds to your XP and Creator Pass progress.
+                                </PopoverContent>
+                              </Popover>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </form>
+                );
+              })()}
+            </div>
           </div>
 
           {/* Celebration overlay — fires when the post lands on the feed */}
