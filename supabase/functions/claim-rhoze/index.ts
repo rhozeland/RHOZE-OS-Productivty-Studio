@@ -52,6 +52,8 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  let reservedClaimId: string | null = null;
+  let payoutSent = false;
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
@@ -73,7 +75,7 @@ Deno.serve(async (req) => {
       return respond({ ok: false, error: "Unauthorized" });
     }
 
-    const { wallet_address, credits_to_claim } = await req.json();
+    const { wallet_address, credits_to_claim, request_id } = await req.json();
     const config = getSolanaConfig();
     if (!config.claimsEnabled) {
       return respond({ ok: false, error: "Token claims are disabled for this environment" });
@@ -81,6 +83,9 @@ Deno.serve(async (req) => {
 
     if (!wallet_address || !credits_to_claim || credits_to_claim <= 0) {
       return respond({ ok: false, error: "Missing wallet_address or credits_to_claim" });
+    }
+    if (!request_id || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(request_id)) {
+      return respond({ ok: false, error: "A valid claim request ID is required" });
     }
 
     if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(wallet_address)) {
@@ -124,26 +129,49 @@ Deno.serve(async (req) => {
         .eq("user_id", user.id);
     }
 
-    const { data: creditData } = await supabaseAdmin
-      .from("user_credits")
-      .select("balance")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    if (!creditData || creditData.balance < credits_to_claim) {
-      return respond({
-        ok: false,
-        error: `Insufficient credits. You have ${creditData?.balance ?? 0} but tried to claim ${credits_to_claim}`,
-      });
+    const { data: reservation, error: reserveError } = await supabaseAdmin.rpc(
+      "reserve_rhoze_claim",
+      {
+        p_request_id: request_id,
+        p_user_id: user.id,
+        p_wallet_address: wallet_address,
+        p_credits: credits_to_claim,
+      },
+    );
+    if (reserveError) {
+      if (reserveError.message.includes("insufficient_credits")) {
+        return respond({ ok: false, error: "Insufficient credits for this claim" });
+      }
+      throw reserveError;
     }
+    if (reservation?.status === "completed" && reservation.signature) {
+      return respond({ ok: true, success: true, signature: reservation.signature, idempotent: true });
+    }
+    if (reservation?.status === "pending" && reservation.created === false) {
+      return respond({ ok: false, error: "This claim request is already being processed", retryable: true });
+    }
+    if (reservation?.status !== "pending" || !reservation?.claim_id) {
+      return respond({ ok: false, error: "Claim request is not available for processing" });
+    }
+    const claimId = reservation.claim_id;
+    reservedClaimId = claimId;
+    const failClaim = async (message: string) => {
+      const { error } = await supabaseAdmin.rpc("fail_rhoze_claim", {
+        p_claim_id: claimId,
+        p_error_message: message,
+      });
+      if (error) console.error("Failed to release claim reservation:", error);
+    };
 
     const privateKeyStr = Deno.env.get("RHOZE_AIRDROP_PRIVATE_KEY");
     if (!privateKeyStr) {
+      await failClaim("Reward payout wallet is not configured");
       return respond({ ok: false, error: "Reward payout wallet is not configured yet." });
     }
 
     const airdropKeypair = parseAirdropKeypair(privateKeyStr);
     if (airdropKeypair.publicKey.toBase58() !== config.payoutAddress) {
+      await failClaim("Payout wallet does not match configured address");
       return respond({
         ok: false,
         error: "Configured payout wallet does not match the payout private key",
@@ -165,6 +193,7 @@ Deno.serve(async (req) => {
     ]);
 
     if (airdropSolBalance < MIN_SOL_FOR_FEES * 1e9) {
+      await failClaim("Payout wallet needs SOL for network fees");
       return respond({
         ok: false,
         error: "Reward claiming is temporarily unavailable: payout wallet needs SOL for network fees.",
@@ -172,6 +201,7 @@ Deno.serve(async (req) => {
     }
 
     if (!airdropAtaInfo) {
+      await failClaim("Payout wallet has no token account");
       return respond({
         ok: false,
         error: "Reward claiming is temporarily unavailable: payout wallet has no $RHOZE token account.",
@@ -182,6 +212,7 @@ Deno.serve(async (req) => {
     const sourceTokenAmount = BigInt(sourceTokenBalance?.value?.amount ?? "0");
 
     if (sourceTokenAmount < tokenAmount) {
+      await failClaim("Payout wallet does not hold enough tokens");
       return respond({
         ok: false,
         error: "Reward claiming is temporarily unavailable: payout wallet does not currently hold enough $RHOZE.",
@@ -223,8 +254,10 @@ Deno.serve(async (req) => {
 
     try {
       signature = await connection.sendRawTransaction(transaction.serialize());
+      payoutSent = true;
     } catch (error) {
       if (error instanceof SendTransactionError) {
+        await failClaim(error.message);
         return respond({
           ok: false,
           error:
@@ -236,26 +269,28 @@ Deno.serve(async (req) => {
       throw error;
     }
 
-    await supabaseAdmin
-      .from("user_credits")
-      .update({
-        balance: creditData.balance - credits_to_claim,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("user_id", user.id);
-
-    await supabaseAdmin.from("credit_transactions").insert({
-      user_id: user.id,
-      amount: -credits_to_claim,
-      type: "claim",
-      description: `Claimed ${credits_to_claim} $RHOZE to ${wallet_address.slice(0, 6)}...`,
-      payment_method: "crypto",
-      payment_reference: signature,
+    const { error: completeError } = await supabaseAdmin.rpc("complete_rhoze_claim", {
+      p_claim_id: claimId,
+      p_signature: signature,
     });
+    if (completeError) {
+      throw new Error(`Payout sent but claim settlement failed: ${completeError.message}`);
+    }
 
     return respond({ ok: true, success: true, signature, tokens_sent: credits_to_claim });
   } catch (err: unknown) {
     console.error("claim-rhoze error:", err);
+    if (reservedClaimId && !payoutSent) {
+      const supabaseAdmin = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      );
+      const { error } = await supabaseAdmin.rpc("fail_rhoze_claim", {
+        p_claim_id: reservedClaimId,
+        p_error_message: err instanceof Error ? err.message : "Claim failed unexpectedly.",
+      });
+      if (error) console.error("Failed to release claim reservation:", error);
+    }
     return respond({
       ok: false,
       error: err instanceof Error ? err.message : "Claim failed unexpectedly.",

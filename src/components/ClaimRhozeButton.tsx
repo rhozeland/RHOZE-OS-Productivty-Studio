@@ -191,6 +191,7 @@ const ClaimRhozeButton = ({
         body: {
           wallet_address: publicKey.toBase58(),
           credits_to_claim: creditsToClaim,
+          request_id: crypto.randomUUID(),
         },
       });
 

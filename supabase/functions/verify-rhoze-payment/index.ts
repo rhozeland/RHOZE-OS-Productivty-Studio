@@ -75,6 +75,19 @@ Deno.serve(async (req) => {
       });
     }
 
+    const { data: profile } = await supabaseUser
+      .from("profiles")
+      .select("wallet_address")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    const feePayer = tx.transaction.message.accountKeys.find((key: any) => key.signer)?.pubkey;
+    if (!profile?.wallet_address || feePayer !== profile.wallet_address) {
+      return new Response(JSON.stringify({ error: "Transaction payer does not match your bound wallet" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Look for SPL token transfer to treasury
     const innerInstructions = tx.meta?.innerInstructions ?? [];
     const mainInstructions = tx.transaction.message.instructions ?? [];
@@ -82,6 +95,16 @@ Deno.serve(async (req) => {
 
     let transferFound = false;
     let transferAmount = 0;
+    const treasuryTokenAccounts = new Set(
+      (tx.meta?.postTokenBalances ?? [])
+        .filter((balance: any) =>
+          balance.mint === rhozeMint &&
+          balance.owner === treasuryAddress &&
+          (!balance.programId || balance.programId === config.tokenProgramId)
+        )
+        .map((balance: any) => tx.transaction.message.accountKeys[balance.accountIndex]?.pubkey)
+        .filter(Boolean),
+    );
 
     for (const ix of allInstructions) {
       const parsed = (ix as any).parsed;
@@ -89,7 +112,8 @@ Deno.serve(async (req) => {
 
       if (
         parsed.type === "transfer" &&
-        parsed.info?.mint === rhozeMint
+        parsed.info?.mint === rhozeMint &&
+        treasuryTokenAccounts.has(parsed.info?.destination)
       ) {
         transferAmount = Number(parsed.info.amount || parsed.info.tokenAmount?.amount || 0);
         transferFound = true;
@@ -98,7 +122,8 @@ Deno.serve(async (req) => {
 
       if (
         parsed.type === "transferChecked" &&
-        parsed.info?.mint === rhozeMint
+        parsed.info?.mint === rhozeMint &&
+        treasuryTokenAccounts.has(parsed.info?.destination)
       ) {
         transferAmount = Number(parsed.info.tokenAmount?.amount || 0);
         transferFound = true;
@@ -154,52 +179,25 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Prevent double-spend
-    const { data: existingTx } = await supabaseAdmin
-      .from("credit_transactions")
-      .select("id")
-      .eq("payment_reference", signature)
-      .maybeSingle();
-
-    if (existingTx) {
-      return new Response(JSON.stringify({ error: "Transaction already processed" }), {
-        status: 409,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    if (creditsToAdd > 0) {
-      // Credit user
-      const { data: existing } = await supabaseAdmin
-        .from("user_credits")
-        .select("balance")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (existing) {
-        await supabaseAdmin
-          .from("user_credits")
-          .update({ balance: existing.balance + creditsToAdd, updated_at: new Date().toISOString() })
-          .eq("user_id", user.id);
-      } else {
-        await supabaseAdmin
-          .from("user_credits")
-          .insert({ user_id: user.id, balance: creditsToAdd });
+    const { error: settleError } = await supabaseAdmin.rpc("record_crypto_payment", {
+      p_user_id: user.id,
+      p_amount: creditsToAdd,
+      p_type: type || (isSubscription ? "subscription" : "purchase"),
+      p_description: description || (isSubscription
+        ? `Subscription payment via $RHOZE (${receivedTokens} tokens)`
+        : `${creditsToAdd} credit(s) via $RHOZE token`),
+      p_payment_method: "rhoze_token",
+      p_payment_reference: signature,
+    });
+    if (settleError) {
+      if (settleError.code === "23505") {
+        return new Response(JSON.stringify({ error: "Transaction already processed" }), {
+          status: 409,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
+      throw settleError;
     }
-
-    await supabaseAdmin
-      .from("credit_transactions")
-      .insert({
-        user_id: user.id,
-        amount: creditsToAdd,
-        type: type || (isSubscription ? "subscription" : "purchase"),
-        description: description || (isSubscription
-          ? `Subscription payment via $RHOZE (${receivedTokens} tokens)`
-          : `${creditsToAdd} credit(s) via $RHOZE token`),
-        payment_method: "rhoze_token",
-        payment_reference: signature,
-      });
 
     return new Response(
       JSON.stringify({ success: true, credits_added: creditsToAdd, tokens_received: receivedTokens }),
@@ -207,7 +205,8 @@ Deno.serve(async (req) => {
     );
   } catch (err) {
     console.error("verify-rhoze-payment error:", err);
-    return new Response(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }), {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

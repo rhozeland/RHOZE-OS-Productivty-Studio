@@ -74,6 +74,20 @@ Deno.serve(async (req) => {
       });
     }
 
+    const feePayer = tx.transaction.message.staticAccountKeys?.[0] ??
+      tx.transaction.message.accountKeys?.[0];
+    const { data: profile } = await supabaseUser
+      .from("profiles")
+      .select("wallet_address")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (!feePayer || !profile?.wallet_address || feePayer.toBase58() !== profile.wallet_address) {
+      return new Response(JSON.stringify({ error: "Transaction payer does not match your bound wallet" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Verify the transaction sent SOL to our treasury
     const treasuryPubkey = new PublicKey(config.treasuryAddress);
     const accountKeys = tx.transaction.message.staticAccountKeys || tx.transaction.message.accountKeys;
@@ -120,56 +134,25 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Check if this signature was already processed (prevent double-spend)
-    const { data: existingTx } = await supabaseAdmin
-      .from("credit_transactions")
-      .select("id")
-      .eq("payment_reference", signature)
-      .maybeSingle();
-
-    if (existingTx) {
-      return new Response(JSON.stringify({ error: "This transaction has already been processed" }), {
-        status: 409,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    if (creditsToAdd > 0) {
-      // Upsert user credits
-      const { data: existing } = await supabaseAdmin
-        .from("user_credits")
-        .select("balance")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (existing) {
-        const { error } = await supabaseAdmin
-          .from("user_credits")
-          .update({ balance: existing.balance + creditsToAdd, updated_at: new Date().toISOString() })
-          .eq("user_id", user.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabaseAdmin
-          .from("user_credits")
-          .insert({ user_id: user.id, balance: creditsToAdd });
-        if (error) throw error;
+    const { error: settleError } = await supabaseAdmin.rpc("record_crypto_payment", {
+      p_user_id: user.id,
+      p_amount: creditsToAdd,
+      p_type: type || (isSubscription ? "subscription" : "purchase"),
+      p_description: description || (isSubscription
+        ? `Subscription payment via SOL (${receivedSol.toFixed(4)} SOL)`
+        : `${creditsToAdd} credit(s) via SOL`),
+      p_payment_method: "crypto",
+      p_payment_reference: signature,
+    });
+    if (settleError) {
+      if (settleError.code === "23505") {
+        return new Response(JSON.stringify({ error: "This transaction has already been processed" }), {
+          status: 409,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
+      throw settleError;
     }
-
-    // Log the transaction (always, even for subscription payments — for audit)
-    const { error: txErr } = await supabaseAdmin
-      .from("credit_transactions")
-      .insert({
-        user_id: user.id,
-        amount: creditsToAdd,
-        type: type || (isSubscription ? "subscription" : "purchase"),
-        description: description || (isSubscription
-          ? `Subscription payment via SOL (${receivedSol.toFixed(4)} SOL)`
-          : `${creditsToAdd} credit(s) via SOL`),
-        payment_method: "crypto",
-        payment_reference: signature,
-      });
-    if (txErr) throw txErr;
 
     return new Response(
       JSON.stringify({ success: true, credits_added: creditsToAdd, sol_received: receivedSol }),

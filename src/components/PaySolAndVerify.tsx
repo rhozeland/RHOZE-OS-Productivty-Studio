@@ -87,8 +87,8 @@ const PaySolAndVerify = ({
           : `Payment confirmed! ${awarded} credit(s) added. Tx: ${signature.slice(0, 8)}...`
       );
       onSuccess?.();
-    } catch (error: any) {
-      const msg = error?.message || "Transaction failed";
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Transaction failed";
       if (msg.includes("User rejected")) {
         toast.error("Transaction cancelled");
       } else {
