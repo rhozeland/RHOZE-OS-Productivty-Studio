@@ -32,6 +32,7 @@ import RhozeClaimCelebration from "@/components/RhozeClaimCelebration";
 import { useClaimLimits, validateClaim } from "@/lib/claim-limits";
 import { Link } from "react-router-dom";
 import { getSolanaConfig } from "@/lib/solana-config";
+import { solanaExplorerAddressUrl, solscanTransactionUrl } from "@/lib/solana-explorer";
 const LAMPORTS_PER_SOL = 1_000_000_000;
 // Base sig fee (5000 lamports) + small priority buffer; ATA creation adds ~0.00203928 SOL rent (paid by payout wallet, not user)
 const ESTIMATED_FEE_LAMPORTS = 5000;
@@ -200,10 +201,7 @@ const ClaimRhozeButton = ({
       if (!data?.signature) throw new Error("Transaction did not return a signature.");
 
       const signature: string = data.signature;
-      const clusterSuffix = getSolanaConfig().cluster === "devnet"
-        ? "?cluster=devnet"
-        : "";
-      const solscanUrl = `https://solscan.io/tx/${signature}${clusterSuffix}`;
+      const solscanUrl = solscanTransactionUrl(signature);
       const shortSig = `${signature.slice(0, 8)}…${signature.slice(-6)}`;
 
       setConfirmOpen(false);
@@ -445,7 +443,9 @@ const ClaimRhozeButton = ({
                     <span className="text-muted-foreground inline-flex items-center gap-1.5">
                       <Network className="h-3 w-3" /> Network
                     </span>
-                    <span className="font-mono text-foreground">Solana mainnet-beta</span>
+                    <span className="font-mono text-foreground">
+                      Solana {getSolanaConfig().cluster}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between gap-3">
                     <span className="text-muted-foreground inline-flex items-center gap-1.5">
@@ -483,11 +483,7 @@ const ClaimRhozeButton = ({
                   </div>
 
                   <a
-                    href={`https://explorer.solana.com/address/${walletAddress}${
-                      getSolanaConfig().cluster === "devnet"
-                        ? "?cluster=devnet"
-                        : ""
-                    }`}
+                    href={solanaExplorerAddressUrl(walletAddress)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="mt-2 inline-flex items-center gap-1.5 text-[11px] text-primary hover:underline font-body"

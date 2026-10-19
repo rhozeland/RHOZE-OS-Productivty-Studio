@@ -26,6 +26,7 @@ import {
 } from "./launchpad-idl-store";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { getSolanaConnectionConfig } from "./solana-config";
+import { solscanAccountUrl } from "./solana-explorer";
 
 const ENV_PROGRAM_ID = (
   import.meta.env.VITE_LAUNCHPAD_PROGRAM_ID as string | undefined
@@ -102,10 +103,7 @@ export const deriveCurveAuthorityPda = (workId: string): PublicKey | null =>
   deriveChildPda(workId, "curve-auth");
 
 export const explorerUrl = (address: string): string =>
-  `https://solscan.io/account/${address}${LAUNCHPAD_NETWORK === "devnet" ? "?cluster=devnet" : ""}`;
-
-export const solscanClusterSuffix = (): string =>
-  LAUNCHPAD_NETWORK === "devnet" ? "?cluster=devnet" : "";
+  solscanAccountUrl(address);
 
 export type OnChainResult<T> =
   | { enabled: false }
