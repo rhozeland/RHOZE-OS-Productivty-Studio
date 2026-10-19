@@ -1,5 +1,5 @@
 import { sendLovableEmail } from 'npm:@lovable.dev/email-js'
-import { createClient } from 'npm:@supabase/supabase-js@2'
+import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2'
 
 const MAX_RETRIES = 5
 const DEFAULT_BATCH_SIZE = 10
@@ -52,11 +52,13 @@ function parseJwtClaims(token: string): Record<string, unknown> | null {
   }
 }
 
-// Move a message to the dead letter queue and log the reason.
+// A row returned by the pgmq read RPC.
+type EmailQueueMessage = { msg_id: number; message: Record<string, unknown> }
+
 async function moveToDlq(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient<any>,
   queue: string,
-  msg: { msg_id: number; message: Record<string, unknown> },
+  msg: EmailQueueMessage,
   reason: string
 ): Promise<void> {
   const payload = msg.message
