@@ -74,6 +74,6 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error("check-rhoze-balance error:", err);
-    return json({ error: err.message }, 500);
+    return json({ error: err instanceof Error ? err.message : String(err) }, 500);
   }
 });

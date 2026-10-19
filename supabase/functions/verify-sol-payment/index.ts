@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
 
     // Verify the transaction sent SOL to our treasury
     const treasuryPubkey = new PublicKey(TREASURY_ADDRESS);
-    const accountKeys = tx.transaction.message.staticAccountKeys || tx.transaction.message.accountKeys;
+    const accountKeys = tx.transaction.message.staticAccountKeys;
 
     let treasuryIndex = -1;
     for (let i = 0; i < accountKeys.length; i++) {
@@ -175,7 +175,7 @@ Deno.serve(async (req) => {
     );
   } catch (err) {
     console.error("verify-sol-payment error:", err);
-    return new Response(JSON.stringify({ error: err.message }), {
+    return new Response(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
