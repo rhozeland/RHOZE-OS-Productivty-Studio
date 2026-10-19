@@ -1,5 +1,9 @@
 import { PublicKey } from "@solana/web3.js";
-import { resolveSolanaConfig, SolanaConfigError } from "./solana-config";
+import {
+  resolveSolanaConnectionConfig,
+  resolveSolanaConfig,
+  SolanaConfigError,
+} from "./solana-config";
 
 const validInput = {
   rhozeMint: PublicKey.unique().toBase58(),
@@ -9,6 +13,19 @@ const validInput = {
 };
 
 describe("resolveSolanaConfig", () => {
+  it("resolves the wallet connection without requiring transaction assets", () => {
+    expect(
+      resolveSolanaConnectionConfig({
+        environment: "devnet",
+        rpcUrl: "https://api.devnet.solana.com",
+      }),
+    ).toEqual({
+      environment: "devnet",
+      cluster: "devnet",
+      rpcUrl: "https://api.devnet.solana.com",
+    });
+  });
+
   it("defaults non-production builds to a disabled Devnet profile", () => {
     expect(resolveSolanaConfig(validInput)).toMatchObject({
       environment: "devnet",

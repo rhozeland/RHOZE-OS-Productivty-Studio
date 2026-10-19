@@ -30,6 +30,12 @@ export interface SolanaConfigInput {
   anchoringEnabled?: string | boolean;
 }
 
+export interface SolanaConnectionConfig {
+  environment: SolanaEnvironment;
+  cluster: SolanaCluster;
+  rpcUrl: string;
+}
+
 export class SolanaConfigError extends Error {
   readonly issues: string[];
 
@@ -78,10 +84,10 @@ const parsePublicKey = (
 const defaultEnvironment = (mode: string): SolanaEnvironment | undefined =>
   mode === "production" ? undefined : "devnet";
 
-export const resolveSolanaConfig = (
-  input: SolanaConfigInput,
+export const resolveSolanaConnectionConfig = (
+  input: Pick<SolanaConfigInput, "environment" | "rpcUrl">,
   mode = "development",
-): SolanaConfig => {
+): SolanaConnectionConfig => {
   const issues: string[] = [];
   const environment = input.environment?.trim() || defaultEnvironment(mode);
 
@@ -106,6 +112,21 @@ export const resolveSolanaConfig = (
   if (resolvedEnvironment === PRODUCTION_ENVIRONMENT && !input.rpcUrl?.trim()) {
     issues.push("mainnet requires an explicit rpcUrl");
   }
+
+  if (issues.length > 0) {
+    throw new SolanaConfigError(issues);
+  }
+
+  return { environment: resolvedEnvironment, cluster, rpcUrl };
+};
+
+export const resolveSolanaConfig = (
+  input: SolanaConfigInput,
+  mode = "development",
+): SolanaConfig => {
+  const connectionConfig = resolveSolanaConnectionConfig(input, mode);
+  const issues: string[] = [];
+  const { environment: resolvedEnvironment, cluster, rpcUrl } = connectionConfig;
 
   const rhozeMint = parsePublicKey(input.rhozeMint, "rhozeMint", issues);
   const tokenProgramId = parsePublicKey(
@@ -165,6 +186,15 @@ export const getSolanaConfig = (): SolanaConfig =>
       paymentsEnabled: import.meta.env.VITE_SOLANA_PAYMENTS_ENABLED,
       claimsEnabled: import.meta.env.VITE_SOLANA_CLAIMS_ENABLED,
       anchoringEnabled: import.meta.env.VITE_SOLANA_ANCHORING_ENABLED,
+    },
+    import.meta.env.MODE,
+  );
+
+export const getSolanaConnectionConfig = (): SolanaConnectionConfig =>
+  resolveSolanaConnectionConfig(
+    {
+      environment: import.meta.env.VITE_SOLANA_ENV,
+      rpcUrl: import.meta.env.VITE_SOLANA_RPC_URL,
     },
     import.meta.env.MODE,
   );

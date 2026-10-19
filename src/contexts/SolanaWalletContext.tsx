@@ -6,24 +6,19 @@ import {
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import { PhantomWalletAdapter } from "@solana/wallet-adapter-phantom";
 import { SolflareWalletAdapter } from "@solana/wallet-adapter-solflare";
-import { clusterApiUrl, type Cluster } from "@solana/web3.js";
-import { LAUNCHPAD_NETWORK } from "../lib/launchpad-onchain";
+import { getSolanaConnectionConfig } from "../lib/solana-config";
 import "@solana/wallet-adapter-react-ui/styles.css";
 
 export const SolanaWalletProvider = ({ children }: { children: ReactNode }) => {
-  const endpoint = useMemo(() => {
-    if (LAUNCHPAD_NETWORK === "mainnet-beta" && import.meta.env.VITE_SOLANA_RPC_URL) {
-      return import.meta.env.VITE_SOLANA_RPC_URL;
-    }
-    return clusterApiUrl(LAUNCHPAD_NETWORK as Cluster);
-  }, []);
+  const connectionConfig = useMemo(() => getSolanaConnectionConfig(), []);
+  const endpoint = connectionConfig.rpcUrl;
 
   const wallets = useMemo(
     () => [
-      new PhantomWalletAdapter(), 
-      new SolflareWalletAdapter({network: LAUNCHPAD_NETWORK}),
+      new PhantomWalletAdapter(),
+      new SolflareWalletAdapter({ }),
     ],
-    []
+    [],
   );
 
   return (
