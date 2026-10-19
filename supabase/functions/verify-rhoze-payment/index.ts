@@ -1,16 +1,12 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { Connection, PublicKey, clusterApiUrl } from "https://esm.sh/@solana/web3.js@1.98.4";
+import { Connection, PublicKey } from "https://esm.sh/@solana/web3.js@1.98.4";
+import { getSolanaConfig } from "../_shared/solana-config.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
-
-const RHOZE_MINT = "7khGn21aGKKAPi1LZF5EsdECdtyDcnYHtMKELrZDpump";
-const TREASURY_ADDRESS = "6znjR2ttDJ5c6ScePsE4jU8e2g29dChX7cCVk6xjizr";
-const NETWORK = "mainnet-beta";
-const RHOZE_DECIMALS = 6;
 
 // Server-side conversion rate: 100 $RHOZE ≈ 1 USD ≈ 1 credit
 // Adjust here only — never trust client values.
@@ -53,7 +49,13 @@ Deno.serve(async (req) => {
       });
     }
 
-    const connection = new Connection(clusterApiUrl(NETWORK));
+    const config = getSolanaConfig();
+    if (!config.paymentsEnabled) {
+      throw new Error("$RHOZE payments are disabled for this environment");
+    }
+    const connection = new Connection(config.rpcUrl);
+    const rhozeMint = config.rhozeMint;
+    const treasuryAddress = config.treasuryAddress;
     const tx = await connection.getParsedTransaction(signature, {
       commitment: "confirmed",
       maxSupportedTransactionVersion: 0,
@@ -87,7 +89,7 @@ Deno.serve(async (req) => {
 
       if (
         parsed.type === "transfer" &&
-        parsed.info?.mint === RHOZE_MINT
+        parsed.info?.mint === rhozeMint
       ) {
         transferAmount = Number(parsed.info.amount || parsed.info.tokenAmount?.amount || 0);
         transferFound = true;
@@ -96,7 +98,7 @@ Deno.serve(async (req) => {
 
       if (
         parsed.type === "transferChecked" &&
-        parsed.info?.mint === RHOZE_MINT
+        parsed.info?.mint === rhozeMint
       ) {
         transferAmount = Number(parsed.info.tokenAmount?.amount || 0);
         transferFound = true;
@@ -110,11 +112,11 @@ Deno.serve(async (req) => {
       const postTokenBalances = tx.meta?.postTokenBalances ?? [];
 
       for (const post of postTokenBalances) {
-        if (post.mint !== RHOZE_MINT) continue;
-        if (post.owner !== TREASURY_ADDRESS) continue;
+        if (post.mint !== rhozeMint) continue;
+        if (post.owner !== treasuryAddress) continue;
 
         const pre = preTokenBalances.find(
-          (p: any) => p.accountIndex === post.accountIndex && p.mint === RHOZE_MINT
+          (p: any) => p.accountIndex === post.accountIndex && p.mint === rhozeMint
         );
         const preAmount = Number(pre?.uiTokenAmount?.amount ?? "0");
         const postAmount = Number(post.uiTokenAmount?.amount ?? "0");
@@ -133,7 +135,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const receivedTokens = transferAmount / Math.pow(10, RHOZE_DECIMALS);
+    const receivedTokens = transferAmount / Math.pow(10, config.rhozeDecimals);
     if (receivedTokens < expected_tokens * 0.99) {
       return new Response(JSON.stringify({
         error: `Insufficient $RHOZE. Expected ${expected_tokens}, received ${receivedTokens}`,

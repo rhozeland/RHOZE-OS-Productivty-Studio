@@ -10,9 +10,9 @@ import {
   getAssociatedTokenAddressSync,
   createTransferInstruction,
   createAssociatedTokenAccountInstruction,
-  TOKEN_2022_PROGRAM_ID,
 } from "npm:@solana/spl-token@0.4.9";
 import bs58 from "npm:bs58@6.0.0";
+import { getSolanaConfig } from "../_shared/solana-config.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,9 +20,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const RHOZE_MINT = "7khGn21aGKKAPi1LZF5EsdECdtyDcnYHtMKELrZDpump";
-const RPC_URL = "https://api.mainnet-beta.solana.com";
-const RHOZE_DECIMALS = 6;
 const MIN_SOL_FOR_FEES = 0.002;
 
 function respond(body: unknown) {
@@ -32,8 +29,8 @@ function respond(body: unknown) {
   });
 }
 
-async function rpcCall(method: string, params: unknown[]) {
-  const res = await fetch(RPC_URL, {
+async function rpcCall(rpcUrl: string, method: string, params: unknown[]) {
+  const res = await fetch(rpcUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
@@ -77,6 +74,10 @@ Deno.serve(async (req) => {
     }
 
     const { wallet_address, credits_to_claim } = await req.json();
+    const config = getSolanaConfig();
+    if (!config.claimsEnabled) {
+      return respond({ ok: false, error: "Token claims are disabled for this environment" });
+    }
 
     if (!wallet_address || !credits_to_claim || credits_to_claim <= 0) {
       return respond({ ok: false, error: "Missing wallet_address or credits_to_claim" });
@@ -142,18 +143,25 @@ Deno.serve(async (req) => {
     }
 
     const airdropKeypair = parseAirdropKeypair(privateKeyStr);
-    const connection = new Connection(RPC_URL);
-    const mintPubkey = new PublicKey(RHOZE_MINT);
+    if (airdropKeypair.publicKey.toBase58() !== config.payoutAddress) {
+      return respond({
+        ok: false,
+        error: "Configured payout wallet does not match the payout private key",
+      });
+    }
+    const connection = new Connection(config.rpcUrl);
+    const mintPubkey = new PublicKey(config.rhozeMint);
     const recipientPubkey = new PublicKey(wallet_address);
-    const tokenAmount = BigInt(Math.floor(credits_to_claim * Math.pow(10, RHOZE_DECIMALS)));
+    const tokenProgramId = new PublicKey(config.tokenProgramId);
+    const tokenAmount = BigInt(Math.floor(credits_to_claim * Math.pow(10, config.rhozeDecimals)));
 
-    const airdropATA = getAssociatedTokenAddressSync(mintPubkey, airdropKeypair.publicKey, false, TOKEN_2022_PROGRAM_ID);
-    const recipientATA = getAssociatedTokenAddressSync(mintPubkey, recipientPubkey, false, TOKEN_2022_PROGRAM_ID);
+    const airdropATA = getAssociatedTokenAddressSync(mintPubkey, airdropKeypair.publicKey, false, tokenProgramId);
+    const recipientATA = getAssociatedTokenAddressSync(mintPubkey, recipientPubkey, false, tokenProgramId);
 
     const [airdropSolBalance, airdropAtaInfo, recipientAtaCheck] = await Promise.all([
       connection.getBalance(airdropKeypair.publicKey),
       connection.getAccountInfo(airdropATA),
-      rpcCall("getAccountInfo", [recipientATA.toBase58(), { encoding: "base64" }]),
+      rpcCall(config.rpcUrl, "getAccountInfo", [recipientATA.toBase58(), { encoding: "base64" }]),
     ]);
 
     if (airdropSolBalance < MIN_SOL_FOR_FEES * 1e9) {
@@ -189,7 +197,7 @@ Deno.serve(async (req) => {
           recipientATA,
           recipientPubkey,
           mintPubkey,
-          TOKEN_2022_PROGRAM_ID
+          tokenProgramId
         )
       );
     }
@@ -201,7 +209,7 @@ Deno.serve(async (req) => {
         airdropKeypair.publicKey,
         tokenAmount,
         [],
-        TOKEN_2022_PROGRAM_ID
+        tokenProgramId
       )
     );
 

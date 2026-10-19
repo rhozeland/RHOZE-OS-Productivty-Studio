@@ -154,3 +154,11 @@ export const getSolanaConfig = (): SolanaConfig => {
   cachedConfig ??= resolveSolanaConfig();
   return cachedConfig;
 };
+
+export const solscanTransactionUrl = (
+  signature: string,
+  config = getSolanaConfig(),
+): string => {
+  const clusterSuffix = config.cluster === "devnet" ? "?cluster=devnet" : "";
+  return `https://solscan.io/tx/${signature}${clusterSuffix}`;
+};

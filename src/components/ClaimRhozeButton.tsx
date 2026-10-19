@@ -31,8 +31,7 @@ import {
 import RhozeClaimCelebration from "@/components/RhozeClaimCelebration";
 import { useClaimLimits, validateClaim } from "@/lib/claim-limits";
 import { Link } from "react-router-dom";
-
-const SOLANA_RPC = "https://api.mainnet-beta.solana.com";
+import { getSolanaConfig } from "@/lib/solana-config";
 const LAMPORTS_PER_SOL = 1_000_000_000;
 // Base sig fee (5000 lamports) + small priority buffer; ATA creation adds ~0.00203928 SOL rent (paid by payout wallet, not user)
 const ESTIMATED_FEE_LAMPORTS = 5000;
@@ -91,7 +90,8 @@ const ClaimRhozeButton = ({
     setPreviewLoading(true);
     setPreviewError(null);
     try {
-      const res = await fetch(SOLANA_RPC, {
+      const config = getSolanaConfig();
+      const res = await fetch(config.rpcUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify([
@@ -199,7 +199,10 @@ const ClaimRhozeButton = ({
       if (!data?.signature) throw new Error("Transaction did not return a signature.");
 
       const signature: string = data.signature;
-      const solscanUrl = `https://solscan.io/tx/${signature}`;
+      const clusterSuffix = getSolanaConfig().cluster === "devnet"
+        ? "?cluster=devnet"
+        : "";
+      const solscanUrl = `https://solscan.io/tx/${signature}${clusterSuffix}`;
       const shortSig = `${signature.slice(0, 8)}…${signature.slice(-6)}`;
 
       setConfirmOpen(false);
@@ -479,7 +482,11 @@ const ClaimRhozeButton = ({
                   </div>
 
                   <a
-                    href={`https://explorer.solana.com/address/${walletAddress}`}
+                    href={`https://explorer.solana.com/address/${walletAddress}${
+                      getSolanaConfig().cluster === "devnet"
+                        ? "?cluster=devnet"
+                        : ""
+                    }`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="mt-2 inline-flex items-center gap-1.5 text-[11px] text-primary hover:underline font-body"

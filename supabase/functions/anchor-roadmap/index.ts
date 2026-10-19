@@ -9,6 +9,10 @@
  * Mirrors the dynamic-import / lightweight pattern of anchor-contribution.
  */
 import { createClient } from "npm:@supabase/supabase-js@2";
+import {
+  getSolanaConfig,
+  solscanTransactionUrl,
+} from "../_shared/solana-config.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -133,7 +137,7 @@ Deno.serve(async (req) => {
 
     const privateKeyArray = JSON.parse(privateKeyStr);
     const keypair = Keypair.fromSecretKey(new Uint8Array(privateKeyArray));
-    const connection = new Connection(clusterApiUrl("mainnet-beta"), "confirmed");
+    const connection = new Connection(getSolanaConfig().rpcUrl, "confirmed");
 
     const memoInstruction = new TransactionInstruction({
       keys: [{ pubkey: keypair.publicKey, isSigner: true, isWritable: false }],
@@ -163,7 +167,7 @@ Deno.serve(async (req) => {
 
     return respond(200, {
       signature,
-      explorer: `https://solscan.io/tx/${signature}`,
+      explorer: solscanTransactionUrl(signature),
     });
   } catch (err) {
     console.error("anchor-roadmap error:", err);

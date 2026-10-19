@@ -1,14 +1,12 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { Connection, PublicKey, clusterApiUrl, LAMPORTS_PER_SOL } from "https://esm.sh/@solana/web3.js@1.98.4";
+import { Connection, PublicKey, LAMPORTS_PER_SOL } from "https://esm.sh/@solana/web3.js@1.98.4";
+import { getSolanaConfig } from "../_shared/solana-config.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
-
-const TREASURY_ADDRESS = "6znjR2ttDJ5c6ScePsE4jU8e2g29dChX7cCVk6xjizr";
-const NETWORK = "mainnet-beta";
 
 // Server-side conversion rate: 1 SOL ≈ 150 USD (approx) -> 150 credits per SOL.
 // Adjust here only — never trust client values.
@@ -52,7 +50,11 @@ Deno.serve(async (req) => {
     }
 
     // Verify the transaction on-chain
-    const connection = new Connection(clusterApiUrl(NETWORK));
+    const config = getSolanaConfig();
+    if (!config.paymentsEnabled) {
+      throw new Error("SOL payments are disabled for this environment");
+    }
+    const connection = new Connection(config.rpcUrl);
     const tx = await connection.getTransaction(signature, {
       commitment: "confirmed",
       maxSupportedTransactionVersion: 0,
@@ -73,8 +75,8 @@ Deno.serve(async (req) => {
     }
 
     // Verify the transaction sent SOL to our treasury
-    const treasuryPubkey = new PublicKey(TREASURY_ADDRESS);
-    const accountKeys = tx.transaction.message.staticAccountKeys;
+    const treasuryPubkey = new PublicKey(config.treasuryAddress);
+    const accountKeys = tx.transaction.message.staticAccountKeys || tx.transaction.message.accountKeys;
 
     let treasuryIndex = -1;
     for (let i = 0; i < accountKeys.length; i++) {

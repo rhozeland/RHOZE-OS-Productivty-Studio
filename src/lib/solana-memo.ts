@@ -1,13 +1,11 @@
 import {
-  Connection,
   PublicKey,
   Transaction,
   TransactionInstruction,
-  clusterApiUrl,
 } from "@solana/web3.js";
+import { getConnection } from "./solana";
 
 const MEMO_PROGRAM_ID = new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr");
-const NETWORK = "mainnet-beta";
 
 /**
  * Creates a Solana memo transaction that anchors data on-chain.
@@ -17,7 +15,7 @@ export const createMemoTransaction = async (
   payer: PublicKey,
   memo: string
 ): Promise<Transaction> => {
-  const connection = new Connection(clusterApiUrl(NETWORK));
+  const connection = getConnection();
 
   const memoInstruction = new TransactionInstruction({
     keys: [{ pubkey: payer, isSigner: true, isWritable: false }],

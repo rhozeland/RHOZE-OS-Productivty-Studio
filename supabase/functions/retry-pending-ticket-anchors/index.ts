@@ -4,6 +4,7 @@
 // CRON_SECRET header.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { getSolanaConfig } from "../_shared/solana-config.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -82,7 +83,7 @@ Deno.serve(async (req) => {
       new Uint8Array(JSON.parse(privateKeyStr)),
     );
     const connection = new Connection(
-      clusterApiUrl("mainnet-beta"),
+      getSolanaConfig().rpcUrl,
       "confirmed",
     );
 

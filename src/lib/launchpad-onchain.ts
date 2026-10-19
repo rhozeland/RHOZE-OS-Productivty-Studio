@@ -16,7 +16,6 @@
 import {
   PublicKey,
   Connection,
-  clusterApiUrl,
   type ConfirmOptions,
 } from "@solana/web3.js";
 import { AnchorProvider, Program, BN, type Idl } from "@coral-xyz/anchor";
@@ -26,13 +25,14 @@ import {
   getOverrideProgramId,
 } from "./launchpad-idl-store";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
+import { getSolanaConnectionConfig } from "./solana-config";
 
 const ENV_PROGRAM_ID = (
   import.meta.env.VITE_LAUNCHPAD_PROGRAM_ID as string | undefined
 )?.trim();
 
 export const LAUNCHPAD_NETWORK: WalletAdapterNetwork =
-  (import.meta.env.VITE_LAUNCHPAD_NETWORK as WalletAdapterNetwork | undefined) ?? WalletAdapterNetwork.Devnet;
+  getSolanaConnectionConfig().cluster;
 
 const SOL_LAMPORTS = 1_000_000_000;
 const TOKEN_DECIMALS_DEFAULT = 6;
@@ -55,7 +55,7 @@ const resolveProgramId = (): PublicKey | null => {
 export const getLaunchpadProgramId = (): PublicKey | null => resolveProgramId();
 
 export const getLaunchpadConnection = (): Connection =>
-  new Connection(clusterApiUrl(LAUNCHPAD_NETWORK), "confirmed");
+  new Connection(getSolanaConnectionConfig().rpcUrl, "confirmed");
 
 export const isLaunchpadOnChainEnabled = (): boolean =>
   resolveProgramId() !== null && getCachedIdl() !== null;

@@ -1,6 +1,10 @@
 // Atomically anchor a Work on Solana and mark a verification request approved.
 // Called by an admin from the IP Verifications dashboard.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import {
+  getSolanaConfig,
+  solscanTransactionUrl,
+} from "../_shared/solana-config.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -89,7 +93,7 @@ Deno.serve(async (req) => {
 
     const MEMO_PROGRAM_ID = new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr");
     const keypair = Keypair.fromSecretKey(new Uint8Array(JSON.parse(privateKeyStr)));
-    const connection = new Connection(clusterApiUrl("mainnet-beta"), "confirmed");
+    const connection = new Connection(getSolanaConfig().rpcUrl, "confirmed");
 
     const memoInstruction = new TransactionInstruction({
       keys: [{ pubkey: keypair.publicKey, isSigner: true, isWritable: false }],
@@ -117,7 +121,7 @@ Deno.serve(async (req) => {
 
     return respond(200, {
       signature,
-      explorer: `https://solscan.io/tx/${signature}`,
+      explorer: solscanTransactionUrl(signature),
     });
   } catch (err) {
     console.error("approve-work-verification error:", err);

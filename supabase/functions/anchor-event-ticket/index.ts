@@ -5,6 +5,10 @@
 // Fees paid by the Rhozeland treasury wallet (RHOZE_AIRDROP_PRIVATE_KEY).
 
 import { createClient } from "npm:@supabase/supabase-js@2";
+import {
+  getSolanaConfig,
+  solscanTransactionUrl,
+} from "../_shared/solana-config.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -99,7 +103,7 @@ Deno.serve(async (req) => {
     if (ticket.solana_signature) {
       return respond(200, {
         signature: ticket.solana_signature,
-        explorer: `https://solscan.io/tx/${ticket.solana_signature}`,
+        explorer: solscanTransactionUrl(ticket.solana_signature),
         already_anchored: true,
       });
     }
@@ -173,7 +177,7 @@ Deno.serve(async (req) => {
         new Uint8Array(JSON.parse(privateKeyStr)),
       );
       const connection = new Connection(
-        clusterApiUrl("mainnet-beta"),
+        getSolanaConfig().rpcUrl,
         "confirmed",
       );
 
@@ -220,7 +224,7 @@ Deno.serve(async (req) => {
 
       return respond(200, {
         signature,
-        explorer: `https://solscan.io/tx/${signature}`,
+        explorer: solscanTransactionUrl(signature),
       });
     } catch (anchorErr) {
       const msg =

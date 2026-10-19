@@ -2,6 +2,10 @@
 // attestation on Solana via a memo TX. Honor-system in phase 1 (no Luma RSVP
 // verification). Idempotent on (user_id, luma_url).
 import { createClient } from "npm:@supabase/supabase-js@2";
+import {
+  getSolanaConfig,
+  solscanTransactionUrl,
+} from "../_shared/solana-config.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -77,7 +81,7 @@ Deno.serve(async (req) => {
         return respond(200, {
           claim_id: existing.id,
           signature: existing.memo_signature,
-          explorer: `https://solscan.io/tx/${existing.memo_signature}`,
+          explorer: solscanTransactionUrl(existing.memo_signature),
           already_anchored: true,
         });
       }
@@ -125,7 +129,7 @@ Deno.serve(async (req) => {
         await import("npm:@solana/web3.js@1.98.0");
       const MEMO_PROGRAM_ID = new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr");
       const keypair = Keypair.fromSecretKey(new Uint8Array(JSON.parse(privateKeyStr)));
-      const connection = new Connection(clusterApiUrl("mainnet-beta"), "confirmed");
+      const connection = new Connection(getSolanaConfig().rpcUrl, "confirmed");
 
       const memo = JSON.stringify({
         protocol: "rhozeland",
@@ -158,7 +162,7 @@ Deno.serve(async (req) => {
       return respond(200, {
         claim_id: claimId,
         signature,
-        explorer: `https://solscan.io/tx/${signature}`,
+        explorer: solscanTransactionUrl(signature),
       });
     } catch (anchorErr) {
       const msg = anchorErr instanceof Error ? anchorErr.message : "Unknown anchor error";

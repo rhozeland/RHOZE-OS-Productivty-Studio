@@ -11,8 +11,7 @@ import {
 } from "@/lib/solana";
 import { toast } from "sonner";
 import { Loader2, Wallet } from "lucide-react";
-
-export const TREASURY_ADDRESS = "6znjR2ttDJ5c6ScePsE4jU8e2g29dChX7cCVk6xjizr";
+import { getSolanaConfig } from "@/lib/solana-config";
 
 interface PaySolAndVerifyProps {
   solAmount: number;
@@ -58,7 +57,7 @@ const PaySolAndVerify = ({
     try {
       // Step 1: Send SOL to treasury
       setStatus("Sending SOL...");
-      const recipient = new PublicKey(TREASURY_ADDRESS);
+      const recipient = new PublicKey(getSolanaConfig().treasuryAddress);
       const transaction = await createTransferTransaction(publicKey, recipient, solAmount);
       const signature = await sendTransaction(transaction, getConnection());
 
