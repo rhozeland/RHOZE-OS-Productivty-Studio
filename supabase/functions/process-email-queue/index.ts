@@ -52,11 +52,13 @@ function parseJwtClaims(token: string): Record<string, unknown> | null {
   }
 }
 
-// Move a message to the dead letter queue and log the reason.
+// A row returned by the pgmq read RPC.
+type EmailQueueMessage = { msg_id: number; message: Record<string, unknown> }
+
 async function moveToDlq(
   supabase: SupabaseClient<any>,
   queue: string,
-  msg: { msg_id: number; message: Record<string, unknown> },
+  msg: EmailQueueMessage,
   reason: string
 ): Promise<void> {
   const payload = msg.message
