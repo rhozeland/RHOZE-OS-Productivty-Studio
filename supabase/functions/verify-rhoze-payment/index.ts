@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Connection, PublicKey } from "https://esm.sh/@solana/web3.js@1.98.4";
 import { getSolanaConfig } from "../_shared/solana-config.ts";
+import { verifySolanaCluster } from "../_shared/solana-cluster.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -42,7 +43,15 @@ Deno.serve(async (req) => {
 
     const { signature, expected_tokens, description, type, intent } = await req.json();
 
-    if (!signature || !expected_tokens) {
+    // Reject the request unless the signature is a properly formatted
+    // Base58 string and the expected token amount is a finite positive number.
+    if (
+      typeof signature !== "string" ||
+      !/^[1-9A-HJ-NP-Za-km-z]{64,90}$/.test(signature) ||
+      typeof expected_tokens !== "number" ||
+      !Number.isFinite(expected_tokens) ||
+      expected_tokens <= 0
+    ) {
       return new Response(JSON.stringify({ error: "Missing required fields: signature, expected_tokens" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -50,10 +59,11 @@ Deno.serve(async (req) => {
     }
 
     const config = getSolanaConfig();
-    if (!config.paymentsEnabled) {
+    if (!config.rhozePaymentsEnabled) {
       throw new Error("$RHOZE payments are disabled for this environment");
     }
     const connection = new Connection(config.rpcUrl);
+    await verifySolanaCluster(connection, config.cluster);
     const rhozeMint = config.rhozeMint;
     const treasuryAddress = config.treasuryAddress;
     const tx = await connection.getParsedTransaction(signature, {
@@ -102,7 +112,9 @@ Deno.serve(async (req) => {
           balance.owner === treasuryAddress &&
           (!balance.programId || balance.programId === config.tokenProgramId)
         )
-        .map((balance: any) => tx.transaction.message.accountKeys[balance.accountIndex]?.pubkey)
+        .map((balance: any) =>
+          tx.transaction.message.accountKeys[balance.accountIndex]?.pubkey.toBase58()
+        )
         .filter(Boolean),
     );
 

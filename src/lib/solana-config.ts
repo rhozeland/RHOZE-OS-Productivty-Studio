@@ -12,7 +12,8 @@ export interface SolanaConfig {
   rhozeDecimals: number;
   treasuryAddress: string;
   payoutAddress: string;
-  paymentsEnabled: boolean;
+  solPaymentsEnabled: boolean;
+  rhozePaymentsEnabled: boolean;
   claimsEnabled: boolean;
   anchoringEnabled: boolean;
 }
@@ -25,6 +26,8 @@ export interface SolanaConfigInput {
   rhozeDecimals?: string | number;
   treasuryAddress?: string;
   payoutAddress?: string;
+  solPaymentsEnabled?: string | boolean;
+  rhozePaymentsEnabled?: string | boolean;
   paymentsEnabled?: string | boolean;
   claimsEnabled?: string | boolean;
   anchoringEnabled?: string | boolean;
@@ -167,7 +170,14 @@ export const resolveSolanaConfig = (
     rhozeDecimals,
     treasuryAddress,
     payoutAddress,
-    paymentsEnabled: parseBoolean(input.paymentsEnabled, false),
+    solPaymentsEnabled: parseBoolean(
+      input.solPaymentsEnabled,
+      parseBoolean(input.paymentsEnabled, false),
+    ),
+    rhozePaymentsEnabled: parseBoolean(
+      input.rhozePaymentsEnabled,
+      parseBoolean(input.paymentsEnabled, false),
+    ),
     claimsEnabled: parseBoolean(input.claimsEnabled, false),
     anchoringEnabled: parseBoolean(input.anchoringEnabled, false),
   };
@@ -183,6 +193,8 @@ export const getSolanaConfig = (): SolanaConfig =>
       rhozeDecimals: import.meta.env.VITE_SOLANA_RHOZE_DECIMALS,
       treasuryAddress: import.meta.env.VITE_SOLANA_TREASURY_WALLET,
       payoutAddress: import.meta.env.VITE_SOLANA_PAYOUT_WALLET,
+      solPaymentsEnabled: import.meta.env.VITE_SOLANA_SOL_PAYMENTS_ENABLED,
+      rhozePaymentsEnabled: import.meta.env.VITE_SOLANA_RHOZE_PAYMENTS_ENABLED,
       paymentsEnabled: import.meta.env.VITE_SOLANA_PAYMENTS_ENABLED,
       claimsEnabled: import.meta.env.VITE_SOLANA_CLAIMS_ENABLED,
       anchoringEnabled: import.meta.env.VITE_SOLANA_ANCHORING_ENABLED,

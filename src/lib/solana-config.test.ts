@@ -30,7 +30,8 @@ describe("resolveSolanaConfig", () => {
     expect(resolveSolanaConfig(validInput)).toMatchObject({
       environment: "devnet",
       cluster: "devnet",
-      paymentsEnabled: false,
+      solPaymentsEnabled: false,
+      rhozePaymentsEnabled: false,
       claimsEnabled: false,
       anchoringEnabled: false,
     });
@@ -79,17 +80,38 @@ describe("resolveSolanaConfig", () => {
     const config = resolveSolanaConfig({
       ...validInput,
       environment: "devnet",
-      paymentsEnabled: "true",
+      solPaymentsEnabled: "true",
+      rhozePaymentsEnabled: false,
       claimsEnabled: true,
       anchoringEnabled: "false",
       rhozeDecimals: "9",
     });
 
     expect(config).toMatchObject({
-      paymentsEnabled: true,
+      solPaymentsEnabled: true,
+      rhozePaymentsEnabled: false,
       claimsEnabled: true,
       anchoringEnabled: false,
       rhozeDecimals: 9,
+    });
+  });
+
+  it("allows each payment flag to override the legacy shared flag", () => {
+    expect(resolveSolanaConfig({
+      ...validInput,
+      solPaymentsEnabled: "true",
+      rhozePaymentsEnabled: "false",
+      paymentsEnabled: true,
+    })).toMatchObject({
+      solPaymentsEnabled: true,
+      rhozePaymentsEnabled: false,
+    });
+  });
+
+  it("uses the legacy shared flag when individual payment flags are absent", () => {
+    expect(resolveSolanaConfig({ ...validInput, paymentsEnabled: true })).toMatchObject({
+      solPaymentsEnabled: true,
+      rhozePaymentsEnabled: true,
     });
   });
 });

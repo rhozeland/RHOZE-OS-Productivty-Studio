@@ -55,9 +55,14 @@ const PaySolAndVerify = ({
 
     setLoading(true);
     try {
+      const config = getSolanaConfig();
+      if (!config.solPaymentsEnabled) {
+        toast.error("SOL payments are disabled for this environment");
+        return;
+      }
       // Step 1: Send SOL to treasury
       setStatus("Sending SOL...");
-      const recipient = new PublicKey(getSolanaConfig().treasuryAddress);
+      const recipient = new PublicKey(config.treasuryAddress);
       const transaction = await createTransferTransaction(publicKey, recipient, solAmount);
       const signature = await sendTransaction(transaction, getConnection());
 

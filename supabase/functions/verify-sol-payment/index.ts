@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { Connection, PublicKey, LAMPORTS_PER_SOL } from "https://esm.sh/@solana/web3.js@1.98.4";
+import { Connection, LAMPORTS_PER_SOL } from "https://esm.sh/@solana/web3.js@1.98.4";
 import { getSolanaConfig } from "../_shared/solana-config.ts";
+import { verifySolanaCluster } from "../_shared/solana-cluster.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -42,7 +43,13 @@ Deno.serve(async (req) => {
 
     const { signature, expected_sol, description, type, intent } = await req.json();
 
-    if (!signature || !expected_sol) {
+    if (
+      typeof signature !== "string" ||
+      !/^[1-9A-HJ-NP-Za-km-z]{64,90}$/.test(signature) ||
+      typeof expected_sol !== "number" ||
+      !Number.isFinite(expected_sol) ||
+      expected_sol <= 0
+    ) {
       return new Response(JSON.stringify({ error: "Missing required fields: signature, expected_sol" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -51,11 +58,12 @@ Deno.serve(async (req) => {
 
     // Verify the transaction on-chain
     const config = getSolanaConfig();
-    if (!config.paymentsEnabled) {
+    if (!config.solPaymentsEnabled) {
       throw new Error("SOL payments are disabled for this environment");
     }
     const connection = new Connection(config.rpcUrl);
-    const tx = await connection.getTransaction(signature, {
+    await verifySolanaCluster(connection, config.cluster);
+    const tx = await connection.getParsedTransaction(signature, {
       commitment: "confirmed",
       maxSupportedTransactionVersion: 0,
     });
@@ -74,8 +82,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const feePayer = tx.transaction.message.staticAccountKeys?.[0] ??
-      tx.transaction.message.accountKeys?.[0];
+    const feePayer = tx.transaction.message.accountKeys[0]?.pubkey;
     const { data: profile } = await supabaseUser
       .from("profiles")
       .select("wallet_address")
@@ -88,29 +95,29 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Verify the transaction sent SOL to our treasury
-    const treasuryPubkey = new PublicKey(config.treasuryAddress);
-    const accountKeys = tx.transaction.message.staticAccountKeys || tx.transaction.message.accountKeys;
+    // Verify an explicit System Program transfer from the user's wallet to
+    // the configured treasury; merely mentioning the treasury is insufficient.
+    const receivedLamports = tx.transaction.message.instructions.reduce((sum, instruction) => {
+      if (!("parsed" in instruction) || instruction.program !== "system") return sum;
+      const parsed = instruction.parsed as {
+        type?: string;
+        info?: { source?: string; destination?: string; lamports?: number };
+      };
+      if (
+        parsed.type !== "transfer" ||
+        parsed.info?.source !== profile.wallet_address ||
+        parsed.info?.destination !== config.treasuryAddress
+      ) return sum;
+      return sum + (Number(parsed.info?.lamports) || 0);
+    }, 0);
 
-    let treasuryIndex = -1;
-    for (let i = 0; i < accountKeys.length; i++) {
-      if (accountKeys[i].toBase58() === treasuryPubkey.toBase58()) {
-        treasuryIndex = i;
-        break;
-      }
-    }
-
-    if (treasuryIndex === -1) {
-      return new Response(JSON.stringify({ error: "Transaction does not involve our treasury wallet" }), {
+    if (receivedLamports <= 0) {
+      return new Response(JSON.stringify({ error: "Transaction has no SOL transfer from your wallet to our treasury" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Check the amount received by treasury
-    const preBalance = tx.meta!.preBalances[treasuryIndex];
-    const postBalance = tx.meta!.postBalances[treasuryIndex];
-    const receivedLamports = postBalance - preBalance;
     const receivedSol = receivedLamports / LAMPORTS_PER_SOL;
 
     // Allow 1% tolerance for rounding
@@ -160,7 +167,8 @@ Deno.serve(async (req) => {
     );
   } catch (err) {
     console.error("verify-sol-payment error:", err);
-    return new Response(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }), {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

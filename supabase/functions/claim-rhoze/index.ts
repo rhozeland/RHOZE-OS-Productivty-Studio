@@ -13,6 +13,7 @@ import {
 } from "npm:@solana/spl-token@0.4.9";
 import bs58 from "npm:bs58@6.0.0";
 import { getSolanaConfig } from "../_shared/solana-config.ts";
+import { verifySolanaCluster } from "../_shared/solana-cluster.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -202,6 +203,7 @@ Deno.serve(async (req) => {
     };
 
     const connection = new Connection(config.rpcUrl, "confirmed");
+    await verifySolanaCluster(connection, config.cluster);
     const mintPubkey = new PublicKey(config.rhozeMint);
     const recipientPubkey = new PublicKey(wallet_address);
     const tokenProgramId = new PublicKey(config.tokenProgramId);

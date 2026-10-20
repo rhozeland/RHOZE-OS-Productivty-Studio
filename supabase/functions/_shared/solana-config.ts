@@ -10,7 +10,8 @@ export interface SolanaConfig {
   rhozeDecimals: number;
   treasuryAddress: string;
   payoutAddress: string;
-  paymentsEnabled: boolean;
+  solPaymentsEnabled: boolean;
+  rhozePaymentsEnabled: boolean;
   claimsEnabled: boolean;
   anchoringEnabled: boolean;
 }
@@ -142,7 +143,14 @@ export const resolveSolanaConfig = (): SolanaConfig => {
     rhozeDecimals,
     treasuryAddress,
     payoutAddress,
-    paymentsEnabled: parseBoolean("SOLANA_PAYMENTS_ENABLED", false),
+    solPaymentsEnabled: parseBoolean(
+      "SOLANA_SOL_PAYMENTS_ENABLED",
+      parseBoolean("SOLANA_PAYMENTS_ENABLED", false),
+    ),
+    rhozePaymentsEnabled: parseBoolean(
+      "SOLANA_RHOZE_PAYMENTS_ENABLED",
+      parseBoolean("SOLANA_PAYMENTS_ENABLED", false),
+    ),
     claimsEnabled: parseBoolean("SOLANA_CLAIMS_ENABLED", false),
     anchoringEnabled: parseBoolean("SOLANA_ANCHORING_ENABLED", false),
   };

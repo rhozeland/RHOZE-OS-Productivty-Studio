@@ -14,6 +14,10 @@ DECLARE
   v_balance NUMERIC;
   v_claim public.crypto_claims;
 BEGIN
+  -- A missing row cannot be locked with SELECT FOR UPDATE. Serialize calls
+  -- for this request ID before checking so concurrent retries share one claim.
+  PERFORM pg_advisory_xact_lock(hashtextextended(p_request_id::TEXT, 0));
+
   SELECT * INTO v_existing
   FROM public.crypto_claims
   WHERE request_id = p_request_id

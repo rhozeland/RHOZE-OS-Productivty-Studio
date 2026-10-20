@@ -56,8 +56,12 @@ const PayWithRhozeButton = ({
 
     setLoading(true);
     try {
-      setStatus("Building transaction...");
       const config = getSolanaConfig();
+      if (!config.rhozePaymentsEnabled) {
+        toast.error("$RHOZE payments are disabled for this environment");
+        return;
+      }
+      setStatus("Building transaction...");
       const connection = getConnection();
       const rhozeMint = new PublicKey(config.rhozeMint);
       const treasury = new PublicKey(config.treasuryAddress);
