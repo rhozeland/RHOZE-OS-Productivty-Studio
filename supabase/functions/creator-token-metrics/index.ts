@@ -17,6 +17,14 @@ const num = (v: unknown): number | null => {
   return Number.isFinite(n) ? n : null;
 };
 
+/**
+ * Fetches public coin metadata from pump.fun
+ * Requests the pump.fun coin endpoint and normalizes response, including the coin's creator wallet, market data, identifiers, timestamps, and virtual reserves. Numeric values are converted to numbers; absent and invalid values are represented as null
+ * 
+ * @param mint - Solana token mint address used to look up the coin
+ * @returns Normalized pump.fun coin metadata, or null, if the request fails, pump.fun returns a non-success status, or an error occurs.
+ * 
+ */
 async function fetchPumpFun(mint: string) {
   try {
     const res = await fetch(`https://frontend-api-v3.pump.fun/coins/${mint}`, {
