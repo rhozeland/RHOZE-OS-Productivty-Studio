@@ -49,6 +49,7 @@ Deno.serve(async (req) => {
     }
 
     // Use getTokenAccountsByOwner RPC to find $RHOZE token accounts
+    const config = getSolanaConfig();
     const result = await rpcCall("getTokenAccountsByOwner", [
       walletAddress,
       { mint: config.rhozeMint },

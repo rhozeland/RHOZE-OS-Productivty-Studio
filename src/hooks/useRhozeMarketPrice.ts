@@ -28,6 +28,7 @@ export interface RhozeMarketPrice {
 
 export const useRhozeMarketPrice = () => {
   return useQuery<RhozeMarketPrice>({
+    queryKey: ["rhoze-market-price", RHOZE_MINT],
     enabled: IS_MAINNET && RHOZE_MINT.length > 0,
     placeholderData: { priceUsd: 0, pairAddress: null, source: null },
     queryFn: async () => {

@@ -33,7 +33,9 @@ const ENV_PROGRAM_ID = (
 )?.trim();
 
 export const LAUNCHPAD_NETWORK: WalletAdapterNetwork =
-  getSolanaConnectionConfig().cluster;
+  getSolanaConnectionConfig().cluster === "devnet"
+    ? WalletAdapterNetwork.Devnet
+    : WalletAdapterNetwork.Mainnet;
 
 const SOL_LAMPORTS = 1_000_000_000;
 const TOKEN_DECIMALS_DEFAULT = 6;

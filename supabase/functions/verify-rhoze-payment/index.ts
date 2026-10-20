@@ -85,12 +85,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { data: profile } = await supabaseUser
-      .from("profiles")
-      .select("wallet_address")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    const feePayer = tx.transaction.message.accountKeys.find((key: any) => key.signer)?.pubkey;
+    const { data: profiles, error: profileError } = await supabaseUser.rpc("get_my_private_profile_fields");
+    if (profileError) throw profileError;
+    const profile = profiles?.[0];
+    const feePayer = tx.transaction.message.accountKeys.find((key) => key.signer)?.pubkey.toBase58();
     if (!profile?.wallet_address || feePayer !== profile.wallet_address) {
       return new Response(JSON.stringify({ error: "Transaction payer does not match your bound wallet" }), {
         status: 403,
