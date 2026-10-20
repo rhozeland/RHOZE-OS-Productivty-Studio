@@ -57,6 +57,30 @@ interface ClaimRhozeButtonProps {
 const shortenAddress = (addr: string) =>
   addr.length > 14 ? `${addr.slice(0, 6)}…${addr.slice(-6)}` : addr;
 
+const readSavedClaim = (key: string): { requestId?: string; signature?: string } | null => {
+  try {
+    return JSON.parse(localStorage.getItem(key) ?? "null");
+  } catch {
+    return null;
+  }
+};
+
+const saveClaimRetry = (key: string, requestId: string, signature: string | null) => {
+  try {
+    localStorage.setItem(key, JSON.stringify({ requestId, signature }));
+  } catch {
+    // Claim submission can still proceed if browser storage is unavailable.
+  }
+};
+
+const clearSavedClaim = (key: string) => {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // A stale retry key is harmless after the server has settled the claim.
+  }
+};
+
 const ClaimRhozeButton = ({
   creditsToClaim,
   onSuccess,
@@ -186,21 +210,39 @@ const ClaimRhozeButton = ({
 
     setClaimError(null);
     setLoading(true);
+    const claimStorageKey = `rhoze-claim:${user.id}:${publicKey.toBase58()}:${creditsToClaim}`;
+    let requestId = "";
+    let payoutSignature: string | null = null;
+    let responseData: { pending?: boolean; ok?: boolean } | null = null;
     try {
+      const saved = readSavedClaim(claimStorageKey);
+      if (saved?.requestId) requestId = saved.requestId;
+      if (typeof saved?.signature === "string") payoutSignature = saved.signature;
+      requestId ||= crypto.randomUUID();
+      saveClaimRetry(claimStorageKey, requestId, payoutSignature);
+
       setStatus("Sending tokens...");
       const { data, error } = await supabase.functions.invoke("claim-rhoze", {
         body: {
           wallet_address: publicKey.toBase58(),
           credits_to_claim: creditsToClaim,
-          request_id: crypto.randomUUID(),
+          request_id: requestId,
+          payout_signature: payoutSignature,
         },
       });
+      responseData = data;
+
+      if (data?.pending && data?.signature) {
+        payoutSignature = data.signature;
+        saveClaimRetry(claimStorageKey, requestId, payoutSignature);
+      }
 
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       if (!data?.signature) throw new Error("Transaction did not return a signature.");
 
       const signature: string = data.signature;
+      clearSavedClaim(claimStorageKey);
       const solscanUrl = solscanTransactionUrl(signature);
       const shortSig = `${signature.slice(0, 8)}…${signature.slice(-6)}`;
 
@@ -236,6 +278,9 @@ const ClaimRhozeButton = ({
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
       onSuccess?.();
     } catch (error: any) {
+      if (responseData && !responseData.pending && !responseData.ok) {
+        clearSavedClaim(claimStorageKey);
+      }
       const raw = error?.message || "Claim failed unexpectedly.";
       const friendly = /network|fetch|failed to fetch|timeout/i.test(raw)
         ? "Network error reaching the claim service. Check your connection and try again."
