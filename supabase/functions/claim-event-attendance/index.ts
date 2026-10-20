@@ -2,6 +2,7 @@
 // attestation on Solana via a memo TX. Honor-system in phase 1 (no Luma RSVP
 // verification). Idempotent on (user_id, luma_url).
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { Buffer } from "node:buffer";
 import {
   getSolanaConfig,
   solscanTransactionUrl,
@@ -38,6 +39,11 @@ Deno.serve(async (req) => {
     );
     const { data: { user }, error: authError } = await userClient.auth.getUser();
     if (authError || !user) return respond(401, { error: "Unauthorized" });
+
+    const config = getSolanaConfig();
+    if (!config.anchoringEnabled) {
+      return respond(503, { error: "On-chain anchoring is disabled for this environment" });
+    }
 
     let body: Record<string, unknown>;
     try { body = await req.json(); } catch { return respond(400, { error: "Invalid JSON" }); }
@@ -129,7 +135,7 @@ Deno.serve(async (req) => {
         await import("npm:@solana/web3.js@1.98.0");
       const MEMO_PROGRAM_ID = new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr");
       const keypair = Keypair.fromSecretKey(new Uint8Array(JSON.parse(privateKeyStr)));
-      const connection = new Connection(getSolanaConfig().rpcUrl, "confirmed");
+      const connection = new Connection(config.rpcUrl, "confirmed");
 
       const memo = JSON.stringify({
         protocol: "rhozeland",
@@ -143,7 +149,7 @@ Deno.serve(async (req) => {
       const ix = new TransactionInstruction({
         keys: [{ pubkey: keypair.publicKey, isSigner: true, isWritable: false }],
         programId: MEMO_PROGRAM_ID,
-        data: new TextEncoder().encode(memo),
+        data: Buffer.from(memo, "utf8"),
       });
       const tx = new Transaction().add(ix);
       const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();

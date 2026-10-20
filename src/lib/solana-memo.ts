@@ -4,6 +4,7 @@ import {
   TransactionInstruction,
 } from "@solana/web3.js";
 import { getConnection } from "./solana";
+import { getSolanaConfig } from "./solana-config";
 
 const MEMO_PROGRAM_ID = new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr");
 
@@ -15,6 +16,9 @@ export const createMemoTransaction = async (
   payer: PublicKey,
   memo: string
 ): Promise<Transaction> => {
+  if (!getSolanaConfig().anchoringEnabled) {
+    throw new Error("On-chain anchoring is disabled for this environment.");
+  }
   const connection = getConnection();
 
   const memoInstruction = new TransactionInstruction({

@@ -61,6 +61,11 @@ const PayWithRhozeButton = ({
         toast.error("$RHOZE payments are disabled for this environment");
         return;
       }
+      const { data: profiles, error: profileError } = await supabase.rpc("get_my_private_profile_fields");
+      if (profileError) throw profileError;
+      if (profiles?.[0]?.wallet_address !== publicKey.toBase58()) {
+        throw new Error("Connect your account's bound wallet before paying.");
+      }
       setStatus("Building transaction...");
       const connection = getConnection();
       const rhozeMint = new PublicKey(config.rhozeMint);

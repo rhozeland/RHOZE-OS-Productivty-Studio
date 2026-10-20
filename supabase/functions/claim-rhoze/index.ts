@@ -4,7 +4,6 @@ import {
   PublicKey,
   Transaction,
   Connection,
-  SendTransactionError,
 } from "npm:@solana/web3.js@1.98.4";
 import {
   getAssociatedTokenAddressSync,
@@ -79,7 +78,7 @@ Deno.serve(async (req) => {
       return respond({ ok: false, error: "Unauthorized" });
     }
 
-    const { wallet_address, credits_to_claim, request_id, payout_signature } = await req.json();
+    const { wallet_address, credits_to_claim, request_id } = await req.json();
     retryRequestId = request_id ?? null;
     const config = getSolanaConfig();
     if (!config.claimsEnabled) {
@@ -101,13 +100,6 @@ Deno.serve(async (req) => {
     if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(wallet_address)) {
       return respond({ ok: false, error: "Invalid wallet address" });
     }
-    if (
-      payout_signature !== undefined && payout_signature !== null &&
-      (typeof payout_signature !== "string" || !/^[1-9A-HJ-NP-Za-km-z]{64,90}$/.test(payout_signature))
-    ) {
-      return respond({ ok: false, error: "Invalid payout signature" });
-    }
-
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -174,19 +166,14 @@ Deno.serve(async (req) => {
     }
     const claimId = reservation.claim_id;
     reservedClaimId = claimId;
-    const isNewReservation = reservation.created === true;
-    mayReleaseReservation = isNewReservation;
-    payoutSignature = reservation.signature || payout_signature || null;
-
-    if (!isNewReservation && !payoutSignature) {
-      return respond({
-        ok: false,
-        pending: true,
-        retryable: true,
-        request_id,
-        error: "This claim is reserved and has no recorded payout signature yet. Retry with the same claim request shortly.",
-      });
-    }
+    payoutSignature = reservation.signature || null;
+    let signedTransaction = reservation.signed_transaction || null;
+    const reservedLastValidBlockHeight = reservation.last_valid_block_height == null
+      ? null
+      : Number(reservation.last_valid_block_height);
+    // A reservation without an intent is safe to resume: no payout is allowed
+    // to broadcast until its signed transaction has been durably recorded.
+    mayReleaseReservation = !payoutSignature;
 
     const failClaim = async (message: string) => {
       const { error } = payoutSignature
@@ -199,7 +186,12 @@ Deno.serve(async (req) => {
             p_claim_id: claimId,
             p_error_message: message,
           });
-      if (error) console.error("Failed to release claim reservation:", error);
+      if (error) {
+        // The RPC may have committed despite a lost response. Keep the claim
+        // recoverable and let the next request inspect the database state.
+        mayReleaseReservation = false;
+        throw error;
+      }
     };
 
     const connection = new Connection(config.rpcUrl, "confirmed");
@@ -226,13 +218,6 @@ Deno.serve(async (req) => {
         });
       }
       if (tx.meta?.err) {
-        if (!reservation.signature) {
-          const { error: recordError } = await supabaseAdmin.rpc("record_rhoze_claim_signature", {
-            p_claim_id: claimId,
-            p_signature: signature,
-          });
-          if (recordError) throw recordError;
-        }
         await failClaim("Payout transaction failed on-chain");
         return respond({ ok: false, error: "The payout transaction failed on-chain; reserved credits were restored." });
       }
@@ -302,7 +287,42 @@ Deno.serve(async (req) => {
     };
 
     if (payoutSignature) {
-      return await settleVerifiedPayout(payoutSignature);
+      const recordedSignature = payoutSignature;
+      const existingTx = await connection.getParsedTransaction(recordedSignature, {
+        commitment: "confirmed",
+        maxSupportedTransactionVersion: 0,
+      });
+      if (!existingTx && signedTransaction) {
+        const statusResult = await connection.getSignatureStatuses([recordedSignature], {
+          searchTransactionHistory: true,
+        });
+        const signatureStatus = statusResult.value[0];
+        if (signatureStatus?.err) {
+          await failClaim("Payout transaction failed on-chain");
+          return respond({ ok: false, error: "The payout transaction failed on-chain; reserved credits were restored." });
+        }
+        if (
+          !signatureStatus && reservedLastValidBlockHeight !== null &&
+          await connection.getBlockHeight("confirmed") > reservedLastValidBlockHeight
+        ) {
+          return respond({
+            ok: false,
+            pending: true,
+            retryable: false,
+            request_id,
+            signature: recordedSignature,
+            error: "The payout transaction expired without a verifiable chain result. The claim remains reserved for review.",
+          });
+        }
+        const bytes = Uint8Array.from(atob(signedTransaction), (character) => character.charCodeAt(0));
+        // The signature is already durable. Any send error is ambiguous, so
+        // retain the reservation and reconcile this exact transaction later.
+        payoutSent = true;
+        await connection.sendRawTransaction(bytes, { maxRetries: 3 }).catch((error) => {
+          console.warn("Claim payout rebroadcast outcome is ambiguous:", error);
+        });
+      }
+      return await settleVerifiedPayout(recordedSignature);
     }
 
     const privateKeyStr = Deno.env.get("RHOZE_AIRDROP_PRIVATE_KEY");
@@ -384,33 +404,49 @@ Deno.serve(async (req) => {
     transaction.lastValidBlockHeight = lastValidBlockHeight;
     transaction.feePayer = airdropKeypair.publicKey;
     transaction.sign(airdropKeypair);
-
-    let sentSignature: string;
-    try {
-      sentSignature = await connection.sendRawTransaction(transaction.serialize());
-      payoutSignature = sentSignature;
-      payoutSent = true;
-      const { error: recordError } = await supabaseAdmin.rpc("record_rhoze_claim_signature", {
+    const signedBytes = transaction.serialize({ requireAllSignatures: true, verifySignatures: true });
+    const signatureBytes = transaction.signature;
+    if (!signatureBytes) throw new Error("Signed payout transaction has no signature");
+    const locallyDerivedSignature = bs58.encode(Array.from(signatureBytes));
+    const encodedTransaction = btoa(String.fromCharCode(...signedBytes));
+    // Treat the following database call as ambiguous if its response is lost:
+    // it may have committed the canonical intent even when the client sees an error.
+    mayReleaseReservation = false;
+    const { data: payoutIntent, error: intentError } = await supabaseAdmin.rpc(
+      "prepare_rhoze_claim_payout",
+      {
         p_claim_id: claimId,
-        p_signature: sentSignature,
-      });
-      if (recordError) throw recordError;
-    } catch (error) {
-      if (error instanceof SendTransactionError) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        await failClaim(errorMessage);
-        return respond({
-          ok: false,
-          error:
-            "Reward claiming failed: token transfer could not be completed.",
-          details: errorMessage,
-        });
-      }
-
-      throw error;
+        p_signature: locallyDerivedSignature,
+        p_signed_transaction: encodedTransaction,
+        p_last_valid_block_height: transaction.lastValidBlockHeight,
+      },
+    );
+    if (intentError) throw intentError;
+    if (!payoutIntent?.signature || !payoutIntent?.signed_transaction) {
+      throw new Error("Payout intent was not persisted");
     }
 
-    return await settleVerifiedPayout(sentSignature);
+    const preparedSignature = payoutIntent.signature as string;
+    payoutSignature = preparedSignature;
+    signedTransaction = payoutIntent.signed_transaction;
+    mayReleaseReservation = false;
+    const canonicalBytes = Uint8Array.from(atob(signedTransaction), (character) => character.charCodeAt(0));
+    payoutSent = true;
+    try {
+      await connection.sendRawTransaction(canonicalBytes, { maxRetries: 3 });
+    } catch (error) {
+      console.warn("Claim payout send outcome is ambiguous:", error);
+      return respond({
+        ok: false,
+        pending: true,
+        retryable: true,
+        request_id,
+        signature: preparedSignature,
+        error: "Payout outcome is being reconciled. Retry this claim to check settlement.",
+      });
+    }
+
+    return await settleVerifiedPayout(preparedSignature);
   } catch (err: unknown) {
     console.error("claim-rhoze error:", err);
     if (reservedClaimId && mayReleaseReservation && !payoutSent) {
@@ -427,7 +463,7 @@ Deno.serve(async (req) => {
     return respond({
       ok: false,
       error: err instanceof Error ? err.message : "Claim failed unexpectedly.",
-      ...(payoutSent ? {
+      ...(payoutSent || (reservedClaimId !== null && !mayReleaseReservation) ? {
         pending: true,
         retryable: true,
         request_id: retryRequestId,

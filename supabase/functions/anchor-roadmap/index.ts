@@ -9,6 +9,7 @@
  * Mirrors the dynamic-import / lightweight pattern of anchor-contribution.
  */
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { Buffer } from "node:buffer";
 import {
   getSolanaConfig,
   solscanTransactionUrl,
@@ -47,6 +48,11 @@ Deno.serve(async (req) => {
       error: authError,
     } = await userClient.auth.getUser();
     if (authError || !user) return respond(401, { error: "Unauthorized" });
+
+    const config = getSolanaConfig();
+    if (!config.anchoringEnabled) {
+      return respond(503, { error: "On-chain anchoring is disabled for this environment" });
+    }
 
     let body: Record<string, unknown>;
     try {
@@ -137,12 +143,12 @@ Deno.serve(async (req) => {
 
     const privateKeyArray = JSON.parse(privateKeyStr);
     const keypair = Keypair.fromSecretKey(new Uint8Array(privateKeyArray));
-    const connection = new Connection(getSolanaConfig().rpcUrl, "confirmed");
+    const connection = new Connection(config.rpcUrl, "confirmed");
 
     const memoInstruction = new TransactionInstruction({
       keys: [{ pubkey: keypair.publicKey, isSigner: true, isWritable: false }],
       programId: MEMO_PROGRAM_ID,
-      data: new TextEncoder().encode(memo),
+      data: Buffer.from(memo, "utf8"),
     });
 
     const transaction = new Transaction().add(memoInstruction);
