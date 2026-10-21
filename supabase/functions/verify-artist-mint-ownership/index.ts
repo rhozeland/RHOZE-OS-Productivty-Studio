@@ -47,7 +47,17 @@ function isSolanaAddress(address: string): boolean {
     return false;
   }
 }
-
+/**
+ * Retrieves the creator wallet address associated with a pump.fun token
+ * 
+ * Uses the provided token min address to query pump.fun's coin details
+ * API and retrieve the wallet address reported as the token's creator
+ * This address can be later compared against the creator's stored
+ * Rhozeland wallets during token ownership verification
+ * 
+ * @param mintAddress - The Solana mint address identifying the token
+ * @returns A promise containing the creator's wallet address
+ */
 async function getPumpCreatorWallet(mintAddress: string): Promise<string | null> {
   const response = await fetch(`${PUMP_API}${encodeURIComponent(mintAddress)}`, {
     headers: { "user-agent": "Mozilla/5.0 (compatible; Rhozeland/1.0)" },
