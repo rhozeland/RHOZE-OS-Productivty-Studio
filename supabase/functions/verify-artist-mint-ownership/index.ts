@@ -50,8 +50,10 @@ function isSolanaAddress(address: string): boolean {
 /**
  * Retrieves the creator wallet address associated with a pump.fun token
  * 
- * Uses the provided token min address to query pump.fun's coin details
+ * Uses the provided token mint address to query pump.fun's coin details
  * API and retrieve the wallet address reported as the token's creator
+ * 
+ * 
  * This address can be later compared against the creator's stored
  * Rhozeland wallets during token ownership verification
  * 
