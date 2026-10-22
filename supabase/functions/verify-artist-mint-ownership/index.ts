@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { z } from "https://esm.sh/zod@3.23.8";
 import nacl from "https://esm.sh/tweetnacl@1.0.3";
 import bs58 from "https://esm.sh/bs58@5.0.0";
@@ -54,9 +54,6 @@ function isSolanaAddress(address: string): boolean {
  * API and retrieve the wallet address reported as the token's creator
  * 
  * 
- * This address can be later compared against the creator's stored
- * Rhozeland wallets during token ownership verification
- * 
  * @param mintAddress - The Solana mint address identifying the token
  * @returns A promise containing the creator's wallet address
  */
@@ -80,6 +77,43 @@ async function getPumpCreatorWallet(mintAddress: string): Promise<string | null>
   }
 
   return payload.creator;
+}
+
+// Return an error response on failure, or null when the account wallet matches.
+async function checkAccountWallet(
+  admin: SupabaseClient,
+  userId: string,
+  creatorWallet: string,
+): Promise<Response | null> {
+  const { data: profile, error: profileError } = await admin
+    .from("profiles")
+    .select("wallet_address")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (profileError) {
+    return json(500, {
+      verified: false,
+      error: "Server Error: Unable to retrieve the account wallet",
+    });
+  }
+
+  if (!profile?.wallet_address) {
+    return json(409, {
+      verified: false,
+      error: "Verify and link your wallet before submitting the token",
+    });
+  }
+
+  if (profile.wallet_address !== creatorWallet) {
+    return json(409, {
+      verified: false,
+      code: "account_wallet_mismatch",
+      error: "The mint creator wallet must match the wallet connected to your account",
+    });
+  }
+
+  return null;
 }
 
 Deno.serve(async (req) => {
@@ -146,6 +180,9 @@ Deno.serve(async (req) => {
         creatorWallet,
       });
     }
+
+    const walletError = await checkAccountWallet(admin, userId, creatorWallet);
+    if (walletError) return walletError;
 
     const now = new Date();
     const expiresAt = new Date(now.getTime() + CHALLENGE_TTL_MS);
@@ -238,6 +275,9 @@ Deno.serve(async (req) => {
   if (!signatureValid) {
     return json(401, { error: "signature does not match the mint creator wallet" });
   }
+
+  const walletError = await checkAccountWallet(admin, userId, challenge.creator_wallet);
+  if (walletError) return walletError;
 
   const consumedAt = new Date().toISOString();
   const { data: consumed, error: consumeError } = await admin
