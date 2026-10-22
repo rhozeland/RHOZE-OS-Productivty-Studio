@@ -47,6 +47,9 @@ function isSolanaAddress(address: string): boolean {
     return false;
   }
 }
+
+class PumpMintNotFoundError extends Error { }
+
 /**
  * Retrieves the creator wallet address associated with a pump.fun token
  * 
@@ -62,6 +65,9 @@ async function getPumpCreatorWallet(mintAddress: string): Promise<string | null>
     headers: { "user-agent": "Mozilla/5.0 (compatible; Rhozeland/1.0)" },
     signal: AbortSignal.timeout(8_000),
   });
+  if (response.status === 404) {
+    throw new PumpMintNotFoundError();
+  }
   if (!response.ok) {
     throw new Error(`Pump.fun returned HTTP ${response.status}`);
   }
@@ -94,16 +100,24 @@ async function checkAccountWallet(
   if (profileError) {
     return json(500, {
       verified: false,
-      code: "wallet-lookup-failed",
+      code: "wallet_lookup_failed",
       error: "Unable to retrieve the account wallet",
     });
+  }
+
+  if (!profile) {
+    return json(404, {
+      verified: false,
+      code: "profile_not_found",
+      error: "Account profile could not be found. Complete your profile before submitting a token."
+    })
   }
 
   if (!profile?.wallet_address) {
     return json(409, {
       verified: false,
-      code: "wallet-not-linked",
-      error: "Verify and link your wallet before submitting the token",
+      code: "wallet_not_linked",
+      error: "Verify and link your wallet before submitting the token.",
     });
   }
 
@@ -111,7 +125,7 @@ async function checkAccountWallet(
     return json(409, {
       verified: false,
       code: "account_wallet_mismatch",
-      error: "The mint creator wallet must match the wallet connected to the account",
+      error: "The mint creator wallet must match the wallet connected to the account.",
     });
   }
 
@@ -168,13 +182,29 @@ Deno.serve(async (req) => {
     try {
       creatorWallet = await getPumpCreatorWallet(mintAddress);
     } catch (error) {
+      if (error instanceof PumpMintNotFoundError) {
+        return json(404, {
+          verified: false,
+          code: "mint_not_found",
+          error: "Pump.fun could not find this mint."
+        });
+      }
       console.error("Pump.fun creator lookup failed", error);
-      return json(502, { error: "could not verify the mint with Pump.fun" });
+      return json(502, {
+        verified: false,
+        code: "pump_lookup_failed",
+        error: "Could not retrieve token details from Pump.fun. Try again later."
+      });
     }
 
     if (!creatorWallet || !isSolanaAddress(creatorWallet)) {
-      return json(404, { error: "Pump.fun did not return a valid creator wallet" });
+      return json(502, {
+        verified: false,
+        code: "pump_invalid_response",
+        error: "Pump.fun did not return a valid creator wallet."
+      })
     }
+
     if (creatorWallet !== signerWallet) {
       return json(409, {
         error: "Connect the wallet used to launch this mint on Pump.fun.",
