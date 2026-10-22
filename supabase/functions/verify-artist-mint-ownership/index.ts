@@ -183,7 +183,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const walletError = await checkAccountWallet(admin, userId, creatorWallet);
+    const walletError = await checkAccountWallet(admin, userId, creatorWallet); // Check account wallet match before challenge is constructed
     if (walletError) return walletError;
 
     const now = new Date();
@@ -278,7 +278,7 @@ Deno.serve(async (req) => {
     return json(401, { error: "signature does not match the mint creator wallet" });
   }
 
-  const walletError = await checkAccountWallet(admin, userId, challenge.creator_wallet);
+  const walletError = await checkAccountWallet(admin, userId, challenge.creator_wallet); // Check wallet before mint verification
   if (walletError) return walletError;
 
   const consumedAt = new Date().toISOString();
