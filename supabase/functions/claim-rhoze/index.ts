@@ -111,12 +111,17 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Wallets are only linked by verify-wallet-ownership after a signed
+    // ownership challenge — never bind an unverified wallet here.
     if (!profile.wallet_address) {
-      await supabaseAdmin
-        .from("profiles")
-        .update({ wallet_address, wallet_locked: true, updated_at: new Date().toISOString() } as never)
-        .eq("user_id", user.id);
-    } else if (!profile.wallet_locked) {
+      return respond({
+        ok: false,
+        error:
+          "Verify your wallet before claiming: open the Wallet menu, choose “Verify wallet” and approve the signature request.",
+      });
+    }
+
+    if (!profile.wallet_locked) {
       await supabaseAdmin
         .from("profiles")
         .update({ wallet_locked: true, updated_at: new Date().toISOString() } as never)
