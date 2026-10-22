@@ -94,13 +94,15 @@ async function checkAccountWallet(
   if (profileError) {
     return json(500, {
       verified: false,
-      error: "Server Error: Unable to retrieve the account wallet",
+      code: "wallet-lookup-failed",
+      error: "Unable to retrieve the account wallet",
     });
   }
 
   if (!profile?.wallet_address) {
     return json(409, {
       verified: false,
+      code: "wallet-not-linked",
       error: "Verify and link your wallet before submitting the token",
     });
   }
@@ -109,7 +111,7 @@ async function checkAccountWallet(
     return json(409, {
       verified: false,
       code: "account_wallet_mismatch",
-      error: "The mint creator wallet must match the wallet connected to your account",
+      error: "The mint creator wallet must match the wallet connected to the account",
     });
   }
 
