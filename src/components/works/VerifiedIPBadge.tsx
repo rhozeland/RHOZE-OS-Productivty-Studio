@@ -17,6 +17,7 @@
  */
 import { Shield, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { solanaExplorerTransactionUrl } from "@/lib/solana-explorer";
 
 interface Props {
   signature?: string | null;
@@ -33,7 +34,7 @@ const VerifiedIPBadge = ({
 }: Props) => {
   if (!signature) return null;
 
-  const explorerUrl = `https://explorer.solana.com/tx/${signature}`;
+  const explorerUrl = solanaExplorerTransactionUrl(signature);
 
   const sizing =
     size === "xs"

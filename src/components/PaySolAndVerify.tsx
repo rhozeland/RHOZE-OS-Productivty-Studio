@@ -11,8 +11,7 @@ import {
 } from "@/lib/solana";
 import { toast } from "sonner";
 import { Loader2, Wallet } from "lucide-react";
-
-export const TREASURY_ADDRESS = "6znjR2ttDJ5c6ScePsE4jU8e2g29dChX7cCVk6xjizr";
+import { getSolanaConfig } from "@/lib/solana-config";
 
 interface PaySolAndVerifyProps {
   solAmount: number;
@@ -56,9 +55,19 @@ const PaySolAndVerify = ({
 
     setLoading(true);
     try {
+      const config = getSolanaConfig();
+      if (!config.solPaymentsEnabled) {
+        toast.error("SOL payments are disabled for this environment");
+        return;
+      }
+      const { data: profiles, error: profileError } = await supabase.rpc("get_my_private_profile_fields");
+      if (profileError) throw profileError;
+      if (profiles?.[0]?.wallet_address !== publicKey.toBase58()) {
+        throw new Error("Connect your account's bound wallet before paying.");
+      }
       // Step 1: Send SOL to treasury
       setStatus("Sending SOL...");
-      const recipient = new PublicKey(TREASURY_ADDRESS);
+      const recipient = new PublicKey(config.treasuryAddress);
       const transaction = await createTransferTransaction(publicKey, recipient, solAmount);
       const signature = await sendTransaction(transaction, getConnection());
 
@@ -88,8 +97,8 @@ const PaySolAndVerify = ({
           : `Payment confirmed! ${awarded} credit(s) added. Tx: ${signature.slice(0, 8)}...`
       );
       onSuccess?.();
-    } catch (error: any) {
-      const msg = error?.message || "Transaction failed";
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Transaction failed";
       if (msg.includes("User rejected")) {
         toast.error("Transaction cancelled");
       } else {

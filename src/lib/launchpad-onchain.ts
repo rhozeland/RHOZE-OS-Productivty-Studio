@@ -16,7 +16,6 @@
 import {
   PublicKey,
   Connection,
-  clusterApiUrl,
   type ConfirmOptions,
 } from "@solana/web3.js";
 import { AnchorProvider, Program, BN, type Idl } from "@coral-xyz/anchor";
@@ -25,16 +24,18 @@ import {
   loadLaunchpadIdl,
   getOverrideProgramId,
 } from "./launchpad-idl-store";
+import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
+import { getSolanaConnectionConfig } from "./solana-config";
+import { solscanAccountUrl } from "./solana-explorer";
 
 const ENV_PROGRAM_ID = (
   import.meta.env.VITE_LAUNCHPAD_PROGRAM_ID as string | undefined
 )?.trim();
 
-export const LAUNCHPAD_NETWORK: "devnet" | "mainnet-beta" =
-  (import.meta.env.VITE_LAUNCHPAD_NETWORK as
-    | "devnet"
-    | "mainnet-beta"
-    | undefined) ?? "devnet";
+export const LAUNCHPAD_NETWORK: WalletAdapterNetwork =
+  getSolanaConnectionConfig().cluster === "devnet"
+    ? WalletAdapterNetwork.Devnet
+    : WalletAdapterNetwork.Mainnet;
 
 const SOL_LAMPORTS = 1_000_000_000;
 const TOKEN_DECIMALS_DEFAULT = 6;
@@ -57,7 +58,7 @@ const resolveProgramId = (): PublicKey | null => {
 export const getLaunchpadProgramId = (): PublicKey | null => resolveProgramId();
 
 export const getLaunchpadConnection = (): Connection =>
-  new Connection(clusterApiUrl(LAUNCHPAD_NETWORK), "confirmed");
+  new Connection(getSolanaConnectionConfig().rpcUrl, "confirmed");
 
 export const isLaunchpadOnChainEnabled = (): boolean =>
   resolveProgramId() !== null && getCachedIdl() !== null;
@@ -104,10 +105,7 @@ export const deriveCurveAuthorityPda = (workId: string): PublicKey | null =>
   deriveChildPda(workId, "curve-auth");
 
 export const explorerUrl = (address: string): string =>
-  `https://solscan.io/account/${address}${LAUNCHPAD_NETWORK === "devnet" ? "?cluster=devnet" : ""}`;
-
-export const solscanClusterSuffix = (): string =>
-  LAUNCHPAD_NETWORK === "devnet" ? "?cluster=devnet" : "";
+  solscanAccountUrl(address);
 
 export type OnChainResult<T> =
   | { enabled: false }
