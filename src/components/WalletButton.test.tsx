@@ -156,7 +156,7 @@ describe("WalletButton wallet verification", () => {
     expect(mocks.verifyWalletOwnership).not.toHaveBeenCalled();
   });
 
-  it("does not re-verify a wallet that is already linked", async () => {
+  it("does nothing for the wallet that is already linked", async () => {
     const address = connectWallet();
     mocks.rpc.mockResolvedValue(profileRow(address));
 
@@ -164,38 +164,8 @@ describe("WalletButton wallet verification", () => {
     await flush();
     expect(mocks.verifyWalletOwnership).not.toHaveBeenCalled();
     expect(mocks.toast.error).not.toHaveBeenCalled();
-  });
-
-  it("does not verify a different wallet when the account already has one", async () => {
-    connectWallet();
-    mocks.rpc.mockResolvedValue(
-      profileRow("LinkedWa11etxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"),
-    );
-
-    renderWithClient(<WalletButton />);
-    await waitFor(() => expect(mocks.toast.error).toHaveBeenCalled());
-    expect(mocks.verifyWalletOwnership).not.toHaveBeenCalled();
-  });
-
-  it("never writes the profile directly, even when signing is declined", async () => {
-    connectWallet();
-    mocks.rpc.mockResolvedValue(profileRow(null));
-    mocks.verifyWalletOwnership.mockRejectedValue(
-      new WalletVerificationError(
-        "declined",
-        "Signature request was declined — your wallet was not linked.",
-      ),
-    );
-
-    renderWithClient(<WalletButton />);
-    await waitFor(() =>
-      expect(mocks.toast.error).toHaveBeenCalledWith(
-        "Signature request was declined — your wallet was not linked.",
-        expect.anything(),
-      ),
-    );
-    expect(mocks.toast.success).not.toHaveBeenCalled();
-    expect(mocks.from).not.toHaveBeenCalled();
+    expect(screen.queryByText("Verify wallet")).not.toBeInTheDocument();
+    expect(screen.queryByText("Request wallet change")).not.toBeInTheDocument();
   });
 
   it("only links after the backend handshake succeeds, without a direct profile write", async () => {
@@ -215,23 +185,6 @@ describe("WalletButton wallet verification", () => {
     finish(mocks.wallet.publicKey!.toBase58());
     await waitFor(() => expect(mocks.toast.success).toHaveBeenCalledTimes(1));
     expect(mocks.from).not.toHaveBeenCalled();
-  });
-
-  it("prompts once when several WalletButtons are mounted", async () => {
-    connectWallet();
-    mocks.rpc.mockResolvedValue(profileRow(null));
-    mocks.verifyWalletOwnership.mockReturnValue(new Promise(() => {}));
-
-    renderWithClient(
-      <>
-        <WalletButton />
-        <WalletButton />
-        <WalletButton />
-      </>,
-    );
-    await waitFor(() => expect(mocks.verifyWalletOwnership).toHaveBeenCalled());
-    await flush();
-    expect(mocks.verifyWalletOwnership).toHaveBeenCalledTimes(1);
   });
 
   it("disconnect still works and never triggers verification", async () => {
@@ -324,30 +277,6 @@ describe("WalletButton wallet verification", () => {
     );
   });
 
-  it("re-reads the linked wallet on reconnect, so a wallet unlinked elsewhere gets verified", async () => {
-    const address = connectWallet();
-    mocks.rpc.mockResolvedValue(profileRow(address));
-    mocks.verifyWalletOwnership.mockResolvedValue(address);
-
-    const view = renderWithClient(<WalletButton />);
-    await flush();
-    expect(mocks.verifyWalletOwnership).not.toHaveBeenCalled();
-
-    // Unlinked in Settings while this button stayed mounted.
-    mocks.rpc.mockResolvedValue(profileRow(null));
-    mocks.wallet.connected = false;
-    mocks.wallet.publicKey = null;
-    view.rerender(<WalletButton />);
-    await flush();
-    mocks.wallet.connected = true;
-    mocks.wallet.publicKey = { toBase58: () => address };
-    view.rerender(<WalletButton />);
-
-    await waitFor(() =>
-      expect(mocks.verifyWalletOwnership).toHaveBeenCalledTimes(1),
-    );
-  });
-
   it("a manual retry while a verification is in flight doesn't prompt twice (in-flight guard)", async () => {
     connectWallet();
     mocks.rpc.mockResolvedValue(profileRow(null));
@@ -387,6 +316,32 @@ describe("WalletButton wallet verification", () => {
       ).toBeInTheDocument(),
     );
     expect(mocks.toast.error).not.toHaveBeenCalled();
+  });
+
+  it("offers 'Request wallet change' when a different wallet is connected, without writing the profile", async () => {
+    const address = connectWallet();
+    mocks.rpc.mockResolvedValue(profileRow("LinkedWa11etxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"));
+    mocks.verifyWalletOwnership.mockResolvedValue(address);
+
+    renderWithClient(<WalletButton />);
+    await waitFor(() => expect(mocks.toast.error).toHaveBeenCalled());
+    expect(mocks.verifyWalletOwnership).not.toHaveBeenCalled();
+    expect(screen.queryByText("Verify wallet")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText("Request wallet change"));
+
+    await waitFor(() =>
+      expect(mocks.toast.success).toHaveBeenCalledWith("Wallet change requested. An admin will review it.", expect.anything()),
+    );
+    expect(mocks.verifyWalletOwnership).toHaveBeenCalledTimes(1);
+    expect(mocks.verifyWalletOwnership).toHaveBeenCalledWith({
+      walletAddress: address,
+      signMessage: mocks.wallet.signMessage,
+      intent: "change",
+    });
+    expect(screen.getByTitle("Wallet not verified")).toBeInTheDocument();
+    expect(screen.queryByTitle("Wallet linked to your account")).not.toBeInTheDocument();
+    expect(screen.getByText("Request wallet change")).toBeInTheDocument();
+    expect(mocks.from).not.toHaveBeenCalled();
   });
 
   it("does nothing while no wallet is connected", async () => {

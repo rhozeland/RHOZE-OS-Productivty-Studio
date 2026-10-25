@@ -5,15 +5,18 @@
  * linked to their profile. Both actions require a valid Supabase session; the
  * user id always comes from the JWT, never from the request body.
  *
- *   { action: "challenge", walletAddress }
+ *   { action: "challenge", walletAddress, intent?: "link" | "change" }
  *     → stores a one-time challenge bound to (user, wallet, random nonce,
  *       5-minute expiry, purpose) and returns { challengeId, message, expiresAt }.
+ *       "link" is for an account with no wallet; "change" is for proving a
+ *       replacement wallet while another one is linked.
  *
  *   { action: "verify", challengeId, walletAddress, message, signature }
  *     → atomically consumes the challenge (must belong to this user and this
  *       wallet, be unexpired and unused), requires `message` to equal the
  *       issued text, verifies the base58 ed25519 signature with tweetnacl, and
- *       only then writes profiles.wallet_address.
+ *       only then either writes profiles.wallet_address (link) or files a
+ *       pending wallet_change_requests row for an admin to approve (change).
  *
  * A challenge gets exactly one verify attempt: a bad signature or an edited
  * message burns it, and the client must request a new one. The cap on open
@@ -45,7 +48,8 @@ const json = (status: number, body: unknown) =>
 const fail = (status: number, code: string, error: string) =>
   json(status, { error, code });
 
-const PURPOSE = "rhoze-wallet-verification";
+const LINK_PURPOSE = "rhoze-wallet-verification";
+const CHANGE_PURPOSE = "rhoze-wallet-change";
 const CHALLENGE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 // Raised by the limit_open_wallet_verification_challenges trigger.
 const CHALLENGE_LIMIT_ERROR = "wallet_verification_challenge_limit";
@@ -81,6 +85,7 @@ const BodySchema = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("challenge"),
     walletAddress: WalletAddress,
+    intent: z.enum(["link", "change"]).default("link"),
   }),
   z.object({
     action: z.literal("verify"),
@@ -92,6 +97,7 @@ const BodySchema = z.discriminatedUnion("action", [
 ]);
 
 type VerifyInput = Extract<z.infer<typeof BodySchema>, { action: "verify" }>;
+type Intent = Extract<z.infer<typeof BodySchema>, { action: "challenge" }>["intent"];
 
 const randomNonce = () => {
   const bytes = crypto.getRandomValues(new Uint8Array(32));
@@ -104,14 +110,18 @@ const buildChallengeMessage = (p: {
   nonce: string;
   issuedAt: string;
   expiresAt: string;
+  replaces: string | null;
 }) =>
   [
     "Rhozeland wants you to verify ownership of this Solana wallet.",
     "",
-    "Signing links this wallet to your Rhozeland account. It is free and does not send a transaction.",
+    p.replaces
+      ? "Signing requests that this wallet replace the wallet linked to your Rhozeland account. An admin must approve the change. It is free and does not send a transaction."
+      : "Signing links this wallet to your Rhozeland account. It is free and does not send a transaction.",
     "",
-    `Purpose: ${PURPOSE}`,
+    `Purpose: ${p.replaces ? CHANGE_PURPOSE : LINK_PURPOSE}`,
     `Wallet: ${p.walletAddress}`,
+    ...(p.replaces ? [`Replaces: ${p.replaces}`] : []),
     `User ID: ${p.userId}`,
     `Nonce: ${p.nonce}`,
     `Issued At: ${p.issuedAt}`,
@@ -140,12 +150,27 @@ const isValidSignature = (
 };
 
 const WALLET_ALREADY_LINKED =
-  "Your account is already linked to a different wallet. Disconnect it in Settings → Wallet, then verify the new one.";
+  "Your account is already linked to a different wallet. To switch, choose “Request wallet change” in the Wallet menu.";
+const NO_LINKED_WALLET = "Link a wallet before requesting a change.";
+const WALLET_CHANGED =
+  "Your linked wallet changed after this request was signed. Start a new wallet change.";
+const CHANGE_PENDING = "You already have a wallet change waiting for review.";
+
+async function hasPendingChange(admin: SupabaseClient, userId: string) {
+  const { count, error } = await admin
+    .from("wallet_change_requests")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("status", "pending");
+  if (error) throw error;
+  return (count ?? 0) > 0;
+}
 
 async function createChallenge(
   admin: SupabaseClient,
   userId: string,
   walletAddress: string,
+  intent: Intent,
 ) {
   const { data: profile, error: profileErr } = await admin
     .from("profiles")
@@ -161,8 +186,7 @@ async function createChallenge(
     );
   }
 
-  // Never let this endpoint replace an existing wallet — the current one has
-  // to be unlinked first.
+  // A link never replaces an existing wallet; a change needs one to replace.
   const linked = profile.wallet_address || null;
   if (linked === walletAddress) {
     return fail(
@@ -171,7 +195,15 @@ async function createChallenge(
       "This wallet is already linked to your account.",
     );
   }
-  if (linked) return fail(409, "wallet_already_linked", WALLET_ALREADY_LINKED);
+  if (intent === "link" && linked) {
+    return fail(409, "wallet_already_linked", WALLET_ALREADY_LINKED);
+  }
+  if (intent === "change") {
+    if (!linked) return fail(409, "no_linked_wallet", NO_LINKED_WALLET);
+    if (await hasPendingChange(admin, userId)) {
+      return fail(409, "change_pending", CHANGE_PENDING);
+    }
+  }
 
   const now = new Date();
   const nowIso = now.toISOString();
@@ -194,6 +226,7 @@ async function createChallenge(
     nonce,
     issuedAt,
     expiresAt,
+    replaces: intent === "change" ? linked : null,
   });
 
   const { data: row, error: insertErr } = await admin
@@ -201,7 +234,8 @@ async function createChallenge(
     .insert({
       user_id: userId,
       wallet_address: walletAddress,
-      purpose: PURPOSE,
+      purpose: intent === "change" ? CHANGE_PURPOSE : LINK_PURPOSE,
+      replaces_wallet: intent === "change" ? linked : null,
       nonce,
       message,
       issued_at: issuedAt,
@@ -238,10 +272,10 @@ async function verifyChallenge(
     .eq("id", challengeId)
     .eq("user_id", userId)
     .eq("wallet_address", walletAddress)
-    .eq("purpose", PURPOSE)
+    .in("purpose", [LINK_PURPOSE, CHANGE_PURPOSE])
     .is("consumed_at", null)
     .gt("expires_at", nowIso)
-    .select("message")
+    .select("id, message, purpose, replaces_wallet")
     .maybeSingle();
   if (consumeErr) throw consumeErr;
   if (!challenge) {
@@ -269,6 +303,12 @@ async function verifyChallenge(
       "The signature could not be verified for this wallet.",
     );
   }
+
+  if (challenge.purpose === CHANGE_PURPOSE) {
+    return await fileWalletChange(admin, userId, walletAddress, challenge);
+  }
+
+  await markVerified(admin, challenge.id);
 
   // 4. Only now link the wallet — and only if the account has none yet.
   const { data: linked, error: linkErr } = await admin
@@ -302,6 +342,67 @@ async function verifyChallenge(
   }
 
   return json(200, { verified: true, walletAddress });
+}
+
+// Recorded only on success; process_wallet_change requires it.
+async function markVerified(admin: SupabaseClient, challengeId: string) {
+  const { error } = await admin
+    .from("wallet_verification_challenges")
+    .update({ verified_at: new Date().toISOString() })
+    .eq("id", challengeId);
+  if (error) throw error;
+}
+
+// The replacement only takes effect once an admin approves it.
+async function fileWalletChange(
+  admin: SupabaseClient,
+  userId: string,
+  walletAddress: string,
+  challenge: { id: string; replaces_wallet: string | null },
+) {
+  const { data: profile, error: profileErr } = await admin
+    .from("profiles")
+    .select("wallet_address")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (profileErr) throw profileErr;
+  if (!profile) {
+    return fail(
+      404,
+      "profile_not_found",
+      "Finish setting up your profile before linking a wallet.",
+    );
+  }
+  const linked = profile.wallet_address || null;
+  if (!linked) return fail(409, "no_linked_wallet", NO_LINKED_WALLET);
+  if (linked === walletAddress) {
+    return fail(
+      409,
+      "already_linked",
+      "This wallet is already linked to your account.",
+    );
+  }
+  // The signature authorizes replacing the wallet named in the message only.
+  if (!challenge.replaces_wallet || linked !== challenge.replaces_wallet) {
+    return fail(409, "wallet_changed", WALLET_CHANGED);
+  }
+
+  await markVerified(admin, challenge.id);
+
+  const { error: insertErr } = await admin.from("wallet_change_requests").insert({
+    user_id: userId,
+    current_wallet: challenge.replaces_wallet,
+    requested_wallet: walletAddress,
+    verification_id: challenge.id,
+    status: "pending",
+  });
+  // wallet_change_requests_one_pending_key
+  if (insertErr?.code === "23505") {
+    return fail(409, "change_pending", CHANGE_PENDING);
+  }
+  if (insertErr) throw insertErr;
+
+  return json(200, { verified: true, walletAddress, changeRequested: true });
 }
 
 Deno.serve(async (req) => {
@@ -345,7 +446,12 @@ Deno.serve(async (req) => {
 
   try {
     return parsed.data.action === "challenge"
-      ? await createChallenge(admin, userId, parsed.data.walletAddress)
+      ? await createChallenge(
+          admin,
+          userId,
+          parsed.data.walletAddress,
+          parsed.data.intent,
+        )
       : await verifyChallenge(admin, userId, parsed.data);
   } catch (e) {
     console.error(

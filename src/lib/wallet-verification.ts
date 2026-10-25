@@ -91,16 +91,19 @@ async function callVerifyFunction(
 
 /**
  * Runs the full challenge → sign → verify handshake for `walletAddress`.
- * Resolves with the linked address only after the backend confirms it;
- * throws WalletVerificationError otherwise. Nothing is linked on failure.
+ * With intent "link" the backend links the wallet; with "change" it files a
+ * replacement request for an admin to approve. Resolves only after the
+ * backend confirms; throws WalletVerificationError otherwise.
  */
 export async function verifyWalletOwnership({
   walletAddress,
   signMessage,
+  intent = "link",
   invoke = defaultInvoke,
 }: {
   walletAddress: string;
   signMessage?: SignMessageFn | null;
+  intent?: "link" | "change";
   invoke?: InvokeFn;
 }): Promise<string> {
   if (!signMessage) {
@@ -113,6 +116,7 @@ export async function verifyWalletOwnership({
   const challenge = await callVerifyFunction(invoke, {
     action: "challenge",
     walletAddress,
+    intent,
   });
   const { challengeId, message } = challenge;
   if (typeof challengeId !== "string" || typeof message !== "string") {
@@ -141,7 +145,11 @@ export async function verifyWalletOwnership({
     message,
     signature,
   });
-  if (result.verified !== true || result.walletAddress !== walletAddress) {
+  if (
+    result.verified !== true ||
+    result.walletAddress !== walletAddress ||
+    (intent === "change" && result.changeRequested !== true)
+  ) {
     throw new WalletVerificationError("rejected", GENERIC_FAILURE);
   }
   return walletAddress;

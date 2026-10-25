@@ -67,7 +67,7 @@ describe("verifyWalletOwnership", () => {
 
     expect(invoke).toHaveBeenCalledTimes(2);
     expect(invoke).toHaveBeenNthCalledWith(1, VERIFY_WALLET_FUNCTION, {
-      body: { action: "challenge", walletAddress: WALLET },
+      body: { action: "challenge", walletAddress: WALLET, intent: "link" },
     });
 
     const signed = signMessage.mock.calls[0][0];
@@ -189,6 +189,33 @@ describe("verifyWalletOwnership", () => {
         signMessage: async () => SIGNATURE_BYTES,
         invoke,
       }),
+      "rejected",
+    );
+  });
+});
+
+describe("verifyWalletOwnership with intent 'change'", () => {
+  const changeInvoke = (verifyData: Record<string, unknown>) =>
+    vi.fn<InvokeFn>(async (_name, { body }) =>
+      body.action === "challenge"
+        ? { data: { challengeId: CHALLENGE_ID, message: MESSAGE }, error: null }
+        : { data: verifyData, error: null },
+    );
+
+  it("asks for a change challenge and resolves once the backend files the request", async () => {
+    const invoke = changeInvoke({ verified: true, walletAddress: WALLET, changeRequested: true });
+
+    await expect(
+      verifyWalletOwnership({ walletAddress: WALLET, signMessage: async () => SIGNATURE_BYTES, intent: "change", invoke }),
+    ).resolves.toBe(WALLET);
+    expect(invoke.mock.calls[0][1].body).toEqual({ action: "challenge", walletAddress: WALLET, intent: "change" });
+  });
+
+  it("does not report a change unless the backend confirms the request was filed", async () => {
+    const invoke = changeInvoke({ verified: true, walletAddress: WALLET });
+
+    await expectVerificationError(
+      verifyWalletOwnership({ walletAddress: WALLET, signMessage: async () => SIGNATURE_BYTES, intent: "change", invoke }),
       "rejected",
     );
   });

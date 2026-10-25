@@ -17,7 +17,13 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
-import { Copy, LogOut, ChevronDown, ShieldCheck } from "lucide-react";
+import {
+  Copy,
+  LogOut,
+  ChevronDown,
+  ShieldCheck,
+  ArrowLeftRight,
+} from "lucide-react";
 
 type WalletBinding = { walletAddress: string | null; walletLocked: boolean };
 
@@ -49,10 +55,15 @@ const WalletButton = () => {
     queryKey: ["wallet-button-binding", user?.id],
     enabled: !!user,
     queryFn: async (): Promise<WalletBinding> => {
-      const { data, error } = await supabase.rpc("get_my_private_profile_fields");
+      const { data, error } = await supabase.rpc(
+        "get_my_private_profile_fields",
+      );
       if (error) throw error;
       const row = data?.[0];
-      return { walletAddress: row?.wallet_address || null, walletLocked: !!row?.wallet_locked };
+      return {
+        walletAddress: row?.wallet_address || null,
+        walletLocked: !!row?.wallet_locked,
+      };
     },
   });
   const storedWallet = binding?.walletAddress ?? null;
@@ -65,10 +76,13 @@ const WalletButton = () => {
     async (walletAddress: string) => {
       if (!user) return;
       const markLinked = () =>
-        queryClient.setQueryData<WalletBinding>(["wallet-button-binding", user.id], {
-          walletAddress,
-          walletLocked: true,
-        });
+        queryClient.setQueryData<WalletBinding>(
+          ["wallet-button-binding", user.id],
+          {
+            walletAddress,
+            walletLocked: true,
+          },
+        );
       setVerifying(true);
       try {
         await runWalletVerificationOnce(`${user.id}:${walletAddress}`, () =>
@@ -78,17 +92,28 @@ const WalletButton = () => {
         for (const key of LINKED_WALLET_QUERY_KEYS) {
           queryClient.invalidateQueries({ queryKey: [key] });
         }
-        toast.success("Wallet verified and linked to your account", { id: VERIFY_TOAST_ID });
+        toast.success("Wallet verified and linked to your account", {
+          id: VERIFY_TOAST_ID,
+        });
       } catch (e) {
         // Linked meanwhile (e.g. from another tab) — the backend says so.
-        if (e instanceof WalletVerificationError && e.code === "already_linked") {
+        if (
+          e instanceof WalletVerificationError &&
+          e.code === "already_linked"
+        ) {
           markLinked();
           return;
         }
-        queryClient.invalidateQueries({ queryKey: ["wallet-button-binding", user.id] });
-        toast.error((e as Error)?.message || "Wallet verification failed. Please try again.", {
-          id: VERIFY_TOAST_ID,
+        queryClient.invalidateQueries({
+          queryKey: ["wallet-button-binding", user.id],
         });
+        toast.error(
+          (e as Error)?.message ||
+            "Wallet verification failed. Please try again.",
+          {
+            id: VERIFY_TOAST_ID,
+          },
+        );
       } finally {
         setVerifying(false);
       }
@@ -96,9 +121,43 @@ const WalletButton = () => {
     [user, signMessage, queryClient],
   );
 
+  // Proves the connected wallet and files a replacement request; the linked
+  // wallet only changes once an admin approves it.
+  const requestWalletChange = useCallback(
+    async (walletAddress: string) => {
+      if (!user) return;
+      setVerifying(true);
+      try {
+        await runWalletVerificationOnce(
+          `${user.id}:${walletAddress}:change`,
+          () =>
+            verifyWalletOwnership({
+              walletAddress,
+              signMessage,
+              intent: "change",
+            }),
+        );
+        toast.success("Wallet change requested. An admin will review it.", {
+          id: VERIFY_TOAST_ID,
+        });
+      } catch (e) {
+        toast.error(
+          (e as Error)?.message ||
+            "Wallet change request failed. Please try again.",
+          {
+            id: VERIFY_TOAST_ID,
+          },
+        );
+      } finally {
+        setVerifying(false);
+      }
+    },
+    [user, signMessage],
+  );
+
   // When the wallet disconnects or switches, allow a fresh auto-prompt for
   // the old one next time, and re-read the linked wallet so a wallet
-  // unlinked elsewhere (e.g. Settings) is noticed without a reload.
+  // changed elsewhere is noticed.
   const previousAddress = useRef(connectedAddress);
   useEffect(() => {
     const previous = previousAddress.current;
@@ -121,7 +180,7 @@ const WalletButton = () => {
     if (storedWallet) {
       if (walletLocked && storedWallet !== connectedAddress) {
         toast.error(
-          `Your account is bound to wallet ${storedWallet.slice(0, 6)}...${storedWallet.slice(-4)}. Disconnect it in Settings → Wallet before linking a different one.`,
+          `Your account is bound to wallet ${storedWallet.slice(0, 6)}...${storedWallet.slice(-4)}. To switch, choose “Request wallet change” in the Wallet menu.`,
           { id: "wallet-bound-mismatch" },
         );
       }
@@ -132,13 +191,28 @@ const WalletButton = () => {
     if (autoVerifyAttempted.has(key)) return;
     autoVerifyAttempted.add(key);
     void verifyWallet(connectedAddress);
-  }, [user, connectedAddress, bindingLoaded, storedWallet, walletLocked, verifyWallet]);
+  }, [
+    user,
+    connectedAddress,
+    bindingLoaded,
+    storedWallet,
+    walletLocked,
+    verifyWallet,
+  ]);
 
   if (connected && publicKey) {
     const address = publicKey.toBase58();
     const truncated = `${address.slice(0, 4)}...${address.slice(-4)}`;
     const linked = storedWallet === address;
-    const canVerify = !!user && bindingLoaded && !storedWallet && !!signMessage && !verifying;
+    const canVerify =
+      !!user && bindingLoaded && !storedWallet && !!signMessage && !verifying;
+    const canRequestChange =
+      !!user &&
+      bindingLoaded &&
+      !!storedWallet &&
+      !linked &&
+      !!signMessage &&
+      !verifying;
     const statusLabel = linked
       ? "Wallet linked to your account"
       : verifying
@@ -169,6 +243,12 @@ const WalletButton = () => {
             <DropdownMenuItem onClick={() => void verifyWallet(address)}>
               <ShieldCheck className="h-3.5 w-3.5 mr-2" />
               Verify wallet
+            </DropdownMenuItem>
+          )}
+          {canRequestChange && (
+            <DropdownMenuItem onClick={() => void requestWalletChange(address)}>
+              <ArrowLeftRight className="h-3.5 w-3.5 mr-2" />
+              Request wallet change
             </DropdownMenuItem>
           )}
           <DropdownMenuItem
