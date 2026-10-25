@@ -390,6 +390,41 @@ describeIntegration(`Linked-wallet locking — live backend (${skipMessage})`, (
     expect((await binding(userA)).wallet_address).toBe(replacement.address);
   });
 
+  it("a wallet change cannot install a wallet linked to another account", async () => {
+    // Filed while the replacement is unclaimed; another account then links it.
+    const requestId = await requestChange(clientA, userA, replacement);
+    const { error: linkErr } = await admin
+      .from("profiles")
+      .update({ wallet_address: replacement.address, wallet_locked: true })
+      .eq("user_id", userB);
+    expect(linkErr).toBeNull();
+
+    const approved = await clientAdmin.rpc("process_wallet_change", {
+      _request_id: requestId,
+      _approve: true,
+    });
+    expect(approved.error?.code).toBe("23505");
+    expect(approved.error?.message).toContain("profiles_wallet_address_key");
+    expect((await binding(userA)).wallet_address).toBe(walletA.address);
+    expect((await binding(userB)).wallet_address).toBe(replacement.address);
+
+    // A new request for that wallet is refused before it is filed.
+    const rejected = await clientAdmin.rpc("process_wallet_change", {
+      _request_id: requestId,
+      _approve: false,
+    });
+    expect(rejected.error).toBeNull();
+    const refused = await call(clientA, await signChange(clientA, replacement));
+    expect(refused.status).toBe(409);
+    expect(refused.body?.code).toBe("wallet_already_in_use");
+    const { count } = await admin
+      .from("wallet_change_requests")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userA)
+      .eq("status", "pending");
+    expect(count).toBe(0);
+  });
+
   it("an admin cannot reopen a processed request to replay its proof", async () => {
     const requestId = await requestChange(clientA, userA, replacement);
     const rejected = await clientAdmin.rpc("process_wallet_change", {

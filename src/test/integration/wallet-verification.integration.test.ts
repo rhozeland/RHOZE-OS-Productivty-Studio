@@ -12,9 +12,11 @@
  *   - a challenge for wallet A can't link wallet B
  *   - small-order public keys (forgeable under plain tweetnacl) are refused
  *   - unauthenticated callers, existing wallets and challenge spam are refused
+ *   - a wallet linked to one account can't be linked to another, even in a race
  *
- * Requires the `20261021120000_wallet_verification_challenges` migration and
- * a deployed `verify-wallet-ownership` function on the target project.
+ * Requires the `20261021120000_wallet_verification_challenges` and
+ * `20261024210000_unique_profile_wallets` migrations and a deployed
+ * `verify-wallet-ownership` function on the target project.
  *
  * Skipped unless ALL of the following env vars are set:
  *   SUPABASE_TEST_URL                        — project URL
@@ -120,6 +122,16 @@ describeIntegration(
         signature: string;
       },
     ) => call(client, { action: "verify", ...p });
+
+    const signedLink = async (client: SupabaseClient, wallet: TestWallet) => {
+      const { challengeId, message } = await requestChallenge(client, wallet);
+      return {
+        challengeId,
+        walletAddress: wallet.address,
+        message,
+        signature: wallet.sign(message),
+      };
+    };
 
     const linkedWallet = async (userId: string) => {
       const { data, error } = await admin
@@ -458,6 +470,53 @@ describeIntegration(
       expect(res.status).toBe(409);
       expect(res.body?.code).toBe("wallet_already_linked");
       expect((await linkedWallet(userA)).wallet_address).toBe(walletB.address);
+    });
+
+    it("does not link a wallet that another account already holds", async () => {
+      const first = await submit(clientA, await signedLink(clientA, walletA));
+      expect(first.status).toBe(200);
+
+      const res = await submit(clientB, await signedLink(clientB, walletA));
+      expect(res.status).toBe(409);
+      expect(res.body?.code).toBe("wallet_already_in_use");
+      expect(await linkedWallet(userB)).toEqual({
+        wallet_address: null,
+        wallet_locked: false,
+      });
+      expect((await linkedWallet(userA)).wallet_address).toBe(walletA.address);
+
+      // The owning account still gets already_linked.
+      const own = await call(clientA, {
+        action: "challenge",
+        walletAddress: walletA.address,
+      });
+      expect(own.status).toBe(409);
+      expect(own.body?.code).toBe("already_linked");
+    });
+
+    it("lets only one of two accounts racing for a wallet link it", async () => {
+      const [signedA, signedB] = await Promise.all([
+        signedLink(clientA, walletA),
+        signedLink(clientB, walletA),
+      ]);
+      // No app-level check precedes the link write; only the unique index
+      // can stop the second one.
+      const [resA, resB] = await Promise.all([
+        submit(clientA, signedA),
+        submit(clientB, signedB),
+      ]);
+
+      expect([resA.status, resB.status].sort()).toEqual([200, 409]);
+      const [winner, loser, refused] =
+        resA.status === 200 ? [userA, userB, resB] : [userB, userA, resA];
+      expect(refused.body?.code).toBe("wallet_already_in_use");
+      expect((await linkedWallet(winner)).wallet_address).toBe(
+        walletA.address,
+      );
+      expect(await linkedWallet(loser)).toEqual({
+        wallet_address: null,
+        wallet_locked: false,
+      });
     });
 
     it("caps outstanding challenges per user", async () => {

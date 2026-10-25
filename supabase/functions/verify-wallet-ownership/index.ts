@@ -21,6 +21,10 @@
  * A challenge gets exactly one verify attempt: a bad signature or an edited
  * message burns it, and the client must request a new one. The cap on open
  * challenges per user lives in the database.
+ *
+ * A wallet can be linked to only one account. The profiles_wallet_address_key
+ * unique index enforces this; a wallet held by another account is reported as
+ * wallet_already_in_use, and only after that wallet has signed.
  */
 
 import {
@@ -155,6 +159,29 @@ const NO_LINKED_WALLET = "Link a wallet before requesting a change.";
 const WALLET_CHANGED =
   "Your linked wallet changed after this request was signed. Start a new wallet change.";
 const CHANGE_PENDING = "You already have a wallet change waiting for review.";
+const WALLET_IN_USE =
+  "This wallet is already linked to another Rhozeland account.";
+
+const WALLET_IN_USE_INDEX = "profiles_wallet_address_key";
+const isWalletInUseError = (
+  error: { code?: string; message?: string } | null,
+) => error?.code === "23505" && !!error.message?.includes(WALLET_IN_USE_INDEX);
+
+// Earlier, friendlier refusal only; profiles_wallet_address_key stays the
+// final check.
+async function isLinkedToOtherAccount(
+  admin: SupabaseClient,
+  userId: string,
+  walletAddress: string,
+) {
+  const { count, error } = await admin
+    .from("profiles")
+    .select("id", { count: "exact", head: true })
+    .eq("wallet_address", walletAddress)
+    .neq("user_id", userId);
+  if (error) throw error;
+  return (count ?? 0) > 0;
+}
 
 async function hasPendingChange(admin: SupabaseClient, userId: string) {
   const { count, error } = await admin
@@ -187,6 +214,8 @@ async function createChallenge(
   }
 
   // A link never replaces an existing wallet; a change needs one to replace.
+  // Whether another account holds the wallet is only revealed after it signs,
+  // so challenges can't be used to probe addresses.
   const linked = profile.wallet_address || null;
   if (linked === walletAddress) {
     return fail(
@@ -310,7 +339,9 @@ async function verifyChallenge(
 
   await markVerified(admin, challenge.id);
 
-  // 4. Only now link the wallet — and only if the account has none yet.
+  // 4. Only now link the wallet — and only if the account has none yet. If
+  //    another account holds it (or links it concurrently), the unique index
+  //    rejects the write.
   const { data: linked, error: linkErr } = await admin
     .from("profiles")
     .update({ wallet_address: walletAddress, wallet_locked: true })
@@ -318,6 +349,9 @@ async function verifyChallenge(
     .or('wallet_address.is.null,wallet_address.eq.""')
     .select("wallet_address")
     .maybeSingle();
+  if (isWalletInUseError(linkErr)) {
+    return fail(409, "wallet_already_in_use", WALLET_IN_USE);
+  }
   if (linkErr) throw linkErr;
 
   if (!linked) {
@@ -385,6 +419,11 @@ async function fileWalletChange(
   // The signature authorizes replacing the wallet named in the message only.
   if (!challenge.replaces_wallet || linked !== challenge.replaces_wallet) {
     return fail(409, "wallet_changed", WALLET_CHANGED);
+  }
+  // If another account links it while the request is pending, approval fails
+  // on the unique index instead.
+  if (await isLinkedToOtherAccount(admin, userId, walletAddress)) {
+    return fail(409, "wallet_already_in_use", WALLET_IN_USE);
   }
 
   await markVerified(admin, challenge.id);
