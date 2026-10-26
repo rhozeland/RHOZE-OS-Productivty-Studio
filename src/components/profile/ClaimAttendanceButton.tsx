@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import { solscanTransactionUrl } from "@/lib/solana-explorer";
 
 /**
  * v10.3 — phase-1 on-chain attendance claim.
@@ -80,7 +81,7 @@ export function ClaimAttendanceButton({
   if (existing?.memo_signature) {
     return (
       <a
-        href={`https://solscan.io/tx/${existing.memo_signature}`}
+        href={solscanTransactionUrl(existing.memo_signature)}
         target="_blank"
         rel="noopener noreferrer"
         className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/15 transition-colors"

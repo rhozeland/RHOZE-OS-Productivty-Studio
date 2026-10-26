@@ -10,6 +10,11 @@
 //
 // Network: mainnet-beta (same wallet/cluster as anchor-contribution).
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { Buffer } from "node:buffer";
+import {
+  getSolanaConfig,
+  solscanTransactionUrl,
+} from "../_shared/solana-config.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -41,6 +46,11 @@ Deno.serve(async (req) => {
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) return respond(401, { error: "Unauthorized" });
+
+    const config = getSolanaConfig();
+    if (!config.anchoringEnabled) {
+      return respond(503, { error: "On-chain anchoring is disabled for this environment" });
+    }
 
     let body: Record<string, unknown>;
     try {
@@ -87,7 +97,7 @@ Deno.serve(async (req) => {
       // Idempotent — return what we already anchored.
       return respond(200, {
         signature: existingTx,
-        explorer: `https://solscan.io/tx/${existingTx}`,
+        explorer: solscanTransactionUrl(existingTx),
         side,
         already_anchored: true,
       });
@@ -125,12 +135,12 @@ Deno.serve(async (req) => {
 
     const privateKeyArray = JSON.parse(privateKeyStr);
     const keypair = Keypair.fromSecretKey(new Uint8Array(privateKeyArray));
-    const connection = new Connection(clusterApiUrl("mainnet-beta"), "confirmed");
+    const connection = new Connection(config.rpcUrl, "confirmed");
 
     const memoInstruction = new TransactionInstruction({
       keys: [{ pubkey: keypair.publicKey, isSigner: true, isWritable: false }],
       programId: MEMO_PROGRAM_ID,
-      data: new TextEncoder().encode(memo),
+      data: Buffer.from(memo, "utf8"),
     });
 
     const transaction = new Transaction().add(memoInstruction);
@@ -150,7 +160,7 @@ Deno.serve(async (req) => {
 
     return respond(200, {
       signature,
-      explorer: `https://solscan.io/tx/${signature}`,
+      explorer: solscanTransactionUrl(signature),
       side,
       hash: signatureHash,
     });

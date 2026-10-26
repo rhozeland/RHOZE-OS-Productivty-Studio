@@ -5,6 +5,11 @@
 // Fees paid by the Rhozeland treasury wallet (RHOZE_AIRDROP_PRIVATE_KEY).
 
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { Buffer } from "node:buffer";
+import {
+  getSolanaConfig,
+  solscanTransactionUrl,
+} from "../_shared/solana-config.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -48,6 +53,11 @@ Deno.serve(async (req) => {
       error: authError,
     } = await userClient.auth.getUser();
     if (authError || !user) return respond(401, { error: "Unauthorized" });
+
+    const config = getSolanaConfig();
+    if (!config.anchoringEnabled) {
+      return respond(503, { error: "On-chain anchoring is disabled for this environment" });
+    }
 
     let body: Record<string, unknown>;
     try {
@@ -99,7 +109,7 @@ Deno.serve(async (req) => {
     if (ticket.solana_signature) {
       return respond(200, {
         signature: ticket.solana_signature,
-        explorer: `https://solscan.io/tx/${ticket.solana_signature}`,
+        explorer: solscanTransactionUrl(ticket.solana_signature),
         already_anchored: true,
       });
     }
@@ -173,7 +183,7 @@ Deno.serve(async (req) => {
         new Uint8Array(JSON.parse(privateKeyStr)),
       );
       const connection = new Connection(
-        clusterApiUrl("mainnet-beta"),
+        config.rpcUrl,
         "confirmed",
       );
 
@@ -191,7 +201,7 @@ Deno.serve(async (req) => {
       const ix = new TransactionInstruction({
         keys: [{ pubkey: keypair.publicKey, isSigner: true, isWritable: false }],
         programId: MEMO_PROGRAM_ID,
-        data: new TextEncoder().encode(memo),
+        data: Buffer.from(memo, "utf8"),
       });
 
       const tx = new Transaction().add(ix);
@@ -220,7 +230,7 @@ Deno.serve(async (req) => {
 
       return respond(200, {
         signature,
-        explorer: `https://solscan.io/tx/${signature}`,
+        explorer: solscanTransactionUrl(signature),
       });
     } catch (anchorErr) {
       const msg =

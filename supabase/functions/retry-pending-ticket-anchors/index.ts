@@ -4,6 +4,8 @@
 // CRON_SECRET header.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { Buffer } from "node:buffer";
+import { getSolanaConfig } from "../_shared/solana-config.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -34,6 +36,10 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const config = getSolanaConfig();
+    if (!config.anchoringEnabled) {
+      return respond(503, { error: "On-chain anchoring is disabled for this environment" });
+    }
     // This endpoint is intentionally callable without auth: it only retries
     // anchoring for tickets that are ALREADY checked in by the host. The
     // worst an attacker can do is trigger retries that would happen anyway.
@@ -82,7 +88,7 @@ Deno.serve(async (req) => {
       new Uint8Array(JSON.parse(privateKeyStr)),
     );
     const connection = new Connection(
-      clusterApiUrl("mainnet-beta"),
+      config.rpcUrl,
       "confirmed",
     );
 
@@ -153,7 +159,7 @@ Deno.serve(async (req) => {
             { pubkey: keypair.publicKey, isSigner: true, isWritable: false },
           ],
           programId: MEMO_PROGRAM_ID,
-          data: new TextEncoder().encode(memo),
+          data: Buffer.from(memo, "utf8"),
         });
         const tx = new Transaction().add(ix);
         const { blockhash, lastValidBlockHeight } =

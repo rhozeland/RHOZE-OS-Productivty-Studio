@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { ExternalLink, Fingerprint, FileCheck2, Loader2, Layers } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
+import { solscanTransactionUrl } from "@/lib/solana-explorer";
 
 interface WorkSettlementsProps {
   userId: string;
@@ -243,7 +244,7 @@ const WorkSettlements = ({ userId }: WorkSettlementsProps) => {
                     </Badge>
                     {row.workSignature ? (
                       <a
-                        href={`https://solscan.io/tx/${row.workSignature}`}
+                        href={solscanTransactionUrl(row.workSignature)}
                         target="_blank"
                         rel="noopener noreferrer"
                       >

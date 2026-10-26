@@ -25,8 +25,8 @@ import {
   deriveTokenVaultPda,
   getLaunchpadConnection,
   getLaunchpadProgramId,
-  solscanClusterSuffix,
 } from "@/lib/launchpad-onchain";
+import { solscanAccountUrl, solscanTokenUrl } from "@/lib/solana-explorer";
 import { PublicKey } from "@solana/web3.js";
 import { cn } from "@/lib/utils";
 
@@ -276,7 +276,7 @@ interface BalanceRowProps {
 
 const BalanceRow = ({ icon, label, pda, loading, exists, value, subValue }: BalanceRowProps) => {
   const address = pda?.toBase58() ?? null;
-  const url = address ? `https://solscan.io/account/${address}${solscanClusterSuffix()}` : null;
+  const url = address ? solscanAccountUrl(address) : null;
   const copy = () => {
     if (!address) return;
     navigator.clipboard.writeText(address);
@@ -340,7 +340,7 @@ const PdaCaption = ({
   kind?: "account" | "token";
 }) => {
   const address = pda.toBase58();
-  const url = `https://solscan.io/${kind}/${address}${solscanClusterSuffix()}`;
+  const url = kind === "token" ? solscanTokenUrl(address) : solscanAccountUrl(address);
   return (
     <div className="flex items-center justify-between gap-2 py-1 text-[10px]">
       <span className="uppercase tracking-wide text-muted-foreground">{label}</span>

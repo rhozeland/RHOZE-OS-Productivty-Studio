@@ -13,6 +13,7 @@ import { Loader2, ShieldCheck, ExternalLink, X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { shortHash } from "@/lib/content-hash";
 import LaunchCoinButton from "@/components/launchpad/LaunchCoinButton";
+import { solscanTransactionUrl } from "@/lib/solana-explorer";
 
 type Row = {
   id: string;
@@ -121,7 +122,7 @@ const MyVerificationRequests = () => {
               <div className="flex gap-2 items-center">
                 {r.status === "approved" && r.work?.solana_signature && (
                   <>
-                    <a href={`https://solscan.io/tx/${r.work.solana_signature}`} target="_blank" rel="noreferrer"
+                    <a href={solscanTransactionUrl(r.work.solana_signature)} target="_blank" rel="noreferrer"
                       className="inline-flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 hover:underline">
                       Solscan <ExternalLink className="h-3 w-3" />
                     </a>

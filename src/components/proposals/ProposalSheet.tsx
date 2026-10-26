@@ -23,6 +23,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { solscanTransactionUrl } from "@/lib/solana-explorer";
 import {
   Dialog,
   DialogContent,
@@ -761,7 +762,7 @@ const SignatureRow = ({ label, signedAt, hash, tx }: SignatureRowProps) => {
         </span>
         {tx && (
           <a
-            href={`https://solscan.io/tx/${tx}`}
+            href={solscanTransactionUrl(tx)}
             target="_blank"
             rel="noreferrer"
             className="ml-auto inline-flex items-center gap-0.5 text-[10px] text-emerald-700 hover:underline"

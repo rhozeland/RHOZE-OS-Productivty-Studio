@@ -15,6 +15,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { solscanTransactionUrl } from "@/lib/solana-explorer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -398,7 +399,7 @@ const VerifiedIPHub = ({ userId }: { userId: string | null }) => {
                   </div>
                   {w.solana_signature && (
                     <a
-                      href={`https://solscan.io/tx/${w.solana_signature}`}
+                      href={solscanTransactionUrl(w.solana_signature)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-muted-foreground hover:text-foreground text-xs inline-flex items-center gap-1 shrink-0"

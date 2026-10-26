@@ -25,8 +25,10 @@ import { supabase } from "@/integrations/supabase/client";
 import SquareCardForm, { SQUARE_LOCATION_ID } from "@/components/booking/SquareCardForm";
 import { useRhozeMarketPrice, formatRhozeUsd } from "@/hooks/useRhozeMarketPrice";
 
-const RHOZE_CA = "7khGn21aGKKAPi1LZF5EsdECdtyDcnYHtMKELrZDpump";
-const PUMP_FUN_URL = `https://pump.fun/coin/${RHOZE_CA}`;
+const RHOZE_CA = import.meta.env.VITE_SOLANA_RHOZE_MINT?.trim() ?? "";
+const IS_MAINNET = import.meta.env.VITE_SOLANA_ENV === "mainnet";
+const PUMP_FUN_URL =
+  IS_MAINNET && RHOZE_CA ? `https://pump.fun/coin/${RHOZE_CA}` : null;
 
 const PRESETS = [
   { usd: 5,   label: "Starter",   blurb: "Try it out" },
@@ -255,16 +257,22 @@ const BuyRhozeSection = () => {
               Contract Address
             </p>
             <code className="text-[11px] text-foreground bg-background px-2 py-1 rounded font-mono break-all block">
-              {RHOZE_CA}
+              {RHOZE_CA || "Configured per environment"}
             </code>
             <p className="text-[10px] text-muted-foreground">Solana · SPL Token</p>
           </div>
 
-          <a href={PUMP_FUN_URL} target="_blank" rel="noopener noreferrer">
-            <Button className="w-full h-11 rounded-full gap-2" variant="outline">
-              <ExternalLink className="h-4 w-4" /> Open Pump.fun
+          {PUMP_FUN_URL ? (
+            <a href={PUMP_FUN_URL} target="_blank" rel="noopener noreferrer">
+              <Button className="w-full h-11 rounded-full gap-2" variant="outline">
+                <ExternalLink className="h-4 w-4" /> Open Pump.fun
+              </Button>
+            </a>
+          ) : (
+            <Button className="w-full h-11 rounded-full gap-2" variant="outline" disabled>
+              Devnet market link unavailable
             </Button>
-          </a>
+          )}
 
           <p className="text-[10px] text-muted-foreground text-center">
             On-chain $RHOZE is the same token. The price floats with the bonding curve.
