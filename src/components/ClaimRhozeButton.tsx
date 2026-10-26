@@ -248,7 +248,12 @@ const ClaimRhozeButton = ({
     let payoutSignature: string | null = null;
     let responseData: { pending?: boolean; ok?: boolean } | null = null;
     try {
-      const saved = readSavedClaim(claimStorageKey);
+      const storedClaim = readSavedClaim(claimStorageKey);
+      const saved = storedClaim?.requestId &&
+        Number.isFinite(storedClaim.amount) && (storedClaim.amount ?? 0) > 0
+        ? storedClaim
+        : pendingClaim;
+      const effectiveCreditsToClaim = saved?.amount ?? creditsToClaim;
       if (saved?.requestId) requestId = saved.requestId;
       if (typeof saved?.signature === "string") payoutSignature = saved.signature;
       requestId ||= crypto.randomUUID();
@@ -376,7 +381,7 @@ const ClaimRhozeButton = ({
         variant="outline"
         className={className}
         onClick={openConfirm}
-        disabled={loading || disabled || (!pendingClaim && (creditsToClaim <= 0 || blockedByLimits))}
+        disabled={loading || (!pendingClaim && (disabled || creditsToClaim <= 0 || blockedByLimits))}
         title={blockedByLimits && !limitsCheck.ok ? limitsCheck.reason : undefined}
       >
         {loading ? (
