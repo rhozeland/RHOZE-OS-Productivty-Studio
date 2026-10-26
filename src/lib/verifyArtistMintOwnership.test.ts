@@ -11,7 +11,10 @@ vi.mock("@/integrations/supabase/client", () => ({
   supabase: { functions: { invoke } },
 }));
 
-import { verifyArtistMintOwnership } from "./verifyArtistMintOwnership";
+import {
+  ArtistMintOwnershipError,
+  verifyArtistMintOwnership,
+} from "./verifyArtistMintOwnership";
 
 const mintAddress = "So11111111111111111111111111111111111111112";
 const publicKey = new PublicKey("11111111111111111111111111111111");
@@ -22,6 +25,14 @@ const challenge = {
   mintAddress,
 };
 const signatureBytes = new Uint8Array(64).fill(7);
+
+const functionError = (message: string, code: string, status = 400) =>
+  new FunctionsHttpError(
+    new Response(JSON.stringify({ error: message, code }), {
+      status,
+      headers: { "Content-Type": "application/json" },
+    }),
+  );
 
 describe("verifyArtistMintOwnership", () => {
   beforeEach(() => {
@@ -72,20 +83,61 @@ describe("verifyArtistMintOwnership", () => {
 
   it("surfaces the backend wallet-mismatch message and does not prompt for a signature", async () => {
     const signMessage = vi.fn();
-    const error = new FunctionsHttpError(
-      new Response(
-        JSON.stringify({
-          error: "Connect the wallet used to launch this mint on Pump.fun.",
-          code: "wallet_mismatch",
-        }),
-        { status: 409, headers: { "Content-Type": "application/json" } },
+    invoke.mockResolvedValueOnce({
+      data: null,
+      error: functionError(
+        "Connect the wallet used to launch this mint on Pump.fun.",
+        "wallet_mismatch",
+        409,
       ),
-    );
-    invoke.mockResolvedValueOnce({ data: null, error });
+    });
 
     await expect(
       verifyArtistMintOwnership({ mintAddress, publicKey, signMessage }),
-    ).rejects.toThrow("Connect the wallet used to launch this mint on Pump.fun.");
+    ).rejects.toMatchObject({
+      name: "ArtistMintOwnershipError",
+      code: "wallet_mismatch",
+      message: "Connect the wallet used to launch this mint on Pump.fun.",
+    });
+    expect(signMessage).not.toHaveBeenCalled();
+    expect(invoke).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ["mint_not_found", "Pump.fun could not find this mint."],
+    [
+      "pump_lookup_failed",
+      "Could not retrieve token details from Pump.fun. Try again later.",
+    ],
+    [
+      "pump_invalid_response",
+      "Pump.fun did not return a valid creator wallet.",
+    ],
+    ["wallet_lookup_failed", "Unable to retrieve the account wallet"],
+    [
+      "profile_not_found",
+      "Account profile could not be found. Complete your profile before submitting a token.",
+    ],
+    ["wallet_not_linked", "Verify and link your wallet before submitting the token."],
+    [
+      "account_wallet_mismatch",
+      "The mint creator wallet must match the wallet connected to the account.",
+    ],
+  ])("preserves the %s backend error code", async (code, message) => {
+    const signMessage = vi.fn();
+    invoke.mockResolvedValueOnce({
+      data: null,
+      error: functionError(message, code, code === "mint_not_found" ? 404 : 409),
+    });
+
+    const error = await verifyArtistMintOwnership({
+      mintAddress,
+      publicKey,
+      signMessage,
+    }).catch((caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(ArtistMintOwnershipError);
+    expect(error).toMatchObject({ code, message });
     expect(signMessage).not.toHaveBeenCalled();
     expect(invoke).toHaveBeenCalledTimes(1);
   });
@@ -116,19 +168,28 @@ describe("verifyArtistMintOwnership", () => {
 
   it("surfaces server signature-verification errors", async () => {
     const signMessage = vi.fn().mockResolvedValue(signatureBytes);
-    const error = new FunctionsHttpError(
-      new Response(JSON.stringify({ error: "signature does not match the mint creator wallet" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      }),
-    );
     invoke
       .mockResolvedValueOnce({ data: challenge, error: null })
-      .mockResolvedValueOnce({ data: null, error });
+      .mockResolvedValueOnce({
+        data: null,
+        error: new FunctionsHttpError(
+          new Response(
+            JSON.stringify({
+              error: "signature does not match the mint creator wallet",
+            }),
+            {
+              status: 401,
+              headers: { "Content-Type": "application/json" },
+            },
+          ),
+        ),
+      });
 
-    await expect(
-      verifyArtistMintOwnership({ mintAddress, publicKey, signMessage }),
-    ).rejects.toThrow("signature does not match the mint creator wallet");
+    await expect(verifyArtistMintOwnership({
+      mintAddress,
+      publicKey,
+      signMessage,
+    })).rejects.toThrow("signature does not match the mint creator wallet");
     expect(invoke).toHaveBeenCalledTimes(2);
   });
 

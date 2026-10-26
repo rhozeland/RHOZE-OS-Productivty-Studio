@@ -22,6 +22,16 @@ type VerificationResponse = {
   mintAddress: string;
 };
 
+export class ArtistMintOwnershipError extends Error {
+  constructor(
+    message: string,
+    public readonly code?: string,
+  ) {
+    super(message);
+    this.name = "ArtistMintOwnershipError";
+  }
+}
+
 async function functionError(error: unknown): Promise<Error> {
   if (error instanceof FunctionsHttpError) {
     try {
@@ -32,7 +42,9 @@ async function functionError(error: unknown): Promise<Error> {
         "error" in body &&
         typeof body.error === "string"
       ) {
-        return new Error(body.error);
+        const code =
+          "code" in body && typeof body.code === "string" ? body.code : undefined;
+        return new ArtistMintOwnershipError(body.error, code);
       }
     } catch {
       // Fall back to the SDK's error when the response is not JSON.
