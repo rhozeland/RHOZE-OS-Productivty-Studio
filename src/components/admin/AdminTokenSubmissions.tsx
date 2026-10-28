@@ -51,24 +51,46 @@ const AdminTokenSubmissions = () => {
     },
   });
 
-  const review = async (userId: string, approve: boolean) => {
+  const review = async (r: Row, approve: boolean) => {
+    const userId = r.user_id;
     setBusy(userId);
     try {
       const { error } = await (supabase as any).rpc("review_token_submission", {
         _user_id: userId,
         _approve: approve,
         _note: notes[userId]?.trim() || null,
+        _expected_mint: r.token_mint_address_pending,
+        _expected_ticker: r.token_ticker_pending,
+        _expected_submitted_at: r.token_submitted_at,
+        _strict: true,
       });
       if (error) throw error;
       toast.success(approve ? "Token approved · now live." : "Submission rejected.");
       setNotes((n) => ({ ...n, [userId]: "" }));
       qc.invalidateQueries({ queryKey: ["admin-token-submissions"] });
     } catch (e: any) {
-      toast.error(e.message || "Review failed");
-    } finally {
-      setBusy(null);
-    }
-  };
+        const message = e?.message || "";
+
+        if (message.includes("submission_changed")) {
+          toast.error(
+            "This submission changed while you were reviewing it. The queue has been refreshed - please review the latest values.",
+         );
+        } else if (message.includes("submission_already_resolved")) {
+          toast.error(
+            "This submission was already reviewed - possibly by another admin.",
+          );
+        } else {
+          toast.error(message || "Review failed");
+        }
+
+        await qc.invalidateQueries({
+          queryKey: ["admin-token-submissions"],
+        });
+
+  } finally {
+    setBusy(null);
+  }
+};
 
   if (isLoading) {
     return <div className="text-sm text-muted-foreground">Loading…</div>;
@@ -166,14 +188,14 @@ const AdminTokenSubmissions = () => {
                 size="sm"
                 variant="outline"
                 disabled={busy === r.user_id}
-                onClick={() => review(r.user_id, false)}
+                onClick={() => review(r, false)}
               >
                 <X className="h-3.5 w-3.5 mr-1" /> Reject
               </Button>
               <Button
                 size="sm"
                 disabled={busy === r.user_id}
-                onClick={() => review(r.user_id, true)}
+                onClick={() => review(r, true)}
               >
                 <Check className="h-3.5 w-3.5 mr-1" /> Approve · go live
               </Button>
