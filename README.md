@@ -36,6 +36,54 @@ npm i
 npm run dev
 ```
 
+### Switching between local Supabase projects
+
+The frontend can target separate Supabase projects without changing source
+code. Create these ignored files in the repository root:
+
+`.env.dev.local`
+
+```dotenv
+VITE_SUPABASE_PROJECT_ID="your-dev-project-id"
+VITE_SUPABASE_URL="https://your-dev-project-id.supabase.co"
+VITE_SUPABASE_PUBLISHABLE_KEY="your-dev-publishable-key"
+VITE_PAYMENTS_CLIENT_TOKEN="pk_test_your-dev-stripe-publishable-key"
+```
+
+`.env.prod.local`
+
+```dotenv
+VITE_SUPABASE_PROJECT_ID="your-prod-project-id"
+VITE_SUPABASE_URL="https://your-prod-project-id.supabase.co"
+VITE_SUPABASE_PUBLISHABLE_KEY="your-prod-publishable-key"
+VITE_PAYMENTS_CLIENT_TOKEN="pk_live_your-prod-stripe-publishable-key"
+```
+
+Start the app against the desired project:
+
+```sh
+npm run dev:database:dev
+npm run dev:database:prod
+```
+
+The development mode must use a Stripe `pk_test_` publishable token and shows
+the payment sandbox banner. The production mode must use a Stripe `pk_live_`
+publishable token and uses live payment configuration. Restart the Vite server
+after changing either environment file so the new values are loaded.
+
+The same modes are available for production builds:
+
+```sh
+npm run build:database:dev
+npm run build:database:prod
+```
+
+Only use a publishable/anon key in `VITE_*` variables. Never put a Supabase
+service-role key in these files or in browser code. Keep the database schemas,
+auth settings, storage buckets, secrets, and Edge Functions synchronized
+separately in both Supabase projects. Switching the frontend URL alone does not
+switch a deployed Edge Function or migrate the other project's database.
+
 **Edit a file directly in GitHub**
 
 - Navigate to the desired file(s).
