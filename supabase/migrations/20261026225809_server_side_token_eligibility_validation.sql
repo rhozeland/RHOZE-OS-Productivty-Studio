@@ -9,7 +9,7 @@ CREATE OR REPLACE FUNCTION public.is_creator_token_eligible(p_token_id UUID, p_t
 RETURNS BOOLEAN
 LANGUAGE plpsql
 STABLE
-SECURITY INVOKER
+SECURITY INVOKER 
 SET search_path = ''
 AS $$
 DECLARE v_user_id UUID;
@@ -33,7 +33,7 @@ IF NOT EXISTS (
     FROM public.creator tokens ct
     WHERE ct.id = p_token_id
     AND ct.user_id = v_user_id
-    AND ct.status = 'verified'
+    AND ct.status = 'approved'
 ) THEN
     RETURN FALSE;
 END IF;
