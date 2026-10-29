@@ -38,8 +38,33 @@ IF NOT EXISTS (
     RETURN FALSE;
 END IF;
 
--- Step 3: Target ownership validation (not implemented yet);
-RETURN FALSE;
+-- Step 3: Validate Project or Work Ownership;
+IF p_target_type = 'project' THEN
+
+    SELECT EXISTS (
+        SELECT 1
+        FROM public.projects p
+        WHERE p.id = p_target_id
+            AND p.user_id = v_user_id
+    )
+    INTO v_target_owned;
+
+ELSIF p_target_type = 'work' THEN
+    SELECT EXISTS (
+        SELECT 1
+        FROM public.works w
+        WHERE w.id = p.target_id
+            AND w.user_id = v_user_id
+    )
+    INTO v_target_owned;
+
+    ELSE
+        RETURN FALSE;
+    END IF;
+
+    --Return TRUE only if all validation checks passed.
+
+    RETURN v_target_owned;
 
 END;
 $$;
