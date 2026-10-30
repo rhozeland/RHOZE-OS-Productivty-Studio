@@ -23,6 +23,7 @@ const challenge = {
   message: "Rhozeland mint ownership challenge",
   creatorWallet: publicKey.toBase58(),
   mintAddress,
+  ticker: "RHOZE",
 };
 const signatureBytes = new Uint8Array(64).fill(7);
 
@@ -43,8 +44,11 @@ describe("verifyArtistMintOwnership", () => {
     const signMessage = vi.fn().mockResolvedValue(signatureBytes);
     const result = {
       verified: true,
+      approved: true,
       creatorWallet: publicKey.toBase58(),
       mintAddress,
+      ticker: "RHOZE",
+      approvedAt: "2026-10-21T12:00:00.000Z",
     };
     invoke
       .mockResolvedValueOnce({ data: challenge, error: null })
@@ -123,6 +127,10 @@ describe("verifyArtistMintOwnership", () => {
       "account_wallet_mismatch",
       "The mint creator wallet must match the wallet connected to the account.",
     ],
+    [
+      "submission_not_pending",
+      "Submit this mint for review before verifying ownership.",
+    ],
   ])("preserves the %s backend error code", async (code, message) => {
     const signMessage = vi.fn();
     invoke.mockResolvedValueOnce({
@@ -193,14 +201,22 @@ describe("verifyArtistMintOwnership", () => {
     expect(invoke).toHaveBeenCalledTimes(2);
   });
 
-  it("does not report success when the server response is not verified", async () => {
+  it("does not report success unless the server confirms approval", async () => {
     const signMessage = vi.fn().mockResolvedValue(signatureBytes);
     invoke
       .mockResolvedValueOnce({ data: challenge, error: null })
-      .mockResolvedValueOnce({ data: { verified: false }, error: null });
+      .mockResolvedValueOnce({
+        data: {
+          verified: true,
+          approved: false,
+        },
+        error: null,
+      });
 
     await expect(
       verifyArtistMintOwnership({ mintAddress, publicKey, signMessage }),
-    ).rejects.toThrow("Mint ownership verification was not confirmed.");
+    ).rejects.toThrow(
+      "Mint ownership verification and approval were not confirmed.",
+    );
   });
 });

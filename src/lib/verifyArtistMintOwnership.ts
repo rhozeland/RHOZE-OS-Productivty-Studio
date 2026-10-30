@@ -14,12 +14,16 @@ type ChallengeResponse = {
   message: string;
   creatorWallet: string;
   mintAddress: string;
+  ticker: string | null;
 };
 
 type VerificationResponse = {
   verified: true;
+  approved: true;
   creatorWallet: string;
   mintAddress: string;
+  ticker: string | null;
+  approvedAt: string;
 };
 
 export class ArtistMintOwnershipError extends Error {
@@ -97,8 +101,8 @@ export async function verifyArtistMintOwnership({
     );
 
   if (verificationError) throw await functionError(verificationError);
-  if (!result?.verified) {
-    throw new Error("Mint ownership verification was not confirmed.");
+  if (!result?.verified || !result.approved) {
+    throw new Error("Mint ownership verification and approval were not confirmed.");
   }
 
   return result;

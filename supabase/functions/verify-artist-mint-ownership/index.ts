@@ -85,15 +85,15 @@ async function getPumpCreatorWallet(mintAddress: string): Promise<string | null>
   return payload.creator;
 }
 
-// Return an error response on failure, or null when the account wallet matches.
-async function checkAccountWallet(
+async function getPendingSubmission(
   admin: SupabaseClient,
   userId: string,
   creatorWallet: string,
-): Promise<Response | null> {
+  mintAddress: string,
+): Promise<{ ticker: string | null } | Response> {
   const { data: profile, error: profileError } = await admin
     .from("profiles")
-    .select("wallet_address")
+    .select("wallet_address,token_mint_address_pending,token_ticker_pending,token_submission_status")
     .eq("user_id", userId)
     .maybeSingle();
 
@@ -110,10 +110,10 @@ async function checkAccountWallet(
       verified: false,
       code: "profile_not_found",
       error: "Account profile could not be found. Complete your profile before submitting a token."
-    })
+    });
   }
 
-  if (!profile?.wallet_address) {
+  if (!profile.wallet_address) {
     return json(409, {
       verified: false,
       code: "wallet_not_linked",
@@ -129,7 +129,18 @@ async function checkAccountWallet(
     });
   }
 
-  return null;
+  if (
+    profile.token_submission_status !== "pending" ||
+    profile.token_mint_address_pending !== mintAddress
+  ) {
+    return json(409, {
+      verified: false,
+      code: "submission_not_pending",
+      error: "Submit this mint for review before verifying ownership.",
+    });
+  }
+
+  return { ticker: profile.token_ticker_pending };
 }
 
 Deno.serve(async (req) => {
@@ -213,8 +224,13 @@ Deno.serve(async (req) => {
       });
     }
 
-    const walletError = await checkAccountWallet(admin, userId, creatorWallet); // Check account wallet match before challenge is constructed
-    if (walletError) return walletError;
+    const submission = await getPendingSubmission(
+      admin,
+      userId,
+      creatorWallet,
+      mintAddress,
+    );
+    if (submission instanceof Response) return submission;
 
     const now = new Date();
     const expiresAt = new Date(now.getTime() + CHALLENGE_TTL_MS);
@@ -222,6 +238,7 @@ Deno.serve(async (req) => {
     const message = [
       "Rhozeland artist mint ownership verification",
       `Mint: ${mintAddress}`,
+      `Ticker: ${submission.ticker ?? "(not set)"}`,
       `Creator wallet: ${creatorWallet}`,
       `Rhozeland user: ${userId}`,
       `Challenge: ${challengeId}`,
@@ -245,6 +262,7 @@ Deno.serve(async (req) => {
         id: challengeId,
         user_id: userId,
         mint_address: mintAddress,
+        token_ticker: submission.ticker,
         creator_wallet: creatorWallet,
         message,
         expires_at: expiresAt.toISOString(),
@@ -259,6 +277,7 @@ Deno.serve(async (req) => {
       message,
       creatorWallet,
       mintAddress,
+      ticker: submission.ticker,
       expiresAt: expiresAt.toISOString(),
     });
   }
@@ -267,7 +286,7 @@ Deno.serve(async (req) => {
   const now = new Date().toISOString();
   const { data: challenge, error: challengeError } = await admin
     .from("artist_mint_verification_challenges")
-    .select("id,mint_address,creator_wallet,message,expires_at,consumed_at")
+    .select("id,mint_address,token_ticker,creator_wallet,message,expires_at,consumed_at")
     .eq("id", challengeId)
     .eq("user_id", userId)
     .maybeSingle();
@@ -308,31 +327,39 @@ Deno.serve(async (req) => {
     return json(401, { error: "signature does not match the mint creator wallet" });
   }
 
-  const walletError = await checkAccountWallet(admin, userId, challenge.creator_wallet); // Check wallet before mint verification
-  if (walletError) return walletError;
-
-  const consumedAt = new Date().toISOString();
-  const { data: consumed, error: consumeError } = await admin
-    .from("artist_mint_verification_challenges")
-    .update({ consumed_at: consumedAt })
-    .eq("id", challengeId)
-    .eq("user_id", userId)
-    .is("consumed_at", null)
-    .gt("expires_at", consumedAt)
-    .select("id")
-    .maybeSingle();
-
-  if (consumeError) {
-    console.error("Mint challenge consumption failed", consumeError);
-    return json(500, { error: "could not complete mint ownership verification" });
+  const { data: approvals, error: approvalError } = await admin.rpc(
+    "approve_verified_artist_token_submission",
+    {
+      _challenge_id: challengeId,
+      _user_id: userId,
+    },
+  );
+  if (approvalError) {
+    console.error("Verified mint approval failed", approvalError);
+    return json(500, {
+      verified: false,
+      approved: false,
+      code: "approval_failed",
+      error: "Could not complete automatic mint approval. Try again.",
+    });
   }
-  if (!consumed) {
-    return json(409, { error: "verification challenge expired or has already been used" });
+
+  const approval = Array.isArray(approvals) ? approvals[0] : null;
+  if (!approval) {
+    return json(409, {
+      verified: true,
+      approved: false,
+      code: "submission_changed",
+      error: "The pending token submission changed or was already processed. Submit it again and verify ownership.",
+    });
   }
 
   return json(200, {
     verified: true,
+    approved: true,
     mintAddress: challenge.mint_address,
     creatorWallet: challenge.creator_wallet,
+    ticker: approval.ticker,
+    approvedAt: approval.approved_at,
   });
 });
