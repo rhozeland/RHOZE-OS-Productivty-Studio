@@ -6640,10 +6640,18 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      review_token_submission: {
-        Args: { _approve: boolean; _note?: string; _user_id: string }
-        Returns: undefined
-      }
+     review_token_submission: {
+        Args: {
+          _user_id: string;
+          _approve: boolean;
+          _note?: string | null;
+          _expected_mint?: string | null;
+          _expected_ticker?: string | null;
+          _expected_submitted_at?: string | null;
+          _strict?: boolean;
+        };
+        Returns: undefined;
+}
       reward_already_granted: {
         Args: { _action_type: string; _reference_id?: string; _user_id: string }
         Returns: boolean
