@@ -89,6 +89,42 @@ export type Database = {
         }
         Relationships: []
       }
+      artist_mint_verification_challenges: {
+        Row: {
+          consumed_at: string | null
+          created_at: string
+          creator_wallet: string
+          expires_at: string
+          id: string
+          message: string
+          mint_address: string
+          token_ticker: string | null
+          user_id: string
+        }
+        Insert: {
+          consumed_at?: string | null
+          created_at?: string
+          creator_wallet: string
+          expires_at: string
+          id: string
+          message: string
+          mint_address: string
+          token_ticker?: string | null
+          user_id: string
+        }
+        Update: {
+          consumed_at?: string | null
+          created_at?: string
+          creator_wallet?: string
+          expires_at?: string
+          id?: string
+          message?: string
+          mint_address?: string
+          token_ticker?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       artist_verification_requests: {
         Row: {
           bio: string | null
@@ -6643,6 +6679,14 @@ export type Database = {
       review_token_submission: {
         Args: { _approve: boolean; _note?: string; _user_id: string }
         Returns: undefined
+      }
+      approve_verified_artist_token_submission: {
+        Args: { _challenge_id: string; _user_id: string }
+        Returns: {
+          approved_at: string
+          mint_address: string
+          ticker: string | null
+        }[]
       }
       reward_already_granted: {
         Args: { _action_type: string; _reference_id?: string; _user_id: string }

@@ -8,11 +8,26 @@ Each suite is gated by its own `RUN_*` env flag and skipped by default.
 |---|---|
 | `flow-rls.integration.test.ts` | `RUN_FLOW_RLS_INTEGRATION=1` |
 | `curator-invite.integration.test.ts` | `RUN_CURATOR_INVITE_INTEGRATION=1` |
+| `artist-mint-auto-approval.integration.test.ts` | `RUN_ARTIST_MINT_APPROVAL_INTEGRATION=1` |
 
 The curator-invite suite runs the full handshake (create split config →
 send invite → accept as invitee → assert `revenue_split_configs.curator_id`
 populated → assert notifications fired) plus a negative-control check
 that a third party cannot read the invite via RLS.
+
+The artist mint approval suite verifies the service-role RPC against the
+configured Supabase project. It checks matching mint/ticker promotion,
+challenge consumption, stale submission and wallet rejection, user binding,
+expiry/replay protection, and denial for anon clients. It is skipped unless
+the URL, anon key, service-role key, and its explicit opt-in flag are set.
+
+```bash
+SUPABASE_TEST_URL=... \
+SUPABASE_TEST_ANON_KEY=... \
+SUPABASE_TEST_SERVICE_ROLE_KEY=... \
+RUN_ARTIST_MINT_APPROVAL_INTEGRATION=1 \
+  npx vitest run src/test/integration/artist-mint-auto-approval.integration.test.ts
+```
 
 ---
 
