@@ -41,7 +41,7 @@ npm run dev
 The frontend can target separate Supabase projects without changing source
 code. Create these ignored files in the repository root:
 
-`.env.dev.local`
+`.env.development.local`
 
 ```dotenv
 VITE_SUPABASE_PROJECT_ID="your-dev-project-id"
@@ -50,7 +50,7 @@ VITE_SUPABASE_PUBLISHABLE_KEY="your-dev-publishable-key"
 VITE_PAYMENTS_CLIENT_TOKEN="pk_test_your-dev-stripe-publishable-key"
 ```
 
-`.env.prod.local`
+`.env.production.local`
 
 ```dotenv
 VITE_SUPABASE_PROJECT_ID="your-prod-project-id"
@@ -83,6 +83,16 @@ service-role key in these files or in browser code. Keep the database schemas,
 auth settings, storage buckets, secrets, and Edge Functions synchronized
 separately in both Supabase projects. Switching the frontend URL alone does not
 switch a deployed Edge Function or migrate the other project's database.
+
+To provision local Solana Devnet wallets and generate the ignored Devnet
+configuration files, run:
+
+```sh
+npm run solana:provision-devnet
+```
+
+Keep the generated private keys in server-side secrets only. Do not expose them
+through `VITE_*` variables.
 
 **Edit a file directly in GitHub**
 
