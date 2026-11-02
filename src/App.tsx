@@ -269,7 +269,7 @@ const App = () => (
 
               {/* Explore pages — fully public */}
               <Route path="/explore/studios" element={<ExploreStudiosPage />} />
-              <Route path="/explore/studios/:id" element={<ExploreStudiosPage />} />
+              <Route path="/explore/studios/:id" element={<StudioDetailPage />} />
               <Route path="/explore/creators" element={<ExploreCreatorsPage />} />
               <Route path="/explore/creators/:id" element={<ExploreCreatorsPage />} />
 
