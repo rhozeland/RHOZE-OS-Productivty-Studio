@@ -22,14 +22,26 @@ jobs:
           password: ${{ secrets.NOTIFICATION_EMAIL_PASSWORD }} # Use an App Password, not your regular password
           
           # Email Content
-          subject: "🚀 PR Merged into Dev: #${{ github.event.pull_request.number }}"
+          subject: "🚀 PR Merged from ${{ github.event.pull_request.head.ref }} into Dev: #${{ github.event.pull_request.number }}"
           to: ${{ secrets.SLACK_CHANNEL_EMAIL }}
           from: "GitHub Actions CI <${{ secrets.NOTIFICATION_EMAIL_USER }}>"
           body: |
             Pull Request #${{ github.event.pull_request.number }} has been successfully merged into dev.
             
             Title: ${{ github.event.pull_request.title }}
-            Merged By: ${{ github.event.pull_request.user.login }}
+            Author: ${{ github.event.pull_request.user.login }}
+            Merged By: ${{ github.event.pull_request.merged_by.login }}
+
+            Rebase Instructions:
+            If you have local changes, run:
+              git stash
+
+            Then run:
+              git fetch origin
+              git rebase origin/dev
+
+            If you created a stash, restore it:
+              git stash pop
             
             View Pull Request on GitHub:
             ${{ github.event.pull_request.html_url }}
