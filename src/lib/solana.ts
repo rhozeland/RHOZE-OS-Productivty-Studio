@@ -4,12 +4,11 @@ import {
   SystemProgram,
   Transaction,
   LAMPORTS_PER_SOL,
-  clusterApiUrl,
 } from "@solana/web3.js";
+import { getSolanaConnectionConfig } from "./solana-config";
 
-const NETWORK = "mainnet-beta";
-
-export const getConnection = () => new Connection(clusterApiUrl(NETWORK));
+export const getConnection = () =>
+  new Connection(getSolanaConnectionConfig().rpcUrl);
 
 export const solToLamports = (sol: number) =>
   Math.round(sol * LAMPORTS_PER_SOL);

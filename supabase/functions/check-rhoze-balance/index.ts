@@ -3,10 +3,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
-
-const RHOZE_MINT = "7khGn21aGKKAPi1LZF5EsdECdtyDcnYHtMKELrZDpump";
-const RPC_URL = "https://api.mainnet-beta.solana.com";
-const RHOZE_DECIMALS = 6;
+import { getSolanaConfig } from "../_shared/solana-config.ts";
 
 const TIERS = [
   { name: "play", min: 50000000, perks: ["Unlimited Boards", "Unlimited Drop Rooms", "15% studio discount", "Priority booking", "All perks unlocked"] },
@@ -24,7 +21,8 @@ function json(body: unknown, status = 200) {
 }
 
 async function rpcCall(method: string, params: unknown[]) {
-  const res = await fetch(RPC_URL, {
+  const config = getSolanaConfig();
+  const res = await fetch(config.rpcUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
@@ -51,16 +49,17 @@ Deno.serve(async (req) => {
     }
 
     // Use getTokenAccountsByOwner RPC to find $RHOZE token accounts
+    const config = getSolanaConfig();
     const result = await rpcCall("getTokenAccountsByOwner", [
       walletAddress,
-      { mint: RHOZE_MINT },
+      { mint: config.rhozeMint },
       { encoding: "jsonParsed" },
     ]);
 
     let balance = 0;
     if (result?.result?.value?.length > 0) {
       const info = result.result.value[0].account.data.parsed.info;
-      balance = Number(info.tokenAmount.amount) / Math.pow(10, RHOZE_DECIMALS);
+      balance = Number(info.tokenAmount.amount) / Math.pow(10, config.rhozeDecimals);
     }
 
     const tier = TIERS.find((t) => balance >= t.min) || TIERS[TIERS.length - 1];

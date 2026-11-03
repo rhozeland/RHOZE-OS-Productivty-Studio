@@ -18,6 +18,7 @@
  */
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { solscanTransactionUrl } from "@/lib/solana-explorer";
 import {
   CheckCircle2,
   ChevronDown,
@@ -229,7 +230,7 @@ const SignerBlock = ({ role, displayName, avatarUrl, signedAt, tx }: SignerBlock
         </p>
         {tx ? (
           <a
-            href={`https://solscan.io/tx/${tx}`}
+            href={solscanTransactionUrl(tx)}
             target="_blank"
             rel="noreferrer"
             className={cn(

@@ -438,12 +438,20 @@ const FlowModePage = ({ embedded = false }: FlowModePageProps) => {
         );
       }
       if (!user?.id) return;
-      const patch: Record<string, unknown> = {};
-      if (next.scope !== undefined) patch.flow_feed_scope = next.scope;
-      if (next.preferred !== undefined) patch.flow_preferred_categories = next.preferred;
-      if (Object.keys(patch).length === 0) return;
+      if (next.scope === undefined && next.preferred === undefined) return;
       try {
-        await supabase.from("profiles").update(patch).eq("user_id", user.id);
+        if (next.scope !== undefined) {
+          await supabase
+            .from("profiles")
+            .update({ flow_feed_scope: next.scope })
+            .eq("user_id", user.id);
+        }
+        if (next.preferred !== undefined) {
+          await supabase
+            .from("profiles")
+            .update({ flow_preferred_categories: next.preferred })
+            .eq("user_id", user.id);
+        }
       } catch {
         // Silent — local cache already updated.
       }

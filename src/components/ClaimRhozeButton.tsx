@@ -31,8 +31,8 @@ import {
 import RhozeClaimCelebration from "@/components/RhozeClaimCelebration";
 import { useClaimLimits, validateClaim } from "@/lib/claim-limits";
 import { Link } from "react-router-dom";
-
-const SOLANA_RPC = "https://api.mainnet-beta.solana.com";
+import { getSolanaConfig } from "@/lib/solana-config";
+import { solanaExplorerAddressUrl, solscanTransactionUrl } from "@/lib/solana-explorer";
 const LAMPORTS_PER_SOL = 1_000_000_000;
 // Base sig fee (5000 lamports) + small priority buffer; ATA creation adds ~0.00203928 SOL rent (paid by payout wallet, not user)
 const ESTIMATED_FEE_LAMPORTS = 5000;
@@ -57,6 +57,41 @@ interface ClaimRhozeButtonProps {
 const shortenAddress = (addr: string) =>
   addr.length > 14 ? `${addr.slice(0, 6)}…${addr.slice(-6)}` : addr;
 
+interface SavedClaim {
+  requestId?: string;
+  signature?: string;
+  amount?: number;
+}
+
+const readSavedClaim = (key: string): SavedClaim | null => {
+  try {
+    return JSON.parse(localStorage.getItem(key) ?? "null");
+  } catch {
+    return null;
+  }
+};
+
+const saveClaimRetry = (
+  key: string,
+  requestId: string,
+  signature: string | null,
+  amount: number,
+) => {
+  try {
+    localStorage.setItem(key, JSON.stringify({ requestId, signature, amount }));
+  } catch {
+    // Claim submission can still proceed if browser storage is unavailable.
+  }
+};
+
+const clearSavedClaim = (key: string) => {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // A stale retry key is harmless after the server has settled the claim.
+  }
+};
+
 const ClaimRhozeButton = ({
   creditsToClaim,
   onSuccess,
@@ -80,18 +115,36 @@ const ClaimRhozeButton = ({
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [claimError, setClaimError] = useState<string | null>(null);
+  const [savedClaim, setSavedClaim] = useState<SavedClaim | null>(null);
+  const [savedClaimKey, setSavedClaimKey] = useState<string | null>(null);
 
   const walletAddress = publicKey?.toBase58() ?? "";
+  const claimStorageKey =
+    user && walletAddress ? `rhoze-claim:${user.id}:${walletAddress}` : null;
+  const pendingClaim =
+    savedClaimKey === claimStorageKey &&
+    savedClaim?.requestId &&
+    Number.isFinite(savedClaim.amount) &&
+    (savedClaim.amount ?? 0) > 0
+      ? savedClaim
+      : null;
+  const effectiveCreditsToClaim = pendingClaim?.amount ?? creditsToClaim;
   const claimLimits = useClaimLimits();
   const limitsCheck = validateClaim(creditsToClaim, claimLimits);
   const limitsReason = limitsCheck.ok ? "" : limitsCheck.reason;
   const blockedByLimits = creditsToClaim > 0 && !limitsCheck.ok;
 
+  useEffect(() => {
+    setSavedClaim(claimStorageKey ? readSavedClaim(claimStorageKey) : null);
+    setSavedClaimKey(claimStorageKey);
+  }, [claimStorageKey]);
+
   const fetchPreview = async () => {
     setPreviewLoading(true);
     setPreviewError(null);
     try {
-      const res = await fetch(SOLANA_RPC, {
+      const config = getSolanaConfig();
+      const res = await fetch(config.rpcUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify([
@@ -122,12 +175,12 @@ const ClaimRhozeButton = ({
       toast.error("Connect your wallet and sign in first");
       return;
     }
-    if (creditsToClaim <= 0) {
+    if (!pendingClaim && creditsToClaim <= 0) {
       toast.error("Enter an amount to claim");
       return;
     }
-    const check = validateClaim(creditsToClaim, claimLimits);
-    if (check.ok === false) {
+    const check = validateClaim(effectiveCreditsToClaim, claimLimits);
+    if (!pendingClaim && check.ok === false) {
       toast.error("Claim outside your safety limits", {
         description: `${check.reason} Update your limits in Settings → Wallet.`,
       });
@@ -175,8 +228,14 @@ const ClaimRhozeButton = ({
       toast.error(msg);
       return;
     }
+    if (!claimStorageKey) {
+      const msg = "Claim recovery is unavailable for this wallet session.";
+      setClaimError(msg);
+      toast.error(msg);
+      return;
+    }
 
-    if (creditsToClaim <= 0) {
+    if (!pendingClaim && creditsToClaim <= 0) {
       const msg = "Enter an amount to claim.";
       setClaimError(msg);
       toast.error(msg);
@@ -185,32 +244,59 @@ const ClaimRhozeButton = ({
 
     setClaimError(null);
     setLoading(true);
+    let requestId = "";
+    let payoutSignature: string | null = null;
+    let responseData: { pending?: boolean; ok?: boolean } | null = null;
     try {
+      const storedClaim = readSavedClaim(claimStorageKey);
+      const saved = storedClaim?.requestId &&
+        Number.isFinite(storedClaim.amount) && (storedClaim.amount ?? 0) > 0
+        ? storedClaim
+        : pendingClaim;
+      const effectiveCreditsToClaim = saved?.amount ?? creditsToClaim;
+      if (saved?.requestId) requestId = saved.requestId;
+      if (typeof saved?.signature === "string") payoutSignature = saved.signature;
+      requestId ||= crypto.randomUUID();
+      saveClaimRetry(claimStorageKey, requestId, payoutSignature, effectiveCreditsToClaim);
+      setSavedClaim({ requestId, signature: payoutSignature ?? undefined, amount: effectiveCreditsToClaim });
+      setSavedClaimKey(claimStorageKey);
+
       setStatus("Sending tokens...");
       const { data, error } = await supabase.functions.invoke("claim-rhoze", {
         body: {
           wallet_address: publicKey.toBase58(),
-          credits_to_claim: creditsToClaim,
+          credits_to_claim: effectiveCreditsToClaim,
+          request_id: requestId,
         },
       });
+      responseData = data;
+
+      if (data?.pending && data?.signature) {
+        payoutSignature = data.signature;
+        saveClaimRetry(claimStorageKey, requestId, payoutSignature, effectiveCreditsToClaim);
+        setSavedClaim({ requestId, signature: payoutSignature, amount: effectiveCreditsToClaim });
+        setSavedClaimKey(claimStorageKey);
+      }
 
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       if (!data?.signature) throw new Error("Transaction did not return a signature.");
 
       const signature: string = data.signature;
-      const solscanUrl = `https://solscan.io/tx/${signature}`;
+      clearSavedClaim(claimStorageKey);
+      setSavedClaim(null);
+      const solscanUrl = solscanTransactionUrl(signature);
       const shortSig = `${signature.slice(0, 8)}…${signature.slice(-6)}`;
 
       setConfirmOpen(false);
-      setCelebration({ open: true, amount: creditsToClaim, signature });
+      setCelebration({ open: true, amount: effectiveCreditsToClaim, signature });
 
       // In-app receipt — persistent notification with Solscan link
       try {
         await supabase.from("notifications").insert({
           user_id: user.id,
           type: "rhoze_claim",
-          title: `Claimed ${creditsToClaim.toLocaleString()} $RHOZE`,
+          title: `Claimed ${effectiveCreditsToClaim.toLocaleString()} $RHOZE`,
           body: `Sent to ${shortenAddress(publicKey.toBase58())} • Tx ${shortSig} • View on Solscan`,
           link: solscanUrl,
         });
@@ -218,7 +304,7 @@ const ClaimRhozeButton = ({
         console.error("Failed to write claim notification:", notifErr);
       }
 
-      toast.success(`Claimed ${creditsToClaim.toLocaleString()} $RHOZE!`, {
+      toast.success(`Claimed ${effectiveCreditsToClaim.toLocaleString()} $RHOZE!`, {
         description: `Tx ${shortSig}`,
         action: {
           label: "View on Solscan",
@@ -234,6 +320,10 @@ const ClaimRhozeButton = ({
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
       onSuccess?.();
     } catch (error: any) {
+      if (responseData && !responseData.pending && !responseData.ok) {
+        clearSavedClaim(claimStorageKey);
+        setSavedClaim(null);
+      }
       const raw = error?.message || "Claim failed unexpectedly.";
       const friendly = /network|fetch|failed to fetch|timeout/i.test(raw)
         ? "Network error reaching the claim service. Check your connection and try again."
@@ -291,7 +381,7 @@ const ClaimRhozeButton = ({
         variant="outline"
         className={className}
         onClick={openConfirm}
-        disabled={loading || disabled || creditsToClaim <= 0 || blockedByLimits}
+        disabled={loading || (!pendingClaim && (disabled || creditsToClaim <= 0 || blockedByLimits))}
         title={blockedByLimits && !limitsCheck.ok ? limitsCheck.reason : undefined}
       >
         {loading ? (
@@ -302,7 +392,7 @@ const ClaimRhozeButton = ({
         ) : (
           <>
             <Download className="mr-2 h-4 w-4" />
-            Claim {creditsToClaim} $RHOZE to Wallet
+            {pendingClaim ? `Retry claim of ${effectiveCreditsToClaim} $RHOZE` : `Claim ${creditsToClaim} $RHOZE to Wallet`}
           </>
         )}
       </Button>
@@ -354,7 +444,7 @@ const ClaimRhozeButton = ({
                 You will receive
               </p>
               <p className="font-display text-4xl text-foreground tabular-nums">
-                {creditsToClaim.toLocaleString()}{" "}
+                {effectiveCreditsToClaim.toLocaleString()}{" "}
                 <span className="text-base font-body text-muted-foreground">
                   $RHOZE
                 </span>
@@ -441,7 +531,9 @@ const ClaimRhozeButton = ({
                     <span className="text-muted-foreground inline-flex items-center gap-1.5">
                       <Network className="h-3 w-3" /> Network
                     </span>
-                    <span className="font-mono text-foreground">Solana mainnet-beta</span>
+                    <span className="font-mono text-foreground">
+                      Solana {getSolanaConfig().cluster}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between gap-3">
                     <span className="text-muted-foreground inline-flex items-center gap-1.5">
@@ -479,7 +571,7 @@ const ClaimRhozeButton = ({
                   </div>
 
                   <a
-                    href={`https://explorer.solana.com/address/${walletAddress}`}
+                    href={solanaExplorerAddressUrl(walletAddress)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="mt-2 inline-flex items-center gap-1.5 text-[11px] text-primary hover:underline font-body"
@@ -580,7 +672,7 @@ const ClaimRhozeButton = ({
             <Button
               type="button"
               onClick={handleClaim}
-              disabled={loading || !acknowledged || creditsToClaim <= 0 || !connected}
+              disabled={loading || !acknowledged || effectiveCreditsToClaim <= 0 || !connected}
             >
               {loading ? (
                 <>

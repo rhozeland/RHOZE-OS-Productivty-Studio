@@ -1,14 +1,13 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { Connection, PublicKey, clusterApiUrl, LAMPORTS_PER_SOL } from "https://esm.sh/@solana/web3.js@1.98.4";
+import { Connection, LAMPORTS_PER_SOL } from "https://esm.sh/@solana/web3.js@1.98.4";
+import { getSolanaConfig } from "../_shared/solana-config.ts";
+import { verifySolanaCluster } from "../_shared/solana-cluster.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
-
-const TREASURY_ADDRESS = "6znjR2ttDJ5c6ScePsE4jU8e2g29dChX7cCVk6xjizr";
-const NETWORK = "mainnet-beta";
 
 // Server-side conversion rate: 1 SOL ≈ 150 USD (approx) -> 150 credits per SOL.
 // Adjust here only — never trust client values.
@@ -44,7 +43,13 @@ Deno.serve(async (req) => {
 
     const { signature, expected_sol, description, type, intent } = await req.json();
 
-    if (!signature || !expected_sol) {
+    if (
+      typeof signature !== "string" ||
+      !/^[1-9A-HJ-NP-Za-km-z]{64,90}$/.test(signature) ||
+      typeof expected_sol !== "number" ||
+      !Number.isFinite(expected_sol) ||
+      expected_sol <= 0
+    ) {
       return new Response(JSON.stringify({ error: "Missing required fields: signature, expected_sol" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -52,8 +57,13 @@ Deno.serve(async (req) => {
     }
 
     // Verify the transaction on-chain
-    const connection = new Connection(clusterApiUrl(NETWORK));
-    const tx = await connection.getTransaction(signature, {
+    const config = getSolanaConfig();
+    if (!config.solPaymentsEnabled) {
+      throw new Error("SOL payments are disabled for this environment");
+    }
+    const connection = new Connection(config.rpcUrl);
+    await verifySolanaCluster(connection, config.cluster);
+    const tx = await connection.getParsedTransaction(signature, {
       commitment: "confirmed",
       maxSupportedTransactionVersion: 0,
     });
@@ -72,29 +82,40 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Verify the transaction sent SOL to our treasury
-    const treasuryPubkey = new PublicKey(TREASURY_ADDRESS);
-    const accountKeys = tx.transaction.message.staticAccountKeys;
-
-    let treasuryIndex = -1;
-    for (let i = 0; i < accountKeys.length; i++) {
-      if (accountKeys[i].toBase58() === treasuryPubkey.toBase58()) {
-        treasuryIndex = i;
-        break;
-      }
+    const feePayer = tx.transaction.message.accountKeys[0]?.pubkey;
+    const { data: profiles, error: profileError } = await supabaseUser.rpc("get_my_private_profile_fields");
+    if (profileError) throw profileError;
+    const profile = profiles?.[0];
+    if (!feePayer || !profile?.wallet_address || feePayer.toBase58() !== profile.wallet_address) {
+      return new Response(JSON.stringify({ error: "Transaction payer does not match your bound wallet" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    if (treasuryIndex === -1) {
-      return new Response(JSON.stringify({ error: "Transaction does not involve our treasury wallet" }), {
+    // Verify an explicit System Program transfer from the user's wallet to
+    // the configured treasury; merely mentioning the treasury is insufficient.
+    const receivedLamports = tx.transaction.message.instructions.reduce((sum, instruction) => {
+      if (!("parsed" in instruction) || instruction.program !== "system") return sum;
+      const parsed = instruction.parsed as {
+        type?: string;
+        info?: { source?: string; destination?: string; lamports?: number };
+      };
+      if (
+        parsed.type !== "transfer" ||
+        parsed.info?.source !== profile.wallet_address ||
+        parsed.info?.destination !== config.treasuryAddress
+      ) return sum;
+      return sum + (Number(parsed.info?.lamports) || 0);
+    }, 0);
+
+    if (receivedLamports <= 0) {
+      return new Response(JSON.stringify({ error: "Transaction has no SOL transfer from your wallet to our treasury" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Check the amount received by treasury
-    const preBalance = tx.meta!.preBalances[treasuryIndex];
-    const postBalance = tx.meta!.postBalances[treasuryIndex];
-    const receivedLamports = postBalance - preBalance;
     const receivedSol = receivedLamports / LAMPORTS_PER_SOL;
 
     // Allow 1% tolerance for rounding
@@ -118,56 +139,25 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Check if this signature was already processed (prevent double-spend)
-    const { data: existingTx } = await supabaseAdmin
-      .from("credit_transactions")
-      .select("id")
-      .eq("payment_reference", signature)
-      .maybeSingle();
-
-    if (existingTx) {
-      return new Response(JSON.stringify({ error: "This transaction has already been processed" }), {
-        status: 409,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    if (creditsToAdd > 0) {
-      // Upsert user credits
-      const { data: existing } = await supabaseAdmin
-        .from("user_credits")
-        .select("balance")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (existing) {
-        const { error } = await supabaseAdmin
-          .from("user_credits")
-          .update({ balance: existing.balance + creditsToAdd, updated_at: new Date().toISOString() })
-          .eq("user_id", user.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabaseAdmin
-          .from("user_credits")
-          .insert({ user_id: user.id, balance: creditsToAdd });
-        if (error) throw error;
+    const { error: settleError } = await supabaseAdmin.rpc("record_crypto_payment", {
+      p_user_id: user.id,
+      p_amount: creditsToAdd,
+      p_type: type || (isSubscription ? "subscription" : "purchase"),
+      p_description: description || (isSubscription
+        ? `Subscription payment via SOL (${receivedSol.toFixed(4)} SOL)`
+        : `${creditsToAdd} credit(s) via SOL`),
+      p_payment_method: "crypto",
+      p_payment_reference: signature,
+    });
+    if (settleError) {
+      if (settleError.code === "23505") {
+        return new Response(JSON.stringify({ error: "This transaction has already been processed" }), {
+          status: 409,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
+      throw settleError;
     }
-
-    // Log the transaction (always, even for subscription payments — for audit)
-    const { error: txErr } = await supabaseAdmin
-      .from("credit_transactions")
-      .insert({
-        user_id: user.id,
-        amount: creditsToAdd,
-        type: type || (isSubscription ? "subscription" : "purchase"),
-        description: description || (isSubscription
-          ? `Subscription payment via SOL (${receivedSol.toFixed(4)} SOL)`
-          : `${creditsToAdd} credit(s) via SOL`),
-        payment_method: "crypto",
-        payment_reference: signature,
-      });
-    if (txErr) throw txErr;
 
     return new Response(
       JSON.stringify({ success: true, credits_added: creditsToAdd, sol_received: receivedSol }),
@@ -175,7 +165,8 @@ Deno.serve(async (req) => {
     );
   } catch (err) {
     console.error("verify-sol-payment error:", err);
-    return new Response(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }), {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

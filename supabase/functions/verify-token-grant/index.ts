@@ -20,6 +20,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { z } from "https://esm.sh/zod@3.23.8";
 import nacl from "https://esm.sh/tweetnacl@1.0.3";
 import bs58 from "https://esm.sh/bs58@5.0.0";
+import { getSolanaConfig } from "../_shared/solana-config.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -41,7 +42,6 @@ const BodySchema = z.object({
   message: z.string().min(10).max(500),
 });
 
-const SOLANA_RPC = "https://api.mainnet-beta.solana.com";
 const GRANT_TTL_HOURS = 24;
 const MESSAGE_MAX_AGE_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -118,7 +118,7 @@ Deno.serve(async (req) => {
   // ── Query Solana RPC for SPL balance.
   let uiBalance = 0;
   try {
-    const rpcRes = await fetch(SOLANA_RPC, {
+    const rpcRes = await fetch(getSolanaConfig().rpcUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
