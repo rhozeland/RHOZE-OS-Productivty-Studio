@@ -20,6 +20,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Link, useNavigate } from "react-router-dom";
 import { useArtistVerification } from "@/hooks/useArtistVerification";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { verifyArtistMintOwnership } from "@/lib/verifyArtistMintOwnership";
 import VerifiedArtistBadge from "@/components/profile/VerifiedArtistBadge";
 import LogoCustomizer from "@/components/onboarding/LogoCustomizer";
 import ClaimLimitsControl from "@/components/settings/ClaimLimitsControl";
@@ -106,6 +109,8 @@ const PAGE_BACKGROUNDS = [
 const SettingsPage = () => {
   const { user, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { connected, publicKey, signMessage } = useWallet();
+  const { setVisible: setWalletModalVisible } = useWalletModal();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const bannerFileRef = useRef<HTMLInputElement>(null);
@@ -224,8 +229,8 @@ const SettingsPage = () => {
       setTiktokUrl(p.tiktok_url ?? "");
       setTwitterUrl(p.twitter_url ?? "");
       setYoutubeUrl(p.youtube_url ?? "");
-      setTokenMint(p.token_mint_address ?? "");
-      setTokenTicker(p.token_ticker ?? "");
+      setTokenMint(p.token_mint_address_pending ?? p.token_mint_address ?? "");
+      setTokenTicker(p.token_ticker_pending ?? p.token_ticker ?? "");
       setAddressLine1(p.shipping_address_line1 ?? "");
       setAddressLine2(p.shipping_address_line2 ?? "");
       setCity(p.shipping_city ?? "");
@@ -301,6 +306,33 @@ const SettingsPage = () => {
           .insert({ id: user!.id, user_id: user!.id });
         if (insertProfileError) throw insertProfileError;
       }
+      const submittedMint = tokenMint.trim();
+      const submittedTicker =
+        tokenTicker.trim().toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10) || null;
+      if (!submittedMint && submittedTicker) {
+        throw new Error("Enter a mint address before adding a token ticker.");
+      }
+      const currentProfile = profile as {
+        token_submission_status?: string | null;
+        token_mint_address_pending?: string | null;
+        token_ticker_pending?: string | null;
+        token_mint_address?: string | null;
+        token_ticker?: string | null;
+      } | undefined;
+      const currentMint =
+        currentProfile?.token_submission_status === "pending"
+          ? currentProfile.token_mint_address_pending
+          : currentProfile?.token_mint_address;
+      const currentTicker =
+        currentProfile?.token_submission_status === "pending"
+          ? currentProfile.token_ticker_pending
+          : currentProfile?.token_ticker;
+      const needsMintVerification = Boolean(
+        submittedMint &&
+          (currentProfile?.token_submission_status === "pending" ||
+            submittedMint !== (currentMint ?? "") ||
+            submittedTicker !== (currentTicker ?? null)),
+      );
       const { error } = await supabase.from("profiles").update({
         display_name: displayName,
         username: username.toLowerCase() || null,
@@ -321,15 +353,45 @@ const SettingsPage = () => {
         twitter_url: twitterUrl || null,
         youtube_url: youtubeUrl || null,
         token_mint_address: tokenMint.trim() || null,
-        token_ticker: tokenTicker.trim().toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10) || null,
+        token_ticker: submittedTicker,
       } as any).eq("user_id", user!.id);
       if (error) throw error;
+      return { needsMintVerification, submittedMint };
     },
-    onSuccess: () => {
+    onSuccess: async ({ needsMintVerification, submittedMint }) => {
       queryClient.invalidateQueries({ queryKey: ["my-profile"] });
       queryClient.invalidateQueries({ queryKey: ["profiles"] });
       queryClient.invalidateQueries({ queryKey: ["profile"] });
-      toast.success("Profile updated!");
+      if (!needsMintVerification) {
+        toast.success("Profile updated!");
+        return;
+      }
+
+      if (!connected || !publicKey || !signMessage) {
+        toast.info("Token submission saved", {
+          description: "Connect a Solana wallet, then save again to verify and approve this mint.",
+        });
+        setWalletModalVisible(true);
+        return;
+      }
+
+      try {
+        const approval = await verifyArtistMintOwnership({
+          mintAddress: submittedMint,
+          publicKey,
+          signMessage,
+        });
+        queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+        queryClient.invalidateQueries({ queryKey: ["profiles"] });
+        queryClient.invalidateQueries({ queryKey: ["profile"] });
+        toast.success(`$${approval.ticker || "TOKEN"} approved and linked!`);
+      } catch (error) {
+        queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+        const message = error instanceof Error ? error.message : String(error);
+        toast.error("Profile saved, but token verification did not finish", {
+          description: `${message} Your submission remains pending; save again to retry.`,
+        });
+      }
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -656,7 +718,7 @@ const SettingsPage = () => {
         </div>
       </div>
 
-      {/* Linked Solana token (pump.fun discovery overlay) — admin review gated */}
+      {/* Linked Solana token — wallet-signature verified */}
       {(() => {
         const p = (profile as any) ?? {};
         const status: "none" | "pending" | "approved" | "rejected" = p.token_submission_status ?? "none";
@@ -665,7 +727,7 @@ const SettingsPage = () => {
         const reviewNote: string | null = p.token_review_note ?? null;
         const statusMeta = {
           none: { label: "Not submitted", tone: "bg-muted text-muted-foreground" },
-          pending: { label: "Pending review", tone: "bg-amber-500/15 text-amber-700 dark:text-amber-300" },
+          pending: { label: "Awaiting wallet verification", tone: "bg-amber-500/15 text-amber-700 dark:text-amber-300" },
           approved: { label: "Approved · live", tone: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300" },
           rejected: { label: "Rejected", tone: "bg-rose-500/15 text-rose-700 dark:text-rose-300" },
         }[status];
@@ -680,11 +742,11 @@ const SettingsPage = () => {
               </span>
             </div>
             <p className="text-[11px] text-muted-foreground">
-              Paste your pump.fun mint — once submitted, Rhozeland admins review and approve so the network stays high-signal. We never custody or trade tokens.
+              Enter your pump.fun mint and ticker. Saving submits them for a free wallet-signature check; a successful check approves the token automatically. No transaction is sent, and we never custody or trade tokens.
             </p>
             {status === "pending" && (pendingMint || pendingTicker) && (
               <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-2 text-[11px]">
-                <div className="font-medium text-amber-700 dark:text-amber-300 mb-0.5">In review</div>
+                <div className="font-medium text-amber-700 dark:text-amber-300 mb-0.5">Ready to verify</div>
                 <div className="font-mono text-muted-foreground break-all">
                   {pendingTicker ? `$${pendingTicker} · ` : ""}{pendingMint}
                 </div>
@@ -716,7 +778,7 @@ const SettingsPage = () => {
               />
             </div>
             <p className="text-[10px] text-muted-foreground">
-              Submitting a new mint or ticker queues it for admin review — your current live token stays visible until the new one is approved. Clearing both fields removes the token immediately.
+              Your current live token stays visible until the new mint is verified. If verification is cancelled or fails, save again to retry. Clearing both fields removes the token immediately.
             </p>
           </div>
         );
