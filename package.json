@@ -12,6 +12,9 @@
     "build:database:prod": "vite build --mode production",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
+    "solana:provision-devnet": "node scripts/provision-solana-devnet.mjs",
+    "solana:reconcile-devnet": "node scripts/reconcile-devnet-sol-payment.mjs",
+    "solana:transfer-devnet-rhoze": "node scripts/transfer-devnet-rhoze.mjs",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest"
