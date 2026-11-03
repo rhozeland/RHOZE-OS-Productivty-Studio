@@ -1,4 +1,4 @@
-name: Slack Notification via Email
+name: Slack Notification
 
 on:
   pull_request:
@@ -6,42 +6,55 @@ on:
     branches:
       - dev
 
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
 jobs:
   notify-slack:
-    # Only run if the pull request was actually merged into dev
-    if: github.event.pull_request.merged == true
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.pull_request.merged == true
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+
     steps:
-      - name: Send PR Merge Email to Slack
-        uses: dawidd6/action-send-mail@v3
-        with:
-          # SMTP Server Configuration (Example using Gmail SMTP)
-          server_address: smtp.gmail.com
-          server_port: 465
-          username: ${{ secrets.NOTIFICATION_EMAIL_USER }}
-          password: ${{ secrets.NOTIFICATION_EMAIL_PASSWORD }} # Use an App Password, not your regular password
-          
-          # Email Content
-          subject: "🚀 PR Merged from ${{ github.event.pull_request.head.ref }} into Dev: #${{ github.event.pull_request.number }}"
-          to: ${{ secrets.SLACK_CHANNEL_EMAIL }}
-          from: "GitHub Actions CI <${{ secrets.NOTIFICATION_EMAIL_USER }}>"
-          body: |
-            Pull Request #${{ github.event.pull_request.number }} has been successfully merged into dev.
-            
-            Title: ${{ github.event.pull_request.title }}
-            Author: ${{ github.event.pull_request.user.login }}
-            Merged By: ${{ github.event.pull_request.merged_by.login }}
+      - name: Trigger Slack workflow
+        env:
+          SLACK_WORKFLOW_WEBHOOK_URL: ${{ secrets.SLACK_WORKFLOW_WEBHOOK_URL }}
+          EVENT_NAME: ${{ github.event_name }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+          URL: ${{ github.event.pull_request.html_url }}
+          MERGED_BY: ${{ github.event.pull_request.merged_by.login }}
+          TITLE: ${{ github.event.pull_request.title }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            AUTHOR="test-author"
+            URL="https://github.com/${{ github.repository }}/pull/0"
+            MERGED_BY="test-merger"
+            TITLE="Test Slack workflow notification"
+            PR_NUMBER="TEST"
+          fi
 
-            Rebase Instructions:
-            If you have local changes, run:
-              git stash
+          payload="$(jq -n \
+            --arg author "$AUTHOR" \
+            --arg url "$URL" \
+            --arg merged_by "$MERGED_BY" \
+            --arg title "$TITLE" \
+            --arg pr_number "$PR_NUMBER" \
+            '{
+              author: $author,
+              url: $url,
+              merged_by: $merged_by,
+              title: $title,
+              pr_number: $pr_number
+            }'
+          )"
 
-            Then run:
-              git fetch origin
-              git rebase origin/dev
-
-            If you created a stash, restore it:
-              git stash pop
-            
-            View Pull Request on GitHub:
-            ${{ github.event.pull_request.html_url }}
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Content-Type: application/json" \
+            --data "$payload" \
+            "$SLACK_WORKFLOW_WEBHOOK_URL"
