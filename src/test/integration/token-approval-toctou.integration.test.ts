@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { createClient } from '@supabase/supabase-js';
 
+
+
 // Header comment: these tests document the insecure status quo as a baseline.
 // After the Task #84 fix (expected-value binding in review_token_submission + trigger hardening),
 // the tests marked VULNERABILITY-CHARACTERIZATION must be updated to expect rejection instead.
@@ -128,6 +130,14 @@ const RUN_TOKEN_TOCTOU_INTEGRATION = process.env.RUN_TOKEN_TOCTOU_INTEGRATION ==
 
 const EXPECTED_TEST_PROJECT_ID = 'rodqmawdrsafmwjeuqjz';
 
+console.log({
+  supabaseUrlLoaded: Boolean(SUPABASE_TEST_URL),
+  publishableKeyLoaded: Boolean(SUPABASE_TEST_ANON_KEY),
+  serviceRoleLoaded: Boolean(SUPABASE_TEST_SERVICE_ROLE_KEY),
+  integrationEnabled: RUN_TOKEN_TOCTOU_INTEGRATION,
+});
+
+
 // Prevents tests from running on the prod DB
 const IS_EXPECTED_TEST_DATABASE =
   SUPABASE_TEST_URL?.includes(EXPECTED_TEST_PROJECT_ID) ?? false;
@@ -144,7 +154,7 @@ if (
 // Skip tests unless the test database is fully set up and testing is tunred on
 const describeIntegration = RUN_TOKEN_TOCTOU_INTEGRATION && SUPABASE_TEST_URL && SUPABASE_TEST_ANON_KEY && SUPABASE_TEST_SERVICE_ROLE_KEY ? describe: describe.skip;
 
-describeIntegration('Token Approval TOCTOU Integration Tests', () => {
+describeIntegration('Creator Token Approval Security Integration Tests', () => {
   // Placeholder credentials keep module collection from throwing when the
   // suite is skipped (no env vars set) — the clients are never used unless
   // every gate above passed.
@@ -495,7 +505,7 @@ beforeAll(async () => {
     }
   });
 
-it('baseline: when a creator submits a token, it should wait for admin approval before becoming their official token', async () => { 
+it('creator token submission waits for admin approval', async () => { 
     const mintA = `TEST-MINT-AAAA-${RUN_TAG}`;
     const tickerA = `TA-${RUN_TAG}`;
 
@@ -518,7 +528,7 @@ it('baseline: when a creator submits a token, it should wait for admin approval 
     expect(data.token_submitted_at).not.toBeNull(); // Trigger sets timestamp
   });
 
-  it('resubmission while pending is allowed and replaces the pending value', async () => {
+  it('creator can replace a token while it is pending', async () => {
     const mintB = `TEST-MINT-BBBB-${RUN_TAG}`;
     const tickerB = `TB-${RUN_TAG}`;
 
@@ -563,40 +573,62 @@ it('baseline: when a creator submits a token, it should wait for admin approval 
       new Date(firstData!.token_submitted_at!).getTime()
   );
 });
-  it('(Concern B): creator can set own token_submission_status=\'approved\' directly', async () => {
-    // VULNERABILITY-CHARACTERIZATION: Concern B is STILL UNFIXED pending
-    // trigger hardening. The enforce_token_approval trigger only intercepts
-    // changes to the live token columns, so direct writes to
-    // token_submission_status / token_*_pending pass straight through when
-    // the live columns are unchanged. This test documents that open hole.
-    // Direct write to status
-    const { data, error } = await creatorClient
-      .from('profiles')
-      .update({ token_submission_status: 'approved' })
-      .eq('user_id', creatorUserId)
-      .select('token_submission_status')
-      .single();
+  it('creator cannot modify protected token review fields', async () => {
+  // TASK #109 FIX:
+  // Authenticated non-admin creators cannot directly modify protected
+  // token approval-state fields. Unauthorized changes are silently reverted
+  // by enforce_token_approval.
 
-    if (error) throw new Error(`Failed to update status: ${error.message}`);
-    expect(data.token_submission_status).toBe('approved'); // Direct write passes through
+  await resetToCleanSlate();
 
-    // Direct write to pending
-    const { data: pendingData, error: pendingError } = await creatorClient
-      .from('profiles')
-      .update({ token_mint_address_pending: 'DIRECT-PENDING' })
-      .eq('user_id', creatorUserId)
-      .select('token_mint_address_pending')
-      .single();
+  // Create a legitimate pending submission first.
+  const captured = await submitToken(
+    `TEST-MINT-PROTECTED-${RUN_TAG}`,
+    `TP-${RUN_TAG}`,
+  );
 
-    if (pendingError) throw new Error(`Failed to update pending: ${pendingError.message}`);
-    expect(pendingData.token_mint_address_pending).toBe('DIRECT-PENDING'); // Direct write passes through
+  // Attempt to directly self-approve.
+  const { data, error } = await creatorClient
+    .from('profiles')
+    .update({
+      token_submission_status: 'approved',
+    })
+    .eq('user_id', creatorUserId)
+    .select('token_submission_status')
+    .single();
 
-    // Reset to a full clean slate for the next test (status 'none' and all
-    // five token columns null) via serviceRoleClient.
-    await resetToCleanSlate();
-  });
+  if (error) {
+    throw new Error(`Failed to update status: ${error.message}`);
+  }
 
-it('(Concern A): stale admin approval rejects a changed token submission', async () => {
+  // Trigger should silently revert the unauthorized status change.
+  expect(data.token_submission_status).toBe('pending');
+
+  // Attempt to directly replace the pending mint.
+  const { data: pendingData, error: pendingError } = await creatorClient
+    .from('profiles')
+    .update({
+      token_mint_address_pending: 'DIRECT-PENDING',
+    })
+    .eq('user_id', creatorUserId)
+    .select('token_mint_address_pending')
+    .single();
+
+  if (pendingError) {
+    throw new Error(
+      `Failed to update pending: ${pendingError.message}`,
+    );
+  }
+
+  // Trigger should preserve the legitimate pending mint.
+  expect(pendingData.token_mint_address_pending).toBe(
+    captured.mint,
+  );
+
+  await resetToCleanSlate();
+});
+
+it('admin cannot approve a token that changed after reviewn', async () => {
     // TASK #108 FIX: this documents the protection now in place via migration
     // 20261027034058. With _strict: true the RPC binds the approval to the
     // exact pending values the admin saw; if the creator swapped the
@@ -691,7 +723,7 @@ expect(rpcError?.message).toContain('submission_changed');
 
   expect(finalData!.token_review_note).toBeNull(); // no review note written on failure
 });
-  it('(Task #108) strict clean approval succeeds', async () => {
+  it('admin can approve an unchanged token submission', async () => {
     await resetToCleanSlate();
     const captured = await submitToken(`TEST-MINT-STRICTA-${RUN_TAG}`, `TSA-${RUN_TAG}`);
 
@@ -717,7 +749,7 @@ expect(rpcError?.message).toContain('submission_changed');
     expect(profile.token_review_note).toBe('Approved (strict)');
   });
 
-  it('(Task #108) strict stale rejection is rejected', async () => {
+  it('admin cannot reject a token that changed after review', async () => {
     await resetToCleanSlate();
     const captured = await submitToken(`TEST-MINT-STALEB-${RUN_TAG}`, `TSB-${RUN_TAG}`);
 
@@ -746,7 +778,7 @@ expect(rpcError?.message).toContain('submission_changed');
     expect(profile.token_ticker).toBeNull();
   });
 
-  it('(Task #108) strict clean rejection succeeds', async () => {
+  it('admin can reject an unchanged token submission', async () => {
     await resetToCleanSlate();
     const captured = await submitToken(`TEST-MINT-STRICTC-${RUN_TAG}`, `TSC-${RUN_TAG}`);
 
@@ -772,7 +804,7 @@ expect(rpcError?.message).toContain('submission_changed');
     expect(profile.token_review_note).toBe('Rejected (strict)');
   });
 
-  it('(Task #108) double strict approval: second returns submission_already_resolved', async () => {
+  it('an already reviewed submission cannot be approved again', async () => {
     // Deterministic via FOR UPDATE serialization: the second caller blocks on
     // the profile row lock until the first approve commits, then sees
     // status <> 'pending' and raises submission_already_resolved.
@@ -820,7 +852,7 @@ expect(rpcError?.message).toContain('submission_changed');
     expect(profile.token_submission_status).toBe('approved');
   });
 
-  it('(Task #108) strict NULL expected values are not wildcards', async () => {
+  it('missing expected values cannot bypass token validation', async () => {
     // (a) A pending submission WITH a mint must not match _expected_mint: null.
     // IS NOT DISTINCT FROM makes NULL equality strict, not a wildcard.
     await resetToCleanSlate();
@@ -867,7 +899,7 @@ expect(rpcError?.message).toContain('submission_changed');
     expect(profile.token_submission_status).toBe('approved');
   });
 
-  it('(Task #108) wrong expected ticker rejected independently', async () => {
+  it('approval fails when the token ticker does not match', async () => {
     await resetToCleanSlate();
     const captured = await submitToken(`TEST-MINT-TICK-${RUN_TAG}`, `TT-${RUN_TAG}`);
 
@@ -886,7 +918,7 @@ expect(rpcError?.message).toContain('submission_changed');
     expect((await getProfileRow()).token_submission_status).toBe('pending');
   });
 
-  it('(Task #108) wrong expected timestamp rejected independently', async () => {
+  it('approval fails when the submission timestamp does not match', async () => {
     await resetToCleanSlate();
     const captured = await submitToken(`TEST-MINT-TIME-${RUN_TAG}`, `TTM-${RUN_TAG}`);
 
@@ -905,7 +937,7 @@ expect(rpcError?.message).toContain('submission_changed');
     expect((await getProfileRow()).token_submission_status).toBe('pending');
   });
 
-  it('(Task #108) non-admin cannot call the review RPC', async () => {
+  it('non-admin users cannot review token submissions', async () => {
     // SECURITY DEFINER still enforces has_role: the RPC rejects callers
     // without the admin role even with perfectly matching expected values.
     await resetToCleanSlate();
@@ -937,7 +969,7 @@ expect(rpcError?.message).toContain('submission_changed');
 // submission values must no longer fall back to the old unbound approval
 // behavior. The review should fail with submission_changed.
 // *****************************************************************************
-it('(Phase 2) unbound review call defaults to strict validation', async () => {
+it('token reviews are validated by default', async () => {
   await resetToCleanSlate();
 
   const capturedA = await submitToken(
@@ -972,7 +1004,7 @@ it('(Phase 2) unbound review call defaults to strict validation', async () => {
   expect(profile.token_mint_address_pending).toBe(capturedB.mint);
 });
 
-  it('(Task #108) concurrent strict approvals: exactly one wins', async () => {
+  it('only one admin can approve the same submission', async () => {
     // Deterministic via FOR UPDATE serialization inside the RPC: the losing
     // caller sees status <> 'pending' and gets submission_already_resolved.
     // If this ever flakes from transport errors, move it to a DB-level test.
@@ -1037,7 +1069,7 @@ it('(Phase 2) unbound review call defaults to strict validation', async () => {
     expect(await countCoinLaunchedNotifications()).toBe(1);
   });
 
-  it('(Task #108) strict clean approve then strict clean reject, end to end', async () => {
+  it('approval and rejection workflows work end to end', async () => {
     // Proves the strict path handles the full approve-then-reject lifecycle without breaking legacy assertions
     // (live promotion, pending cleared, reviewed_at/note stored, reject never touches live columns).
     const mintC = `TEST-MINT-CCCC-${RUN_TAG}`;
