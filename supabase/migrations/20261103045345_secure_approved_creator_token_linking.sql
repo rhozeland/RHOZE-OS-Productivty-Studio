@@ -17,7 +17,51 @@ ADD COLUMN IF NOT EXISTS linked_token_id UUID
 REFERENCES public.creator_tokens(id)
 ON DELETE SET NULL;
 
--- 2. Create approved token-linking RPC
+-- 2. Lock an approved token while the linking transaction validates and links it.
+--
+-- The caller cannot acquire this row lock through the SECURITY INVOKER RPC under
+-- the normal creator_tokens grants. This narrowly scoped SECURITY DEFINER helper
+-- performs the lock only after checking auth.uid() against the token owner, and
+-- returns no token data. The lock prevents approval/rejection updates from
+-- committing between this check and the link operation.
+CREATE OR REPLACE FUNCTION public.lock_approved_creator_token(p_token_id UUID)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+VOLATILE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+    v_user_id UUID;
+BEGIN
+    v_user_id := auth.uid();
+
+    IF v_user_id IS NULL OR p_token_id IS NULL THEN
+        RETURN FALSE;
+    END IF;
+
+    PERFORM 1
+    FROM public.creator_tokens AS ct
+    WHERE ct.id = p_token_id
+      AND ct.user_id = v_user_id
+      AND ct.status = 'approved'
+    FOR SHARE;
+
+    RETURN FOUND;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.lock_approved_creator_token(UUID)
+FROM PUBLIC, anon;
+
+GRANT EXECUTE ON FUNCTION public.lock_approved_creator_token(UUID)
+TO authenticated;
+
+-- Supabase migrations run as postgres. Keep the definer identity explicit so
+-- the helper can take the row lock despite creator_tokens RLS and caller grants.
+ALTER FUNCTION public.lock_approved_creator_token(UUID) OWNER TO postgres;
+
+-- 3. Create approved token-linking RPC
 
 CREATE OR REPLACE FUNCTION public.link_approved_creator_token(p_token_id UUID, p_target_type TEXT, p_target_id UUID)
 RETURNS VOID
@@ -91,6 +135,11 @@ BEGIN
 
         RETURN;
 
+    END IF;
+
+    IF NOT public.lock_approved_creator_token(p_token_id) THEN
+        RAISE EXCEPTION 'Token is not eligible for this target'
+            USING ERRCODE = '42501';
     END IF;
 
     IF NOT public.is_creator_token_eligible(p_token_id, p_target_type, p_target_id) THEN
