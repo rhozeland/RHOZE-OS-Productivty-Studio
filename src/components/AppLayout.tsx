@@ -50,7 +50,7 @@ import { resolveNavLink } from "@/hooks/useNavLink";
 import { useNavShortcuts } from "@/hooks/useNavShortcuts";
 import { useScrollRestoration } from "@/hooks/useScrollRestoration";
 import { NAV_SHORTCUTS, formatChord, formatLeader } from "@/lib/nav-shortcuts";
-import { REGISTERED_ROUTE_PATHS } from "@/App";
+import AppRoutes from "@/config/app-routes";
 import { CelebrationProvider } from "@/components/hud/CelebrationProvider";
 
 // Creator-first ordering: Discover, Flow, Creators, Works/Offerings,
@@ -112,14 +112,14 @@ const matchesRegisteredRoute = (navPath: string, routes: string[]): boolean => {
 // routes are renamed or removed without updating navigation config.
 if (import.meta.env.DEV) {
   const broken = HEADER_NAV.filter(
-    (item) => !matchesRegisteredRoute(item.path, REGISTERED_ROUTE_PATHS),
+    (item) => !matchesRegisteredRoute(item.path, AppRoutes.routePaths),
   );
   if (broken.length > 0) {
     // eslint-disable-next-line no-console
     console.warn(
       "[AppLayout] Header nav items reference paths with no matching route:",
       broken.map((b) => ({ id: b.id, path: b.path })),
-      "\nUpdate REGISTERED_ROUTE_PATHS in src/App.tsx or the nav config in src/config/navigation.ts.",
+      "\nUpdate APP_ROUTES in src/config/app-routes.tsx or the nav config in src/config/navigation.ts.",
     );
   }
 }
