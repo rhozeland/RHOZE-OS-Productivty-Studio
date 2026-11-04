@@ -164,6 +164,7 @@ const AttachCoinLauncher = ({ open, onOpenChange, scope }: Props) => {
     mutationFn: async () => {
       if (!preview || !target || !pickedId) throw new Error("Missing selection");
       const payload = {
+        linked_token_id: null,
         linked_token_mint: preview.mint,
         linked_token_ticker: preview.symbol,
         linked_token_name: preview.name,
