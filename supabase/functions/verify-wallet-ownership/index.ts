@@ -101,7 +101,10 @@ const BodySchema = z.discriminatedUnion("action", [
 ]);
 
 type VerifyInput = Extract<z.infer<typeof BodySchema>, { action: "verify" }>;
-type Intent = Extract<z.infer<typeof BodySchema>, { action: "challenge" }>["intent"];
+type Intent = Extract<
+  z.infer<typeof BodySchema>,
+  { action: "challenge" }
+>["intent"];
 
 const randomNonce = () => {
   const bytes = crypto.getRandomValues(new Uint8Array(32));
@@ -337,8 +340,6 @@ async function verifyChallenge(
     return await fileWalletChange(admin, userId, walletAddress, challenge);
   }
 
-  await markVerified(admin, challenge.id);
-
   // 4. Only now link the wallet — and only if the account has none yet. If
   //    another account holds it (or links it concurrently), the unique index
   //    rejects the write.
@@ -374,6 +375,8 @@ async function verifyChallenge(
       return fail(409, "wallet_already_linked", WALLET_ALREADY_LINKED);
     }
   }
+
+  await markVerified(admin, challenge.id);
 
   return json(200, { verified: true, walletAddress });
 }
@@ -426,20 +429,22 @@ async function fileWalletChange(
     return fail(409, "wallet_already_in_use", WALLET_IN_USE);
   }
 
-  await markVerified(admin, challenge.id);
-
-  const { error: insertErr } = await admin.from("wallet_change_requests").insert({
-    user_id: userId,
-    current_wallet: challenge.replaces_wallet,
-    requested_wallet: walletAddress,
-    verification_id: challenge.id,
-    status: "pending",
-  });
+  const { error: insertErr } = await admin
+    .from("wallet_change_requests")
+    .insert({
+      user_id: userId,
+      current_wallet: challenge.replaces_wallet,
+      requested_wallet: walletAddress,
+      verification_id: challenge.id,
+      status: "pending",
+    });
   // wallet_change_requests_one_pending_key
   if (insertErr?.code === "23505") {
     return fail(409, "change_pending", CHANGE_PENDING);
   }
   if (insertErr) throw insertErr;
+
+  await markVerified(admin, challenge.id);
 
   return json(200, { verified: true, walletAddress, changeRequested: true });
 }
