@@ -22,6 +22,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { solscanTransactionUrl } from "@/lib/solana-explorer";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -642,7 +643,7 @@ function WorkCard({ work, isOwner }: { work: Work; isOwner: boolean }) {
       <div className="flex items-center justify-between gap-2 pt-1">
         {work.solana_signature ? (
           <a
-            href={`https://solscan.io/tx/${work.solana_signature}`}
+            href={solscanTransactionUrl(work.solana_signature)}
             target="_blank"
             rel="noopener noreferrer"
             className="text-xs text-primary hover:underline inline-flex items-center gap-1"

@@ -1,9 +1,9 @@
 // Stripe webhook handler. Writes creator subscription rows.
 // URL: /payments-webhook?env=sandbox|live  (registered automatically by Lovable)
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { type StripeEnv, verifyWebhook } from "../_shared/stripe.ts";
 
-let _supabase: ReturnType<typeof createClient> | null = null;
+let _supabase: SupabaseClient<any> | null = null;
 function getSupabase() {
   if (!_supabase) {
     _supabase = createClient(

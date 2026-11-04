@@ -15,8 +15,8 @@ function base64url(input: Uint8Array): string {
     .replace(/=+$/, "");
 }
 
-function textToUint8(text: string): Uint8Array {
-  return new TextEncoder().encode(text);
+function textToUint8(text: string): Uint8Array<ArrayBuffer> {
+  return new Uint8Array(new TextEncoder().encode(text));
 }
 
 async function createLiveKitToken(

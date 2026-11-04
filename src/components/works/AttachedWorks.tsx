@@ -19,6 +19,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { solscanTransactionUrl } from "@/lib/solana-explorer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -551,7 +552,7 @@ const AttachedWorks = ({
                 <div className="flex items-center gap-1 shrink-0">
                   {a.works.solana_signature && (
                     <a
-                      href={`https://solscan.io/tx/${a.works.solana_signature}`}
+                      href={solscanTransactionUrl(a.works.solana_signature)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-muted-foreground hover:text-foreground"

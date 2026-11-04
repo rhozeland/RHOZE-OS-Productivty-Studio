@@ -6,17 +6,13 @@ import {
   getAssociatedTokenAddressSync,
   createTransferInstruction,
   createAssociatedTokenAccountInstruction,
-  TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { getConnection } from "@/lib/solana";
 import { toast } from "sonner";
 import { Loader2, Wallet, Coins } from "lucide-react";
-
-const RHOZE_MINT = new PublicKey("7khGn21aGKKAPi1LZF5EsdECdtyDcnYHtMKELrZDpump");
-const TREASURY = new PublicKey("6znjR2ttDJ5c6ScePsE4jU8e2g29dChX7cCVk6xjizr");
-const RHOZE_DECIMALS = 6;
+import { getSolanaConfig } from "@/lib/solana-config";
 
 interface PayWithRhozeButtonProps {
   tokenAmount: number;
@@ -60,12 +56,35 @@ const PayWithRhozeButton = ({
 
     setLoading(true);
     try {
+      const config = getSolanaConfig();
+      if (!config.rhozePaymentsEnabled) {
+        toast.error("$RHOZE payments are disabled for this environment");
+        return;
+      }
+      const { data: profiles, error: profileError } = await supabase.rpc("get_my_private_profile_fields");
+      if (profileError) throw profileError;
+      if (profiles?.[0]?.wallet_address !== publicKey.toBase58()) {
+        throw new Error("Connect your account's bound wallet before paying.");
+      }
       setStatus("Building transaction...");
       const connection = getConnection();
-      const rawAmount = BigInt(Math.floor(tokenAmount * Math.pow(10, RHOZE_DECIMALS)));
+      const rhozeMint = new PublicKey(config.rhozeMint);
+      const treasury = new PublicKey(config.treasuryAddress);
+      const tokenProgramId = new PublicKey(config.tokenProgramId);
+      const rawAmount = BigInt(Math.floor(tokenAmount * Math.pow(10, config.rhozeDecimals)));
 
-      const senderATA = getAssociatedTokenAddressSync(RHOZE_MINT, publicKey);
-      const treasuryATA = getAssociatedTokenAddressSync(RHOZE_MINT, TREASURY);
+      const senderATA = getAssociatedTokenAddressSync(
+        rhozeMint,
+        publicKey,
+        false,
+        tokenProgramId,
+      );
+      const treasuryATA = getAssociatedTokenAddressSync(
+        rhozeMint,
+        treasury,
+        false,
+        tokenProgramId,
+      );
 
       const transaction = new Transaction();
 
@@ -73,12 +92,25 @@ const PayWithRhozeButton = ({
       const treasuryATAInfo = await connection.getAccountInfo(treasuryATA);
       if (!treasuryATAInfo) {
         transaction.add(
-          createAssociatedTokenAccountInstruction(publicKey, treasuryATA, TREASURY, RHOZE_MINT)
+          createAssociatedTokenAccountInstruction(
+            publicKey,
+            treasuryATA,
+            treasury,
+            rhozeMint,
+            tokenProgramId,
+          )
         );
       }
 
       transaction.add(
-        createTransferInstruction(senderATA, treasuryATA, publicKey, rawAmount)
+        createTransferInstruction(
+          senderATA,
+          treasuryATA,
+          publicKey,
+          rawAmount,
+          [],
+          tokenProgramId,
+        )
       );
 
       const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
@@ -113,8 +145,8 @@ const PayWithRhozeButton = ({
           : `Paid ${tokenAmount} $RHOZE! ${awarded} credits added.`
       );
       onSuccess?.({ signature, payerWallet: publicKey.toBase58() });
-    } catch (error: any) {
-      const msg = error?.message || "Transaction failed";
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Transaction failed";
       if (msg.includes("User rejected")) {
         toast.error("Transaction cancelled");
       } else {

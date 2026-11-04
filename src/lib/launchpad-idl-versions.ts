@@ -13,6 +13,7 @@
  * existing on-chain client keeps working without changes.
  */
 import { validateLaunchpadIdl } from "./launchpad-idl-validator";
+import { getSolanaConnectionConfig } from "./solana-config";
 
 export type LaunchpadNetwork = "devnet" | "mainnet-beta";
 
@@ -108,8 +109,7 @@ const syncLegacyMirror = (network: LaunchpadNetwork): void => {
 // ---------- Public API ----------
 
 export const getCurrentNetwork = (): LaunchpadNetwork => {
-  const env = (import.meta.env.VITE_LAUNCHPAD_NETWORK as LaunchpadNetwork | undefined) ?? "devnet";
-  return env === "mainnet-beta" ? "mainnet-beta" : "devnet";
+  return getSolanaConnectionConfig().cluster;
 };
 
 export const listVersions = (network?: LaunchpadNetwork): IdlVersion[] => {

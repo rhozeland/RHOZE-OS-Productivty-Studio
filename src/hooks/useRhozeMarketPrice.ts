@@ -14,7 +14,8 @@ import { useQuery } from "@tanstack/react-query";
  * untouched; only the "≈ $USD" display next to a holder's balance uses
  * the live market rate.
  */
-const RHOZE_MINT = "7khGn21aGKKAPi1LZF5EsdECdtyDcnYHtMKELrZDpump";
+const RHOZE_MINT = import.meta.env.VITE_SOLANA_RHOZE_MINT?.trim() ?? "";
+const IS_MAINNET = import.meta.env.VITE_SOLANA_ENV === "mainnet";
 
 export interface RhozeMarketPrice {
   /** USD per 1 $RHOZE token. */
@@ -28,6 +29,8 @@ export interface RhozeMarketPrice {
 export const useRhozeMarketPrice = () => {
   return useQuery<RhozeMarketPrice>({
     queryKey: ["rhoze-market-price", RHOZE_MINT],
+    enabled: IS_MAINNET && RHOZE_MINT.length > 0,
+    placeholderData: { priceUsd: 0, pairAddress: null, source: null },
     queryFn: async () => {
       // 1) Jupiter Lite price API — pump.fun-aware, returns a price even
       //    before a token has migrated to Raydium. This is our primary

@@ -6,6 +6,7 @@
 // 3. Distribute the remainder to every collaborator by their locked %.
 // 4. Memo the canonical payload on Solana (best-effort).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getSolanaConfig } from "../_shared/solana-config.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -151,7 +152,7 @@ Deno.serve(async (req) => {
           "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr",
         );
         const kp = Keypair.fromSecretKey(new Uint8Array(JSON.parse(privateKeyStr)));
-        const conn = new Connection(clusterApiUrl("mainnet-beta"), "confirmed");
+        const conn = new Connection(getSolanaConfig().rpcUrl, "confirmed");
         const tx = new Transaction().add(
           new TransactionInstruction({
             keys: [{ pubkey: kp.publicKey, isSigner: true, isWritable: false }],
