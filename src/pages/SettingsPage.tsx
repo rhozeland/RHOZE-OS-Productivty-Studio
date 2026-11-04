@@ -152,6 +152,7 @@ const SettingsPage = () => {
   const [youtubeUrl, setYoutubeUrl] = useState("");
   const [tokenMint, setTokenMint] = useState("");
   const [tokenTicker, setTokenTicker] = useState("");
+  const [verifyingToken, setVerifyingToken] = useState(false);
 
   // Shipping fields
   const [addressLine1, setAddressLine1] = useState("");
@@ -306,33 +307,6 @@ const SettingsPage = () => {
           .insert({ id: user!.id, user_id: user!.id });
         if (insertProfileError) throw insertProfileError;
       }
-      const submittedMint = tokenMint.trim();
-      const submittedTicker =
-        tokenTicker.trim().toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10) || null;
-      if (!submittedMint && submittedTicker) {
-        throw new Error("Enter a mint address before adding a token ticker.");
-      }
-      const currentProfile = profile as {
-        token_submission_status?: string | null;
-        token_mint_address_pending?: string | null;
-        token_ticker_pending?: string | null;
-        token_mint_address?: string | null;
-        token_ticker?: string | null;
-      } | undefined;
-      const currentMint =
-        currentProfile?.token_submission_status === "pending"
-          ? currentProfile.token_mint_address_pending
-          : currentProfile?.token_mint_address;
-      const currentTicker =
-        currentProfile?.token_submission_status === "pending"
-          ? currentProfile.token_ticker_pending
-          : currentProfile?.token_ticker;
-      const needsMintVerification = Boolean(
-        submittedMint &&
-          (currentProfile?.token_submission_status === "pending" ||
-            submittedMint !== (currentMint ?? "") ||
-            submittedTicker !== (currentTicker ?? null)),
-      );
       const { error } = await supabase.from("profiles").update({
         display_name: displayName,
         username: username.toLowerCase() || null,
@@ -352,49 +326,133 @@ const SettingsPage = () => {
         tiktok_url: tiktokUrl || null,
         twitter_url: twitterUrl || null,
         youtube_url: youtubeUrl || null,
-        token_mint_address: tokenMint.trim() || null,
-        token_ticker: submittedTicker,
       } as any).eq("user_id", user!.id);
       if (error) throw error;
-      return { needsMintVerification, submittedMint };
     },
-    onSuccess: async ({ needsMintVerification, submittedMint }) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-profile"] });
       queryClient.invalidateQueries({ queryKey: ["profiles"] });
       queryClient.invalidateQueries({ queryKey: ["profile"] });
-      if (!needsMintVerification) {
-        toast.success("Profile updated!");
-        return;
+      toast.success("Profile updated!");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const submitTokenForVerification = async () => {
+    if (!user || verifyingToken) return;
+
+    const submittedMint = tokenMint.trim();
+    const submittedTicker =
+      tokenTicker.trim().toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10) || null;
+    if (!submittedMint) {
+      toast.error("Enter a mint address before verifying the token.");
+      return;
+    }
+
+    const currentProfile = profile as {
+      token_submission_status?: string | null;
+      token_mint_address_pending?: string | null;
+      token_ticker_pending?: string | null;
+      token_mint_address?: string | null;
+      token_ticker?: string | null;
+    } | undefined;
+    const alreadyPending =
+      currentProfile?.token_submission_status === "pending" &&
+      currentProfile.token_mint_address_pending === submittedMint &&
+      (currentProfile.token_ticker_pending ?? null) === submittedTicker;
+    const alreadyApproved =
+      currentProfile?.token_submission_status === "approved" &&
+      currentProfile.token_mint_address === submittedMint &&
+      (currentProfile.token_ticker ?? null) === submittedTicker;
+
+    if (alreadyApproved) {
+      toast.info("This token is already approved.");
+      return;
+    }
+
+    setVerifyingToken(true);
+    let submissionSaved = alreadyPending;
+    try {
+      if (!alreadyPending) {
+        const { error } = await supabase
+          .from("profiles")
+          .update({
+            token_mint_address: submittedMint,
+            token_ticker: submittedTicker,
+          })
+          .eq("user_id", user.id);
+        if (error) throw error;
+        submissionSaved = true;
+        await queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+        await queryClient.invalidateQueries({ queryKey: ["profiles"] });
+        await queryClient.invalidateQueries({ queryKey: ["profile"] });
       }
 
       if (!connected || !publicKey || !signMessage) {
         toast.info("Token submission saved", {
-          description: "Connect a Solana wallet, then save again to verify and approve this mint.",
+          description: "Connect a Solana wallet, then choose Verify token to finish.",
         });
         setWalletModalVisible(true);
         return;
       }
 
-      try {
-        const approval = await verifyArtistMintOwnership({
-          mintAddress: submittedMint,
-          publicKey,
-          signMessage,
-        });
-        queryClient.invalidateQueries({ queryKey: ["my-profile"] });
-        queryClient.invalidateQueries({ queryKey: ["profiles"] });
-        queryClient.invalidateQueries({ queryKey: ["profile"] });
-        toast.success(`$${approval.ticker || "TOKEN"} approved and linked!`);
-      } catch (error) {
-        queryClient.invalidateQueries({ queryKey: ["my-profile"] });
-        const message = error instanceof Error ? error.message : String(error);
-        toast.error("Profile saved, but token verification did not finish", {
-          description: `${message} Your submission remains pending; save again to retry.`,
-        });
+      const approval = await verifyArtistMintOwnership({
+        mintAddress: submittedMint,
+        publicKey,
+        signMessage,
+      });
+      await queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+      await queryClient.invalidateQueries({ queryKey: ["profiles"] });
+      await queryClient.invalidateQueries({ queryKey: ["profile"] });
+      toast.success(`$${approval.ticker || "TOKEN"} approved and linked!`);
+    } catch (error) {
+      if (submissionSaved) {
+        await queryClient.invalidateQueries({ queryKey: ["my-profile"] });
       }
-    },
-    onError: (e: any) => toast.error(e.message),
-  });
+      const message = error instanceof Error ? error.message : String(error);
+      toast.error(
+        submissionSaved ? "Token verification did not finish" : "Token submission could not be saved",
+        submissionSaved
+          ? {
+              description: `${message} The submission remains pending; choose Verify token to retry.`,
+            }
+          : { description: message },
+      );
+    } finally {
+      setVerifyingToken(false);
+    }
+  };
+
+  const removeLinkedToken = async () => {
+    if (!user || verifyingToken) return;
+    setVerifyingToken(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          token_mint_address: null,
+          token_ticker: null,
+          token_mint_address_pending: null,
+          token_ticker_pending: null,
+          token_submission_status: "none",
+          token_submitted_at: null,
+          token_review_note: null,
+        })
+        .eq("user_id", user.id);
+      if (error) throw error;
+      setTokenMint("");
+      setTokenTicker("");
+      await queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+      await queryClient.invalidateQueries({ queryKey: ["profiles"] });
+      await queryClient.invalidateQueries({ queryKey: ["profile"] });
+      toast.success("Linked token removed.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      toast.error("Could not remove linked token", { description: message });
+    } finally {
+      setVerifyingToken(false);
+    }
+  };
 
   const updateShipping = useMutation({
     mutationFn: async () => {
@@ -742,7 +800,7 @@ const SettingsPage = () => {
               </span>
             </div>
             <p className="text-[11px] text-muted-foreground">
-              Enter your pump.fun mint and ticker. Saving submits them for a free wallet-signature check; a successful check approves the token automatically. No transaction is sent, and we never custody or trade tokens.
+              Enter your pump.fun mint and ticker, then choose Verify token. A free wallet signature check can approve it automatically. No transaction is sent, and we never custody or trade tokens.
             </p>
             {status === "pending" && (pendingMint || pendingTicker) && (
               <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-2 text-[11px]">
@@ -778,8 +836,33 @@ const SettingsPage = () => {
               />
             </div>
             <p className="text-[10px] text-muted-foreground">
-              Your current live token stays visible until the new mint is verified. If verification is cancelled or fails, save again to retry. Clearing both fields removes the token immediately.
+              Your current live token stays visible until the new mint is verified. If verification is cancelled or fails, choose Verify token to retry. These fields are saved separately from your profile.
             </p>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                size="sm"
+                onClick={submitTokenForVerification}
+                disabled={verifyingToken || updateProfile.isPending}
+              >
+                {verifyingToken
+                  ? "Verifying..."
+                  : status === "pending"
+                    ? "Verify pending token"
+                    : "Submit & verify token"}
+              </Button>
+              {(status !== "none" || p.token_mint_address || pendingMint) && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={removeLinkedToken}
+                  disabled={verifyingToken || updateProfile.isPending}
+                >
+                  Remove linked token
+                </Button>
+              )}
+            </div>
           </div>
         );
       })()}
