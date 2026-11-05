@@ -1,8 +1,8 @@
-import type { ReactElement, ReactNode } from "react";
-import { Navigate, Route, useParams } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { EventNotFound } from "@/components/events/EventNotFound";
+import type { ReactNode } from "react";
+import { Navigate } from "react-router-dom";
 import { LegacyAliasRedirect } from "@/components/LegacyAliasRedirect";
+import LegacyEventRedirect from "@/components/LegacyEventRedirect";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import FlowAuthGuard from "@/components/FlowAuthGuard";
 import { NAV_ALIASES } from "@/config/navigation";
 import HomeFeedPage from "@/pages/HomeFeedPage";
@@ -51,36 +51,9 @@ export interface AppRoute {
   element: ReactNode;
 }
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-const LegacyEventRedirect = ({ manage = false }: { manage?: boolean }) => {
-  const { id } = useParams();
-  if (!id || !UUID_RE.test(id)) {
-    return (
-      <EventNotFound
-        title="Invalid event link"
-        message="That URL doesn't point to a real event ID."
-        badId={id}
-      />
-    );
-  }
-  return <Navigate to={`/spaces/events/${id}${manage ? "/manage" : ""}`} replace />;
-};
-
-export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
-  const { user, loading } = useAuth();
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-      </div>
-    );
-  }
-  if (!user) return <Navigate to="/auth" replace />;
-  return <>{children}</>;
-};
-
-const APP_ROUTES: AppRoute[] = [
+// Route configuration intentionally exports JSX data for App.tsx to render.
+// eslint-disable-next-line react-refresh/only-export-components
+export const APP_ROUTES: AppRoute[] = [
   { path: "/dashboard", element: <Navigate to="/home" replace /> },
   { path: "/home", element: <HomeFeedPage /> },
   { path: "/scene", element: <SceneRoomPage /> },
@@ -162,16 +135,4 @@ const APP_ROUTES: AppRoute[] = [
   { path: "/launch-coin", element: <Navigate to="/why-coin" replace /> },
 ];
 
-type AppRoutesComponent = (() => ReactElement) & { routePaths: string[] };
-
-const AppRoutes = (() => (
-  <>
-    {APP_ROUTES.map(({ path, element }) => (
-      <Route key={path} path={path} element={element} />
-    ))}
-  </>
-)) as AppRoutesComponent;
-
-AppRoutes.routePaths = APP_ROUTES.map(({ path }) => path);
-
-export default AppRoutes;
+export const APP_ROUTE_PATHS = APP_ROUTES.map(({ path }) => path);

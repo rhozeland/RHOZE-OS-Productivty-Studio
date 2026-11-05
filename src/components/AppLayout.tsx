@@ -50,7 +50,7 @@ import { resolveNavLink } from "@/hooks/useNavLink";
 import { useNavShortcuts } from "@/hooks/useNavShortcuts";
 import { useScrollRestoration } from "@/hooks/useScrollRestoration";
 import { NAV_SHORTCUTS, formatChord, formatLeader } from "@/lib/nav-shortcuts";
-import AppRoutes from "@/config/app-routes";
+import { APP_ROUTE_PATHS } from "@/config/app-routes";
 import { CelebrationProvider } from "@/components/hud/CelebrationProvider";
 
 // Creator-first ordering: Discover, Flow, Creators, Works/Offerings,
@@ -112,7 +112,7 @@ const matchesRegisteredRoute = (navPath: string, routes: string[]): boolean => {
 // routes are renamed or removed without updating navigation config.
 if (import.meta.env.DEV) {
   const broken = HEADER_NAV.filter(
-    (item) => !matchesRegisteredRoute(item.path, AppRoutes.routePaths),
+    (item) => !matchesRegisteredRoute(item.path, APP_ROUTE_PATHS),
   );
   if (broken.length > 0) {
     // eslint-disable-next-line no-console

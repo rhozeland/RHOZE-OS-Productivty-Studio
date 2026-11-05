@@ -9,7 +9,7 @@ import { SolanaWalletProvider } from "@/contexts/SolanaWalletContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthGateProvider } from "@/components/AuthGateDialog";
 import AppLayout from "@/components/AppLayout";
-import { ProtectedRoute } from "@/config/app-routes";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import AuthPage from "@/pages/AuthPage";
 import AccessGatePage from "@/pages/AccessGatePage";
 
@@ -46,7 +46,7 @@ import SubscriptionsPage from "@/pages/SubscriptionsPage";
 import ReleasePage from "@/pages/ReleasePage";
 import WhyLaunchCoinPage from "@/pages/WhyLaunchCoinPage";
 import ArSplitterGuidePage from "@/pages/ArSplitterGuidePage";
-import AppRoutes from "@/config/app-routes";
+import { APP_ROUTES } from "@/config/app-routes";
 
 const queryClient = new QueryClient();
 
@@ -132,7 +132,9 @@ const App = () => (
 
               {/* Main app — browsable by everyone, auth-gated actions inside */}
               <Route element={<AppLayout />}>
-                <AppRoutes />
+                {APP_ROUTES.map(({ path, element }) => (
+                  <Route key={path} path={path} element={element} />
+                ))}
               </Route>
               <Route path="/boards/:id" element={<SmartboardPresentationPage />} />
               <Route path="*" element={<NotFound />} />
