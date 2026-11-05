@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { readFunctionError } from "@/lib/wallet-verification";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
@@ -72,7 +73,7 @@ export default function TokenGateConnectSheet({
           message,
         },
       });
-      if (error) throw error;
+      if (error) throw new Error((await readFunctionError(error)).message);
       if (!data?.granted) {
         toast.error("Wallet doesn't hold this token", {
           description: ticker
@@ -110,7 +111,7 @@ export default function TokenGateConnectSheet({
         </DialogHeader>
 
         <ol className="text-sm text-muted-foreground space-y-2 pl-5 list-decimal">
-          <li>Connect your Solana wallet (Phantom, Solflare).</li>
+          <li>Connect the Solana wallet verified on your account.</li>
           <li>Sign a free verification message — no transaction, no gas.</li>
           <li>We check the on-chain balance and unlock instantly.</li>
         </ol>

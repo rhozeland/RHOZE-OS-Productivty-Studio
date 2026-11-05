@@ -55,7 +55,7 @@ const GENERIC_FAILURE = "Wallet verification failed. Please try again.";
 
 // supabase-js wraps non-2xx as FunctionsHttpError and hides the body.
 // Pull the JSON body so the UI can show the backend's reason.
-async function readFunctionError(
+export async function readFunctionError(
   error: unknown,
 ): Promise<{ message: string; code?: string }> {
   let message = GENERIC_FAILURE;

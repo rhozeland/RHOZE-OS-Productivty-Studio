@@ -32,9 +32,11 @@ import {
   type SupabaseClient,
 } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { z } from "https://esm.sh/zod@3.23.8";
-import nacl from "https://esm.sh/tweetnacl@1.0.3";
 import bs58 from "https://esm.sh/bs58@5.0.0";
-import { ed25519 } from "https://esm.sh/@noble/curves@1.4.0/ed25519";
+import {
+  isOwnableWalletKey,
+  isValidWalletSignature,
+} from "../_shared/wallet-signature.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -57,18 +59,6 @@ const CHANGE_PURPOSE = "rhoze-wallet-change";
 const CHALLENGE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 // Raised by the limit_open_wallet_verification_challenges trigger.
 const CHALLENGE_LIMIT_ERROR = "wallet_verification_challenge_limit";
-
-// tweetnacl accepts small-order public keys, for which one fixed signature
-// verifies every message. No private key stands behind them, so they can
-// never prove ownership. fromHex also rejects off-curve and non-canonical
-// encodings.
-const isOwnableWalletKey = (pubBytes: Uint8Array) => {
-  try {
-    return !ed25519.ExtendedPoint.fromHex(pubBytes).isSmallOrder();
-  } catch {
-    return false;
-  }
-};
 
 // A Solana wallet address is the base58 encoding of a 32-byte ed25519 public key.
 const isWalletAddress = (value: string) => {
@@ -134,27 +124,6 @@ const buildChallengeMessage = (p: {
     `Issued At: ${p.issuedAt}`,
     `Expiration Time: ${p.expiresAt}`,
   ].join("\n");
-
-const isValidSignature = (
-  message: string,
-  signature: string,
-  walletAddress: string,
-) => {
-  try {
-    const sigBytes = bs58.decode(signature);
-    const pubBytes = bs58.decode(walletAddress);
-    if (sigBytes.length !== nacl.sign.signatureLength) return false;
-    if (pubBytes.length !== nacl.sign.publicKeyLength) return false;
-    if (!isOwnableWalletKey(pubBytes)) return false;
-    return nacl.sign.detached.verify(
-      new TextEncoder().encode(message),
-      sigBytes,
-      pubBytes,
-    );
-  } catch {
-    return false;
-  }
-};
 
 const WALLET_ALREADY_LINKED =
   "Your account is already linked to a different wallet. To switch, choose “Request wallet change” in the Wallet menu.";
@@ -328,7 +297,7 @@ async function verifyChallenge(
   }
 
   // 3. Verify the ed25519 signature against the wallet's public key.
-  if (!isValidSignature(challenge.message, signature, walletAddress)) {
+  if (!isValidWalletSignature(challenge.message, signature, walletAddress)) {
     return fail(
       401,
       "invalid_signature",

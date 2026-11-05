@@ -9,18 +9,19 @@
  * Body (Zod-validated):
  *   { creatorId, walletAddress, signature (base58), message }
  *
+ * - walletAddress must be the caller's linked wallet (profiles.wallet_address,
+ *   set only after a signed ownership proof).
  * - message must contain creatorId and a fresh ISO timestamp (< 5min old).
  * - signature is the wallet's signMessage() output over `message`.
- * - We verify with tweetnacl, then call Solana JSON-RPC
+ * - We verify the signature, then call Solana JSON-RPC
  *   getTokenAccountsByOwner({owner: walletAddress, mint: creator.token_mint})
  *   and sum uiAmount across accounts. Any non-zero balance grants access.
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { z } from "https://esm.sh/zod@3.23.8";
-import nacl from "https://esm.sh/tweetnacl@1.0.3";
-import bs58 from "https://esm.sh/bs58@5.0.0";
 import { getSolanaConfig } from "../_shared/solana-config.ts";
+import { isValidWalletSignature } from "../_shared/wallet-signature.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -88,20 +89,33 @@ Deno.serve(async (req) => {
     return json(400, { error: "message expired, please re-sign" });
   }
 
-  // ── Verify signature with tweetnacl.
-  let sigOk = false;
-  try {
-    const sigBytes = bs58.decode(signature);
-    const pubBytes = bs58.decode(walletAddress);
-    const msgBytes = new TextEncoder().encode(message);
-    sigOk = nacl.sign.detached.verify(msgBytes, sigBytes, pubBytes);
-  } catch (e) {
-    return json(400, { error: "invalid signature encoding" });
+  // ── Wallet must be the one verified and linked to this account.
+  const admin = createClient(supabaseUrl, serviceKey);
+  const { data: profile, error: profileErr } = await admin
+    .from("profiles")
+    .select("wallet_address")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (profileErr) return json(500, { error: profileErr.message });
+  if (!profile?.wallet_address) {
+    return json(403, {
+      error: "Verify a wallet in the Wallet menu before unlocking with a token.",
+      code: "wallet_not_verified",
+    });
   }
-  if (!sigOk) return json(401, { error: "signature does not match wallet" });
+  if (profile.wallet_address !== walletAddress) {
+    return json(403, {
+      error: "Connect the wallet verified on your account to unlock with a token.",
+      code: "wallet_not_linked",
+    });
+  }
+
+  // ── Proves the caller controls the linked wallet right now.
+  if (!isValidWalletSignature(message, signature, walletAddress)) {
+    return json(401, { error: "signature does not match wallet" });
+  }
 
   // ── Look up creator's approved token mint.
-  const admin = createClient(supabaseUrl, serviceKey);
   const { data: creator, error: creatorErr } = await admin
     .from("profiles")
     .select("token_mint_address, token_ticker, token_submission_status")
