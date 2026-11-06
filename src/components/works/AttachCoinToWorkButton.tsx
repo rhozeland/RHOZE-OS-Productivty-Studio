@@ -48,7 +48,7 @@ const AttachCoinToWorkButton = ({ workId, workOwnerId, currentMint }: Props) => 
       setBusy(true);
       const { error } = await supabase
         .from("works")
-        .update({ linked_token_mint: mint })
+        .update({ linked_token_id: null, linked_token_mint: mint })
         .eq("id", workId);
       if (error) throw error;
     },
