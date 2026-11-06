@@ -109,12 +109,10 @@ import { createClient } from '@supabase/supabase-js';
  * 2. Concern A - TOCTOU race condition where a creator changes their token
  *    after the admin has already reviewed the original token. This is now
  *    EXPECTED TO BE PROTECTED by the Task #108 binding migration (20261027034058)
- *    that added strict mode with expected-value validation.
+ *    that added expected-value validation.
  * 3. Concern B - A creator being able to modify fields that should only
  *    be controlled by the admin approval process. This is STILL UNFIXED
  *    and remains a characterization-only test pending trigger hardening.
- * 4. A Phase 1 legacy-compat test that is temporary (will be removed when
- *    the Phase 2 migration flips _strict DEFAULT true).
  *
  */
 
@@ -235,7 +233,6 @@ describeIntegration('Creator Token Approval Security Integration Tests', () => {
     _expected_mint?: string | null;
     _expected_ticker?: string | null;
     _expected_submitted_at?: string | null;
-    _strict?: boolean;
   }) {
     const result = await adminClient.rpc('review_token_submission', args);
     return result;
@@ -630,9 +627,9 @@ it('creator token submission waits for admin approval', async () => {
 
 it('admin cannot approve a token that changed after reviewn', async () => {
     // TASK #108 FIX: this documents the protection now in place via migration
-    // 20261027034058. With _strict: true the RPC binds the approval to the
-    // exact pending values the admin saw; if the creator swapped the
-    // submission in between, the approve fails with 'submission_changed'.
+    // 20261027034058. The RPC binds the approval to the exact pending values
+    // the admin saw; if the creator swapped the submission in between, the
+    // approve fails with 'submission_changed'.
 
     const mintA = `TEST-MINT-AAAA-${RUN_TAG}`;
     const mintB = `TEST-MINT-BBBB-${RUN_TAG}`;
@@ -690,7 +687,6 @@ it('admin cannot approve a token that changed after reviewn', async () => {
     _expected_mint: capturedPendingMint,
     _expected_ticker: capturedPendingTicker,
     _expected_submitted_at: capturedSubmittedAt,
-    _strict: true,
   }
 );
 
@@ -730,11 +726,10 @@ expect(rpcError?.message).toContain('submission_changed');
     const { error } = await callReview({
       _user_id: creatorUserId,
       _approve: true,
-      _note: 'Approved (strict)',
+      _note: 'Approved',
       _expected_mint: captured.mint,
       _expected_ticker: captured.ticker,
       _expected_submitted_at: captured.submittedAt, // raw ISO string from the fetch
-      _strict: true,
     });
 
     expect(error).toBeNull();
@@ -746,7 +741,7 @@ expect(rpcError?.message).toContain('submission_changed');
     expect(profile.token_ticker_pending).toBeNull();
     expect(profile.token_submission_status).toBe('approved');
     expect(profile.token_reviewed_at).not.toBeNull();
-    expect(profile.token_review_note).toBe('Approved (strict)');
+    expect(profile.token_review_note).toBe('Approved');
   });
 
   it('admin cannot reject a token that changed after review', async () => {
@@ -763,7 +758,6 @@ expect(rpcError?.message).toContain('submission_changed');
       _expected_mint: captured.mint,
       _expected_ticker: captured.ticker,
       _expected_submitted_at: captured.submittedAt,
-      _strict: true,
     });
 
     expect(error).not.toBeNull();
@@ -785,11 +779,10 @@ expect(rpcError?.message).toContain('submission_changed');
     const { error } = await callReview({
       _user_id: creatorUserId,
       _approve: false,
-      _note: 'Rejected (strict)',
+      _note: 'Rejected',
       _expected_mint: captured.mint,
       _expected_ticker: captured.ticker,
       _expected_submitted_at: captured.submittedAt,
-      _strict: true,
     });
 
     expect(error).toBeNull();
@@ -801,7 +794,7 @@ expect(rpcError?.message).toContain('submission_changed');
     expect(profile.token_mint_address).toBeNull(); // reject leaves live columns alone
     expect(profile.token_ticker).toBeNull();
     expect(profile.token_reviewed_at).not.toBeNull();
-    expect(profile.token_review_note).toBe('Rejected (strict)');
+    expect(profile.token_review_note).toBe('Rejected');
   });
 
   it('an already reviewed submission cannot be approved again', async () => {
@@ -826,23 +819,22 @@ expect(rpcError?.message).toContain('submission_changed');
     const countBefore = await countCoinLaunchedNotifications();
     expect(countBefore).toBe(0);
 
-    const strictArgs = {
+    const reviewArgs = {
       _user_id: creatorUserId,
       _approve: true,
-      _note: 'Approved once (strict)',
+      _note: 'Approved once',
       _expected_mint: captured.mint,
       _expected_ticker: captured.ticker,
       _expected_submitted_at: captured.submittedAt,
-      _strict: true,
     };
 
-    const first = await callReview(strictArgs);
+    const first = await callReview(reviewArgs);
     expect(first.error).toBeNull();
 
     const countAfterFirst = await countCoinLaunchedNotifications();
     expect(countAfterFirst).toBe(1); // 0 -> 1 fan-out on success
 
-    const second = await callReview(strictArgs);
+    const second = await callReview(reviewArgs);
     expect(second.error).not.toBeNull();
     expect(second.error!.message).toContain('submission_already_resolved');
 
@@ -865,7 +857,6 @@ expect(rpcError?.message).toContain('submission_changed');
       _expected_mint: null, // wrong: the pending mint is not NULL
       _expected_ticker: captured.ticker,
       _expected_submitted_at: captured.submittedAt,
-      _strict: true,
     });
 
     expect(error).not.toBeNull();
@@ -874,7 +865,7 @@ expect(rpcError?.message).toContain('submission_changed');
 
     // (b) The NULL pending-mint state is reachable via the real trigger path,
     // not artificially: submitting a ticker-only change while the live mint
-    // is NULL stashes pending_mint = NULL. Strict mode must still accept it
+    // is NULL stashes pending_mint = NULL. Validation must still accept it
     // when the expected values match exactly (NULL == NULL).
     await resetToCleanSlate();
     const tickerOnly = await submitToken(null, 'TA-ONLY');
@@ -887,7 +878,6 @@ expect(rpcError?.message).toContain('submission_changed');
       _expected_mint: tickerOnly.mint, // null
       _expected_ticker: tickerOnly.ticker,
       _expected_submitted_at: tickerOnly.submittedAt,
-      _strict: true,
     });
 
     expect(okError).toBeNull();
@@ -910,7 +900,6 @@ expect(rpcError?.message).toContain('submission_changed');
       _expected_mint: captured.mint, // correct
       _expected_ticker: 'WRONG', // stale
       _expected_submitted_at: captured.submittedAt, // correct
-      _strict: true,
     });
 
     expect(error).not.toBeNull();
@@ -929,7 +918,6 @@ expect(rpcError?.message).toContain('submission_changed');
       _expected_mint: captured.mint, // correct
       _expected_ticker: captured.ticker, // correct
       _expected_submitted_at: new Date(Date.now() + 60_000).toISOString(), // stale
-      _strict: true,
     });
 
     expect(error).not.toBeNull();
@@ -950,7 +938,6 @@ expect(rpcError?.message).toContain('submission_changed');
       _expected_mint: captured.mint,
       _expected_ticker: captured.ticker,
       _expected_submitted_at: captured.submittedAt,
-      _strict: true,
     });
 
     expect(error).not.toBeNull();
@@ -963,11 +950,11 @@ expect(rpcError?.message).toContain('submission_changed');
     expect(profile.token_review_note).toBeNull();
   });
 // *****************************************************************************
-// Phase 2 regression test.
+// Regression test for unconditional validation.
 //
-// _strict now defaults to true. A caller that omits _strict and the expected
-// submission values must no longer fall back to the old unbound approval
-// behavior. The review should fail with submission_changed.
+// A caller that omits the expected submission values must no longer fall back
+// to the old unbound approval behavior. The review should fail with
+// submission_changed.
 // *****************************************************************************
 it('token reviews are validated by default', async () => {
   await resetToCleanSlate();
@@ -985,8 +972,7 @@ it('token reviews are validated by default', async () => {
 
   expect(capturedB.mint).not.toBe(capturedA.mint);
 
-  // No expected values or _strict are supplied.
-  // Phase 2 defaults _strict to true, so this unbound review must fail.
+  // No expected values are supplied, so this unbound review must fail.
   const { error } = await adminClient.rpc('review_token_submission', {
     _user_id: creatorUserId,
     _approve: true,
@@ -1026,19 +1012,18 @@ it('token reviews are validated by default', async () => {
     const countBefore = await countCoinLaunchedNotifications();
     expect(countBefore).toBe(0);
 
-    const strictArgs = {
+    const reviewArgs = {
       _user_id: creatorUserId,
       _approve: true,
       _note: 'Race winner',
       _expected_mint: captured.mint,
       _expected_ticker: captured.ticker,
       _expected_submitted_at: captured.submittedAt,
-      _strict: true,
     };
 
     const settled = await Promise.allSettled([
-      adminClient.rpc('review_token_submission', strictArgs),
-      adminClient.rpc('review_token_submission', strictArgs),
+      adminClient.rpc('review_token_submission', reviewArgs),
+      adminClient.rpc('review_token_submission', reviewArgs),
     ]);
 
     const outcomes = settled.map((result) => {
@@ -1070,7 +1055,7 @@ it('token reviews are validated by default', async () => {
   });
 
   it('approval and rejection workflows work end to end', async () => {
-    // Proves the strict path handles the full approve-then-reject lifecycle without breaking legacy assertions
+    // Proves the expected-value-validated path handles the full approve-then-reject lifecycle
     // (live promotion, pending cleared, reviewed_at/note stored, reject never touches live columns).
     const mintC = `TEST-MINT-CCCC-${RUN_TAG}`;
     const tickerC = `TC-${RUN_TAG}`;
@@ -1078,7 +1063,7 @@ it('token reviews are validated by default', async () => {
     // Fresh submission
     const captured = await submitToken(mintC, tickerC);
 
-    // Admin approves (strict)
+    // Admin approves
     const { error: approveError } = await callReview({
       _user_id: creatorUserId,
       _approve: true,
@@ -1086,7 +1071,6 @@ it('token reviews are validated by default', async () => {
       _expected_mint: captured.mint,
       _expected_ticker: captured.ticker,
       _expected_submitted_at: captured.submittedAt,
-      _strict: true,
     });
 
     expect(approveError).toBeNull();
@@ -1113,7 +1097,6 @@ it('token reviews are validated by default', async () => {
       _expected_mint: capturedReject.mint,
       _expected_ticker: capturedReject.ticker,
       _expected_submitted_at: capturedReject.submittedAt,
-      _strict: true,
     });
 
     expect(rejectError).toBeNull();

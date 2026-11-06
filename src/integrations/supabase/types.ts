@@ -6648,7 +6648,7 @@ export type Database = {
           _expected_mint?: string | null;
           _expected_ticker?: string | null;
           _expected_submitted_at?: string | null;
-          _strict?: boolean;
+
         };
         Returns: undefined;
 }

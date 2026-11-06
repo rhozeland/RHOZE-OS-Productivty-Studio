@@ -62,7 +62,6 @@ const AdminTokenSubmissions = () => {
         _expected_mint: r.token_mint_address_pending,
         _expected_ticker: r.token_ticker_pending,
         _expected_submitted_at: r.token_submitted_at,
-        _strict: true,
       });
       if (error) throw error;
       toast.success(approve ? "Token approved · now live." : "Submission rejected.");
