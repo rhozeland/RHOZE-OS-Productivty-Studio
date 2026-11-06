@@ -5629,6 +5629,7 @@ export type Database = {
           status: string
           updated_at: string
           user_id: string
+          verification_id: string | null
         }
         Insert: {
           admin_note?: string | null
@@ -5642,6 +5643,7 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id: string
+          verification_id?: string | null
         }
         Update: {
           admin_note?: string | null
@@ -5655,6 +5657,7 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id?: string
+          verification_id?: string | null
         }
         Relationships: []
       }
@@ -6524,7 +6527,6 @@ export type Database = {
       process_streaks_and_holds: { Args: never; Returns: Json }
       process_wallet_change: {
         Args: {
-          _admin_id: string
           _approve: boolean
           _note?: string
           _request_id: string
