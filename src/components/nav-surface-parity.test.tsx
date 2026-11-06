@@ -78,7 +78,7 @@ interface SurfaceProps {
 const HeaderNavSurface = ({ pathname }: SurfaceProps) => {
   // v7: Stream is the unified social pillar. Boards/Drops still appear
   // in the header for power users who deep-link in.
-  const ids = ["stream", "boards", "droprooms"] as const;
+  const ids = ["discover", "projects", "droprooms"] as const;
   return (
     <nav aria-label="header-nav" data-testid="surface-header">
       {ids.map((id) => {
@@ -187,9 +187,9 @@ const ROUTE_MATRIX: Array<{ pathname: string; expectedId: string }> = [
   { pathname: "/discover", expectedId: "discover" },
   // Legacy /dashboard route still lights up Discover (matchPath alias).
   { pathname: "/dashboard", expectedId: "discover" },
-  { pathname: "/stream", expectedId: "stream" },
+  { pathname: "/stream", expectedId: "discover" },
   { pathname: "/messages", expectedId: "messages" },
-  { pathname: "/smartboards", expectedId: "boards" },
+  { pathname: "/smartboards", expectedId: "projects" },
   { pathname: "/drop-rooms", expectedId: "droprooms" },
   { pathname: "/drop-rooms/xyz/chat", expectedId: "droprooms" },
   // Legacy alias — must still light Drops up.
