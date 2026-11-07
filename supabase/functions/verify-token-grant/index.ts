@@ -7,13 +7,16 @@
  * holds_creator_token() to unlock the creator's private feed.
  *
  * Body (Zod-validated):
- *   { creatorId, walletAddress, signature (base58), message }
+ *   { action: "challenge", creatorId, walletAddress }
+ *     → stores a one-time challenge (user, wallet, creator, nonce, 5min
+ *       expiry) and returns { challengeId, message, expiresAt }.
+ *   { action: "grant", challengeId, walletAddress, signature (base58) }
+ *     → atomically consumes the challenge, then verifies the signature over
+ *       the stored message. A challenge gets exactly one attempt.
  *
  * - walletAddress must be the caller's linked wallet (profiles.wallet_address,
  *   set only after a signed ownership proof).
- * - message must contain creatorId and a fresh ISO timestamp (< 5min old).
- * - signature is the wallet's signMessage() output over `message`.
- * - We verify the signature, then call Solana JSON-RPC
+ * - After verifying the signature we call Solana JSON-RPC
  *   getTokenAccountsByOwner({owner: walletAddress, mint: creator.token_mint})
  *   and sum uiAmount across accounts. Any non-zero balance grants access.
  */
@@ -36,15 +39,49 @@ const json = (status: number, body: unknown) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
-const BodySchema = z.object({
-  creatorId: z.string().uuid(),
-  walletAddress: z.string().min(32).max(48),
-  signature: z.string().min(64),
-  message: z.string().min(10).max(500),
-});
+const WalletAddress = z.string().min(32).max(48);
+
+const BodySchema = z.discriminatedUnion("action", [
+  z.object({
+    action: z.literal("challenge"),
+    creatorId: z.string().uuid(),
+    walletAddress: WalletAddress,
+  }),
+  z.object({
+    action: z.literal("grant"),
+    challengeId: z.string().uuid(),
+    walletAddress: WalletAddress,
+    signature: z.string().min(64).max(128),
+  }),
+]);
 
 const GRANT_TTL_HOURS = 24;
-const MESSAGE_MAX_AGE_MS = 5 * 60 * 1000; // 5 minutes
+const CHALLENGE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const TOKEN_GRANT_PURPOSE = "rhoze-token-grant";
+// Raised by the limit_open_wallet_verification_challenges trigger.
+const CHALLENGE_LIMIT_ERROR = "wallet_verification_challenge_limit";
+
+const buildChallengeMessage = (p: {
+  userId: string;
+  creatorId: string;
+  walletAddress: string;
+  nonce: string;
+  issuedAt: string;
+  expiresAt: string;
+}) =>
+  [
+    "Rhozeland wants you to confirm you hold this creator's token.",
+    "",
+    "Signing unlocks their token-gated posts on your Rhozeland account. It is free and does not send a transaction.",
+    "",
+    `Purpose: ${TOKEN_GRANT_PURPOSE}`,
+    `Creator ID: ${p.creatorId}`,
+    `Wallet: ${p.walletAddress}`,
+    `User ID: ${p.userId}`,
+    `Nonce: ${p.nonce}`,
+    `Issued At: ${p.issuedAt}`,
+    `Expiration Time: ${p.expiresAt}`,
+  ].join("\n");
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -76,18 +113,7 @@ Deno.serve(async (req) => {
   if (!parsed.success) {
     return json(400, { error: "invalid body", details: parsed.error.flatten() });
   }
-  const { creatorId, walletAddress, signature, message } = parsed.data;
-
-  // ── Message freshness + binding.
-  if (!message.includes(creatorId)) {
-    return json(400, { error: "message must reference creatorId" });
-  }
-  const tsMatch = message.match(/(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z)/);
-  if (!tsMatch) return json(400, { error: "message must include ISO timestamp" });
-  const msgAge = Date.now() - new Date(tsMatch[1]).getTime();
-  if (Number.isNaN(msgAge) || msgAge < 0 || msgAge > MESSAGE_MAX_AGE_MS) {
-    return json(400, { error: "message expired, please re-sign" });
-  }
+  const { walletAddress } = parsed.data;
 
   // ── Wallet must be the one verified and linked to this account.
   const admin = createClient(supabaseUrl, serviceKey);
@@ -110,8 +136,79 @@ Deno.serve(async (req) => {
     });
   }
 
+  const nowIso = new Date().toISOString();
+
+  if (parsed.data.action === "challenge") {
+    const { creatorId } = parsed.data;
+
+    const { error: cleanupErr } = await admin
+      .from("wallet_verification_challenges")
+      .delete()
+      .eq("user_id", userId)
+      .is("consumed_at", null)
+      .lte("expires_at", nowIso);
+    if (cleanupErr) return json(500, { error: cleanupErr.message });
+
+    const nonce = crypto.randomUUID().replaceAll("-", "");
+    const challengeExpiresAt = new Date(Date.now() + CHALLENGE_TTL_MS).toISOString();
+    const message = buildChallengeMessage({
+      userId,
+      creatorId,
+      walletAddress,
+      nonce,
+      issuedAt: nowIso,
+      expiresAt: challengeExpiresAt,
+    });
+
+    const { data: row, error: insertErr } = await admin
+      .from("wallet_verification_challenges")
+      .insert({
+        user_id: userId,
+        wallet_address: walletAddress,
+        purpose: TOKEN_GRANT_PURPOSE,
+        creator_id: creatorId,
+        nonce,
+        message,
+        issued_at: nowIso,
+        expires_at: challengeExpiresAt,
+      })
+      .select("id")
+      .single();
+    if (insertErr?.message?.includes(CHALLENGE_LIMIT_ERROR)) {
+      return json(429, {
+        error: "Too many pending requests. Wait a few minutes and try again.",
+        code: "too_many_requests",
+      });
+    }
+    if (insertErr) return json(500, { error: insertErr.message });
+
+    return json(200, { challengeId: row.id, message, expiresAt: challengeExpiresAt });
+  }
+
+  // ── Consume the challenge atomically: only one request can ever match.
+  const { challengeId, signature } = parsed.data;
+  const { data: challenge, error: consumeErr } = await admin
+    .from("wallet_verification_challenges")
+    .update({ consumed_at: nowIso })
+    .eq("id", challengeId)
+    .eq("user_id", userId)
+    .eq("wallet_address", walletAddress)
+    .eq("purpose", TOKEN_GRANT_PURPOSE)
+    .is("consumed_at", null)
+    .gt("expires_at", nowIso)
+    .select("message, creator_id")
+    .maybeSingle();
+  if (consumeErr) return json(500, { error: consumeErr.message });
+  if (!challenge) {
+    return json(400, {
+      error: "This unlock request is invalid, expired, or already used. Please try again.",
+      code: "invalid_challenge",
+    });
+  }
+  const creatorId: string = challenge.creator_id;
+
   // ── Proves the caller controls the linked wallet right now.
-  if (!isValidWalletSignature(message, signature, walletAddress)) {
+  if (!isValidWalletSignature(challenge.message, signature, walletAddress)) {
     return json(401, { error: "signature does not match wallet" });
   }
 

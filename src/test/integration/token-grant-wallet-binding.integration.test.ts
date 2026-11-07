@@ -12,8 +12,9 @@
  *   - a grant for the caller's linked wallet unlocks gated works
  *   - a grant for another wallet, or for a since-replaced wallet, does not
  *
- * Requires the `20261104120000_bind_token_grants_to_linked_wallet` migration
- * and the updated `verify-token-grant` function on the target project.
+ * Requires the `20261104120000_bind_token_grants_to_linked_wallet` and
+ * `20261106120000_token_grant_challenges` migrations and the updated
+ * `verify-token-grant` function on the target project.
  *
  * Skipped unless ALL of the following env vars are set:
  *   SUPABASE_TEST_URL                          — project URL
@@ -89,16 +90,24 @@ describeIntegration(
     const unlinkedWallet = makeWallet();
     const testMint = makeWallet().address;
 
-    const requestGrant = (
+    const requestGrant = async (
       wallet: TestWallet,
       opts: { signer?: TestWallet; creator?: string } = {},
     ) => {
-      const creator = opts.creator ?? creatorId;
-      const message = `Rhozeland token-gate access for ${creator} at ${new Date().toISOString()}`;
-      return call(clientA, {
-        creatorId: creator,
+      const challenge = await call(clientA, {
+        action: "challenge",
+        creatorId: opts.creator ?? creatorId,
         walletAddress: wallet.address,
-        message,
+      });
+      if (challenge.status !== 200) return challenge;
+      const { challengeId, message } = challenge.body as {
+        challengeId: string;
+        message: string;
+      };
+      return call(clientA, {
+        action: "grant",
+        challengeId,
+        walletAddress: wallet.address,
         signature: (opts.signer ?? wallet).sign(message),
       });
     };
@@ -214,6 +223,10 @@ describeIntegration(
       await linkWallet(userB, walletB.address);
       await admin
         .from("creator_token_grants")
+        .delete()
+        .in("user_id", [userA, userB]);
+      await admin
+        .from("wallet_verification_challenges")
         .delete()
         .in("user_id", [userA, userB]);
     });

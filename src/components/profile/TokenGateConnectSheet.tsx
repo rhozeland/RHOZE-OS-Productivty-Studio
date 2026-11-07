@@ -4,8 +4,8 @@
  * Opens from <SubscriberLock /> when a creator has a linked, approved
  * pump.fun token. Flow:
  *   1) Connect Solana wallet (reuses @solana/wallet-adapter modal).
- *   2) Build a fresh signed message: "Rhozeland token-gate access for {creatorId} at {ISO}".
- *   3) Wallet signMessage → POST /verify-token-grant.
+ *   2) Request a one-time challenge from /verify-token-grant.
+ *   3) Wallet signs the challenge message → POST /verify-token-grant.
  *   4) Edge fn checks SPL balance for creator.token_mint_address → upserts 24h grant.
  *   5) On success, invalidate token-gate-access query → SubscriberLock unlocks in place.
  */
@@ -61,17 +61,23 @@ export default function TokenGateConnectSheet({
     }
     setBusy(true);
     try {
-      const message = `Rhozeland token-gate access for ${creatorId} at ${new Date().toISOString()}`;
+      const walletAddress = publicKey.toBase58();
+      const challenge = await supabase.functions.invoke("verify-token-grant", {
+        body: { action: "challenge", creatorId, walletAddress },
+      });
+      if (challenge.error) {
+        throw new Error((await readFunctionError(challenge.error)).message);
+      }
+      const { challengeId, message } = challenge.data ?? {};
+      if (typeof challengeId !== "string" || typeof message !== "string") {
+        throw new Error("Couldn't start verification. Please try again.");
+      }
+
       const sigBytes = await signMessage(new TextEncoder().encode(message));
       const signature = bs58.encode(sigBytes);
 
       const { data, error } = await supabase.functions.invoke("verify-token-grant", {
-        body: {
-          creatorId,
-          walletAddress: publicKey.toBase58(),
-          signature,
-          message,
-        },
+        body: { action: "grant", challengeId, walletAddress, signature },
       });
       if (error) throw new Error((await readFunctionError(error)).message);
       if (!data?.granted) {
