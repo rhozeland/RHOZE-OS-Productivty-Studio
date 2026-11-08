@@ -62,7 +62,7 @@ const PaySolAndVerify = ({
   variant = "outline",
   disabled,
 }: PaySolAndVerifyProps) => {
-  const { publicKey, sendTransaction, connected } = useWallet();
+  const { publicKey, signTransaction, connected } = useWallet();
   const { setVisible } = useWalletModal();
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
@@ -88,12 +88,25 @@ const PaySolAndVerify = ({
       // Step 1: Send SOL to treasury
       setStatus("Sending SOL...");
       const recipient = new PublicKey(config.treasuryAddress);
-      const transaction = await createTransferTransaction(publicKey, recipient, solAmount);
-      const signature = await sendTransaction(transaction, getConnection());
+      const connection = getConnection();
+      const transaction = await createTransferTransaction(
+        publicKey,
+        recipient,
+        solAmount,
+        connection,
+      );
+      if (!signTransaction) {
+        throw new Error("Your connected wallet does not support transaction signing.");
+      }
+      const signedTransaction = await signTransaction(transaction);
+      const signature = await connection.sendRawTransaction(
+        signedTransaction.serialize(),
+        { preflightCommitment: "confirmed" },
+      );
 
       // Step 2: Wait for confirmation
       setStatus("Confirming on-chain...");
-      await confirmTransaction(signature);
+      await confirmTransaction(signature, transaction, connection);
 
       // Step 3: Verify on backend and credit user
       setStatus("Verifying & crediting...");

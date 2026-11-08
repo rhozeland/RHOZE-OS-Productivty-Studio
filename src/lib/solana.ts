@@ -19,9 +19,9 @@ export const lamportsToSol = (lamports: number) =>
 export const createTransferTransaction = async (
   from: PublicKey,
   to: PublicKey,
-  solAmount: number
+  solAmount: number,
+  connection: Connection = getConnection(),
 ): Promise<Transaction> => {
-  const connection = getConnection();
   const transaction = new Transaction().add(
     SystemProgram.transfer({
       fromPubkey: from,
@@ -31,7 +31,7 @@ export const createTransferTransaction = async (
   );
 
   const { blockhash, lastValidBlockHeight } =
-    await connection.getLatestBlockhash();
+    await connection.getLatestBlockhash("confirmed");
   transaction.recentBlockhash = blockhash;
   transaction.lastValidBlockHeight = lastValidBlockHeight;
   transaction.feePayer = from;
@@ -39,16 +39,24 @@ export const createTransferTransaction = async (
   return transaction;
 };
 
-export const confirmTransaction = async (signature: string) => {
-  const connection = getConnection();
-  const { blockhash, lastValidBlockHeight } =
-    await connection.getLatestBlockhash();
+export const confirmTransaction = async (
+  signature: string,
+  transaction: Pick<Transaction, "recentBlockhash" | "lastValidBlockHeight">,
+  connection: Connection = getConnection(),
+) => {
+  const { recentBlockhash, lastValidBlockHeight } = transaction;
+  if (!recentBlockhash || lastValidBlockHeight == null) {
+    throw new Error("Cannot confirm transaction without its blockhash expiry.");
+  }
 
-  return connection.confirmTransaction({
-    signature,
-    blockhash,
-    lastValidBlockHeight,
-  });
+  return connection.confirmTransaction(
+    {
+      signature,
+      blockhash: recentBlockhash,
+      lastValidBlockHeight,
+    },
+    "confirmed",
+  );
 };
 
 export const isValidSolanaAddress = (address: string): boolean => {

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import {
   createTransferTransaction,
   confirmTransaction,
+  getConnection,
   isValidSolanaAddress,
 } from "@/lib/solana";
 import { toast } from "sonner";
@@ -20,7 +21,7 @@ const PayWithSolButton = ({
   solAmount,
   label,
 }: PayWithSolButtonProps) => {
-  const { publicKey, sendTransaction, connected } = useWallet();
+  const { publicKey, signTransaction, connected } = useWallet();
   const [loading, setLoading] = useState(false);
 
   const handlePay = async () => {
@@ -37,16 +38,25 @@ const PayWithSolButton = ({
     setLoading(true);
     try {
       const recipient = new PublicKey(recipientAddress);
+      const connection = getConnection();
       const transaction = await createTransferTransaction(
         publicKey,
         recipient,
-        solAmount
+        solAmount,
+        connection,
       );
 
-      const signature = await sendTransaction(transaction, (await import("@/lib/solana")).getConnection());
+      if (!signTransaction) {
+        throw new Error("Your connected wallet does not support transaction signing.");
+      }
+      const signedTransaction = await signTransaction(transaction);
+      const signature = await connection.sendRawTransaction(
+        signedTransaction.serialize(),
+        { preflightCommitment: "confirmed" },
+      );
       toast.info("Transaction sent, confirming...");
 
-      await confirmTransaction(signature);
+      await confirmTransaction(signature, transaction, connection);
       toast.success(`Sent ${solAmount} SOL! Tx: ${signature.slice(0, 8)}...`);
     } catch (error: any) {
       const msg = error?.message || "Transaction failed";
