@@ -13,6 +13,26 @@ import { toast } from "sonner";
 import { Loader2, Wallet } from "lucide-react";
 import { getSolanaConfig } from "@/lib/solana-config";
 
+const getErrorMessage = async (error: unknown) => {
+  if (error instanceof Error && error.message !== "Edge Function returned a non-2xx status code") {
+    return error.message;
+  }
+
+  if (typeof error === "object" && error !== null && "context" in error) {
+    const context = error.context;
+    if (context instanceof Response) {
+      try {
+        const body = await context.clone().json();
+        if (typeof body?.error === "string") return body.error;
+      } catch {
+        // Keep the generic error when the function response is not JSON.
+      }
+    }
+  }
+
+  return error instanceof Error ? error.message : "Transaction failed";
+};
+
 interface PaySolAndVerifyProps {
   solAmount: number;
   /**
@@ -98,7 +118,7 @@ const PaySolAndVerify = ({
       );
       onSuccess?.();
     } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : "Transaction failed";
+      const msg = await getErrorMessage(error);
       if (msg.includes("User rejected")) {
         toast.error("Transaction cancelled");
       } else {
