@@ -438,7 +438,7 @@ const FlowModePage = ({ embedded = false }: FlowModePageProps) => {
         );
       }
       if (!user?.id) return;
-      const patch: Record<string, unknown> = {};
+      const patch: { flow_feed_scope?: string; flow_preferred_categories?: string[] } = {};
       if (next.scope !== undefined) patch.flow_feed_scope = next.scope;
       if (next.preferred !== undefined) patch.flow_preferred_categories = next.preferred;
       if (Object.keys(patch).length === 0) return;
