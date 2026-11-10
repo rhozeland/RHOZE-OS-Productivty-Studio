@@ -3,9 +3,9 @@ import { createClient } from '@supabase/supabase-js';
 
 
 
-// Header comment: these tests document the insecure status quo as a baseline.
-// After the Task #84 fix (expected-value binding in review_token_submission + trigger hardening),
-// the tests marked VULNERABILITY-CHARACTERIZATION must be updated to expect rejection instead.
+// Header comment: these tests document the token approval security behavior.
+// After migration 20261108000000, unauthorized protected-field mutations are
+// explicitly rejected (ERRCODE 42501) instead of silently reverted.
 
 /**
  * ============================================================================
@@ -111,8 +111,8 @@ import { createClient } from '@supabase/supabase-js';
  *    EXPECTED TO BE PROTECTED by the Task #108 binding migration (20261027034058)
  *    that added expected-value validation.
  * 3. Concern B - A creator being able to modify fields that should only
- *    be controlled by the admin approval process. This is STILL UNFIXED
- *    and remains a characterization-only test pending trigger hardening.
+ *    be controlled by the admin approval process. This is now FIXED by
+ *    migration 20261108000000 which rejects unauthorized mutations explicitly.
  *
  */
 
@@ -573,8 +573,8 @@ it('creator token submission waits for admin approval', async () => {
   it('creator cannot modify protected token review fields', async () => {
   // TASK #109 FIX:
   // Authenticated non-admin creators cannot directly modify protected
-  // token approval-state fields. Unauthorized changes are silently reverted
-  // by enforce_token_approval.
+  // token approval-state fields. Unauthorized changes are now explicitly
+  // rejected by enforce_token_approval (migration 20261108000000).
 
   await resetToCleanSlate();
 
@@ -594,12 +594,14 @@ it('creator token submission waits for admin approval', async () => {
     .select('token_submission_status')
     .single();
 
-  if (error) {
-    throw new Error(`Failed to update status: ${error.message}`);
-  }
+  // Expect explicit rejection (ERRCODE 42501)
+  expect(error).toBeDefined();
+  expect(error!.message).toContain(  'token approval state cannot be modified directly');
 
-  // Trigger should silently revert the unauthorized status change.
-  expect(data.token_submission_status).toBe('pending');
+  // Verify via service role that the status is still 'pending'
+  const profileRow = await getProfileRow();
+  expect(profileRow.token_submission_status).toBe('pending');
+  expect(profileRow.token_mint_address_pending).toBe(captured.mint);
 
   // Attempt to directly replace the pending mint.
   const { data: pendingData, error: pendingError } = await creatorClient
@@ -611,16 +613,13 @@ it('creator token submission waits for admin approval', async () => {
     .select('token_mint_address_pending')
     .single();
 
-  if (pendingError) {
-    throw new Error(
-      `Failed to update pending: ${pendingError.message}`,
-    );
-  }
+  // Expect explicit rejection (ERRCODE 42501)
+  expect(pendingError).toBeDefined();
+  expect(pendingError!.message).toContain(  'token approval state cannot be modified directly');
 
-  // Trigger should preserve the legitimate pending mint.
-  expect(pendingData.token_mint_address_pending).toBe(
-    captured.mint,
-  );
+  // Verify via service role that the pending mint is unchanged
+  const updatedProfileRow = await getProfileRow();
+  expect(updatedProfileRow.token_mint_address_pending).toBe(captured.mint);
 
   await resetToCleanSlate();
 });
@@ -948,6 +947,48 @@ expect(rpcError?.message).toContain('submission_changed');
     expect(profile.token_mint_address_pending).toBe(captured.mint);
     expect(profile.token_ticker_pending).toBe(captured.ticker);
     expect(profile.token_review_note).toBeNull();
+  });
+
+  it('anonymous client cannot bypass the approval trigger', async () => {
+    // Create a signed-out client with the anon key and NO sign-in
+    const anonClient = createClient(
+      SUPABASE_TEST_URL!,
+      SUPABASE_TEST_ANON_KEY!,
+      { auth: { persistSession: false, autoRefreshToken: false } }
+    );
+
+    await resetToCleanSlate();
+    const captured = await submitToken(
+      `TEST-MINT-ANON-${RUN_TAG}`,
+      `TA-${RUN_TAG}`,
+    );
+
+    // Anonymous client attempts to modify protected fields
+    const { error: anonError, data: anonData } = await anonClient
+      .from('profiles')
+      .update({ token_submission_status: 'approved' })
+      .eq('user_id', creatorUserId);
+
+    // With the anon key, RLS ("Users can update own profile" policy) already
+    // blocks matching rows, so PostgREST may return zero affected rows without
+    // an error. The trigger's explicit claims check (migration 20261108000000)
+    // is defense-in-depth: even if a future policy granted anon UPDATE access,
+    // the trigger's trusted branch is no longer reachable for anon (claims
+    // role='anon'), so the write would fail with 'token approval state is protected'
+    // rather than silently succeed.
+
+    // Accept both outcomes (error present, or zero rows affected)
+    // The key assertion is that the protected fields remain unchanged
+    const profileRow = await getProfileRow();
+    expect(profileRow.token_submission_status).toBe('pending');
+    expect(profileRow.token_mint_address_pending).toBe(captured.mint);
+
+    // If data is returned and non-empty, no row should show 'approved'
+    if (anonData && anonData.length > 0) {
+      expect(anonData.every(row => row.token_submission_status !== 'approved')).toBe(true);
+    }
+
+    await resetToCleanSlate();
   });
 // *****************************************************************************
 // Regression test for unconditional validation.
