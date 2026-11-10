@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.1"
   }
   public: {
     Tables: {
@@ -85,6 +85,42 @@ export type Database = {
           published_at?: string
           scheduled_for?: string | null
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      artist_mint_verification_challenges: {
+        Row: {
+          consumed_at: string | null
+          created_at: string
+          creator_wallet: string
+          expires_at: string
+          id: string
+          message: string
+          mint_address: string
+          token_ticker: string | null
+          user_id: string
+        }
+        Insert: {
+          consumed_at?: string | null
+          created_at?: string
+          creator_wallet: string
+          expires_at: string
+          id: string
+          message: string
+          mint_address: string
+          token_ticker?: string | null
+          user_id: string
+        }
+        Update: {
+          consumed_at?: string | null
+          created_at?: string
+          creator_wallet?: string
+          expires_at?: string
+          id?: string
+          message?: string
+          mint_address?: string
+          token_ticker?: string | null
           user_id?: string
         }
         Relationships: []
@@ -1450,6 +1486,51 @@ export type Database = {
           payment_reference?: string | null
           type?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      crypto_claims: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          credits: number
+          error_message: string | null
+          id: string
+          last_valid_block_height: number | null
+          request_id: string
+          signature: string | null
+          signed_transaction: string | null
+          status: string
+          user_id: string
+          wallet_address: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          credits: number
+          error_message?: string | null
+          id?: string
+          last_valid_block_height?: number | null
+          request_id: string
+          signature?: string | null
+          signed_transaction?: string | null
+          status?: string
+          user_id: string
+          wallet_address: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          credits?: number
+          error_message?: string | null
+          id?: string
+          last_valid_block_height?: number | null
+          request_id?: string
+          signature?: string | null
+          signed_transaction?: string | null
+          status?: string
+          user_id?: string
+          wallet_address?: string
         }
         Relationships: []
       }
@@ -5629,6 +5710,7 @@ export type Database = {
           status: string
           updated_at: string
           user_id: string
+          verification_id: string | null
         }
         Insert: {
           admin_note?: string | null
@@ -5642,6 +5724,7 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id: string
+          verification_id?: string | null
         }
         Update: {
           admin_note?: string | null
@@ -5655,6 +5738,60 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id?: string
+          verification_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_change_requests_verification_id_fkey"
+            columns: ["verification_id"]
+            isOneToOne: false
+            referencedRelation: "wallet_verification_challenges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wallet_verification_challenges: {
+        Row: {
+          consumed_at: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          issued_at: string
+          message: string
+          nonce: string
+          purpose: string
+          replaces_wallet: string | null
+          user_id: string
+          verified_at: string | null
+          wallet_address: string
+        }
+        Insert: {
+          consumed_at?: string | null
+          created_at?: string
+          expires_at: string
+          id?: string
+          issued_at?: string
+          message: string
+          nonce: string
+          purpose?: string
+          replaces_wallet?: string | null
+          user_id: string
+          verified_at?: string | null
+          wallet_address: string
+        }
+        Update: {
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          issued_at?: string
+          message?: string
+          nonce?: string
+          purpose?: string
+          replaces_wallet?: string | null
+          user_id?: string
+          verified_at?: string | null
+          wallet_address?: string
         }
         Relationships: []
       }
@@ -6003,6 +6140,14 @@ export type Database = {
         Args: { _admin_id: string; _reward_ids: string[] }
         Returns: number
       }
+      approve_verified_artist_token_submission: {
+        Args: { _challenge_id: string; _user_id: string }
+        Returns: {
+          approved_at: string
+          mint_address: string
+          ticker: string
+        }[]
+      }
       approve_work_verification: {
         Args: {
           _request_id: string
@@ -6057,6 +6202,10 @@ export type Database = {
       cleanup_old_notifications: { Args: never; Returns: undefined }
       complete_project_early: {
         Args: { _contract_id: string; _reason?: string; _requester_id: string }
+        Returns: undefined
+      }
+      complete_rhoze_claim: {
+        Args: { p_claim_id: string; p_signature: string }
         Returns: undefined
       }
       compute_proposal_terms_hash: {
@@ -6241,6 +6390,19 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      fail_rhoze_claim:
+        | {
+            Args: { p_claim_id: string; p_error_message: string }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              p_claim_id: string
+              p_error_message: string
+              p_signature: string
+            }
+            Returns: undefined
+          }
       generate_rhoze_vanity_address: { Args: never; Returns: string }
       get_active_underwriting_rules: {
         Args: never
@@ -6521,14 +6683,18 @@ export type Database = {
         }
         Returns: string
       }
+      prepare_rhoze_claim_payout: {
+        Args: {
+          p_claim_id: string
+          p_last_valid_block_height: number
+          p_signature: string
+          p_signed_transaction: string
+        }
+        Returns: Json
+      }
       process_streaks_and_holds: { Args: never; Returns: Json }
       process_wallet_change: {
-        Args: {
-          _admin_id: string
-          _approve: boolean
-          _note?: string
-          _request_id: string
-        }
+        Args: { _approve: boolean; _note?: string; _request_id: string }
         Returns: undefined
       }
       process_withdrawal: {
@@ -6566,8 +6732,23 @@ export type Database = {
         Args: { _action_type: string; _metadata?: Json; _reference_id: string }
         Returns: string
       }
+      record_crypto_payment: {
+        Args: {
+          p_amount: number
+          p_description: string
+          p_payment_method: string
+          p_payment_reference: string
+          p_type: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       record_proposal_signature_anchor: {
         Args: { _proposal_id: string; _side: string; _tx_signature: string }
+        Returns: undefined
+      }
+      record_rhoze_claim_signature: {
+        Args: { p_claim_id: string; p_signature: string }
         Returns: undefined
       }
       record_rhoze_topup: {
@@ -6617,6 +6798,15 @@ export type Database = {
         Returns: string
       }
       request_work_unlock: { Args: { _work_id: string }; Returns: Json }
+      reserve_rhoze_claim: {
+        Args: {
+          p_credits: number
+          p_request_id: string
+          p_user_id: string
+          p_wallet_address: string
+        }
+        Returns: Json
+      }
       review_creator_token: {
         Args: { _decision: string; _reason?: string; _token_id: string }
         Returns: {
