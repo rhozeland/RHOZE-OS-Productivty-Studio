@@ -57,6 +57,7 @@ describeIntegration(`Flow Mode RLS — live backend (${skipMessage})`, () => {
   let authed: SupabaseClient;
   let throwawayUserId: string | null = null;
   let seededIds: string[] = [];
+  let seededProfile = false;
 
   beforeAll(async () => {
     admin = createClient(URL, SERVICE, {
@@ -139,19 +140,33 @@ describeIntegration(`Flow Mode RLS — live backend (${skipMessage})`, () => {
       password,
     });
     if (signInErr) throw new Error(`Sign-in failed: ${signInErr.message}`);
+
+    const { error: profileErr } = await admin.from("profiles").insert({
+      user_id: throwawayUserId,
+      username: `flow_profile_${RUN_TAG}`,
+      display_name: `Flow Test Profile ${RUN_TAG}`,
+    });
+    if (profileErr) throw new Error(`Profile seed failed: ${profileErr.message}`);
+    seededProfile = true;
   }, 60_000);
 
   afterAll(async () => {
-    // Always attempt teardown — even if assertions failed mid-run.
-    try {
-      if (seededIds.length > 0) {
-        await admin.from("flow_items").delete().in("id", seededIds);
-      }
-      if (throwawayUserId) {
-        await admin.auth.admin.deleteUser(throwawayUserId);
-      }
-    } finally {
-      clearFlowProfileCache();
+    const cleanupErrors: string[] = [];
+    if (seededIds.length > 0) {
+      const { error } = await admin.from("flow_items").delete().in("id", seededIds);
+      if (error) cleanupErrors.push(`flow_items: ${error.message}`);
+    }
+    if (seededProfile && throwawayUserId) {
+      const { error } = await admin.from("profiles").delete().eq("user_id", throwawayUserId);
+      if (error) cleanupErrors.push(`profiles: ${error.message}`);
+    }
+    if (throwawayUserId) {
+      const { error } = await admin.auth.admin.deleteUser(throwawayUserId);
+      if (error) cleanupErrors.push(`auth user: ${error.message}`);
+    }
+    clearFlowProfileCache();
+    if (cleanupErrors.length > 0) {
+      throw new Error(`Integration cleanup failed: ${cleanupErrors.join("; ")}`);
     }
   }, 30_000);
 
@@ -174,15 +189,17 @@ describeIntegration(`Flow Mode RLS — live backend (${skipMessage})`, () => {
   });
 
   it("anon role can read profiles_public (guest-safe attribution view)", async () => {
-    // Doesn't matter that our synthetic creators have no profile row —
-    // we're proving the *view itself* is selectable by anon, which is the
-    // RLS contract Flow Mode depends on. A failure here would mean
-    // FlowCard would render every uploader as "Anonymous".
-    const { error } = await anon
+    const { data, error } = await anon
       .from("profiles_public")
       .select("user_id, display_name, avatar_url")
-      .limit(1);
+      .eq("user_id", throwawayUserId)
+      .single();
     expect(error).toBeNull();
+    expect(data).toMatchObject({
+      user_id: throwawayUserId,
+      display_name: `Flow Test Profile ${RUN_TAG}`,
+    });
+    expect(data).not.toHaveProperty("email");
   });
 
   it("loadFlowFeed (anon) returns the seeded multi-creator items", async () => {
