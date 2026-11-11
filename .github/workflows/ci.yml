@@ -82,6 +82,11 @@ jobs:
             - name: Install dependencies
               run: npm ci
 
+            - name: Set up Deno
+              uses: denoland/setup-deno@v2
+              with:
+                  deno-version: v2.x
+
             # `--run` makes Vitest exit after one pass instead of watching.
             # If you use Jest, change this to: npm test -- --ci
             - name: Run tests
