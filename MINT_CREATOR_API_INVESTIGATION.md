@@ -12,15 +12,21 @@ field. The endpoint returned a Cloudflare 403 challenge in the direct `curl`
 test. Public documentation for this frontend endpoint has not been found, so
 its third-party support status and availability are not established.
 
-**Bitquery is the strongest candidate found for a short proof of concept.** Its
-Pump.fun-specific documentation describes GraphQL queries for `create` and
-`create_v2` events, filtered by mint, and says creation data includes the mint
-and creator/dev wallet. It is a documented third-party data API rather than a
-Pump.fun-operated endpoint. It still needs to be validated against a known mint
-before it is trusted for automatic approval.
+**Helius is now the recommended first proof of concept.** Its Parsed Events
+Scan API can search the submitted mint's transaction history for Pump.fun
+`create` and `create_v2` instructions, then return decoded instruction
+accounts/arguments. This avoids scanning the entire Pump.fun program history.
+Helius documents unlimited mainnet history and a free plan, but the result
+still needs to be tested against a known mint before it is trusted for
+automatic approval.
 
-Helius, QuickNode, SHYFT, and Solscan can provide Solana transaction or account
-data, but the reviewed material did not establish them as direct Pump.fun
+**Bitquery remains a strong alternative.** Its Pump.fun-specific documentation
+describes GraphQL queries for creation events filtered by mint and says
+creation data includes the mint and creator/dev wallet. It may require a paid
+plan for older historical data.
+
+QuickNode, SHYFT, and Solscan can provide Solana transaction or account data,
+but the reviewed material did not establish them as direct Pump.fun
 mint-to-creator lookup APIs. They would require locating the creation
 transaction and interpreting it. SHYFT documents a short transaction-history
 window, making it a poor default for older mints. The Pump.fun public docs and
@@ -28,7 +34,49 @@ IDL can be used to validate an on-chain decoding approach.
 
 ## Findings
 
-### 1. Bitquery Pump.fun API — best first candidate
+### 1. Helius Parsed Events — recommended first candidate
+
+**What the documentation says**
+
+- Parsed Events Scan can search one address's transaction history by program
+  instructions, token mints, or both.
+- The scan can use a mint address as the searched address and match Pump.fun
+  program instructions. Its Pump.fun guide names the `create` and `create_v2`
+  instructions and shows decoding the mint and creator from instruction
+  accounts/arguments.
+- The scan supports oldest-first ordering, a scan budget, and pagination.
+  Mainnet retention for `getTransactionsForAddress` is listed as unlimited.
+- Parsed Events is available on all plans. Helius documents Scan as costing
+  10 credits plus 1 credit per history page scanned (up to 1,000 transactions
+  per page).
+
+**Fit for Rhozeland**
+
+Scan the submitted mint address, filter for the Pump.fun program and
+`create`/`create_v2`, and inspect the decoded creation instruction. The
+Edge Function should accept only a successful transaction whose Pump program,
+instruction name, mint, and creator account all match expected values.
+Scanning oldest-first with a bounded budget makes the launch transaction the
+first relevant match in the typical case. A partial scan must be treated as an
+incomplete lookup, never as proof that no mint exists.
+
+**Limitations and checks**
+
+- This is a documented indexer/parser API, not an official Pump.fun API.
+- Creator account naming and semantics can vary by instruction version.
+  Validate against a known mint and compare the decoded creator with its
+  successful on-chain creation transaction.
+- Helius publishes 1M credits/month and 10 RPC requests/second on Free; its
+  credit documentation says Parsed Events Scan costs 10 credits plus 1 per
+  scanned 1,000-transaction page. Confirm actual page count/cost for a mint
+  history in the Helius dashboard.
+- Keep the API key only in Supabase Edge Function secrets.
+
+**Assessment:** Best first implementation/test candidate, likely sufficient
+for low-volume project use on Free. Test exact lookup behavior before enabling
+automatic approval.
+
+### 2. Bitquery Pump.fun API — documented alternative
 
 **What the documentation says**
 
@@ -45,11 +93,11 @@ IDL can be used to validate an on-chain decoding approach.
 
 **Fit for Rhozeland**
 
-This is the only candidate in this review with Pump.fun-specific documentation
-that explicitly describes getting a token's creation time and dev/creator
-address by mint. A proof of concept should query by the submitted mint and
-creation methods (`create`, `create_v2`), then verify the exact returned mint
-and expected Pump program before using the creator field.
+This is a provider-specific alternative with Pump.fun documentation that
+describes getting a token's creation time and dev/creator address by mint. A
+proof of concept should query by the submitted mint and creation methods
+(`create`, `create_v2`), then verify the exact returned mint and expected Pump
+program before using the creator field.
 
 **Limitations and checks**
 
@@ -70,26 +118,24 @@ and expected Pump program before using the creator field.
   that transaction from Solana RPC and verify success, Pump program ID, mint,
   and creator account.
 
-**Assessment:** Recommended for a time-boxed proof of concept, subject to API
-key, plan, history-retention, and creator-semantics validation.
+**Assessment:** Strong alternative if Helius parsing fails or Bitquery's
+response is easier to validate, subject to API key, plan, history-retention,
+and creator-semantics validation.
 
-### 2. Helius — capable transaction/RPC provider, not a confirmed direct lookup
+### 3. Helius standard Solana RPC — fallback primitive
 
-Helius documents Solana RPC and transaction-history APIs, including
-`getTransactionsForAddress`, and its DAS API for token/asset information. Those
-are useful primitives for retrieving indexed or parsed chain data.
+Helius also documents standard Solana RPC and transaction-history APIs,
+including `getTransactionsForAddress`, and its DAS API for token/asset
+information.
 
-The documentation reviewed did not confirm a Pump.fun-specific endpoint that
-directly returns the authoritative launch creator for an arbitrary mint. The
-likely approach is to locate the mint's creation transaction, then decode and
-validate its Pump instruction/event.
+If Parsed Events Scan is unsuitable, standard RPC can locate and fetch the
+creation transaction, but requires more custom transaction discovery and
+decoding. DAS metadata by itself should not be treated as proof of the Pump.fun
+launch creator.
 
-**Assessment:** Good fallback for an on-chain-derived implementation if
-Bitquery is unsuitable. DAS metadata by itself should not be treated as proof
-of the Pump.fun launch creator. Confirm historical coverage and pricing for
-the chosen method.
+**Assessment:** Useful fallback for an on-chain-derived implementation.
 
-### 3. QuickNode — standard RPC primitives, with transaction parsing required
+### 4. QuickNode — standard RPC primitives, with transaction parsing required
 
 QuickNode documents standard Solana RPC methods such as
 [`getSignaturesForAddress`](https://www.quicknode.com/docs/solana/getSignaturesForAddress)
@@ -104,7 +150,7 @@ and mint. Provider history and rate limits must be tested for older tokens.
 **Assessment:** Credible general-purpose fallback, but more parsing and
 historical-coverage work than using a Pump.fun-indexed query.
 
-### 4. SHYFT — parsed transaction APIs, but history window is a concern
+### 5. SHYFT — parsed transaction APIs, but history window is a concern
 
 SHYFT documents a parsed-transaction endpoint and transaction-history endpoint
 with parsed transaction data:
@@ -120,7 +166,7 @@ within that history window and validating the parsed/raw transaction.
 signature; not a good default for arbitrary older mints unless SHYFT confirms
 the required historical coverage.
 
-### 5. Solscan Pro API — transaction/explorer data, not a confirmed direct creator lookup
+### 6. Solscan Pro API — transaction/explorer data, not a confirmed direct creator lookup
 
 Solscan documents token metadata and transaction APIs, including an enhanced
 transaction endpoint with filters for programs and instruction discriminators:
@@ -137,7 +183,7 @@ add cost without removing the need to validate transaction semantics.
 for this specific lookup until Solscan confirms an authoritative creator field
 and its provenance.
 
-### 6. Pump.fun public program documentation plus Solana RPC — source-level
+### 7. Pump.fun public program documentation plus Solana RPC — source-level
 on-chain verification
 
 Pump.fun maintains public program documentation and IDLs in
@@ -157,7 +203,7 @@ semantics.
 to own and test the parser. A third-party indexer can still reduce the effort
 to locate candidate transactions.
 
-### 7. Birdeye — not established for this exact requirement
+### 8. Birdeye — not established for this exact requirement
 
 Birdeye is a known Solana market/token-data provider, but during this
 investigation I did not verify an official, documented API field that
@@ -171,18 +217,17 @@ official docs/support.
 
 ## Recommended implementation investigation
 
-1. Use Bitquery's documented Pump.fun query against a known mint. Require an
-   exact match on mint, Pump program ID, and a successful `create` or
-   `create_v2` transaction.
+1. Use Helius Parsed Events Scan against a known mint. Require an exact match
+   on mint, Pump program ID, successful transaction status, and a `create` or
+   `create_v2` instruction.
 2. Compare the returned creator address with an independently verified launch
-   wallet. Confirm whether the provider field represents the launch wallet
+   wallet. Confirm whether the decoded field represents the launch wallet
    (transaction signer) or a Pump creator/authority field that may differ.
-3. Check whether the mint is old enough to require Bitquery archive access.
-   Confirm a plan that permits the project's use, required history, request
-   volume, and budget.
-4. If the data is unavailable or the creator semantics are ambiguous, do not
-   approve. Investigate querying the transaction through Helius or QuickNode
-   and decoding it against Pump's official IDL.
+3. Check scan completion, page count, request rate, and credit usage in
+   Helius. A partial scan must return an explicit retryable failure.
+4. If the data is unavailable or creator semantics are ambiguous, do not
+   approve. Test Bitquery or use standard RPC and decode the transaction
+   against Pump's public IDL.
 5. Keep provider credentials in server-side Supabase Edge Function secrets.
    Never place keys in `VITE_*` variables or browser code.
 6. Preserve fail-closed behavior: missing, ambiguous, malformed, or unavailable
@@ -191,15 +236,20 @@ official docs/support.
 
 ## Decision
 
-**Proceed with a Bitquery proof of concept first; do not treat it as production
-ready until a known mint is tested and creator-field semantics are confirmed.**
-If the class project cannot use its plan terms/cost or the needed creation
-history is outside the available dataset, use an indexed RPC provider plus
-Pump's public IDL to derive the creator from the on-chain creation
-transaction.
+**Proceed with a Helius Parsed Events proof of concept first; do not treat it
+as production ready until a known mint is tested and creator-field semantics
+are confirmed.** If the scan cannot reliably identify creation transactions,
+test Bitquery or use an indexed RPC provider plus Pump's public IDL to derive
+the creator from the on-chain creation transaction.
 
-No API key was created, no provider request was made, and no application code
-was changed as part of this research.
+No API key was created and no live provider request was made during the
+investigation. The implementation now reads `HELIUS_API_KEY` from the Edge
+Function environment; configure it as a Supabase Edge Function secret in the
+intended project before deploying:
+
+```sh
+supabase secrets set HELIUS_API_KEY="<your-key>" --project-ref "<project-ref>"
+```
 
 ## Sources
 
@@ -210,6 +260,10 @@ was changed as part of this research.
 - [Pump.fun public program docs and IDLs](https://github.com/pump-fun/pump-public-docs)
 - [Helius transaction-history API](https://www.helius.dev/docs/rpc/gettransactionsforaddress)
 - [Helius DAS API](https://www.helius.dev/docs/das-api)
+- [Helius Parsed Events Scan](https://www.helius.dev/docs/api-reference/parsed-events/scan)
+- [Helius Pump.fun Parsed Events guide](https://www.helius.dev/docs/parsed-events/guides/fetch-pumpfun-mints)
+- [Helius credits](https://www.helius.dev/docs/billing/credits)
+- [Helius rate limits](https://www.helius.dev/docs/billing/rate-limits)
 - [QuickNode `getSignaturesForAddress`](https://www.quicknode.com/docs/solana/getSignaturesForAddress)
 - [QuickNode `getTransaction`](https://www.quicknode.com/docs/solana/getTransaction)
 - [SHYFT transaction APIs](https://docs.shyft.to/solana-apis/transactions/transaction-apis.md)

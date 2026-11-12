@@ -2,6 +2,10 @@ import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supa
 import { z } from "https://esm.sh/zod@3.23.8";
 import nacl from "https://esm.sh/tweetnacl@1.0.3";
 import bs58 from "https://esm.sh/bs58@5.0.0";
+import {
+  CreatorLookupError,
+  getHeliusPumpCreatorWallet,
+} from "../_shared/helius-pump-creator.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -38,7 +42,6 @@ const BodySchema = z.discriminatedUnion("action", [
 ]);
 
 const CHALLENGE_TTL_MS = 5 * 60 * 1000;
-const PUMP_API = "https://frontend-api-v3.pump.fun/coins/";
 
 function isSolanaAddress(address: string): boolean {
   try {
@@ -46,43 +49,6 @@ function isSolanaAddress(address: string): boolean {
   } catch {
     return false;
   }
-}
-
-class PumpMintNotFoundError extends Error { }
-
-/**
- * Retrieves the creator wallet address associated with a pump.fun token
- * 
- * Uses the provided token mint address to query pump.fun's coin details
- * API and retrieve the wallet address reported as the token's creator
- * 
- * 
- * @param mintAddress - The Solana mint address identifying the token
- * @returns A promise containing the creator's wallet address
- */
-async function getPumpCreatorWallet(mintAddress: string): Promise<string | null> {
-  const response = await fetch(`${PUMP_API}${encodeURIComponent(mintAddress)}`, {
-    headers: { "user-agent": "Mozilla/5.0 (compatible; Rhozeland/1.0)" },
-    signal: AbortSignal.timeout(8_000),
-  });
-  if (response.status === 404) {
-    throw new PumpMintNotFoundError();
-  }
-  if (!response.ok) {
-    throw new Error(`Pump.fun returned HTTP ${response.status}`);
-  }
-
-  const payload: unknown = await response.json();
-  if (
-    typeof payload !== "object" ||
-    payload === null ||
-    !("creator" in payload) ||
-    typeof payload.creator !== "string"
-  ) {
-    return null;
-  }
-
-  return payload.creator;
 }
 
 async function getPendingSubmission(
@@ -189,31 +155,51 @@ Deno.serve(async (req) => {
       return json(400, { error: "invalid Solana address" });
     }
 
-    let creatorWallet: string | null;
-    try {
-      creatorWallet = await getPumpCreatorWallet(mintAddress);
-    } catch (error) {
-      if (error instanceof PumpMintNotFoundError) {
-        return json(404, {
-          verified: false,
-          code: "mint_not_found",
-          error: "Pump.fun could not find this mint."
-        });
-      }
-      console.error("Pump.fun creator lookup failed", error);
-      return json(502, {
+    const heliusApiKey = Deno.env.get("HELIUS_API_KEY");
+    if (!heliusApiKey) {
+      console.error("HELIUS_API_KEY is not configured");
+      return json(500, {
         verified: false,
-        code: "pump_lookup_failed",
-        error: "Could not retrieve token details from Pump.fun. Try again later."
+        code: "helius_not_configured",
+        error: "Mint verification is temporarily unavailable.",
       });
     }
 
-    if (!creatorWallet || !isSolanaAddress(creatorWallet)) {
+    let creatorWallet: string;
+    try {
+      creatorWallet = await getHeliusPumpCreatorWallet(mintAddress, heliusApiKey);
+    } catch (error) {
+      if (error instanceof CreatorLookupError && error.code === "not_found") {
+        return json(404, {
+          verified: false,
+          code: "mint_not_found",
+          error: "Helius could not find a successful Pump.fun creation for this mint.",
+        });
+      }
+      if (error instanceof CreatorLookupError && error.code === "incomplete") {
+        console.error("Helius creator lookup was incomplete", error.message);
+        return json(502, {
+          verified: false,
+          code: "helius_lookup_incomplete",
+          error: "Could not complete the token creator lookup. Try again later.",
+        });
+      }
+      console.error("Helius creator lookup failed", error);
       return json(502, {
         verified: false,
-        code: "pump_invalid_response",
-        error: "Pump.fun did not return a valid creator wallet."
-      })
+        code: error instanceof CreatorLookupError
+          ? `helius_${error.code}`
+          : "helius_lookup_failed",
+        error: "Could not verify the token creator with Helius. Try again later.",
+      });
+    }
+
+    if (!isSolanaAddress(creatorWallet)) {
+      return json(502, {
+        verified: false,
+        code: "helius_invalid_response",
+        error: "Helius did not return a valid creator wallet.",
+      });
     }
 
     if (creatorWallet !== signerWallet) {
