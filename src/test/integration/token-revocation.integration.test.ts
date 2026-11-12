@@ -1,7 +1,8 @@
 /**
  * Token revocation rules — live backend integration test
- * Requires the `20261107120000_token_grant_revocation` migration on the
- * target project.
+ * Requires the `20261107120000_token_grant_revocation` and
+ * `20261111120000_invalidate_revoked_token_grants` migrations on the target
+ * project.
  *
  * Skipped unless ALL of the following env vars are set:
  *   SUPABASE_TEST_URL                          — project URL
@@ -89,12 +90,19 @@ describeIntegration(
     };
 
     const seedGrant = async (mint: string) => {
+      const { data: creator, error: genErr } = await admin
+        .from("profiles")
+        .select("token_generation")
+        .eq("user_id", creatorId)
+        .single();
+      if (genErr) throw genErr;
       const { error } = await admin.from("creator_token_grants").upsert(
         {
           user_id: fanId,
           creator_id: creatorId,
           wallet_address: fanWallet,
           mint_address: mint,
+          token_generation: creator.token_generation,
           balance: 1,
           expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
         },

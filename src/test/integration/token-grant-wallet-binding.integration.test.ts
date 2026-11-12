@@ -12,9 +12,10 @@
  *   - a grant for the caller's linked wallet unlocks gated works
  *   - a grant for another wallet, or for a since-replaced wallet, does not
  *
- * Requires the `20261104120000_bind_token_grants_to_linked_wallet` and
- * `20261106120000_token_grant_challenges` migrations and the updated
- * `verify-token-grant` function on the target project.
+ * Requires the `20261104120000_bind_token_grants_to_linked_wallet`,
+ * `20261106120000_token_grant_challenges`, `20261107120000_token_grant_revocation`
+ * and `20261111120000_invalidate_revoked_token_grants` migrations and the
+ * updated `verify-token-grant` function on the target project.
  *
  * Skipped unless ALL of the following env vars are set:
  *   SUPABASE_TEST_URL                          — project URL
@@ -83,6 +84,7 @@ describeIntegration(
     let userA: string;
     let userB: string;
     let creatorId: string;
+    let adminUserId: string;
     let gatedWorkId: string;
 
     const walletA = makeWallet();
@@ -121,12 +123,19 @@ describeIntegration(
     };
 
     const seedGrant = async (userId: string, walletAddress: string) => {
+      const { data: creator, error: genErr } = await admin
+        .from("profiles")
+        .select("token_generation")
+        .eq("user_id", creatorId)
+        .single();
+      if (genErr) throw genErr;
       const { error } = await admin.from("creator_token_grants").upsert(
         {
           user_id: userId,
           creator_id: creatorId,
           wallet_address: walletAddress,
           mint_address: testMint,
+          token_generation: creator.token_generation,
           balance: 1,
           expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
         },
@@ -184,16 +193,44 @@ describeIntegration(
       const a = await mkUser("a");
       const b = await mkUser("b");
       const creator = await mkUser("creator");
+      const adminUser = await mkUser("admin");
       userA = a.id;
       userB = b.id;
       creatorId = creator.id;
+      adminUserId = adminUser.id;
 
       await admin
         .from("profiles")
         .upsert(
-          [{ user_id: userA }, { user_id: userB }, { user_id: creatorId }],
+          [{ user_id: userA }, { user_id: userB }, { user_id: creatorId }, { user_id: adminUserId }],
           { onConflict: "user_id", ignoreDuplicates: true },
         );
+
+      const signIn = async (email: string) => {
+        const client = createClient(URL, ANON, {
+          auth: { persistSession: false, autoRefreshToken: false },
+        });
+        const { error } = await client.auth.signInWithPassword({ email, password });
+        if (error) throw new Error(`Sign-in failed: ${error.message}`);
+        return client;
+      };
+
+      // Grants only count for the creator's admin-approved live token.
+      const { error: roleErr } = await admin
+        .from("user_roles")
+        .insert({ user_id: adminUserId, role: "admin" });
+      if (roleErr) throw roleErr;
+      const creatorClient = await signIn(creator.email);
+      const { error: submitErr } = await creatorClient
+        .from("profiles")
+        .update({ token_mint_address: testMint, token_ticker: "TKN" })
+        .eq("user_id", creatorId);
+      if (submitErr) throw submitErr;
+      const { error: approveErr } = await (await signIn(adminUser.email)).rpc(
+        "review_token_submission",
+        { _user_id: creatorId, _approve: true },
+      );
+      if (approveErr) throw approveErr;
 
       const { data: work, error: workErr } = await admin
         .from("works")
@@ -233,9 +270,10 @@ describeIntegration(
 
     afterAll(async () => {
       try {
-        const ids = [userA, userB, creatorId].filter(Boolean);
+        const ids = [userA, userB, creatorId, adminUserId].filter(Boolean);
         await admin.from("creator_token_grants").delete().in("user_id", ids);
         if (gatedWorkId) await admin.from("works").delete().eq("id", gatedWorkId);
+        await admin.from("user_roles").delete().in("user_id", ids);
         await admin.from("profiles").delete().in("user_id", ids);
         for (const id of ids) await admin.auth.admin.deleteUser(id);
       } catch {

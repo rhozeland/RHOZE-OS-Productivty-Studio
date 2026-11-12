@@ -84,7 +84,8 @@ const buildChallengeMessage = (p: {
   ].join("\n");
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS")
+    return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json(405, { error: "method not allowed" });
 
   // ── Auth: caller must be signed in.
@@ -111,7 +112,10 @@ Deno.serve(async (req) => {
   }
   const parsed = BodySchema.safeParse(body);
   if (!parsed.success) {
-    return json(400, { error: "invalid body", details: parsed.error.flatten() });
+    return json(400, {
+      error: "invalid body",
+      details: parsed.error.flatten(),
+    });
   }
   const { walletAddress } = parsed.data;
 
@@ -125,13 +129,15 @@ Deno.serve(async (req) => {
   if (profileErr) return json(500, { error: profileErr.message });
   if (!profile?.wallet_address) {
     return json(403, {
-      error: "Verify a wallet in the Wallet menu before unlocking with a token.",
+      error:
+        "Verify a wallet in the Wallet menu before unlocking with a token.",
       code: "wallet_not_verified",
     });
   }
   if (profile.wallet_address !== walletAddress) {
     return json(403, {
-      error: "Connect the wallet verified on your account to unlock with a token.",
+      error:
+        "Connect the wallet verified on your account to unlock with a token.",
       code: "wallet_not_linked",
     });
   }
@@ -150,7 +156,9 @@ Deno.serve(async (req) => {
     if (cleanupErr) return json(500, { error: cleanupErr.message });
 
     const nonce = crypto.randomUUID().replaceAll("-", "");
-    const challengeExpiresAt = new Date(Date.now() + CHALLENGE_TTL_MS).toISOString();
+    const challengeExpiresAt = new Date(
+      Date.now() + CHALLENGE_TTL_MS,
+    ).toISOString();
     const message = buildChallengeMessage({
       userId,
       creatorId,
@@ -182,7 +190,11 @@ Deno.serve(async (req) => {
     }
     if (insertErr) return json(500, { error: insertErr.message });
 
-    return json(200, { challengeId: row.id, message, expiresAt: challengeExpiresAt });
+    return json(200, {
+      challengeId: row.id,
+      message,
+      expiresAt: challengeExpiresAt,
+    });
   }
 
   // ── Consume the challenge atomically: only one request can ever match.
@@ -201,7 +213,8 @@ Deno.serve(async (req) => {
   if (consumeErr) return json(500, { error: consumeErr.message });
   if (!challenge) {
     return json(400, {
-      error: "This unlock request is invalid, expired, or already used. Please try again.",
+      error:
+        "This unlock request is invalid, expired, or already used. Please try again.",
       code: "invalid_challenge",
     });
   }
@@ -215,14 +228,19 @@ Deno.serve(async (req) => {
   // ── Look up creator's approved token mint.
   const { data: creator, error: creatorErr } = await admin
     .from("profiles")
-    .select("token_mint_address, token_ticker, token_submission_status")
+    .select(
+      "token_mint_address, token_ticker, token_submission_status, token_generation",
+    )
     .eq("id", creatorId)
     .maybeSingle();
   if (creatorErr) return json(500, { error: creatorErr.message });
   if (!creator?.token_mint_address) {
     return json(404, { error: "creator has not linked a token" });
   }
-  if (creator.token_submission_status && creator.token_submission_status !== "approved") {
+  if (
+    creator.token_submission_status &&
+    creator.token_submission_status !== "approved"
+  ) {
     return json(403, { error: "creator's token is not yet approved" });
   }
 
@@ -256,25 +274,30 @@ Deno.serve(async (req) => {
   }
 
   if (uiBalance <= 0) {
-    return json(200, { granted: false, balance: 0, reason: "wallet does not hold this token" });
+    return json(200, {
+      granted: false,
+      balance: 0,
+      reason: "wallet does not hold this token",
+    });
   }
 
   // ── Upsert grant (24h TTL).
-  const expiresAt = new Date(Date.now() + GRANT_TTL_HOURS * 60 * 60 * 1000).toISOString();
-  const { error: upsertErr } = await admin
-    .from("creator_token_grants")
-    .upsert(
-      {
-        user_id: userId,
-        creator_id: creatorId,
-        wallet_address: walletAddress,
-        mint_address: creator.token_mint_address,
-        balance: uiBalance,
-        expires_at: expiresAt,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "user_id,creator_id" },
-    );
+  const expiresAt = new Date(
+    Date.now() + GRANT_TTL_HOURS * 60 * 60 * 1000,
+  ).toISOString();
+  const { error: upsertErr } = await admin.from("creator_token_grants").upsert(
+    {
+      user_id: userId,
+      creator_id: creatorId,
+      wallet_address: walletAddress,
+      mint_address: creator.token_mint_address,
+      token_generation: creator.token_generation,
+      balance: uiBalance,
+      expires_at: expiresAt,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id,creator_id" },
+  );
   if (upsertErr) return json(500, { error: upsertErr.message });
 
   return json(200, {
