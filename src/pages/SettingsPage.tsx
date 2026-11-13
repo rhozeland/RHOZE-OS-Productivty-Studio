@@ -941,15 +941,13 @@ const SettingsPage = () => {
       <div className="space-y-4">
         <p className="text-xs text-muted-foreground">Your connected Solana wallet address is stored here for on-chain features.</p>
         {(profile as any)?.wallet_address ? (
-          <div className="flex items-center gap-3">
-            <code className="text-sm font-mono bg-muted px-3 py-2 rounded-lg flex-1 truncate">
+          <div className="space-y-2">
+            <code className="block text-sm font-mono bg-muted px-3 py-2 rounded-lg truncate">
               {(profile as any).wallet_address}
             </code>
-            <Button variant="outline" size="sm" onClick={async () => {
-              await supabase.from("profiles").update({ wallet_address: null } as any).eq("user_id", user!.id);
-              queryClient.invalidateQueries({ queryKey: ["my-profile"] });
-              toast.success("Wallet disconnected");
-            }}>Disconnect</Button>
+            <p className="text-xs text-muted-foreground">
+              This wallet is locked to your account. To switch, connect the new wallet and choose “Request wallet change” from the Wallet menu.
+            </p>
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">No wallet connected. Connect your wallet using the button in the header to link it to your profile.</p>
