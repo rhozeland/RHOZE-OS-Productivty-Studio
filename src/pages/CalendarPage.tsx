@@ -24,6 +24,8 @@ import { ChevronLeft, ChevronRight, Clock, X, CalendarDays, RefreshCw, Coins, Cr
 import { cn } from "@/lib/utils";
 import SquareCardForm, { SQUARE_LOCATION_ID } from "@/components/booking/SquareCardForm";
 import PaySolAndVerify from "@/components/PaySolAndVerify";
+import PayWithRhozeButton from "@/components/PayWithRhozeButton";
+import { getSolanaConfig } from "@/lib/solana-config";
 import {
   format,
   startOfWeek,
@@ -45,7 +47,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 type ViewMode = "month" | "week";
 type TabMode = "upcoming" | "history" | "cancelled";
-type PaymentMethod = "credits" | "card" | "crypto";
+type PaymentMethod = "credits" | "card" | "crypto" | "rhoze";
 type EventType = "studio" | "project" | "reminder";
 
 interface CalendarEvent {
@@ -348,11 +350,15 @@ const CalendarPage = () => {
           ? "Credits"
           : paymentMethod === "card"
           ? "Card (Square)"
+          : paymentMethod === "rhoze"
+          ? "$RHOZE"
           : "SOL (Crypto)";
         const paymentAmountStr = paymentMethod === "credits"
           ? `${service.credits_cost} credits`
           : paymentMethod === "card"
           ? `$${(service.non_member_rate ?? 0).toFixed(2)}`
+          : paymentMethod === "rhoze"
+          ? `${Math.max(1, Math.round((service.non_member_rate ?? service.credits_cost * 75) * 100)).toLocaleString()} $RHOZE`
           : `SOL`;
         supabase.functions.invoke("send-booking-confirmation", {
           body: {
@@ -600,6 +606,7 @@ const CalendarPage = () => {
     () => services?.find((s) => s.id === selectedService),
     [services, selectedService]
   );
+  const rhozePaymentsEnabled = getSolanaConfig().rhozePaymentsEnabled;
 
   // Fixed credit model: credits_cost is the flat session price,
   // duration_hours is the max time that credit unlocks
@@ -1196,6 +1203,22 @@ const CalendarPage = () => {
                       </div>
                       {paymentMethod === "crypto" && <Check className="h-4 w-4 text-primary" />}
                     </button>
+
+                    {rhozePaymentsEnabled && (
+                      <button
+                        onClick={() => setPaymentMethod("rhoze")}
+                        className={cn("flex items-center gap-3 rounded-xl border p-3 transition-all text-left", paymentMethod === "rhoze" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50")}
+                      >
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-pink-500/10"><Coins className="h-4 w-4 text-pink-500" /></div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-foreground">Pay with $RHOZE</p>
+                          <p className="text-xs text-muted-foreground">
+                            {Math.max(1, Math.round((selectedServiceObj.non_member_rate ?? selectedServiceObj.credits_cost * 75) * 100)).toLocaleString()} $RHOZE
+                          </p>
+                        </div>
+                        {paymentMethod === "rhoze" && <Check className="h-4 w-4 text-primary" />}
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
@@ -1215,6 +1238,19 @@ const CalendarPage = () => {
                   creditsToAdd={0}
                   description={`Booking: ${selectedServiceObj.title}`}
                   label="Pay with SOL & Book"
+                  onSuccess={async () => { await createBookingWithPayment(); }}
+                />
+              )}
+
+              {paymentMethod === "rhoze" && selectedServiceObj && (
+                <PayWithRhozeButton
+                  tokenAmount={Math.max(1, Math.round((selectedServiceObj.non_member_rate ?? selectedServiceObj.credits_cost * 75) * 100))}
+                  description={`Booking: ${selectedServiceObj.title}`}
+                  type="studio_booking"
+                  intent="subscription"
+                  label={`Pay ${Math.max(1, Math.round((selectedServiceObj.non_member_rate ?? selectedServiceObj.credits_cost * 75) * 100)).toLocaleString()} $RHOZE & Book`}
+                  className="w-full"
+                  variant="default"
                   onSuccess={async () => { await createBookingWithPayment(); }}
                 />
               )}
