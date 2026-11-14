@@ -26,6 +26,8 @@ interface PayWithRhozeButtonProps {
   /** "subscription" tells the backend not to award credits (tier benefits applied separately). */
   intent?: "credits" | "subscription";
   onSuccess?: (result?: { signature: string; payerWallet: string }) => void;
+  onVerificationPending?: (signature: string) => void;
+  retrySignature?: string;
   label?: string;
   className?: string;
   variant?: "default" | "outline" | "secondary" | "ghost";
@@ -38,6 +40,8 @@ const PayWithRhozeButton = ({
   type = "purchase",
   intent = "credits",
   onSuccess,
+  onVerificationPending,
+  retrySignature,
   label,
   className,
   variant = "outline",
@@ -48,6 +52,38 @@ const PayWithRhozeButton = ({
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
 
+  const verifyPayment = async (signature: string) => {
+    const { data, error } = await supabase.functions.invoke("verify-rhoze-payment", {
+      body: {
+        signature,
+        expected_tokens: tokenAmount,
+        description,
+        type,
+        intent,
+      },
+    });
+
+    if (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.toLowerCase().includes("already processed") || (error as { status?: number }).status === 409) {
+        onSuccess?.({ signature, payerWallet: publicKey?.toBase58() ?? "" });
+        return;
+      }
+      throw error;
+    }
+    if (data?.error) {
+      throw new Error(data.error);
+    }
+
+    const awarded = data?.credits_added ?? 0;
+    toast.success(
+      intent === "subscription"
+        ? `Paid ${tokenAmount} $RHOZE!`
+        : `Paid ${tokenAmount} $RHOZE! ${awarded} credits added.`
+    );
+    onSuccess?.({ signature, payerWallet: publicKey?.toBase58() ?? "" });
+  };
+
   const handlePay = async () => {
     if (!publicKey) {
       toast.error("Connect your wallet first");
@@ -55,10 +91,16 @@ const PayWithRhozeButton = ({
     }
 
     setLoading(true);
+    let submittedSignature: string | null = null;
     try {
       const config = getSolanaConfig();
       if (!config.rhozePaymentsEnabled) {
         toast.error("$RHOZE payments are disabled for this environment");
+        return;
+      }
+      if (retrySignature) {
+        setStatus("Retrying verification...");
+        await verifyPayment(retrySignature);
         return;
       }
       const { data: profiles, error: profileError } = await supabase.rpc("get_my_private_profile_fields");
@@ -120,36 +162,21 @@ const PayWithRhozeButton = ({
 
       setStatus("Confirm in wallet...");
       const signature = await sendTransaction(transaction, connection);
+      submittedSignature = signature;
 
       setStatus("Confirming...");
       await connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight });
 
       setStatus("Verifying...");
-      const { data, error } = await supabase.functions.invoke("verify-rhoze-payment", {
-        body: {
-          signature,
-          expected_tokens: tokenAmount,
-          description,
-          type,
-          intent,
-        },
-      });
-
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-
-      const awarded = data?.credits_added ?? 0;
-      toast.success(
-        intent === "subscription"
-          ? `Paid ${tokenAmount} $RHOZE!`
-          : `Paid ${tokenAmount} $RHOZE! ${awarded} credits added.`
-      );
-      onSuccess?.({ signature, payerWallet: publicKey.toBase58() });
+      await verifyPayment(signature);
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : "Transaction failed";
       if (msg.includes("User rejected")) {
         toast.error("Transaction cancelled");
       } else {
+        if (submittedSignature) {
+          onVerificationPending?.(submittedSignature);
+        }
         toast.error(msg);
       }
     } finally {
