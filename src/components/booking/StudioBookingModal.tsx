@@ -41,10 +41,12 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import PaySolAndVerify from "@/components/PaySolAndVerify";
+import PayWithRhozeButton from "@/components/PayWithRhozeButton";
 import SquareCardForm, { SQUARE_LOCATION_ID } from "@/components/booking/SquareCardForm";
+import { getSolanaConfig } from "@/lib/solana-config";
 
 type Step = "schedule" | "details" | "payment";
-type PaymentMethod = "credits" | "card" | "crypto";
+type PaymentMethod = "credits" | "card" | "crypto" | "rhoze";
 
 // 100 Credits ≈ $1 (mirrors PRO_CREDITS pricing + event-ticket checkout).
 const CREDITS_PER_USD = 100;
@@ -194,7 +196,9 @@ const StudioBookingModal = ({ open, onOpenChange, studio }: StudioBookingModalPr
   const totalPrice = studio.hourly_rate * selectedDuration;
   const solPrice = +(totalPrice / 150).toFixed(4);
   const creditsPrice = Math.max(1, Math.round(totalPrice * CREDITS_PER_USD));
+  const rhozePrice = Math.max(1, Math.round(totalPrice * 100));
   const hasEnoughCredits = userCredits >= creditsPrice;
+  const rhozePaymentsEnabled = getSolanaConfig().rhozePaymentsEnabled;
   const maxGuests = studio.max_guests ?? 10;
 
   const canProceedToDetails = dragDate && dragStartHour !== null && dragEndHour !== null && selectedDuration > 0;
@@ -701,7 +705,9 @@ const StudioBookingModal = ({ open, onOpenChange, studio }: StudioBookingModalPr
                     ? `${creditsPrice.toLocaleString()} Credits`
                     : paymentMethod === "card"
                     ? `$${totalPrice}`
-                    : `~${solPrice} SOL`}
+                    : paymentMethod === "crypto"
+                    ? `~${solPrice} SOL`
+                    : `${rhozePrice.toLocaleString()} $RHOZE`}
                 </span>
               </div>
             </div>
@@ -772,6 +778,29 @@ const StudioBookingModal = ({ open, onOpenChange, studio }: StudioBookingModalPr
                 </div>
                 {paymentMethod === "crypto" && <Check className="h-5 w-5 text-primary" />}
               </button>
+
+              {rhozePaymentsEnabled && (
+                <button
+                  onClick={() => setPaymentMethod("rhoze")}
+                  className={cn(
+                    "flex items-center gap-4 rounded-xl border p-4 transition-all text-left",
+                    paymentMethod === "rhoze"
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:bg-muted/50"
+                  )}
+                >
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-pink-500/10">
+                    <Coins className="h-5 w-5 text-pink-500" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-foreground">Pay with $RHOZE</p>
+                    <p className="text-xs text-muted-foreground">
+                      {rhozePrice.toLocaleString()} $RHOZE · on-chain payment
+                    </p>
+                  </div>
+                  {paymentMethod === "rhoze" && <Check className="h-5 w-5 text-primary" />}
+                </button>
+              )}
             </div>
 
             {/* Payment form */}
@@ -785,13 +814,24 @@ const StudioBookingModal = ({ open, onOpenChange, studio }: StudioBookingModalPr
               </Button>
             ) : paymentMethod === "card" ? (
               <SquareCardForm amount={totalPrice} onTokenize={handleCardTokenize} disabled={loading} />
-            ) : (
+            ) : paymentMethod === "crypto" ? (
               <PaySolAndVerify
                 solAmount={solPrice}
                 creditsToAdd={0}
                 description={`Studio: ${studio.name} — ${selectedDuration}h`}
                 label={`Pay ~${solPrice} SOL`}
                 className="w-full"
+                onSuccess={() => handleConfirm()}
+              />
+            ) : (
+              <PayWithRhozeButton
+                tokenAmount={rhozePrice}
+                description={`Studio: ${studio.name} — ${selectedDuration}h`}
+                type="studio_booking"
+                intent="subscription"
+                label={`Pay ${rhozePrice.toLocaleString()} $RHOZE`}
+                className="w-full"
+                variant="default"
                 onSuccess={() => handleConfirm()}
               />
             )}
