@@ -8,6 +8,7 @@ Each suite is gated by its own `RUN_*` env flag and skipped by default.
 |---|---|
 | `flow-rls.integration.test.ts` | `RUN_FLOW_RLS_INTEGRATION=1` |
 | `curator-invite.integration.test.ts` | `RUN_CURATOR_INVITE_INTEGRATION=1` |
+| `external-mint-attachment.integration.test.ts` | `RUN_EXTERNAL_MINT_ATTACHMENT_INTEGRATION=1` |
 
 The curator-invite suite runs the full handshake (create split config →
 send invite → accept as invitee → assert `revenue_split_configs.curator_id`
@@ -80,3 +81,29 @@ Cloud unintentionally.)
 - The throwaway auth user is created with `admin.createUser({
   email_confirm: true })`, signed in once, then deleted in
   `afterAll` — even if assertions fail.
+
+---
+
+# External pump.fun mint attachment integration tests
+
+This suite checks Task #149's database boundary against a real Supabase
+Postgres instance. It creates throwaway users, Projects, Works, and
+server-only challenge rows, then removes those rows after each test.
+
+Run it with the same three `SUPABASE_TEST_*` credentials above and the explicit
+safety flag:
+
+```bash
+SUPABASE_TEST_URL=... \
+SUPABASE_TEST_ANON_KEY=... \
+SUPABASE_TEST_SERVICE_ROLE_KEY=... \
+RUN_EXTERNAL_MINT_ATTACHMENT_INTEGRATION=1 \
+  bunx vitest run src/test/integration/external-mint-attachment.integration.test.ts
+```
+
+The suite verifies challenge-backed persistence, replay and expiry rejection,
+target ownership and prior-link checks, direct metadata-write rejection,
+cross-user updates, and unlink cleanup through Task #147. It seeds challenge
+rows with the service role to isolate the SQL transaction boundary; the Edge
+Function signature path is covered by focused unit tests and must be deployed
+alongside the migration before the frontend can use it.

@@ -1,6 +1,8 @@
 project_id = "puielauovddatgqvgxdy"
 
 [functions]
+  [functions.attach-external-pump-token]
+    verify_jwt = true
   [functions.auth-email-hook]
     verify_jwt = false
   [functions.create-event-ticket-checkout]
