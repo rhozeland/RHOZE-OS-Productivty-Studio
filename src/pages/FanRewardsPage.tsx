@@ -1,11 +1,10 @@
 /**
  * FanRewardsPage — `/fan/rewards` (Fan mode, Prompt 3)
  *
- * Fan-facing rewards view. Reuses the same `<CreatorPassCard />` +
- * `<TierProgressCard />` blocks that already power the Creator Pass page
- * (single source of truth for balance / tier / progress), then layers a
- * fan-flavored "Ways to earn" list and a recent-activity feed using the
- * same `surface-card` + divide rows pattern as the existing activity preview.
+ * Fan-facing rewards view. Reuses the same `<CreatorPassCard />` block that
+ * powers the Creator Pass page, then layers a fan-flavored "Ways to earn"
+ * list and a recent-activity feed using the same `surface-card` + divide rows
+ * pattern as the existing activity preview.
  */
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
@@ -23,7 +22,6 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import CreatorPassCard from "@/components/creators/CreatorPassCard";
-import TierProgressCard from "@/components/creators/TierProgressCard";
 
 const EARN_WAYS = [
   {
@@ -78,10 +76,9 @@ const FanRewardsPage = () => {
         <p className="text-muted-foreground">Your $RHOZE balance, tier, and recent activity.</p>
       </div>
 
-      {/* Balance + tier — exactly the components used on Creator Pass */}
+      {/* Balance + tier */}
       <div className="space-y-4">
         <CreatorPassCard />
-        <TierProgressCard />
       </div>
 
       {/* Ways to earn */}
