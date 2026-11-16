@@ -1,29 +1,26 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import ClaimLimitsControl from "@/components/settings/ClaimLimitsControl";
 import WalletButton from "@/components/WalletButton";
-import { toast } from "sonner";
 
 /**
  * Self-contained wallet info panel — reused inside the Vault "Wallet" lightbox.
  * Shows the connected Solana wallet (or empty state) and the claim safety
- * limits control. Wallet binding is intentionally 1:1 and locked on connect
- * — disconnect here only unlinks it from the profile.
+ * limits control. Wallet binding is intentionally 1:1 and locked once
+ * verified; switching goes through an admin-approved change request.
  */
 const WalletInfoPanel = () => {
   const { user } = useAuth();
-  const qc = useQueryClient();
 
   const { data: profile } = useQuery({
     queryKey: ["wallet-panel-profile", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data } = await (supabase as any).rpc("get_my_private_profile_fields");
-      const row = Array.isArray(data) ? data[0] : data;
-      return row ? { wallet_address: row.wallet_address as string | null } : null;
+      const { data } = await supabase.rpc("get_my_private_profile_fields");
+      const row = data?.[0];
+      return row ? { wallet_address: row.wallet_address || null } : null;
     },
   });
 
@@ -31,29 +28,12 @@ const WalletInfoPanel = () => {
     <div className="space-y-5">
       <div className="space-y-3">
         <p className="text-xs text-muted-foreground">
-          One wallet per account, bound on first connect. Disconnect here to re-link a different one.
+          One wallet per account, locked once verified. To switch, connect the new wallet and choose “Request wallet change” from the Wallet menu.
         </p>
         {profile?.wallet_address ? (
-          <div className="flex items-center gap-2">
-            <code className="text-xs font-mono bg-muted px-3 py-2 rounded-lg flex-1 truncate">
-              {profile.wallet_address}
-            </code>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={async () => {
-                await supabase
-                  .from("profiles")
-                  .update({ wallet_address: null } as any)
-                  .eq("user_id", user!.id);
-                qc.invalidateQueries({ queryKey: ["wallet-panel-profile"] });
-                qc.invalidateQueries({ queryKey: ["my-profile"] });
-                toast.success("Wallet disconnected");
-              }}
-            >
-              Disconnect
-            </Button>
-          </div>
+          <code className="block text-xs font-mono bg-muted px-3 py-2 rounded-lg truncate">
+            {profile.wallet_address}
+          </code>
         ) : (
           <div className="rounded-lg border border-dashed border-border bg-muted/20 p-4 space-y-3">
             <p className="text-sm text-foreground font-medium">No wallet connected</p>
