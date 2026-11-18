@@ -4,7 +4,7 @@ import { ed25519 } from "@noble/curves/ed25519";
 import { verifyWalletMessage } from "../../supabase/functions/_shared/wallet-signature-verifier";
 
 const adapter = {
-  decodeBase58: (value: string) => bs58.decode(value),
+  decodeBase58: (value: string) => Uint8Array.from(bs58.decode(value)),
   signatureLength: 64,
   publicKeyLength: 32,
   isOwnablePublicKey: (bytes: Uint8Array) => {
