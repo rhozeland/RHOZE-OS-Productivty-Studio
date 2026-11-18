@@ -1,10 +1,9 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { getSupabaseTestConfig } from "./supabase-test-config";
 
-const URL = process.env.SUPABASE_TEST_URL ?? process.env.VITE_SUPABASE_URL ?? "";
-const ANON = process.env.SUPABASE_TEST_ANON_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "";
-const SERVICE = process.env.SUPABASE_TEST_SERVICE_ROLE_KEY ?? "";
-const ENABLED = Boolean(URL && ANON && SERVICE) && process.env.RUN_EXTERNAL_MINT_ATTACHMENT_INTEGRATION === "1";
+const { url: URL, anonKey: ANON, serviceRoleKey: SERVICE, enabled: ENABLED } =
+  getSupabaseTestConfig("RUN_EXTERNAL_MINT_ATTACHMENT_INTEGRATION");
 const describeIntegration = ENABLED ? describe : describe.skip;
 
 const MINT = "So11111111111111111111111111111111111111112";
@@ -36,10 +35,10 @@ describeIntegration("external pump.fun mint attachment database enforcement", ()
         admin.auth.admin.createUser({ email: ownerEmail, password: ownerPassword, email_confirm: true }),
         admin.auth.admin.createUser({ email: otherEmail, password: otherPassword, email_confirm: true }),
       ]);
+    ownerId = ownerCreated.user?.id ?? "";
+    otherUserId = otherCreated.user?.id ?? "";
     if (ownerCreateError || !ownerCreated.user) throw new Error(`Create owner failed: ${ownerCreateError?.message}`);
     if (otherCreateError || !otherCreated.user) throw new Error(`Create second user failed: ${otherCreateError?.message}`);
-    ownerId = ownerCreated.user.id;
-    otherUserId = otherCreated.user.id;
 
     const [{ error: ownerSignInError }, { error: otherSignInError }] = await Promise.all([
       owner.auth.signInWithPassword({ email: ownerEmail, password: ownerPassword }),
@@ -60,7 +59,7 @@ describeIntegration("external pump.fun mint attachment database enforcement", ()
 
     const { data: work, error: workError } = await admin
       .from("works")
-      .insert({ user_id: ownerId, title: "External mint integration work", content_hash: crypto.randomUUID().replaceAll("-", "") })
+      .insert({ user_id: ownerId, title: "External mint integration work", content_hash: crypto.randomUUID().replace(/-/g, "") })
       .select("id")
       .single();
     if (workError || !work) throw new Error(`Create work failed: ${workError?.message}`);
