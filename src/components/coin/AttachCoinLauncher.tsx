@@ -9,7 +9,7 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Check,
@@ -31,6 +31,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useTokenAttachment } from "@/hooks/useTokenAttachment";
+import {
+  isWalletConnectionRequiredError,
+  isWalletSignatureRejectedError,
+  tokenAttachmentErrorMessage,
+} from "@/lib/token-attachment";
 
 type Step = "paste" | "target" | "pick" | "celebrate";
 type Target = "project" | "work";
@@ -65,7 +71,7 @@ const isValidMint = (v: string) => /^[1-9A-HJ-NP-Za-km-z]{32,64}$/.test(v.trim()
 const AttachCoinLauncher = ({ open, onOpenChange, scope }: Props) => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const qc = useQueryClient();
+  const tokenAttachment = useTokenAttachment();
 
   const [step, setStep] = useState<Step>("paste");
   const [ca, setCa] = useState("");
@@ -95,7 +101,7 @@ const AttachCoinLauncher = ({ open, onOpenChange, scope }: Props) => {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("projects")
-        .select("id, title, description, cover_image_url, cover_color, linked_token_mint, created_at")
+        .select("id, title, description, cover_image_url, cover_color, linked_token_id, linked_token_mint, created_at")
         .eq("user_id", user!.id)
         .order("created_at", { ascending: false })
         .limit(60);
@@ -110,7 +116,7 @@ const AttachCoinLauncher = ({ open, onOpenChange, scope }: Props) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("works")
-        .select("id, title, kind, cover_url, thumbnail_url, file_url, linked_token_mint, created_at")
+        .select("id, title, kind, cover_url, thumbnail_url, file_url, linked_token_id, linked_token_mint, created_at")
         .eq("user_id", user!.id)
         .order("created_at", { ascending: false })
         .limit(60);
@@ -163,29 +169,28 @@ const AttachCoinLauncher = ({ open, onOpenChange, scope }: Props) => {
   const attach = useMutation({
     mutationFn: async () => {
       if (!preview || !target || !pickedId) throw new Error("Missing selection");
-      const payload = {
-        linked_token_id: null,
-        linked_token_mint: preview.mint,
-        linked_token_ticker: preview.symbol,
-        linked_token_name: preview.name,
-        linked_token_image_url: preview.imageUri,
-      };
-      const table = target === "project" ? "projects" : "works";
-      const { error } = await (supabase as any)
-        .from(table)
-        .update(payload)
-        .eq("id", pickedId);
-      if (error) throw error;
+      return tokenAttachment.attachExternal({
+        mintAddress: preview.mint,
+        targetType: target,
+        targetId: pickedId,
+      });
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["projects"] });
-      qc.invalidateQueries({ queryKey: ["works"] });
-      qc.invalidateQueries({ queryKey: ["release"] });
-      qc.invalidateQueries({ queryKey: ["launcher-projects"] });
-      qc.invalidateQueries({ queryKey: ["launcher-works"] });
+    onSuccess: (result) => {
+      if (!result) return;
+      setPreview((current) => current ? {
+        ...current,
+        mint: result.token.mint,
+        symbol: result.token.ticker,
+        name: result.token.name,
+        imageUri: result.token.imageUrl,
+      } : current);
       setStep("celebrate");
     },
-    onError: (e: any) => toast.error(e?.message ?? "Could not attach coin"),
+    onError: (error: unknown) => {
+      const message = tokenAttachmentErrorMessage(error);
+      if (isWalletConnectionRequiredError(error) || isWalletSignatureRejectedError(error)) toast.info(message);
+      else toast.error(message);
+    },
   });
 
   const rows: any[] = target === "project" ? (projectsQ.data ?? []) : (worksQ.data ?? []);
@@ -392,6 +397,7 @@ const AttachCoinLauncher = ({ open, onOpenChange, scope }: Props) => {
                       target={target}
                       active={pickedId === r.id}
                       current={r.linked_token_mint === preview.mint}
+                      hasOther={!!r.linked_token_id || (!!r.linked_token_mint && r.linked_token_mint !== preview.mint)}
                       onClick={() => setPickedId(r.id)}
                     />
                   ))}
@@ -401,11 +407,11 @@ const AttachCoinLauncher = ({ open, onOpenChange, scope }: Props) => {
               <button
                 type="button"
                 onClick={() => attach.mutate()}
-                disabled={!pickedId || attach.isPending}
+                disabled={!pickedId || attach.isPending || tokenAttachment.isPending}
                 className="kb-display w-full py-4 rounded-2xl text-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{ background: "var(--kb-accent)", color: "#fff" }}
               >
-                {attach.isPending ? "Attaching…" : `Attach $${preview.symbol}`}
+                {attach.isPending || tokenAttachment.isPending ? "Verifying and attaching…" : `Attach $${preview.symbol}`}
               </button>
             </div>
           )}
@@ -496,7 +502,7 @@ const TargetTile = ({ label, sublabel, icon: Icon, onClick }: any) => (
  * PickRow — text-forward list row. No sad purple boxes for projects
  * without covers; the title carries the tile.
  */
-const PickRow = ({ row, target, active, current, onClick }: any) => {
+const PickRow = ({ row, target, active, current, hasOther, onClick }: any) => {
   const cover = row.thumbnail_url || row.cover_url || row.cover_image_url;
   const isVideo = target === "work" && row.kind === "video";
   const isAudio = target === "work" && (row.kind === "audio" || row.kind === "music");
@@ -550,6 +556,11 @@ const PickRow = ({ row, target, active, current, onClick }: any) => {
         <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider"
           style={{ background: "color-mix(in srgb, var(--kb-accent) 15%, transparent)", color: "var(--kb-accent)" }}>
           Linked
+        </span>
+      )}
+      {hasOther && (
+        <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider text-amber-500">
+          Replace
         </span>
       )}
       {active && (
