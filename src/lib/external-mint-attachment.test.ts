@@ -56,8 +56,10 @@ describe("external mint attachment validation", () => {
 
   it("unwraps Solana getAccountInfo results from result.value", () => {
     const account = { owner: "token-program", executable: false };
-    expect(accountInfoValue({ context: { slot: 123 }, value: account })).toEqual(account);
-    expect(accountInfoValue({ context: { slot: 123 }, value: null })).toBeNull();
+    const responseWithAccount = { context: { slot: 123 }, value: account };
+    const responseWithoutAccount = { context: { slot: 123 }, value: null };
+    expect(accountInfoValue(responseWithAccount)).toEqual(account);
+    expect(accountInfoValue(responseWithoutAccount)).toBeNull();
   });
 
   it("binds the signature text to the user, mint, target, creator, and nonce", () => {
