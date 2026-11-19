@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import bs58 from "bs58";
@@ -23,7 +24,7 @@ const signerWallet = bs58.encode(signerPublicKey);
 
 const isOwnablePublicKey = (address: string) => {
   try {
-    const bytes = bs58.decode(address);
+    const bytes = Uint8Array.from(bs58.decode(address));
     return bytes.length === 32 && !ed25519.ExtendedPoint.fromHex(bytes).isSmallOrder();
   } catch {
     return false;
@@ -31,7 +32,7 @@ const isOwnablePublicKey = (address: string) => {
 };
 
 const signatureAdapter = {
-  decodeBase58: (value: string) => bs58.decode(value),
+  decodeBase58: (value: string) => Uint8Array.from(bs58.decode(value)),
   signatureLength: 64,
   publicKeyLength: 32,
   isOwnablePublicKey: (bytes: Uint8Array) => {
