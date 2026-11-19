@@ -180,7 +180,7 @@ describeIntegration("external pump.fun mint attachment database enforcement", ()
     expect(currentError).toBeNull();
 
     const { error: staleError } = await admin.rpc("attach_verified_external_mint", { p_challenge_id: staleChallenge });
-    expect(staleError?.code).toBe("40001");
+    expect(staleError?.code).toBe("PT409");
   });
 
   it("supports secure attachment to a Work row", async () => {

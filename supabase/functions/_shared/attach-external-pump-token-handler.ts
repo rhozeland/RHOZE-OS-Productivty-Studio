@@ -274,7 +274,9 @@ export const createAttachExternalPumpTokenHandler = (dependencies: ExternalMintH
     });
     if (error) {
       if (error.code === "22023") return json(409, { error: "verification challenge expired, changed, or already used" });
-      if (error.code === "40001") return json(409, { error: "target token relationship changed; request a new challenge" });
+      if (error.code === "PT409" || error.code === "40001") {
+        return json(409, { error: "target token relationship changed; request a new challenge" });
+      }
       if (error.code === "42501") return json(403, { error: "target is no longer available to this account" });
       throw error;
     }
