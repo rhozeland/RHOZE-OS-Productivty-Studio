@@ -226,22 +226,15 @@ Deno.serve(async (req) => {
   }
 
   // ── Look up creator's approved token mint.
+  // Only admin approval sets it; pending or rejected replacements don't touch it.
   const { data: creator, error: creatorErr } = await admin
     .from("profiles")
-    .select(
-      "token_mint_address, token_ticker, token_submission_status, token_generation",
-    )
-    .eq("id", creatorId)
+    .select("token_mint_address, token_ticker, token_generation")
+    .eq("user_id", creatorId)
     .maybeSingle();
   if (creatorErr) return json(500, { error: creatorErr.message });
   if (!creator?.token_mint_address) {
     return json(404, { error: "creator has not linked a token" });
-  }
-  if (
-    creator.token_submission_status &&
-    creator.token_submission_status !== "approved"
-  ) {
-    return json(403, { error: "creator's token is not yet approved" });
   }
 
   // ── Query Solana RPC for SPL balance.

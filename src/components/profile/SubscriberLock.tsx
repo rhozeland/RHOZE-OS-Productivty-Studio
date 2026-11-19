@@ -66,11 +66,10 @@ export function SubscriberLock({
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("token_mint_address, token_ticker, token_submission_status")
-        .eq("id", creatorId)
+        .select("token_mint_address, token_ticker")
+        .eq("user_id", creatorId)
         .maybeSingle();
       if (!data?.token_mint_address) return null;
-      if (data.token_submission_status && data.token_submission_status !== "approved") return null;
       return { mint: data.token_mint_address, ticker: data.token_ticker as string | null };
     },
   });

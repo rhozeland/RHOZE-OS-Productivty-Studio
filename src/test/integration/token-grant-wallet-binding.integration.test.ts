@@ -7,6 +7,8 @@
  *     verified wallet signed by its real key
  *   - refuses a bad signature for the linked wallet
  *   - lets the caller's linked wallet through to the token check
+ *   - checks a real creator's live token, even with a pending or rejected
+ *     replacement, and refuses an unapproved one
  *
  * holds_creator_token() / creator_token_grants RLS:
  *   - a grant for the caller's linked wallet unlocks gated works
@@ -76,11 +78,18 @@ const call = async (
   throw error;
 };
 
+// Past the creator checks: Solana RPC errors on or finds no balance for the random test mint.
+const reachedBalanceCheck = (r: FnResult) =>
+  (r.status === 200 && r.body?.granted === false) ||
+  (r.status === 502 && String(r.body?.error).startsWith("solana rpc failed"));
+
 describeIntegration(
   `Token grants bound to verified wallets — live backend (${skipMessage})`,
   () => {
     let admin: SupabaseClient;
     let clientA: SupabaseClient;
+    let creatorClient: SupabaseClient;
+    let adminUserClient: SupabaseClient;
     let userA: string;
     let userB: string;
     let creatorId: string;
@@ -202,7 +211,12 @@ describeIntegration(
       await admin
         .from("profiles")
         .upsert(
-          [{ user_id: userA }, { user_id: userB }, { user_id: creatorId }, { user_id: adminUserId }],
+          [
+            { user_id: userA },
+            { user_id: userB },
+            { user_id: creatorId },
+            { user_id: adminUserId },
+          ],
           { onConflict: "user_id", ignoreDuplicates: true },
         );
 
@@ -210,7 +224,10 @@ describeIntegration(
         const client = createClient(URL, ANON, {
           auth: { persistSession: false, autoRefreshToken: false },
         });
-        const { error } = await client.auth.signInWithPassword({ email, password });
+        const { error } = await client.auth.signInWithPassword({
+          email,
+          password,
+        });
         if (error) throw new Error(`Sign-in failed: ${error.message}`);
         return client;
       };
@@ -220,13 +237,14 @@ describeIntegration(
         .from("user_roles")
         .insert({ user_id: adminUserId, role: "admin" });
       if (roleErr) throw roleErr;
-      const creatorClient = await signIn(creator.email);
+      creatorClient = await signIn(creator.email);
       const { error: submitErr } = await creatorClient
         .from("profiles")
         .update({ token_mint_address: testMint, token_ticker: "TKN" })
         .eq("user_id", creatorId);
       if (submitErr) throw submitErr;
-      const { error: approveErr } = await (await signIn(adminUser.email)).rpc(
+      adminUserClient = await signIn(adminUser.email);
+      const { error: approveErr } = await adminUserClient.rpc(
         "review_token_submission",
         { _user_id: creatorId, _approve: true },
       );
@@ -252,7 +270,8 @@ describeIntegration(
         email: a.email,
         password,
       });
-      if (signInErr) throw new Error(`User A sign-in failed: ${signInErr.message}`);
+      if (signInErr)
+        throw new Error(`User A sign-in failed: ${signInErr.message}`);
     }, 60_000);
 
     beforeEach(async () => {
@@ -272,7 +291,8 @@ describeIntegration(
       try {
         const ids = [userA, userB, creatorId, adminUserId].filter(Boolean);
         await admin.from("creator_token_grants").delete().in("user_id", ids);
-        if (gatedWorkId) await admin.from("works").delete().eq("id", gatedWorkId);
+        if (gatedWorkId)
+          await admin.from("works").delete().eq("id", gatedWorkId);
         await admin.from("user_roles").delete().in("user_id", ids);
         await admin.from("profiles").delete().in("user_id", ids);
         for (const id of ids) await admin.auth.admin.deleteUser(id);
@@ -319,10 +339,54 @@ describeIntegration(
       it("lets the caller's linked wallet through to the token check", async () => {
         // An unknown creator is the next gate after the wallet checks, so a
         // 404 here means the wallet was accepted without touching Solana RPC.
-        const res = await requestGrant(walletA, { creator: crypto.randomUUID() });
+        const res = await requestGrant(walletA, {
+          creator: crypto.randomUUID(),
+        });
 
         expect(res.status).toBe(404);
         expect(res.body?.error).toBe("creator has not linked a token");
+      });
+
+      it("checks the balance for a real creator's live token", async () => {
+        const res = await requestGrant(walletA);
+
+        expect(reachedBalanceCheck(res)).toBe(true);
+        expect(await grantCount(userA)).toBe(0);
+      });
+
+      it("keeps the live token unlockable while a replacement is pending or rejected", async () => {
+        const { error: submitErr } = await creatorClient
+          .from("profiles")
+          .update({
+            token_mint_address: makeWallet().address,
+            token_ticker: "NEW",
+          })
+          .eq("user_id", creatorId);
+        if (submitErr) throw submitErr;
+        expect(reachedBalanceCheck(await requestGrant(walletA))).toBe(true);
+
+        const { error: rejectErr } = await adminUserClient.rpc(
+          "review_token_submission",
+          { _user_id: creatorId, _approve: false },
+        );
+        if (rejectErr) throw rejectErr;
+        expect(reachedBalanceCheck(await requestGrant(walletA))).toBe(true);
+      });
+
+      it("refuses a creator whose only token is unapproved", async () => {
+        const { error } = await admin
+          .from("profiles")
+          .update({
+            token_mint_address_pending: makeWallet().address,
+            token_submission_status: "pending",
+          })
+          .eq("user_id", userB);
+        if (error) throw error;
+
+        const res = await requestGrant(walletA, { creator: userB });
+
+        expect(res.status).toBe(404);
+        expect(await grantCount(userA)).toBe(0);
       });
     });
 

@@ -73,7 +73,7 @@ const WorksLightbox = ({ open, onOpenChange, userId }: Props) => {
       const { data } = await supabase
         .from("profiles")
         .select("display_name, username")
-        .eq("id", userId)
+        .eq("user_id", userId)
         .maybeSingle();
       return data;
     },
