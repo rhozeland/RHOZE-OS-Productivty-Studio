@@ -76,9 +76,10 @@ interface SurfaceProps {
 
 /** Mirrors AppLayout's persistent header nav (top bar). */
 const HeaderNavSurface = ({ pathname }: SurfaceProps) => {
-  // v7: Stream is the unified social pillar. Boards/Drops still appear
-  // in the header for power users who deep-link in.
-  const ids = ["discover", "projects", "droprooms"] as const;
+  // AppLayout currently renders no persistent header links. Keep the mirror
+  // aligned with HEADER_NAV_IDS there so this surface does not invent retired
+  // navigation entries that are absent from NAV_ITEMS_BY_ID.
+  const ids = [] as const;
   return (
     <nav aria-label="header-nav" data-testid="surface-header">
       {ids.map((id) => {
@@ -183,10 +184,11 @@ const activeIdIn = (el: HTMLElement): string | null => {
  *   - nested sub-routes (detail pages)
  *   - legacy aliases (matchPaths)
  * ──────────────────────────────────────────────────────────────────────── */
-const ROUTE_MATRIX: Array<{ pathname: string; expectedId: string }> = [
+const ROUTE_MATRIX: Array<{ pathname: string; expectedId: string | null }> = [
   { pathname: "/discover", expectedId: "discover" },
   // Legacy /dashboard route still lights up Discover (matchPath alias).
   { pathname: "/dashboard", expectedId: "discover" },
+  // /stream is a legacy alias of Discover
   { pathname: "/stream", expectedId: "discover" },
   { pathname: "/messages", expectedId: "messages" },
   { pathname: "/smartboards", expectedId: "projects" },
@@ -195,6 +197,7 @@ const ROUTE_MATRIX: Array<{ pathname: string; expectedId: string }> = [
   // Legacy alias — must still light Drops up.
   { pathname: "/droprooms", expectedId: "droprooms" },
   { pathname: "/droprooms/xyz/chat", expectedId: "droprooms" },
+  { pathname: "/unregistered-route", expectedId: null },
 ];
 
 /* ────────────────────────────────────────────────────────────────────────
@@ -257,13 +260,20 @@ describe("Header / Dock / Sidebar active-state parity (rendered)", () => {
             ).toBeLessThanOrEqual(1);
           }
 
+          // An unregistered route should not activate a primary nav item.
+          if (route.expectedId === null) {
+            expect(headerActive).toBeNull();
+            expect(dockActive).toBeNull();
+            expect(sidebarActive).toBeNull();
+          }
+
           // The active id, when present in a surface, must equal expectedId.
           for (const [name, actual] of [
             ["header", headerActive],
             ["dock", dockActive],
             ["sidebar", sidebarActive],
           ] as const) {
-            if (actual !== null) {
+            if (actual !== null && route.expectedId !== null) {
               expect(
                 actual,
                 `${name} highlighted "${actual}" on ${route.pathname}, expected "${route.expectedId}"`,
