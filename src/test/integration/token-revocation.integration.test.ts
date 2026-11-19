@@ -293,6 +293,18 @@ describeIntegration(
       expect(await fanSeesGrant()).toBe(false);
     });
 
+    it("revokes access once the grant expires", async () => {
+      expect(await fanSeesGatedWork()).toBe(true);
+
+      const { error } = await admin
+        .from("creator_token_grants")
+        .update({ expires_at: new Date(Date.now() - 1000).toISOString() })
+        .eq("user_id", fanId);
+      if (error) throw error;
+
+      expect(await fanSeesGatedWork()).toBe(false);
+    });
+
     it("refuses unauthorized revocation and grant tampering", async () => {
       await otherClient
         .from("profiles")
