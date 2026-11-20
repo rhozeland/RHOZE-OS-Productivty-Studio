@@ -190,6 +190,16 @@ describeLocalIntegration("external mint local database trust and lock regression
       let lockerTransactionOpen = false;
       let releaseLock: Promise<void> | undefined;
       let lockerError: unknown;
+      let testFailed = false;
+      let testError: unknown;
+      const cleanupErrors: Array<{ step: string; error: unknown }> = [];
+      const captureCleanup = async (step: string, action: () => Promise<unknown>): Promise<void> => {
+        try {
+          await action();
+        } catch (error) {
+          cleanupErrors.push({ step, error });
+        }
+      };
 
       try {
         await control.connect();
@@ -307,31 +317,78 @@ describeLocalIntegration("external mint local database trust and lock regression
           [challengeId],
         );
         expect(challenge.rows[0]?.consumed_at).toBeNull();
+      } catch (error) {
+        testFailed = true;
+        testError = error;
       } finally {
-        if (releaseLock) await releaseLock;
-        if (controlTransactionOpen) await control.query("ROLLBACK").catch(() => undefined);
-        if (lockerTransactionOpen) await locker.query("ROLLBACK").catch(() => undefined);
+        await captureCleanup("release locker", async () => {
+          if (releaseLock) await releaseLock;
+        });
+        if (lockerError !== undefined) cleanupErrors.push({ step: "release locker", error: lockerError });
+        await captureCleanup("rollback control transaction", async () => {
+          if (controlTransactionOpen) {
+            await control.query("ROLLBACK");
+            controlTransactionOpen = false;
+          }
+        });
+        await captureCleanup("rollback locker transaction", async () => {
+          if (lockerTransactionOpen) {
+            await locker.query("ROLLBACK");
+            lockerTransactionOpen = false;
+          }
+        });
 
-        try {
-          if (controlConnected) {
+        if (controlConnected) {
+          let fixtureCleanupTransactionOpen = false;
+          await captureCleanup("begin fixture cleanup transaction", async () => {
             await control.query("BEGIN");
+            fixtureCleanupTransactionOpen = true;
+          });
+
+          if (fixtureCleanupTransactionOpen) {
             try {
               await control.query("DELETE FROM public.external_mint_attachment_challenges WHERE id = $1", [challengeId]);
               await control.query(`DELETE FROM public.${table} WHERE id = $1`, [targetId]);
               await control.query("DELETE FROM auth.users WHERE id = $1", [userId]);
               await control.query("COMMIT");
+              fixtureCleanupTransactionOpen = false;
             } catch (error) {
-              await control.query("ROLLBACK").catch(() => undefined);
-              throw error;
+              cleanupErrors.push({ step: "delete fixture data", error });
+            }
+
+            if (fixtureCleanupTransactionOpen) {
+              await captureCleanup("rollback fixture cleanup transaction", async () => {
+                await control.query("ROLLBACK");
+                fixtureCleanupTransactionOpen = false;
+              });
             }
           }
-        } finally {
-          await Promise.all([
-            controlConnected ? control.end() : Promise.resolve(),
-            lockerConnected ? locker.end() : Promise.resolve(),
-          ]);
+        }
+
+        const closeResults = await Promise.allSettled([
+          controlConnected ? control.end() : Promise.resolve(),
+          lockerConnected ? locker.end() : Promise.resolve(),
+        ]);
+        closeResults.forEach((result, index) => {
+          if (result.status === "rejected") {
+            cleanupErrors.push({
+              step: index === 0 ? "close control connection" : "close locker connection",
+              error: result.reason,
+            });
+          }
+        });
+      }
+
+      if (cleanupErrors.length > 0) {
+        const details = cleanupErrors.map(({ step, error }) => `${step}: ${String(error)}`).join("; ");
+        if (testFailed) {
+          console.error("Integration fixture cleanup failed", cleanupErrors);
+        } else {
+          throw new Error(`Integration fixture cleanup failed: ${details}`);
         }
       }
+
+      if (testFailed) throw testError;
     },
     25_000,
   );
