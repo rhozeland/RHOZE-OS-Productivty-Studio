@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import TokenAttachmentDialog from "@/components/coin/TokenAttachmentDialog";
-import { WalletSignatureRejectedError } from "@/lib/token-attachment";
+import { WalletConnectionRequiredError, WalletSignatureRejectedError } from "@/lib/token-attachment";
 
 const mocks = vi.hoisted(() => ({
   attachApproved: vi.fn(),
@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   toastSuccess: vi.fn(),
   toastInfo: vi.fn(),
   toastError: vi.fn(),
+  walletModalVisible: false,
 }));
 
 vi.mock("@/hooks/useTokenAttachment", () => ({
@@ -25,6 +26,9 @@ vi.mock("@/hooks/useTokenAttachment", () => ({
 }));
 
 vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => ({ user: { id: "creator-id" } }) }));
+vi.mock("@solana/wallet-adapter-react-ui", () => ({
+  useWalletModal: () => ({ visible: mocks.walletModalVisible }),
+}));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { from: mocks.from } }));
 vi.mock("sonner", () => ({ toast: {
   success: mocks.toastSuccess,
@@ -59,7 +63,7 @@ const renderDialog = (targetType: "project" | "work", onOpenChange = vi.fn()) =>
     unlink: mocks.unlink,
     isPending: false,
   } as any;
-  const view = render(
+  const tree = () => (
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
         <TokenAttachmentDialog
@@ -70,9 +74,10 @@ const renderDialog = (targetType: "project" | "work", onOpenChange = vi.fn()) =>
           attachment={attachment}
         />
       </MemoryRouter>
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
-  return { ...view, onOpenChange };
+  const view = render(tree());
+  return { ...view, onOpenChange, rerenderDialog: () => view.rerender(tree()) };
 };
 
 describe("TokenAttachmentDialog", () => {
@@ -84,6 +89,7 @@ describe("TokenAttachmentDialog", () => {
     mocks.toastSuccess.mockReset();
     mocks.toastInfo.mockReset();
     mocks.toastError.mockReset();
+    mocks.walletModalVisible = false;
     mocks.from.mockReturnValue(makeQueryBuilder());
   });
 
@@ -142,6 +148,58 @@ describe("TokenAttachmentDialog", () => {
     fireEvent.click(screen.getByRole("button", { name: /Verify creator wallet and attach/i }));
 
     await waitFor(() => expect(mocks.toastInfo).toHaveBeenCalledWith("Wallet signature canceled. No token was attached."));
+  });
+
+  it("releases the Radix modal while the wallet chooser is open and preserves the retry input", async () => {
+    const mintAddress = "Mint111111111111111111111111111111111111111";
+    mocks.attachExternal.mockImplementation(async () => {
+      mocks.walletModalVisible = true;
+      throw new WalletConnectionRequiredError();
+    });
+    const { rerenderDialog } = renderDialog("work");
+    expect(document.body.style.pointerEvents).toBe("none");
+
+    fireEvent.click(screen.getByRole("button", { name: /External pump.fun token/i }));
+    fireEvent.change(screen.getByLabelText(/Pump.fun mint address/i), { target: { value: mintAddress } });
+    fireEvent.click(screen.getByRole("button", { name: /Verify creator wallet and attach/i }));
+
+    await waitFor(() => expect(mocks.attachExternal).toHaveBeenCalledTimes(1));
+
+    const walletModal = document.createElement("div");
+    walletModal.className = "wallet-adapter-modal";
+    const walletOption = document.createElement("button");
+    walletOption.textContent = "Phantom";
+    walletOption.setAttribute("aria-label", "Phantom wallet");
+    const walletList = document.createElement("ul");
+    walletList.className = "wallet-adapter-modal-list";
+    walletList.append(walletOption);
+    walletModal.append(walletList);
+    document.body.append(walletModal);
+
+    act(() => rerenderDialog());
+
+    expect(screen.queryByLabelText(/Pump.fun mint address/i)).not.toBeInTheDocument();
+    expect(document.body.style.pointerEvents).not.toBe("none");
+    expect(walletOption).toHaveFocus();
+    expect(mocks.attachExternal).toHaveBeenCalledTimes(1);
+
+    mocks.walletModalVisible = false;
+    act(() => rerenderDialog());
+
+    expect(screen.getByLabelText(/Pump.fun mint address/i)).toHaveValue(mintAddress);
+    expect(document.body.style.pointerEvents).toBe("none");
+    expect(mocks.attachExternal).toHaveBeenCalledTimes(1);
+
+    mocks.attachExternal.mockResolvedValue({ token: { mint: mintAddress, ticker: "RETRY" } });
+    fireEvent.click(screen.getByRole("button", { name: /Verify creator wallet and attach/i }));
+
+    await waitFor(() => expect(mocks.attachExternal).toHaveBeenCalledTimes(2));
+    expect(mocks.attachExternal).toHaveBeenLastCalledWith({
+      mintAddress,
+      targetType: "work",
+      targetId: "target-id",
+    });
+    walletModal.remove();
   });
 
   it("reports an external backend failure in the UI", async () => {

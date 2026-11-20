@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { Check, Coins, Loader2, Wallet } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -44,6 +45,7 @@ const showAttachmentError = (error: unknown) => {
 
 export default function TokenAttachmentDialog({ open, onOpenChange, targetType, targetId, attachment, hasExistingLink = false }: Props) {
   const { user } = useAuth();
+  const { visible: walletModalVisible } = useWalletModal();
   const [method, setMethod] = useState<Method>("choose");
   const [mintAddress, setMintAddress] = useState("");
 
@@ -69,6 +71,14 @@ export default function TokenAttachmentDialog({ open, onOpenChange, targetType, 
       setMintAddress("");
     }
   }, [open]);
+
+  useEffect(() => {
+    if (!walletModalVisible) return;
+    const walletModal = document.querySelector<HTMLElement>(".wallet-adapter-modal");
+    const firstWalletOption = walletModal?.querySelector<HTMLElement>(".wallet-adapter-modal-list button");
+    const focusTarget = firstWalletOption ?? walletModal?.querySelector<HTMLElement>("button");
+    focusTarget?.focus();
+  }, [walletModalVisible]);
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (attachment.isPending) return;
@@ -104,7 +114,7 @@ export default function TokenAttachmentDialog({ open, onOpenChange, targetType, 
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      {!walletModalVisible && <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="font-display">Attach a token</DialogTitle>
           <DialogDescription>
@@ -204,7 +214,7 @@ export default function TokenAttachmentDialog({ open, onOpenChange, targetType, 
             </Button>
           </div>
         )}
-      </DialogContent>
+      </DialogContent>}
     </Dialog>
   );
 }
