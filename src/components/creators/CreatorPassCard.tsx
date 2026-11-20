@@ -197,7 +197,7 @@ const CreatorPassCard = ({ hideBalanceClaim = false }: { hideBalanceClaim?: bool
           .eq("read", false),
         sb.from("events")
           .select("id", { count: "exact", head: true })
-          .eq("user_id", user!.id)
+          .eq("host_id", user!.id)
           .gte("starts_at", new Date().toISOString()),
         sb.from("messages")
           .select("content, created_at")
