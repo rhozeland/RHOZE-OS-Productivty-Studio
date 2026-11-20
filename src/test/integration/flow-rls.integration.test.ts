@@ -20,18 +20,17 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { loadFlowFeed, clearFlowProfileCache } from "@/lib/flow-feed";
+import { getSupabaseTestConfig } from "./supabase-test-config";
 
 // ── Env-gate ─────────────────────────────────────────────────────────────
-const URL =
-  process.env.SUPABASE_TEST_URL ?? process.env.VITE_SUPABASE_URL ?? "";
-const ANON =
-  process.env.SUPABASE_TEST_ANON_KEY ??
-  process.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
-  "";
-const SERVICE = process.env.SUPABASE_TEST_SERVICE_ROLE_KEY ?? "";
+const testConfig = getSupabaseTestConfig("RUN_FLOW_RLS_INTEGRATION");
+const {
+  url: URL,
+  anonKey: ANON,
+  serviceRoleKey: SERVICE,
+  enabled: ENABLED,
+} = testConfig;
 const OPT_IN = process.env.RUN_FLOW_RLS_INTEGRATION === "1";
-
-const ENABLED = Boolean(URL && ANON && SERVICE && OPT_IN);
 
 const skipMessage = !OPT_IN
   ? "skipped: set RUN_FLOW_RLS_INTEGRATION=1 to enable"

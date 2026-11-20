@@ -43,7 +43,7 @@ const WorksLightbox = ({ open, onOpenChange, userId }: Props) => {
       // automatically unlocks any private/subscriber-only rows on next fetch.
       const { data } = await supabase
         .from("works")
-        .select("id, title, file_url, mime_type, kind, visibility, is_unverified, anchored_at, created_at, user_id, linked_token_mint")
+        .select("id, title, file_url, mime_type, kind, visibility, is_unverified, anchored_at, created_at, user_id, linked_token_id, linked_token_mint")
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .limit(120);
@@ -180,9 +180,9 @@ const WorksLightbox = ({ open, onOpenChange, userId }: Props) => {
                       <ShieldCheck className="h-2.5 w-2.5" /> Verified
                     </div>
                   )}
-                  {w.linked_token_mint && (
+                  {(w.linked_token_mint || w.linked_token_id) && (
                     <div className="absolute top-2 left-2" onClick={(e) => e.preventDefault()}>
-                      <WorkTokenChip mint={w.linked_token_mint} variant="compact" />
+                      <WorkTokenChip mint={w.linked_token_mint} tokenId={w.linked_token_id} variant="compact" />
                     </div>
                   )}
                   <div className="absolute inset-x-2 bottom-2 text-white">
@@ -200,6 +200,7 @@ const WorksLightbox = ({ open, onOpenChange, userId }: Props) => {
                         workId={w.id}
                         workOwnerId={w.user_id}
                         currentMint={w.linked_token_mint}
+                        currentTokenId={w.linked_token_id}
                       />
                     </div>
                   )}
