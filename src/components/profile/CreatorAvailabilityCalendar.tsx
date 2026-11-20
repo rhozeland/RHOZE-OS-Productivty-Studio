@@ -163,14 +163,13 @@ const CreatorAvailabilityCalendar = ({
   const { data: availability, isLoading: loadingAvail } = useQuery({
     queryKey: ["creator-availability", creatorId, weekStart.toISOString()],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("creator_availability")
-        .select("*")
-        .eq("user_id", creatorId)
-        .gte("start_time", weekStart.toISOString())
-        .lte("start_time", weekEnd.toISOString());
+      const { data, error } = await supabase.rpc("get_creator_availability", {
+        _creator: creatorId,
+        _from: weekStart.toISOString(),
+        _to: weekEnd.toISOString(),
+      });
       if (error) throw error;
-      return (data ?? []) as AvailabilityRow[];
+      return (data ?? []) as unknown as AvailabilityRow[];
     },
   });
 
@@ -191,12 +190,11 @@ const CreatorAvailabilityCalendar = ({
   const { data: recurring } = useQuery({
     queryKey: ["creator-recurring-availability", creatorId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("creator_availability_recurring")
-        .select("*")
-        .eq("user_id", creatorId);
+      const { data, error } = await supabase.rpc("get_creator_recurring_availability", {
+        _creator: creatorId,
+      });
       if (error) throw error;
-      return (data ?? []) as RecurringRow[];
+      return (data ?? []) as unknown as RecurringRow[];
     },
   });
 
