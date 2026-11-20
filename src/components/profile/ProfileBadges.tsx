@@ -21,10 +21,7 @@ const ProfileBadges = ({ userId, compact = false }: ProfileBadgesProps) => {
   const { data: badges } = useQuery({
     queryKey: ["user-badges-display", userId],
     queryFn: async () => {
-      const { data: userBadges } = await supabase
-        .from("user_badges")
-        .select("badge_id")
-        .eq("user_id", userId);
+      const { data: userBadges } = await supabase.rpc("get_user_badge_ids", { _user: userId });
       if (!userBadges || userBadges.length === 0) return [];
 
       const badgeIds = userBadges.map((ub: any) => ub.badge_id);

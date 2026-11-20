@@ -6448,6 +6448,25 @@ export type Database = {
         }[]
       }
       get_concierge_contact_email: { Args: { _id: string }; Returns: string }
+      get_creator_availability: {
+        Args: { _creator: string; _from: string; _to: string }
+        Returns: {
+          end_time: string
+          id: string
+          start_time: string
+          user_id: string
+        }[]
+      }
+      get_creator_recurring_availability: {
+        Args: { _creator: string }
+        Returns: {
+          end_minute: number
+          id: string
+          start_minute: number
+          user_id: string
+          weekday: number
+        }[]
+      }
       get_host_fiat_earnings: {
         Args: { _host_id: string }
         Returns: {
@@ -6527,6 +6546,12 @@ export type Database = {
           username: string
           wallet_address: string
           youtube_url: string
+        }[]
+      }
+      get_user_badge_ids: {
+        Args: { _user: string }
+        Returns: {
+          badge_id: string
         }[]
       }
       get_user_token_holding: {
