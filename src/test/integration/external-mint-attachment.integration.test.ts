@@ -7,6 +7,7 @@ const { url: URL, anonKey: ANON, serviceRoleKey: SERVICE, enabled: ENABLED } =
 const describeIntegration = ENABLED ? describe : describe.skip;
 
 const MINT = "So11111111111111111111111111111111111111112";
+const REPLACEMENT_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 const TICKER = "TESTCOIN";
 const NAME = "Verified Test Coin";
 const IMAGE = "https://images.example.test/verified.png";
@@ -196,6 +197,47 @@ describeIntegration("external pump.fun mint attachment database enforcement", ()
     expect(work).toEqual({ linked_token_mint: MINT, linked_token_name: NAME, linked_token_ticker: TICKER, linked_token_image_url: IMAGE });
   });
 
+  it.each(["project", "work"] as const)(
+    "preserves verified display metadata when replacing an external mint on a %s",
+    async (targetType) => {
+      const targetId = targetType === "project" ? projectId : workId;
+      const firstChallenge = await seedChallenge({ target_type: targetType, target_id: targetId });
+      const { error: firstAttachError } = await admin.rpc("attach_verified_external_mint", {
+        p_challenge_id: firstChallenge,
+      });
+      expect(firstAttachError).toBeNull();
+
+      const replacementChallenge = await seedChallenge({
+        target_type: targetType,
+        target_id: targetId,
+        mint_address: REPLACEMENT_MINT,
+        previous_linked_token_mint: MINT,
+      });
+      const { error: replacementError } = await admin.rpc("attach_verified_external_mint", {
+        p_challenge_id: replacementChallenge,
+      });
+      expect(replacementError).toBeNull();
+
+      const linkedTarget = targetType === "project"
+        ? await admin.from("projects")
+          .select("linked_token_id,linked_token_mint,linked_token_ticker,linked_token_name,linked_token_image_url")
+          .eq("id", targetId)
+          .single()
+        : await admin.from("works")
+          .select("linked_token_id,linked_token_mint,linked_token_ticker,linked_token_name,linked_token_image_url")
+          .eq("id", targetId)
+          .single();
+      expect(linkedTarget.error).toBeNull();
+      expect(linkedTarget.data).toEqual({
+        linked_token_id: null,
+        linked_token_mint: REPLACEMENT_MINT,
+        linked_token_ticker: TICKER,
+        linked_token_name: NAME,
+        linked_token_image_url: IMAGE,
+      });
+    },
+  );
+
   it("blocks owner-supplied and service-role direct external metadata writes", async () => {
     const forged = {
       linked_token_mint: MINT,
@@ -230,21 +272,36 @@ describeIntegration("external pump.fun mint attachment database enforcement", ()
     expect(project).toEqual({ title: "External mint integration project", linked_token_mint: null });
   });
 
-  it("lets the owner unlink and relies on Task #147 to clear stale metadata", async () => {
-    const challengeId = await seedChallenge();
-    const { error: attachError } = await admin.rpc("attach_verified_external_mint", { p_challenge_id: challengeId });
-    expect(attachError).toBeNull();
+  it.each(["project", "work"] as const)(
+    "lets the owner unlink a %s and clears its stale metadata",
+    async (targetType) => {
+      const targetId = targetType === "project" ? projectId : workId;
+      const challengeId = await seedChallenge({ target_type: targetType, target_id: targetId });
+      const { error: attachError } = await admin.rpc("attach_verified_external_mint", { p_challenge_id: challengeId });
+      expect(attachError).toBeNull();
 
-    const { error: unlinkError } = await owner.from("projects").update({ linked_token_mint: null }).eq("id", projectId);
-    expect(unlinkError).toBeNull();
+      const unlink = targetType === "project"
+        ? await owner.from("projects").update({ linked_token_mint: null }).eq("id", targetId)
+        : await owner.from("works").update({ linked_token_mint: null }).eq("id", targetId);
+      expect(unlink.error).toBeNull();
 
-    const { data: project } = await admin
-      .from("projects")
-      .select("linked_token_mint,linked_token_ticker,linked_token_name,linked_token_image_url")
-      .eq("id", projectId)
-      .single();
-    expect(project).toEqual({ linked_token_mint: null, linked_token_ticker: null, linked_token_name: null, linked_token_image_url: null });
-  });
+      const unlinkedTarget = targetType === "project"
+        ? await admin.from("projects")
+          .select("linked_token_mint,linked_token_ticker,linked_token_name,linked_token_image_url")
+          .eq("id", targetId)
+          .single()
+        : await admin.from("works")
+          .select("linked_token_mint,linked_token_ticker,linked_token_name,linked_token_image_url")
+          .eq("id", targetId)
+          .single();
+      expect(unlinkedTarget.data).toEqual({
+        linked_token_mint: null,
+        linked_token_ticker: null,
+        linked_token_name: null,
+        linked_token_image_url: null,
+      });
+    },
+  );
 
   it("rejects conflicting creator-token and external-mint relationships", async () => {
     const { error } = await owner.from("projects").update({

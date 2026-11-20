@@ -8,7 +8,7 @@ and selected production request handlers. Suites are skipped by default.
 | `flow-rls.integration.test.ts` | `RUN_FLOW_RLS_INTEGRATION=1` | Supabase only |
 | `curator-invite.integration.test.ts` | `RUN_CURATOR_INVITE_INTEGRATION=1` | Supabase only |
 | `external-mint-attachment.integration.test.ts` | `RUN_EXTERNAL_MINT_ATTACHMENT_INTEGRATION=1` | Supabase only; seeds persistence challenges |
-| `external-mint-challenge-expiry-lock.integration.test.ts` | `RUN_EXTERNAL_MINT_CHALLENGE_LOCK_INTEGRATION=1` | Local Supabase only; opens two PostgreSQL sessions |
+| `external-mint-challenge-expiry-lock.integration.test.ts` | `RUN_EXTERNAL_MINT_CHALLENGE_LOCK_INTEGRATION=1` | Local Supabase only; tests the database trust boundary and opens two PostgreSQL sessions |
 | `approved-token-attachment.integration.test.ts` | `RUN_APPROVED_TOKEN_ATTACHMENT_INTEGRATION=1` | Supabase only |
 | `external-mint-attachment-workflow.integration.test.ts` | `RUN_EXTERNAL_MINT_ATTACHMENT_WORKFLOW_INTEGRATION=1` | Supabase plus mocked Solana RPC and pump.fun responses |
 
@@ -56,11 +56,13 @@ real database persistence function directly with service-role-seeded
 challenges. It remains useful for database-only enforcement and replay tests;
 the handler workflow suite covers the authenticated challenge-to-attach path.
 
-The challenge-expiry lock regression requires the local Supabase stack and CLI.
-It reads the local database URL from `supabase status`, verifies the URL is
-loopback-only, and opens separate PostgreSQL sessions for the target-row lock
-and attachment RPC. Run it with `RUN_EXTERNAL_MINT_CHALLENGE_LOCK_INTEGRATION=1`
-and `npm test -- src/test/integration/external-mint-challenge-expiry-lock.integration.test.ts`.
+The local database regression suite requires the local Supabase stack and CLI.
+It reads the database URL from `supabase status`, verifies the URL is
+loopback-only, confirms authenticated sessions cannot spoof the trusted
+external-attachment marker, and opens separate PostgreSQL sessions for the
+target-row lock and attachment RPC. Run it with
+`RUN_EXTERNAL_MINT_CHALLENGE_LOCK_INTEGRATION=1` and
+`npm test -- src/test/integration/external-mint-challenge-expiry-lock.integration.test.ts`.
 
 ## Running
 

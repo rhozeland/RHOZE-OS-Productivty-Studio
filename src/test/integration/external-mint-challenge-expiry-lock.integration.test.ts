@@ -4,8 +4,9 @@ import { Client } from "pg";
 import { beforeAll, describe, expect, it } from "vitest";
 
 const RUN_FLAG = "RUN_EXTERNAL_MINT_CHALLENGE_LOCK_INTEGRATION";
-const MIGRATION_VERSION = "20261120120000";
+const MIGRATION_VERSION = "20261120130000";
 const LOCK_HOLD_MS = 6_000;
+const MINT = "So11111111111111111111111111111111111111112";
 const describeLocalIntegration = process.env[RUN_FLAG] === "1" ? describe : describe.skip;
 
 type TargetType = "project" | "work";
@@ -46,7 +47,7 @@ const getLocalDatabaseUrl = (): string => {
     !["127.0.0.1", "localhost", "::1"].includes(hostname) ||
     parsedUrl.pathname !== "/postgres"
   ) {
-    throw new Error("This concurrency suite only connects to the local loopback Supabase database.");
+    throw new Error("This local database suite only connects to the loopback Supabase database.");
   }
 
   return connectionString;
@@ -55,7 +56,7 @@ const getLocalDatabaseUrl = (): string => {
 const targetTable = (targetType: TargetType): "projects" | "works" =>
   targetType === "project" ? "projects" : "works";
 
-describeLocalIntegration("external mint challenge expiry during local database lock waits", () => {
+describeLocalIntegration("external mint local database trust and lock regressions", () => {
   let connectionString: string;
 
   beforeAll(async () => {
@@ -92,6 +93,77 @@ describeLocalIntegration("external mint challenge expiry during local database l
       await client.end();
     }
   }, 20_000);
+
+  it.each(["project", "work"] as const)(
+    "rejects a forged verified marker from an authenticated session updating a %s",
+    async (targetType) => {
+      const table = targetTable(targetType);
+      const userId = randomUUID();
+      const targetId = randomUUID();
+      const email = `mint-context-${randomUUID()}@integration.test`;
+      const client = new Client({
+        connectionString,
+        connectionTimeoutMillis: 5_000,
+        query_timeout: 10_000,
+      });
+      await client.connect();
+      let transactionOpen = false;
+
+      try {
+        await client.query("BEGIN");
+        transactionOpen = true;
+        await client.query("SET LOCAL statement_timeout = '10s'");
+        await client.query("INSERT INTO auth.users (id, email) VALUES ($1, $2)", [userId, email]);
+        await client.query("SELECT set_config('request.jwt.claim.sub', $1, true)", [userId]);
+        await client.query("SELECT set_config('rhoze.external_mint_attachment', 'verified', true)");
+        if (targetType === "project") {
+          await client.query(
+            `INSERT INTO public.projects (
+               id, user_id, title, linked_token_mint, linked_token_ticker, linked_token_name, linked_token_image_url
+             ) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+            [targetId, userId, "GUC trust test project", MINT, "TRUST", "Trust Test", "https://images.example.test/trust.png"],
+          );
+        } else {
+          await client.query(
+            `INSERT INTO public.works (
+               id, user_id, title, content_hash, linked_token_mint, linked_token_ticker, linked_token_name, linked_token_image_url
+             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+            [targetId, userId, "GUC trust test work", randomUUID().replace(/-/g, ""), MINT, "TRUST", "Trust Test", "https://images.example.test/trust.png"],
+          );
+        }
+
+        await client.query("SET LOCAL ROLE authenticated");
+        await client.query("SELECT set_config('request.jwt.claim.role', 'authenticated', true)");
+        await client.query("SELECT set_config('rhoze.external_mint_attachment', 'verified', true)");
+        const identity = await client.query<{ role: string; user_id: string }>(
+          "SELECT current_user AS role, auth.uid() AS user_id",
+        );
+        expect(identity.rows[0]).toEqual({ role: "authenticated", user_id: userId });
+
+        const visibleTarget = await client.query(`SELECT id FROM public.${table} WHERE id = $1`, [targetId]);
+        expect(visibleTarget.rowCount).toBe(1);
+
+        let spoofedWriteError: unknown;
+        try {
+          await client.query(
+            `UPDATE public.${table}
+                SET linked_token_mint = $1,
+                    linked_token_ticker = $2,
+                    linked_token_name = $3,
+                    linked_token_image_url = $4
+              WHERE id = $5`,
+            ["11111111111111111111111111111111", "TRUST", "Trust Test", "https://images.example.test/trust.png", targetId],
+          );
+        } catch (error) {
+          spoofedWriteError = error;
+        }
+        expect((spoofedWriteError as { code?: string } | undefined)?.code).toBe("42501");
+      } finally {
+        if (transactionOpen) await client.query("ROLLBACK").catch(() => undefined);
+        await client.end();
+      }
+    },
+  );
 
   it.each(["project", "work"] as const)(
     "rejects a challenge that expires while its %s target row is locked",
