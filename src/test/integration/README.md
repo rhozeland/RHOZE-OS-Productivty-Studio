@@ -13,10 +13,12 @@ and selected production request handlers. Suites are skipped by default.
 
 ## Safe Supabase target
 
-The token attachment suites create temporary auth users and rows, so they also
-require a target declaration. They accept only a local Supabase instance or a
-dedicated remote test project. They refuse to run against the project ID in
-`supabase/config.toml` or any Supabase URL configured in the app's `.env` files.
+Mutating suites require an explicit `SUPABASE_TEST_URL`; they never use
+`VITE_SUPABASE_URL` as the test target. They accept only a local Supabase
+instance or a dedicated remote test project. They refuse to run against the
+project ID in `supabase/config.toml`, `process.env.VITE_SUPABASE_URL`, or a
+Supabase URL configured in Vite environment files (`.env`, `.env.local`,
+`.env.[mode]`, or `.env.[mode].local`).
 
 Required credentials:
 
