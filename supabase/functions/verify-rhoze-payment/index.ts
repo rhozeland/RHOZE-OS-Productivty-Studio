@@ -171,7 +171,8 @@ Deno.serve(async (req) => {
     }
 
     const receivedTokens = transferAmount / Math.pow(10, config.rhozeDecimals);
-    if (receivedTokens < expected_tokens * 0.99) {
+    const expectedBaseUnits = Math.ceil(expected_tokens * Math.pow(10, config.rhozeDecimals));
+    if (transferAmount < expectedBaseUnits) {
       return new Response(JSON.stringify({
         error: `Insufficient $RHOZE. Expected ${expected_tokens}, received ${receivedTokens}`,
       }), {

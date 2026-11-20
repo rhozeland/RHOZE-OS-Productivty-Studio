@@ -296,7 +296,7 @@ const StudioBookingModal = ({ open, onOpenChange, studio }: StudioBookingModalPr
     return setMinutes(setHours(dragDate, startH), 0);
   };
 
-  const handleConfirm = async (tokenOverride?: string) => {
+  const handleConfirm = async (tokenOverride?: string, rethrowOnError = false) => {
     if (!user || !studio) return;
     const startTime = getStartTime();
     if (!startTime) return;
@@ -377,6 +377,7 @@ const StudioBookingModal = ({ open, onOpenChange, studio }: StudioBookingModalPr
       resetForm();
     } catch (err: any) {
       toast.error(err.message || "Booking failed");
+      if (rethrowOnError) throw err;
     } finally {
       setLoading(false);
     }
@@ -887,7 +888,7 @@ const StudioBookingModal = ({ open, onOpenChange, studio }: StudioBookingModalPr
                 variant="default"
                 retrySignature={pendingRhozeSignature ?? undefined}
                 onVerificationPending={savePendingRhozePayment}
-                onSuccess={() => handleConfirm()}
+                onSuccess={() => handleConfirm(undefined, true)}
               />
             )}
 
