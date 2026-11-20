@@ -5,6 +5,7 @@ import {
   attachExternalPumpToken,
   invalidateTokenAttachmentQueries,
   linkApprovedCreatorToken,
+  tokenAttachmentErrorMessage,
   WalletSignatureRejectedError,
   type ExternalAttachmentBody,
   type FunctionInvoker,
@@ -36,6 +37,39 @@ const invokeWithSuccessfulResponses = () => {
 
 describe("shared secure token attachment logic", () => {
   beforeEach(() => vi.clearAllMocks());
+
+  it("preserves a PostgREST message from a plain error object", () => {
+    expect(tokenAttachmentErrorMessage({
+      message: "Token is not eligible for this target",
+      code: "42501",
+    })).toBe("Token is not eligible for this target");
+  });
+
+  it("preserves a nonempty JavaScript Error message", () => {
+    expect(tokenAttachmentErrorMessage(new Error("RPC authorization failed")))
+      .toBe("RPC authorization failed");
+  });
+
+  it.each([new Error(""), { message: "" }])(
+    "uses the generic fallback for an empty message",
+    (error) => {
+      expect(tokenAttachmentErrorMessage(error)).toBe("Token attachment failed. Please try again.");
+    },
+  );
+
+  it.each([new Error("   "), { message: "   " }])(
+    "uses the generic fallback for a whitespace-only message",
+    (error) => {
+      expect(tokenAttachmentErrorMessage(error)).toBe("Token attachment failed. Please try again.");
+    },
+  );
+
+  it.each([null, undefined, "RPC failed", 42501, {}, { message: 42501 }])(
+    "uses the generic fallback for unknown or malformed error values",
+    (error) => {
+      expect(tokenAttachmentErrorMessage(error)).toBe("Token attachment failed. Please try again.");
+    },
+  );
 
   it.each(["project", "work"] as TokenTargetType[])("uses the approved-token RPC for a %s target", async (targetType) => {
     const rpc = vi.fn<RpcInvoker>().mockResolvedValue({ error: null });

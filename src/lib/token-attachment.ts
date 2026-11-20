@@ -178,8 +178,22 @@ export async function invalidateTokenAttachmentQueries(
   await Promise.all(keys.map((queryKey) => queryClient.invalidateQueries({ queryKey })));
 }
 
-export const tokenAttachmentErrorMessage = (error: unknown): string =>
-  error instanceof Error ? error.message : "Token attachment failed. Please try again.";
+export const tokenAttachmentErrorMessage = (error: unknown): string => {
+  const fallback = "Token attachment failed. Please try again.";
+  let message: unknown;
+
+  try {
+    if (error instanceof Error) {
+      message = error.message;
+    } else if (typeof error === "object" && error !== null) {
+      message = (error as { message?: unknown }).message;
+    }
+  } catch {
+    return fallback;
+  }
+
+  return typeof message === "string" && message.trim().length > 0 ? message : fallback;
+};
 
 export const isWalletSignatureRejectedError = (error: unknown): error is WalletSignatureRejectedError =>
   error instanceof WalletSignatureRejectedError;
