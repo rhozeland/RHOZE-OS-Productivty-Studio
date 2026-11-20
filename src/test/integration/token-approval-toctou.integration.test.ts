@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { createClient } from '@supabase/supabase-js';
+import { Client } from 'pg';
 
 
 
@@ -55,6 +56,11 @@ import { createClient } from '@supabase/supabase-js';
  * Set the test database service role key:
  *
  * $env:SUPABASE_TEST_SERVICE_ROLE_KEY="<TEST_SERVICE_ROLE_KEY>"
+ *
+ * Set the direct postgres connection string (OPTIONAL - only needed for
+ * the direct-DB trust-boundary tests; everything else skips them):
+ *
+ * $env:SUPABASE_TEST_DB_URL="postgresql://postgres:<PASSWORD>@db.rodqmawdrsafmwjeuqjz.supabase.co:5432/postgres"
  *
  * Get these values from the Rhozeland development Supabase project or ask me them on Slack (Gina)
  *
@@ -112,7 +118,15 @@ import { createClient } from '@supabase/supabase-js';
  *    that added expected-value validation.
  * 3. Concern B - A creator being able to modify fields that should only
  *    be controlled by the admin approval process. This is now FIXED by
- *    migration 20261108000000 which rejects unauthorized mutations explicitly.
+ *    migration 20261108000000 which rejects unauthorized mutations explicitly
+ *    with ERRCODE 42501 unless the caller is positively authorized
+ *    (admin role, verified service_role claims over PostgREST, or an
+ *    explicit maintenance session_user). Anon requests and plain
+ *    no-JWT direct database sessions are rejected.
+ * 4. P1 Task #109 boundary - a direct, no-JWT database session with UPDATE
+ *    privileges must NOT bypass the trigger just because auth.uid() and
+ *    request.jwt.claims are absent (tested with a dedicated probe role
+ *    below, gated on SUPABASE_TEST_DB_URL).
  *
  */
 
@@ -124,6 +138,7 @@ const RUN_TAG = `toctou-${Date.now()}`;
 const SUPABASE_TEST_URL = process.env.SUPABASE_TEST_URL || process.env.VITE_SUPABASE_URL;
 const SUPABASE_TEST_ANON_KEY = process.env.SUPABASE_TEST_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 const SUPABASE_TEST_SERVICE_ROLE_KEY = process.env.SUPABASE_TEST_SERVICE_ROLE_KEY;
+const SUPABASE_TEST_DB_URL = process.env.SUPABASE_TEST_DB_URL;
 const RUN_TOKEN_TOCTOU_INTEGRATION = process.env.RUN_TOKEN_TOCTOU_INTEGRATION === '1';
 
 const EXPECTED_TEST_PROJECT_ID = 'rodqmawdrsafmwjeuqjz';
@@ -132,6 +147,7 @@ console.log({
   supabaseUrlLoaded: Boolean(SUPABASE_TEST_URL),
   publishableKeyLoaded: Boolean(SUPABASE_TEST_ANON_KEY),
   serviceRoleLoaded: Boolean(SUPABASE_TEST_SERVICE_ROLE_KEY),
+  dbUrlLoaded: Boolean(SUPABASE_TEST_DB_URL),
   integrationEnabled: RUN_TOKEN_TOCTOU_INTEGRATION,
 });
 
@@ -149,8 +165,27 @@ if (
   );
 }
 
+// Direct-database boundary tests (P1 Task #109) additionally require a postgres
+// connection string, and it must point at the same test project.
+const IS_EXPECTED_TEST_DB_URL =
+  SUPABASE_TEST_DB_URL?.includes(EXPECTED_TEST_PROJECT_ID) ?? false;
+
+if (
+  RUN_TOKEN_TOCTOU_INTEGRATION &&
+  SUPABASE_TEST_DB_URL &&
+  !IS_EXPECTED_TEST_DB_URL
+) {
+  throw new Error(
+    `SAFETY CHECK FAILED: SUPABASE_TEST_DB_URL must point at the Rhozeland test database (${EXPECTED_TEST_PROJECT_ID}).`
+  );
+}
+
 // Skip tests unless the test database is fully set up and testing is tunred on
 const describeIntegration = RUN_TOKEN_TOCTOU_INTEGRATION && SUPABASE_TEST_URL && SUPABASE_TEST_ANON_KEY && SUPABASE_TEST_SERVICE_ROLE_KEY ? describe: describe.skip;
+
+// Boundary tests that use a raw postgres connection run only when
+// SUPABASE_TEST_DB_URL is provided; all other tests are unaffected.
+const itDb = SUPABASE_TEST_DB_URL ? it : it.skip;
 
 describeIntegration('Creator Token Approval Security Integration Tests', () => {
   // Placeholder credentials keep module collection from throwing when the
@@ -1153,5 +1188,130 @@ it('token reviews are validated by default', async () => {
     expect(rejectData.token_mint_address).toBe(mintC); // Reject must not touch live columns
     expect(rejectData.token_mint_address_pending).toBeNull(); // Pending cleared
     expect(rejectData.token_review_note).toBe('Rejected'); // Note stored
+  });
+
+  // *****************************************************************************
+  // P1 Task #109 boundary tests (direct database sessions).
+  //
+  // Migration 20261108000000 no longer trusts "auth.uid() IS NULL AND no JWT
+  // claims". Bypassing the protected-field checks now requires POSITIVE
+  // authorization: an admin JWT, verified service_role claims delivered by
+  // PostgREST (session_user = 'authenticator'), or an explicit maintenance
+  // session (session_user 'postgres' / 'supabase_admin' / 'postgres.%').
+  //
+  // These tests need a direct postgres connection string in
+  // SUPABASE_TEST_DB_URL and are skipped when it is not set.
+  // *****************************************************************************
+
+  itDb('direct no-JWT database session cannot bypass the approval trigger', async () => {
+    // The probe role has column-level UPDATE privilege plus its own permissive
+    // FOR UPDATE policy scoped ONLY to that role, so the row IS reached and
+    // fired through enforce_token_approval — the 42501 below comes from the
+    // trigger itself, not from RLS. The session has no request.jwt.claims and
+    // session_user is the untrusted probe role, so the trigger must reject it.
+    await resetToCleanSlate();
+    const captured = await submitToken(
+      `TEST-MINT-DBPROBE-${RUN_TAG}`,
+      `TDP-${RUN_TAG}`,
+    );
+
+    const roleName = 'tbp_' + RUN_TAG.replace(/[^a-zA-Z0-9]/g, '');
+    const rolePassword = 'tbp-pw-' + RUN_TAG;
+
+    const adminDb = new Client({ connectionString: SUPABASE_TEST_DB_URL });
+    let probeDb: Client | null = null;
+
+    try {
+      await adminDb.connect();
+      // Create a minimal, role-scoped probe role + policy.
+      await adminDb.query(`
+        CREATE ROLE ${roleName} LOGIN PASSWORD '${rolePassword}';
+        GRANT USAGE ON SCHEMA public TO ${roleName};
+        GRANT SELECT (user_id), UPDATE (token_submission_status)
+          ON public.profiles TO ${roleName};
+        CREATE POLICY ${roleName}_upd ON public.profiles
+          FOR UPDATE TO ${roleName}
+          USING (true)
+          WITH CHECK (true);
+      `);
+
+      // Connect AS the probe role: a plain postgres session with no JWT GUC.
+      probeDb = new Client({
+        connectionString: SUPABASE_TEST_DB_URL,
+        user: roleName,
+        password: rolePassword,
+      });
+      await probeDb.connect();
+
+      // The write has privilege + a permissive policy, so the BEFORE UPDATE
+      // trigger runs and must reject it explicitly.
+      let rejected = false;
+      try {
+        await probeDb.query(
+          'UPDATE public.profiles SET token_submission_status = $1 WHERE user_id = $2',
+          ['approved', creatorUserId],
+        );
+      } catch (err) {
+        rejected = true;
+        const pgErr = err as { code?: string; message?: string };
+        expect(pgErr.code).toBe('42501');
+        expect(pgErr.message).toContain('token approval state cannot be modified directly');
+      }
+      // Fail loudly if the UPDATE somehow succeeded (bypass regression).
+      expect(rejected).toBe(true);
+
+      // Protected state must be unchanged.
+      const profileRow = await getProfileRow();
+      expect(profileRow.token_submission_status).toBe('pending');
+      expect(profileRow.token_mint_address_pending).toBe(captured.mint);
+    } finally {
+      if (probeDb) {
+        await probeDb.end().catch(() => undefined);
+      }
+      try {
+        if (adminDb.connected) {
+          // Policy BEFORE role.
+          await adminDb.query(`DROP POLICY IF EXISTS ${roleName}_upd ON public.profiles;`);
+          await adminDb.query(`DROP ROLE IF EXISTS ${roleName};`);
+        }
+      } finally {
+        await adminDb.end().catch(() => undefined);
+      }
+    }
+  });
+
+  itDb('trusted maintenance session can still write protected fields', async () => {
+    // Positive bypass test: the postgres admin connection (session_user =
+    // 'postgres') is an explicitly trusted maintenance context.
+    // The service-role HTTP bypass is exercised on every test above via
+    // resetToCleanSlate()/serviceRoleClient.
+    await resetToCleanSlate();
+    await submitToken(`TEST-MINT-DBMAINT-${RUN_TAG}`, `TDM-${RUN_TAG}`);
+
+    const adminDb = new Client({ connectionString: SUPABASE_TEST_DB_URL });
+    try {
+      await adminDb.connect();
+      await adminDb.query(
+        `UPDATE public.profiles
+         SET token_submission_status = 'none',
+             token_mint_address_pending = NULL,
+             token_ticker_pending = NULL,
+             token_submitted_at = NULL,
+             token_reviewed_at = NULL,
+             token_review_note = NULL
+         WHERE user_id = $1`,
+        [creatorUserId],
+      );
+
+      const profileRow = await getProfileRow();
+      expect(profileRow.token_submission_status).toBe('none');
+      expect(profileRow.token_mint_address_pending).toBeNull();
+      expect(profileRow.token_ticker_pending).toBeNull();
+      expect(profileRow.token_submitted_at).toBeNull();
+      expect(profileRow.token_reviewed_at).toBeNull();
+      expect(profileRow.token_review_note).toBeNull();
+    } finally {
+      await adminDb.end().catch(() => undefined);
+    }
   });
 });

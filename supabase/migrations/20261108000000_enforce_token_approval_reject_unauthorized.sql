@@ -3,11 +3,11 @@
 -- Objective: Harden creator token approval state against unauthorized profile updates.
 --
 -- Changes vs migration 20261030213201:
--- 1. Replace implicit null-uid trust with explicit JWT claims check.
---    - v_jwt_claims IS NULL: direct DB connection (migrations, psql, SQL-editor maintenance, integration-test cleanup).
---    - role = 'service_role': service-key HTTP requests.
---    - role = 'anon': anonymous key requests are NOT trusted (new behavior).
---    - Avoid auth.role() because it coalesces to 'anon' when claims are unset, which would break direct maintenance connections.
+-- 1. Replace implicit null-uid trust with explicit positive authorization checks.
+--    - Admin bypass: authenticated users with the 'admin' role.
+--    - Service-role HTTP bypass: requests with role='service_role' AND session_user='authenticator'.
+--    - Maintenance-session bypass: direct DB connections with session_user IN ('postgres', 'supabase_admin') OR session_user LIKE 'postgres.%'.
+--    - All other contexts (anon-key HTTP requests, direct DB sessions without trusted session_user) are explicitly rejected.
 -- 2. Replace silent revert (RAISE WARNING + assign OLD values) with explicit rejection (RAISE EXCEPTION).
 --    - No legitimate client path writes these columns: SettingsPage writes only live columns + profile fields;
 --      admins go through review_token_submission; service jobs hit the trusted branch.
@@ -39,12 +39,17 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  -- Trusted server context: direct DB connections (no JWT) or service-role HTTP requests.
-  -- Explicitly exclude anon-key requests (claims role='anon') to prevent bypass.
-  -- Note: auth.role() is avoided because it coalesces to 'anon' when claims are unset,
-  -- which would incorrectly block direct maintenance connections.
-  IF auth.uid() IS NULL
-     AND (v_jwt_claims IS NULL OR v_jwt_claims->>'role' = 'service_role') THEN
+  -- Service-role HTTP bypass: only trust requests with role='service_role' AND session_user='authenticator'.
+  -- session_user='authenticator' ensures the request came through PostgREST, which verifies the JWT signature.
+  IF v_jwt_claims IS NOT NULL
+     AND v_jwt_claims->>'role' = 'service_role'
+     AND session_user = 'authenticator' THEN
+    RETURN NEW;
+  END IF;
+
+  -- Maintenance-session bypass: direct DB connections with trusted session_user.
+  -- session_user cannot be changed by SET ROLE and only superusers can change it via SET SESSION AUTHORIZATION.
+  IF session_user IN ('postgres', 'supabase_admin') OR session_user LIKE 'postgres.%' THEN
     RETURN NEW;
   END IF;
 
