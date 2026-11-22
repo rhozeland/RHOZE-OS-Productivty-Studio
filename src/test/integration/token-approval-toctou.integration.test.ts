@@ -1009,8 +1009,8 @@ expect(rpcError?.message).toContain('submission_changed');
     // an error. The trigger's explicit claims check (migration 20261108000000)
     // is defense-in-depth: even if a future policy granted anon UPDATE access,
     // the trigger's trusted branch is no longer reachable for anon (claims
-    // role='anon'), so the write would fail with 'token approval state is protected'
-    // rather than silently succeed.
+    // role='anon'), so the write would fail with 'token approval state cannot
+    // be modified directly' rather than silently succeed.
 
     // Accept both outcomes (error present, or zero rows affected)
     // The key assertion is that the protected fields remain unchanged
@@ -1197,7 +1197,7 @@ it('token reviews are validated by default', async () => {
   // claims". Bypassing the protected-field checks now requires POSITIVE
   // authorization: an admin JWT, verified service_role claims delivered by
   // PostgREST (session_user = 'authenticator'), or an explicit maintenance
-  // session (session_user 'postgres' / 'supabase_admin' / 'postgres.%').
+  // session (session_user 'postgres' / 'supabase_admin' only, exact matches).
   //
   // These tests need a direct postgres connection string in
   // SUPABASE_TEST_DB_URL and are skipped when it is not set.
@@ -1209,6 +1209,9 @@ it('token reviews are validated by default', async () => {
     // fired through enforce_token_approval — the 42501 below comes from the
     // trigger itself, not from RLS. The session has no request.jwt.claims and
     // session_user is the untrusted probe role, so the trigger must reject it.
+    // Note: a permissive FOR SELECT policy is also required because an UPDATE
+    // with a WHERE clause must satisfy SELECT RLS policies. Row reachability
+    // is asserted explicitly below.
     await resetToCleanSlate();
     const captured = await submitToken(
       `TEST-MINT-DBPROBE-${RUN_TAG}`,
@@ -1217,47 +1220,113 @@ it('token reviews are validated by default', async () => {
 
     const roleName = 'tbp_' + RUN_TAG.replace(/[^a-zA-Z0-9]/g, '');
     const rolePassword = 'tbp-pw-' + RUN_TAG;
+    // Defensive: both values are interpolated into SQL literals below.
+    if (!/^[a-zA-Z0-9_]+$/.test(roleName) || !/^[a-zA-Z0-9-]+$/.test(rolePassword)) {
+      throw new Error('unexpected character in probe role name or password');
+    }
 
     const adminDb = new Client({ connectionString: SUPABASE_TEST_DB_URL });
     let probeDb: Client | null = null;
+    let adminDbReady = false;
 
     try {
       await adminDb.connect();
+      adminDbReady = true;
       // Create a minimal, role-scoped probe role + policy.
       await adminDb.query(`
         CREATE ROLE ${roleName} LOGIN PASSWORD '${rolePassword}';
         GRANT USAGE ON SCHEMA public TO ${roleName};
-        GRANT SELECT (user_id), UPDATE (token_submission_status)
+        GRANT SELECT (user_id, token_submission_status, token_mint_address_pending),
+              UPDATE (token_submission_status)
           ON public.profiles TO ${roleName};
+        CREATE POLICY ${roleName}_sel ON public.profiles
+          FOR SELECT TO ${roleName}
+          USING (true);
         CREATE POLICY ${roleName}_upd ON public.profiles
           FOR UPDATE TO ${roleName}
           USING (true)
           WITH CHECK (true);
       `);
 
-      // Connect AS the probe role: a plain postgres session with no JWT GUC.
-      probeDb = new Client({
-        connectionString: SUPABASE_TEST_DB_URL,
-        user: roleName,
-        password: rolePassword,
-      });
-      await probeDb.connect();
 
-      // The write has privilege + a permissive policy, so the BEFORE UPDATE
-      // trigger runs and must reject it explicitly.
+const probeUrl = new URL(SUPABASE_TEST_DB_URL);
+
+probeUrl.username = `${roleName}.rodqmawdrsafmwjeuqjz`;
+probeUrl.password = rolePassword;
+
+probeDb = new Client({
+  connectionString: probeUrl.toString(),
+});
+
+await probeDb.connect();
+
+
+const identity = await probeDb.query(`
+  SELECT
+    current_user,
+    session_user
+`);
+
+console.log("DBPROBE identity:", identity.rows[0]);
+
+if (
+  identity.rows[0].session_user !== roleName ||
+  identity.rows[0].current_user !== roleName
+) {
+  throw new Error(
+    `TEST SETUP FAILURE: DBPROBE connected as current_user=${identity.rows[0].current_user}, ` +
+    `session_user=${identity.rows[0].session_user}; expected ${roleName}.`,
+  );
+}
+
+
+
+
+// Prove that the temporary role can actually reach the target row.
+// If this returns zero rows, the test setup is broken and we haven't
+// actually exercised enforce_token_approval.
+const probeReachability = await probeDb.query(
+  `
+    SELECT user_id, token_submission_status
+    FROM public.profiles
+    WHERE user_id = $1
+  `,
+  [creatorUserId],
+);
+
+if (probeReachability.rowCount !== 1) {
+  throw new Error(
+    `TEST SETUP FAILURE: probe role could not reach target profile; expected 1 row, got ${probeReachability.rowCount}.`,
+  );
+}
+
+expect(probeReachability.rows[0].token_submission_status).toBe('pending');
+
+
+      // The row is provably reachable; the BEFORE UPDATE trigger must now run
+      // and reject the mutation with ERRCODE 42501.
       let rejected = false;
+      let probeRowCount: number | null = null;
       try {
-        await probeDb.query(
-          'UPDATE public.profiles SET token_submission_status = $1 WHERE user_id = $2',
+        const probeUpdate = await probeDb.query(
+          'UPDATE public.profiles SET token_submission_status = $1 WHERE user_id = $2 RETURNING user_id',
           ['approved', creatorUserId],
         );
+        probeRowCount = probeUpdate.rowCount;
       } catch (err) {
         rejected = true;
         const pgErr = err as { code?: string; message?: string };
         expect(pgErr.code).toBe('42501');
         expect(pgErr.message).toContain('token approval state cannot be modified directly');
       }
-      // Fail loudly if the UPDATE somehow succeeded (bypass regression).
+
+      // A zero-row UPDATE must never be treated as evidence about the trigger.
+      if (!rejected && probeRowCount === 0) {
+        throw new Error(
+          'TEST SETUP FAILURE: UPDATE matched zero rows; enforce_token_approval was never exercised.',
+        );
+      }
+      // Row was reached (rowCount >= 1) and no rejection occurred -> genuine bypass regression.
       expect(rejected).toBe(true);
 
       // Protected state must be unchanged.
@@ -1269,10 +1338,28 @@ it('token reviews are validated by default', async () => {
         await probeDb.end().catch(() => undefined);
       }
       try {
-        if (adminDb.connected) {
-          // Policy BEFORE role.
-          await adminDb.query(`DROP POLICY IF EXISTS ${roleName}_upd ON public.profiles;`);
-          await adminDb.query(`DROP ROLE IF EXISTS ${roleName};`);
+        if (adminDbReady) {
+         // Remove everything that depends on the temporary role before dropping it.
+            await adminDb.query(
+              `DROP POLICY IF EXISTS ${roleName}_sel ON public.profiles;`
+            );
+            await adminDb.query(
+              `DROP POLICY IF EXISTS ${roleName}_upd ON public.profiles;`
+            );
+
+            await adminDb.query(
+              `REVOKE SELECT (user_id, token_submission_status, token_mint_address_pending),
+                     UPDATE (token_submission_status)
+              ON public.profiles FROM ${roleName};`
+            );
+
+            await adminDb.query(
+              `REVOKE USAGE ON SCHEMA public FROM ${roleName};`
+            );
+
+            await adminDb.query(
+              `DROP ROLE IF EXISTS ${roleName};`
+            );
         }
       } finally {
         await adminDb.end().catch(() => undefined);

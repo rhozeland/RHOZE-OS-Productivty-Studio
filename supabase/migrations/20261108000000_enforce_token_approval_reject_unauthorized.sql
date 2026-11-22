@@ -6,7 +6,7 @@
 -- 1. Replace implicit null-uid trust with explicit positive authorization checks.
 --    - Admin bypass: authenticated users with the 'admin' role.
 --    - Service-role HTTP bypass: requests with role='service_role' AND session_user='authenticator'.
---    - Maintenance-session bypass: direct DB connections with session_user IN ('postgres', 'supabase_admin') OR session_user LIKE 'postgres.%'.
+--    - Maintenance-session bypass: direct DB connections whose session_user is exactly 'postgres' or 'supabase_admin' (no wildcard patterns).
 --    - All other contexts (anon-key HTTP requests, direct DB sessions without trusted session_user) are explicitly rejected.
 -- 2. Replace silent revert (RAISE WARNING + assign OLD values) with explicit rejection (RAISE EXCEPTION).
 --    - No legitimate client path writes these columns: SettingsPage writes only live columns + profile fields;
@@ -47,9 +47,12 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  -- Maintenance-session bypass: direct DB connections with trusted session_user.
-  -- session_user cannot be changed by SET ROLE and only superusers can change it via SET SESSION AUTHORIZATION.
-  IF session_user IN ('postgres', 'supabase_admin') OR session_user LIKE 'postgres.%' THEN
+  -- Maintenance-session bypass: ONLY the exact canonical maintenance roles.
+  -- session_user is fixed at connect time, cannot be changed by SET ROLE, and
+  -- only a superuser can SET SESSION AUTHORIZATION. Exact matches only: a
+  -- wildcard ('postgres.%') would also trust any role whose name merely
+  -- shares the prefix, and pooler address formats must never widen this check.
+  IF session_user IN ('postgres', 'supabase_admin') THEN
     RETURN NEW;
   END IF;
 
