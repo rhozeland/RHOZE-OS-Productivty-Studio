@@ -1308,7 +1308,7 @@ expect(probeReachability.rows[0].token_submission_status).toBe('pending');
       let rejected = false;
       let probeRowCount: number | null = null;
       try {
-        const probeUpdate = await probeDb.query(
+        const pgitrobeUpdate = await probeDb.query(
           'UPDATE public.profiles SET token_submission_status = $1 WHERE user_id = $2 RETURNING user_id',
           ['approved', creatorUserId],
         );
