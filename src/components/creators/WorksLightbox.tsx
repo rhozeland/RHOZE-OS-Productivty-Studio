@@ -8,12 +8,13 @@
  * when the file isn't an image.
  */
 import { useQuery } from "@tanstack/react-query";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { ShieldCheck, FileText, ExternalLink } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { SubscriberLock } from "@/components/profile/SubscriberLock";
 import WorkTokenChip from "@/components/works/WorkTokenChip";
 import AttachCoinToWorkButton from "@/components/works/AttachCoinToWorkButton";
+import TokenAttachmentDialog from "@/components/coin/TokenAttachmentDialog";
+import { useTokenAttachment } from "@/hooks/useTokenAttachment";
 
 interface Props {
   open: boolean;
@@ -32,8 +35,15 @@ type Filter = "all" | "verified";
 
 const WorksLightbox = ({ open, onOpenChange, userId }: Props) => {
   const [filter, setFilter] = useState<Filter>("all");
+  const [attachmentTarget, setAttachmentTarget] = useState<{ workId: string; hasExistingLink: boolean } | null>(null);
+  const { visible: walletModalVisible } = useWalletModal();
   const { user } = useAuth();
+  const tokenAttachment = useTokenAttachment();
   const isOwner = user?.id === userId;
+
+  useEffect(() => {
+    if (!open) setAttachmentTarget(null);
+  }, [open]);
 
   const { data: works = [], isLoading } = useQuery({
     queryKey: ["works-lightbox", userId, user?.id ?? "anon"],
@@ -86,8 +96,13 @@ const WorksLightbox = ({ open, onOpenChange, userId }: Props) => {
   const verifiedCount = works.filter((w: any) => w.is_unverified === false).length;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+    <Dialog open={open} onOpenChange={onOpenChange} modal={!walletModalVisible}>
+      <DialogContent
+        onOpenAutoFocus={(event) => {
+          if (walletModalVisible) event.preventDefault();
+        }}
+        className="max-w-4xl max-h-[85vh] overflow-y-auto"
+      >
         <DialogHeader>
           <DialogTitle className="font-display text-2xl">Works</DialogTitle>
         </DialogHeader>
@@ -201,6 +216,7 @@ const WorksLightbox = ({ open, onOpenChange, userId }: Props) => {
                         workOwnerId={w.user_id}
                         currentMint={w.linked_token_mint}
                         currentTokenId={w.linked_token_id}
+                        onAttachRequest={(workId, hasExistingLink) => setAttachmentTarget({ workId, hasExistingLink })}
                       />
                     </div>
                   )}
@@ -220,6 +236,14 @@ const WorksLightbox = ({ open, onOpenChange, userId }: Props) => {
           </Link>
         </div>
       </DialogContent>
+      <TokenAttachmentDialog
+        open={open && !!attachmentTarget}
+        onOpenChange={(nextOpen) => { if (!nextOpen) setAttachmentTarget(null); }}
+        targetType="work"
+        targetId={attachmentTarget?.workId ?? ""}
+        attachment={tokenAttachment}
+        hasExistingLink={attachmentTarget?.hasExistingLink}
+      />
     </Dialog>
   );
 };

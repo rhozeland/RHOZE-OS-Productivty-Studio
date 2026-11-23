@@ -10,6 +10,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import {
   ArrowLeft,
   Check,
@@ -70,6 +71,7 @@ const isValidMint = (v: string) => /^[1-9A-HJ-NP-Za-km-z]{32,64}$/.test(v.trim()
 
 const AttachCoinLauncher = ({ open, onOpenChange, scope }: Props) => {
   const { user } = useAuth();
+  const { visible: walletModalVisible } = useWalletModal();
   const navigate = useNavigate();
   const tokenAttachment = useTokenAttachment();
 
@@ -207,8 +209,11 @@ const AttachCoinLauncher = ({ open, onOpenChange, scope }: Props) => {
     preview?.change24h == null ? "—" : `${positive ? "+" : ""}${preview.change24h.toFixed(1)}%`;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange} modal={!walletModalVisible}>
       <DialogContent
+        onOpenAutoFocus={(event) => {
+          if (walletModalVisible) event.preventDefault();
+        }}
         className="kinetic-theme p-0 gap-0 max-w-2xl w-[calc(100vw-2rem)] max-h-[85vh] overflow-hidden rounded-3xl border"
         style={{ background: "var(--kb-bg)", borderColor: "var(--kb-border)" }}
       >
