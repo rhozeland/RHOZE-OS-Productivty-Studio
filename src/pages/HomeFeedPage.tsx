@@ -136,8 +136,8 @@ const RecentMessagesCard = () => {
       const sb: any = supabase;
       const { data, error } = await sb
         .from("messages")
-        .select("id,sender_id,body,created_at,read")
-        .eq("recipient_id", user!.id)
+        .select("id,sender_id,body:content,created_at,read")
+        .eq("receiver_id", user!.id)
         .order("created_at", { ascending: false })
         .limit(5);
       if (error) throw error;

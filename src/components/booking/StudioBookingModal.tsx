@@ -41,10 +41,12 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import PaySolAndVerify from "@/components/PaySolAndVerify";
+import PayWithRhozeButton from "@/components/PayWithRhozeButton";
 import SquareCardForm, { SQUARE_LOCATION_ID } from "@/components/booking/SquareCardForm";
+import { getSolanaConfig } from "@/lib/solana-config";
 
 type Step = "schedule" | "details" | "payment";
-type PaymentMethod = "credits" | "card" | "crypto";
+type PaymentMethod = "credits" | "card" | "crypto" | "rhoze";
 
 // 100 Credits ≈ $1 (mirrors PRO_CREDITS pricing + event-ticket checkout).
 const CREDITS_PER_USD = 100;
@@ -76,6 +78,7 @@ const StudioBookingModal = ({ open, onOpenChange, studio }: StudioBookingModalPr
   const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [cardToken, setCardToken] = useState<string | null>(null);
+  const [pendingRhozeSignature, setPendingRhozeSignature] = useState<string | null>(null);
 
   // Fetch the user's in-app credit balance
   const { data: userCredits = 0 } = useQuery({
@@ -142,6 +145,7 @@ const StudioBookingModal = ({ open, onOpenChange, studio }: StudioBookingModalPr
     setSelectedStaffId(null);
     setLoading(false);
     setCardToken(null);
+    setPendingRhozeSignature(null);
     resetDrag();
   };
 
@@ -185,6 +189,29 @@ const StudioBookingModal = ({ open, onOpenChange, studio }: StudioBookingModalPr
     return () => window.removeEventListener("mouseup", handler);
   }, [isDragging]);
 
+  const pendingRhozeStorageKey = user && studio
+    ? `rhoze-studio-booking:${user.id}:${studio.id}`
+    : null;
+
+  useEffect(() => {
+    if (!open || !pendingRhozeStorageKey) return;
+    try {
+      const saved = JSON.parse(localStorage.getItem(pendingRhozeStorageKey) ?? "null");
+      if (!saved?.signature || saved.studioId !== studio?.id) return;
+      setPendingRhozeSignature(saved.signature);
+      setDragDate(saved.dragDate ? new Date(saved.dragDate) : null);
+      setDragStartHour(Number.isInteger(saved.dragStartHour) ? saved.dragStartHour : null);
+      setDragEndHour(Number.isInteger(saved.dragEndHour) ? saved.dragEndHour : null);
+      setGuestCount(Number.isInteger(saved.guestCount) ? saved.guestCount : 1);
+      setNotes(typeof saved.notes === "string" ? saved.notes : "");
+      setSelectedStaffId(typeof saved.selectedStaffId === "string" ? saved.selectedStaffId : null);
+      setPaymentMethod("rhoze");
+      setStep("payment");
+    } catch {
+      localStorage.removeItem(pendingRhozeStorageKey);
+    }
+  }, [open, pendingRhozeStorageKey, studio?.id]);
+
   if (!studio) return null;
 
   const selectedDuration =
@@ -194,8 +221,27 @@ const StudioBookingModal = ({ open, onOpenChange, studio }: StudioBookingModalPr
   const totalPrice = studio.hourly_rate * selectedDuration;
   const solPrice = +(totalPrice / 150).toFixed(4);
   const creditsPrice = Math.max(1, Math.round(totalPrice * CREDITS_PER_USD));
+  const rhozePrice = Math.max(1, Math.round(totalPrice * 100));
   const hasEnoughCredits = userCredits >= creditsPrice;
+  const rhozePaymentsEnabled = getSolanaConfig().rhozePaymentsEnabled;
   const maxGuests = studio.max_guests ?? 10;
+  const savePendingRhozePayment = (signature: string) => {
+    if (!pendingRhozeStorageKey || !studio || !dragDate) return;
+    localStorage.setItem(
+      pendingRhozeStorageKey,
+      JSON.stringify({
+        signature,
+        studioId: studio.id,
+        dragDate: dragDate.toISOString(),
+        dragStartHour,
+        dragEndHour,
+        guestCount,
+        notes,
+        selectedStaffId,
+      }),
+    );
+    setPendingRhozeSignature(signature);
+  };
 
   const canProceedToDetails = dragDate && dragStartHour !== null && dragEndHour !== null && selectedDuration > 0;
 
@@ -250,7 +296,7 @@ const StudioBookingModal = ({ open, onOpenChange, studio }: StudioBookingModalPr
     return setMinutes(setHours(dragDate, startH), 0);
   };
 
-  const handleConfirm = async (tokenOverride?: string) => {
+  const handleConfirm = async (tokenOverride?: string, rethrowOnError = false) => {
     if (!user || !studio) return;
     const startTime = getStartTime();
     if (!startTime) return;
@@ -324,10 +370,14 @@ const StudioBookingModal = ({ open, onOpenChange, studio }: StudioBookingModalPr
       queryClient.invalidateQueries({ queryKey: ["user-credits"] });
 
       toast.success("Studio booked successfully!");
+      if (pendingRhozeStorageKey) {
+        localStorage.removeItem(pendingRhozeStorageKey);
+      }
       onOpenChange(false);
       resetForm();
     } catch (err: any) {
       toast.error(err.message || "Booking failed");
+      if (rethrowOnError) throw err;
     } finally {
       setLoading(false);
     }
@@ -701,7 +751,9 @@ const StudioBookingModal = ({ open, onOpenChange, studio }: StudioBookingModalPr
                     ? `${creditsPrice.toLocaleString()} Credits`
                     : paymentMethod === "card"
                     ? `$${totalPrice}`
-                    : `~${solPrice} SOL`}
+                    : paymentMethod === "crypto"
+                    ? `~${solPrice} SOL`
+                    : `${rhozePrice.toLocaleString()} $RHOZE`}
                 </span>
               </div>
             </div>
@@ -772,9 +824,38 @@ const StudioBookingModal = ({ open, onOpenChange, studio }: StudioBookingModalPr
                 </div>
                 {paymentMethod === "crypto" && <Check className="h-5 w-5 text-primary" />}
               </button>
+
+              {rhozePaymentsEnabled && (
+                <button
+                  onClick={() => setPaymentMethod("rhoze")}
+                  className={cn(
+                    "flex items-center gap-4 rounded-xl border p-4 transition-all text-left",
+                    paymentMethod === "rhoze"
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:bg-muted/50"
+                  )}
+                >
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-pink-500/10">
+                    <Coins className="h-5 w-5 text-pink-500" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-foreground">Pay with $RHOZE</p>
+                    <p className="text-xs text-muted-foreground">
+                      {rhozePrice.toLocaleString()} $RHOZE · on-chain payment
+                    </p>
+                  </div>
+                  {paymentMethod === "rhoze" && <Check className="h-5 w-5 text-primary" />}
+                </button>
+              )}
             </div>
 
             {/* Payment form */}
+            {pendingRhozeSignature && paymentMethod === "rhoze" && (
+              <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200">
+                Your RHOZE payment was submitted but is still awaiting verification.
+                Retry verification below; do not send another payment.
+              </div>
+            )}
             {paymentMethod === "credits" ? (
               <Button
                 className="w-full"
@@ -785,7 +866,7 @@ const StudioBookingModal = ({ open, onOpenChange, studio }: StudioBookingModalPr
               </Button>
             ) : paymentMethod === "card" ? (
               <SquareCardForm amount={totalPrice} onTokenize={handleCardTokenize} disabled={loading} />
-            ) : (
+            ) : paymentMethod === "crypto" ? (
               <PaySolAndVerify
                 solAmount={solPrice}
                 creditsToAdd={0}
@@ -793,6 +874,21 @@ const StudioBookingModal = ({ open, onOpenChange, studio }: StudioBookingModalPr
                 label={`Pay ~${solPrice} SOL`}
                 className="w-full"
                 onSuccess={() => handleConfirm()}
+              />
+            ) : (
+              <PayWithRhozeButton
+                tokenAmount={rhozePrice}
+                description={`Studio: ${studio.name} — ${selectedDuration}h`}
+                type="studio_booking"
+                intent="subscription"
+                label={pendingRhozeSignature
+                  ? `Retry verification — ${rhozePrice.toLocaleString()} $RHOZE already sent`
+                  : `Pay ${rhozePrice.toLocaleString()} $RHOZE`}
+                className="w-full"
+                variant="default"
+                retrySignature={pendingRhozeSignature ?? undefined}
+                onVerificationPending={savePendingRhozePayment}
+                onSuccess={() => handleConfirm(undefined, true)}
               />
             )}
 

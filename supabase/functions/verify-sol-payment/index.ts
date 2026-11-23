@@ -118,8 +118,8 @@ Deno.serve(async (req) => {
 
     const receivedSol = receivedLamports / LAMPORTS_PER_SOL;
 
-    // Allow 1% tolerance for rounding
-    if (receivedSol < expected_sol * 0.99) {
+    const expectedLamports = Math.ceil(expected_sol * LAMPORTS_PER_SOL);
+    if (receivedLamports < expectedLamports) {
       return new Response(JSON.stringify({
         error: `Insufficient payment. Expected ${expected_sol} SOL, received ${receivedSol.toFixed(6)} SOL`,
       }), {

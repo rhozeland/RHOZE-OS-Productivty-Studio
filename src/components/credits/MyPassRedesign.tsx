@@ -89,14 +89,14 @@ const NextMoveSection = () => {
         {/* Left — Balance */}
         <div>
           <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground font-medium">
-            $RHOZE balance
+            Current $RHOZE balance
           </p>
           <p className="font-display text-4xl sm:text-5xl font-bold text-foreground tabular-nums mt-1">
             {formatRhoze(balance)}
           </p>
           {next ? (
             <p className="text-sm font-medium text-primary mt-2">
-              {formatRhoze(remaining)} $RHOZE to {next.label}
+              {formatRhoze(remaining)} $RHOZE needed for next tier: {next.label}
             </p>
           ) : (
             <p className="text-sm font-medium text-primary mt-2">Top tier reached</p>
