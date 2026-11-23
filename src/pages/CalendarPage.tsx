@@ -76,6 +76,8 @@ const CalendarPage = () => {
   const [bookingNotes, setBookingNotes] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("credits");
   const [bookingLoading, setBookingLoading] = useState(false);
+  const [pendingRhozeSignature, setPendingRhozeSignature] = useState<string | null>(null);
+  const pendingRhozeStorageKey = user ? `rhoze-calendar-booking:${user.id}` : null;
   // Event editor extras
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [eventDate, setEventDate] = useState<string>(""); // YYYY-MM-DD
@@ -88,6 +90,40 @@ const CalendarPage = () => {
   const [googleEvents, setGoogleEvents] = useState<CalendarEvent[]>([]);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleConnected, setGoogleConnected] = useState(false);
+
+  useEffect(() => {
+    if (!pendingRhozeStorageKey) return;
+    setPendingRhozeSignature(null);
+    try {
+      const saved = JSON.parse(localStorage.getItem(pendingRhozeStorageKey) ?? "null");
+      const savedDate = saved?.dragDate ? new Date(saved.dragDate) : null;
+      if (
+        !saved?.signature ||
+        typeof saved.serviceId !== "string" ||
+        !saved.serviceId ||
+        !savedDate ||
+        Number.isNaN(savedDate.getTime()) ||
+        !Number.isInteger(saved.dragStartHour) ||
+        !Number.isInteger(saved.dragEndHour)
+      ) {
+        if (saved) localStorage.removeItem(pendingRhozeStorageKey);
+        return;
+      }
+
+      setPendingRhozeSignature(saved.signature);
+      setDragDate(savedDate);
+      setDragStartHour(saved.dragStartHour);
+      setDragEndHour(saved.dragEndHour);
+      setSelectedService(saved.serviceId);
+      setBookingNotes(typeof saved.notes === "string" ? saved.notes : "");
+      setPaymentMethod("rhoze");
+      setEventType("studio");
+      setCurrentDate(savedDate);
+      setBookingDialogOpen(true);
+    } catch {
+      localStorage.removeItem(pendingRhozeStorageKey);
+    }
+  }, [pendingRhozeStorageKey]);
 
   // Drag state for weekly view
   const [isDragging, setIsDragging] = useState(false);
@@ -344,6 +380,11 @@ const CalendarPage = () => {
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
       queryClient.invalidateQueries({ queryKey: ["user-credits"] });
 
+      if (paymentMethod === "rhoze") {
+        setPendingRhozeSignature(null);
+        if (pendingRhozeStorageKey) localStorage.removeItem(pendingRhozeStorageKey);
+      }
+
       // Send confirmation email with payment method
       if (user.email && service) {
         const paymentLabel = paymentMethod === "credits"
@@ -383,9 +424,28 @@ const CalendarPage = () => {
       toast.success("Booking confirmed!");
     } catch (err: any) {
       toast.error(err.message || "Booking failed");
+      // Let PayWithRhozeButton preserve the verified transaction signature so
+      // booking creation can be retried without asking the user to pay again.
+      if (paymentMethod === "rhoze") throw err;
     } finally {
       setBookingLoading(false);
     }
+  };
+
+  const savePendingRhozePayment = (signature: string) => {
+    if (!pendingRhozeStorageKey || !dragDate || dragStartHour === null || dragEndHour === null || !selectedService) return;
+    localStorage.setItem(
+      pendingRhozeStorageKey,
+      JSON.stringify({
+        signature,
+        dragDate: dragDate.toISOString(),
+        dragStartHour,
+        dragEndHour,
+        serviceId: selectedService,
+        notes: bookingNotes,
+      }),
+    );
+    setPendingRhozeSignature(signature);
   };
 
   const cancelBooking = useMutation({
@@ -671,6 +731,17 @@ const CalendarPage = () => {
           </Button>
         </div>
       </div>
+
+      {pendingRhozeSignature && !bookingDialogOpen && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
+          <p className="text-sm text-foreground">
+            A verified $RHOZE payment still needs its booking saved. Resume to retry without paying again.
+          </p>
+          <Button size="sm" onClick={() => setBookingDialogOpen(true)}>
+            Resume booking
+          </Button>
+        </div>
+      )}
 
       {/* Legend */}
       <div className="flex items-center gap-4 text-xs text-muted-foreground">
@@ -1062,6 +1133,7 @@ const CalendarPage = () => {
       {/* Booking / Event dialog */}
       <Dialog open={bookingDialogOpen} onOpenChange={(open) => {
         if (!open) {
+          if (pendingRhozeSignature) return;
           resetDrag();
           if (!searchParams.get("service")) setSelectedService("");
           setEventType(null);
@@ -1135,7 +1207,7 @@ const CalendarPage = () => {
             <div className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-foreground mb-1.5 block">Service</label>
-                <Select value={selectedService} onValueChange={setSelectedService}>
+                <Select value={selectedService} onValueChange={setSelectedService} disabled={Boolean(pendingRhozeSignature)}>
                   <SelectTrigger><SelectValue placeholder="Select a service" /></SelectTrigger>
                   <SelectContent>
                     {services?.map((s) => (
@@ -1168,6 +1240,7 @@ const CalendarPage = () => {
                   <div className="grid gap-2">
                     <button
                       onClick={() => setPaymentMethod("credits")}
+                      disabled={Boolean(pendingRhozeSignature)}
                       className={cn("flex items-center gap-3 rounded-xl border p-3 transition-all text-left", paymentMethod === "credits" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50")}
                     >
                       <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10"><Coins className="h-4 w-4 text-primary" /></div>
@@ -1181,6 +1254,7 @@ const CalendarPage = () => {
                     {selectedServiceObj.non_member_rate && (
                       <button
                         onClick={() => setPaymentMethod("card")}
+                        disabled={Boolean(pendingRhozeSignature)}
                         className={cn("flex items-center gap-3 rounded-xl border p-3 transition-all text-left", paymentMethod === "card" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50")}
                       >
                         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10"><CreditCard className="h-4 w-4 text-primary" /></div>
@@ -1194,6 +1268,7 @@ const CalendarPage = () => {
 
                     <button
                       onClick={() => setPaymentMethod("crypto")}
+                      disabled={Boolean(pendingRhozeSignature)}
                       className={cn("flex items-center gap-3 rounded-xl border p-3 transition-all text-left", paymentMethod === "crypto" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50")}
                     >
                       <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10"><Wallet className="h-4 w-4 text-primary" /></div>
@@ -1207,6 +1282,7 @@ const CalendarPage = () => {
                     {rhozePaymentsEnabled && (
                       <button
                         onClick={() => setPaymentMethod("rhoze")}
+                        disabled={Boolean(pendingRhozeSignature)}
                         className={cn("flex items-center gap-3 rounded-xl border p-3 transition-all text-left", paymentMethod === "rhoze" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50")}
                       >
                         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-pink-500/10"><Coins className="h-4 w-4 text-pink-500" /></div>
@@ -1225,7 +1301,7 @@ const CalendarPage = () => {
 
               <div>
                 <label className="text-sm font-medium text-foreground mb-1.5 block">Notes (optional)</label>
-                <Textarea placeholder="What's the session about?" value={bookingNotes} onChange={(e) => setBookingNotes(e.target.value)} rows={2} />
+                <Textarea placeholder="What's the session about?" value={bookingNotes} onChange={(e) => setBookingNotes(e.target.value)} rows={2} disabled={Boolean(pendingRhozeSignature)} />
               </div>
 
               {paymentMethod === "card" && selectedServiceObj?.non_member_rate && (
@@ -1243,16 +1319,27 @@ const CalendarPage = () => {
               )}
 
               {paymentMethod === "rhoze" && selectedServiceObj && (
-                <PayWithRhozeButton
-                  tokenAmount={Math.max(1, Math.round((selectedServiceObj.non_member_rate ?? selectedServiceObj.credits_cost * 75) * 100))}
-                  description={`Booking: ${selectedServiceObj.title}`}
-                  type="studio_booking"
-                  intent="subscription"
-                  label={`Pay ${Math.max(1, Math.round((selectedServiceObj.non_member_rate ?? selectedServiceObj.credits_cost * 75) * 100)).toLocaleString()} $RHOZE & Book`}
-                  className="w-full"
-                  variant="default"
-                  onSuccess={async () => { await createBookingWithPayment(); }}
-                />
+                <>
+                  {pendingRhozeSignature && (
+                    <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200">
+                      Your $RHOZE payment was verified, but the booking could not be saved. Retry below; the existing payment will be checked again and you will not be charged twice.
+                    </div>
+                  )}
+                  <PayWithRhozeButton
+                    tokenAmount={Math.max(1, Math.round((selectedServiceObj.non_member_rate ?? selectedServiceObj.credits_cost * 75) * 100))}
+                    description={`Booking: ${selectedServiceObj.title}`}
+                    type="studio_booking"
+                    intent="subscription"
+                    label={pendingRhozeSignature
+                      ? `Retry booking — ${Math.max(1, Math.round((selectedServiceObj.non_member_rate ?? selectedServiceObj.credits_cost * 75) * 100)).toLocaleString()} $RHOZE already sent`
+                      : `Pay ${Math.max(1, Math.round((selectedServiceObj.non_member_rate ?? selectedServiceObj.credits_cost * 75) * 100)).toLocaleString()} $RHOZE & Book`}
+                    className="w-full"
+                    variant="default"
+                    retrySignature={pendingRhozeSignature ?? undefined}
+                    onVerificationPending={savePendingRhozePayment}
+                    onSuccess={async () => { await createBookingWithPayment(); }}
+                  />
+                </>
               )}
 
               {paymentMethod === "credits" && (
@@ -1261,7 +1348,7 @@ const CalendarPage = () => {
                 </Button>
               )}
 
-              <Button variant="ghost" size="sm" className="w-full" onClick={() => setEventType(null)}>← Back</Button>
+              {!pendingRhozeSignature && <Button variant="ghost" size="sm" className="w-full" onClick={() => setEventType(null)}>← Back</Button>}
             </div>
           )}
 
