@@ -21,6 +21,8 @@ const corsHeaders = {
 };
 
 const MIN_SOL_FOR_FEES = 0.002;
+const SETTLEMENT_ATTEMPTS = 8;
+const SETTLEMENT_RETRY_DELAY_MS = 750;
 
 function respond(body: unknown) {
   return new Response(JSON.stringify(body), {
@@ -39,11 +41,25 @@ async function rpcCall(rpcUrl: string, method: string, params: unknown[]) {
 }
 
 function parseAirdropKeypair(privateKeyStr: string) {
+  const trimmed = privateKeyStr.trim();
+
   try {
-    const parsed = JSON.parse(privateKeyStr);
+    const parsed = JSON.parse(trimmed);
     return Keypair.fromSecretKey(new Uint8Array(parsed));
   } catch {
-    return Keypair.fromSecretKey(bs58.decode(privateKeyStr));
+    // The Devnet provisioning script stores the JSON key array as Base64 so
+    // it can be copied into Supabase secrets without shell quoting issues.
+    try {
+      const decoded = atob(trimmed);
+      const parsed = JSON.parse(decoded);
+      return Keypair.fromSecretKey(new Uint8Array(parsed));
+    } catch {
+      try {
+        return Keypair.fromSecretKey(bs58.decode(trimmed));
+      } catch {
+        throw new Error("RHOZE_AIRDROP_PRIVATE_KEY is not valid JSON, Base64 JSON, or Base58");
+      }
+    }
   }
 }
 
@@ -203,87 +219,90 @@ Deno.serve(async (req) => {
     const recipientATA = getAssociatedTokenAddressSync(mintPubkey, recipientPubkey, false, tokenProgramId);
 
     const settleVerifiedPayout = async (signature: string) => {
-      const tx = await connection.getParsedTransaction(signature, {
-        commitment: "confirmed",
-        maxSupportedTransactionVersion: 0,
-      });
-      if (!tx) {
-        return respond({
-          ok: false,
-          pending: true,
-          retryable: true,
-          request_id,
-          signature,
-          error: "Payout transaction is not confirmed yet. Retry this claim to check settlement.",
-        });
-      }
-      if (tx.meta?.err) {
-        await failClaim("Payout transaction failed on-chain");
-        return respond({ ok: false, error: "The payout transaction failed on-chain; reserved credits were restored." });
-      }
+      let lastVerificationError = "Payout transaction is not confirmed yet.";
 
-      const accountKeys = tx.transaction.message.accountKeys;
-      const payoutSigned = accountKeys.some((key: any) =>
-        key.signer && key.pubkey.toBase58() === config.payoutAddress
-      );
-      const recipientAccountIndex = accountKeys.findIndex((key: any) =>
-        key.pubkey.toBase58() === recipientATA.toBase58()
-      );
-      const recipientReceived = (tx.meta?.postTokenBalances ?? [])
-        .filter((post: any) =>
-          post.accountIndex === recipientAccountIndex &&
-          post.mint === config.rhozeMint &&
-          post.owner === wallet_address &&
-          (!post.programId || post.programId === config.tokenProgramId)
-        )
-        .reduce((total: bigint, post: any) => {
-          const pre = (tx.meta?.preTokenBalances ?? []).find(
-            (balance: any) => balance.accountIndex === post.accountIndex && balance.mint === config.rhozeMint,
+      for (let attempt = 0; attempt < SETTLEMENT_ATTEMPTS; attempt += 1) {
+        const tx = await connection.getParsedTransaction(signature, {
+          commitment: "confirmed",
+          maxSupportedTransactionVersion: 0,
+        });
+
+        if (tx?.meta?.err) {
+          await failClaim("Payout transaction failed on-chain");
+          return respond({ ok: false, error: "The payout transaction failed on-chain; reserved credits were restored." });
+        }
+
+        if (tx) {
+          const accountKeys = tx.transaction.message.accountKeys;
+          const payoutSigned = accountKeys.some((key: any) =>
+            key.signer && key.pubkey.toBase58() === config.payoutAddress
           );
-          return total + BigInt(post.uiTokenAmount.amount) - BigInt(pre?.uiTokenAmount.amount ?? "0");
-        }, 0n);
+          const recipientAccountIndex = accountKeys.findIndex((key: any) =>
+            key.pubkey.toBase58() === recipientATA.toBase58()
+          );
+          const recipientReceived = (tx.meta?.postTokenBalances ?? [])
+            .filter((post: any) =>
+              post.accountIndex === recipientAccountIndex &&
+              post.mint === config.rhozeMint &&
+              post.owner === wallet_address &&
+              (!post.programId || post.programId === config.tokenProgramId)
+            )
+            .reduce((total: bigint, post: any) => {
+              const pre = (tx.meta?.preTokenBalances ?? []).find(
+                (balance: any) => balance.accountIndex === post.accountIndex && balance.mint === config.rhozeMint,
+              );
+              return total + BigInt(post.uiTokenAmount.amount) - BigInt(pre?.uiTokenAmount.amount ?? "0");
+            }, 0n);
 
-      if (!payoutSigned || recipientAccountIndex < 0 || recipientReceived !== tokenAmount) {
-        return respond({
-          ok: false,
-          pending: true,
-          retryable: false,
-          request_id,
-          signature,
-          error: "The submitted signature does not prove this claim payout. The reservation remains pending for review.",
-        });
+          if (payoutSigned && recipientAccountIndex >= 0 && recipientReceived === tokenAmount) {
+            const { error: recordError } = await supabaseAdmin.rpc("record_rhoze_claim_signature", {
+              p_claim_id: claimId,
+              p_signature: signature,
+            });
+            if (recordError) {
+              return respond({
+                ok: false,
+                pending: true,
+                retryable: true,
+                request_id,
+                signature,
+                error: `Payout is confirmed, but saving its signature failed: ${recordError.message}`,
+              });
+            }
+
+            const { error: completeError } = await supabaseAdmin.rpc("complete_rhoze_claim", {
+              p_claim_id: claimId,
+              p_signature: signature,
+            });
+            if (completeError) {
+              return respond({
+                ok: false,
+                pending: true,
+                retryable: true,
+                request_id,
+                signature,
+                error: `Payout is confirmed, but database settlement needs retry: ${completeError.message}`,
+              });
+            }
+            return respond({ ok: true, success: true, signature, tokens_sent: credits_to_claim, recovered: true });
+          }
+
+          lastVerificationError = "The payout transaction is confirmed, but its token transfer details are still being indexed.";
+        }
+
+        if (attempt < SETTLEMENT_ATTEMPTS - 1) {
+          await new Promise((resolve) => setTimeout(resolve, SETTLEMENT_RETRY_DELAY_MS));
+        }
       }
 
-      const { error: recordError } = await supabaseAdmin.rpc("record_rhoze_claim_signature", {
-        p_claim_id: claimId,
-        p_signature: signature,
+      return respond({
+        ok: false,
+        pending: true,
+        retryable: true,
+        request_id,
+        signature,
+        error: `${lastVerificationError} Retry this claim to confirm settlement.`,
       });
-      if (recordError) {
-        return respond({
-          ok: false,
-          pending: true,
-          retryable: true,
-          request_id,
-          signature,
-          error: `Payout is confirmed, but saving its signature failed: ${recordError.message}`,
-        });
-      }
-
-      const { error: completeError } = await supabaseAdmin.rpc("complete_rhoze_claim", {
-        p_claim_id: claimId,
-        p_signature: signature,
-      });
-      if (completeError) {
-        return respond({
-          ok: false,
-          pending: true,
-          retryable: true,
-          request_id,
-          signature,
-          error: `Payout is confirmed, but database settlement needs retry: ${completeError.message}`,
-        });
-      }
-      return respond({ ok: true, success: true, signature, tokens_sent: credits_to_claim, recovered: true });
     };
 
     if (payoutSignature) {
