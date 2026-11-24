@@ -1,11 +1,10 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
+import { useWallet } from "@solana/wallet-adapter-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import ClaimLimitsControl from "@/components/settings/ClaimLimitsControl";
 import WalletButton from "@/components/WalletButton";
-import { toast } from "sonner";
 
 /**
  * Self-contained wallet info panel — reused inside the Vault "Wallet" lightbox.
@@ -15,15 +14,19 @@ import { toast } from "sonner";
  */
 const WalletInfoPanel = () => {
   const { user } = useAuth();
-  const qc = useQueryClient();
+  const { connected } = useWallet();
 
-  const { data: profile } = useQuery({
-    queryKey: ["wallet-panel-profile", user?.id],
+  const walletProfileQuery = useQuery({
+    queryKey: ["wallet-binding", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data } = await (supabase as any).rpc("get_my_private_profile_fields");
+      const { data, error } = await supabase.rpc("get_my_private_profile_fields");
+      if (error) throw error;
+
       const row = Array.isArray(data) ? data[0] : data;
-      return row ? { wallet_address: row.wallet_address as string | null } : null;
+      if (!row) throw new Error("Could not load your linked wallet.");
+
+      return { walletAddress: row.wallet_address || null };
     },
   });
 
@@ -31,34 +34,34 @@ const WalletInfoPanel = () => {
     <div className="space-y-5">
       <div className="space-y-3">
         <p className="text-xs text-muted-foreground">
-          One wallet per account, bound on first connect. Disconnect here to re-link a different one.
+          One verified wallet is linked per account. To change it, connect the replacement wallet and choose “Request wallet change” from the wallet menu; the request requires admin approval.
         </p>
-        {profile?.wallet_address ? (
+        {walletProfileQuery.isLoading ? (
+          <p className="text-sm text-muted-foreground">Checking linked wallet…</p>
+        ) : walletProfileQuery.isError ? (
+          <div className="space-y-2">
+            <p className="text-sm text-destructive">Could not load your linked wallet.</p>
+            <button
+              type="button"
+              className="text-sm text-primary underline-offset-4 hover:underline"
+              onClick={() => void walletProfileQuery.refetch()}
+            >
+              Try again
+            </button>
+          </div>
+        ) : walletProfileQuery.data?.walletAddress ? (
           <div className="flex items-center gap-2">
             <code className="text-xs font-mono bg-muted px-3 py-2 rounded-lg flex-1 truncate">
-              {profile.wallet_address}
+              {walletProfileQuery.data.walletAddress}
             </code>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={async () => {
-                await supabase
-                  .from("profiles")
-                  .update({ wallet_address: null } as any)
-                  .eq("user_id", user!.id);
-                qc.invalidateQueries({ queryKey: ["wallet-panel-profile"] });
-                qc.invalidateQueries({ queryKey: ["my-profile"] });
-                toast.success("Wallet disconnected");
-              }}
-            >
-              Disconnect
-            </Button>
           </div>
         ) : (
           <div className="rounded-lg border border-dashed border-border bg-muted/20 p-4 space-y-3">
             <p className="text-sm text-foreground font-medium">No wallet connected</p>
             <p className="text-xs text-muted-foreground">
-              Link Phantom, Solflare, or Backpack to claim $RHOZE and trade Artist Shares. Bound 1:1 to your account on first connect.
+              {connected
+                ? "Your wallet is connected in this browser but isn't linked to your Rhozeland account yet. Open the wallet menu and choose “Verify and link wallet.”"
+                : "Link Phantom, Solflare, or Backpack to claim $RHOZE and trade Artist Shares. You'll sign a free off-chain message to verify ownership."}
             </p>
             <WalletButton />
           </div>

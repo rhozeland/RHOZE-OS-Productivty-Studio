@@ -1086,18 +1086,18 @@ const SettingsPage = () => {
       <div className="space-y-4">
         <p className="text-xs text-muted-foreground">Your connected Solana wallet address is stored here for on-chain features.</p>
         {(profile as any)?.wallet_address ? (
-          <div className="flex items-center gap-3">
+          <div className="space-y-3">
             <code className="text-sm font-mono bg-muted px-3 py-2 rounded-lg flex-1 truncate">
               {(profile as any).wallet_address}
             </code>
-            <Button variant="outline" size="sm" onClick={async () => {
-              await supabase.from("profiles").update({ wallet_address: null } as any).eq("user_id", user!.id);
-              queryClient.invalidateQueries({ queryKey: ["my-profile"] });
-              toast.success("Wallet disconnected");
-            }}>Disconnect</Button>
+            <p className="text-xs text-muted-foreground">
+              Wallet changes require ownership verification and admin approval. Connect a replacement wallet, then choose “Request wallet change” from the wallet menu.
+            </p>
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">No wallet connected. Connect your wallet using the button in the header to link it to your profile.</p>
+          <p className="text-sm text-muted-foreground">
+            No wallet is linked to your profile. Connect a Solana wallet, then open its menu in the header and choose “Verify and link wallet.”
+          </p>
         )}
       </div>
 
