@@ -1,0 +1,54 @@
+name: Slack PR Creation Notification
+
+on:
+  pull_request:
+    types: [opened]
+    branches:
+      - dev
+      - main
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  notify-slack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Trigger Slack workflow
+        env:
+          SLACK_PR_CREATION_NOTIFY_WEBHOOK: ${{ secrets.SLACK_PR_CREATION_NOTIFY_WEBHOOK }}
+          EVENT_NAME: ${{ github.event_name }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+          URL: ${{ github.event.pull_request.html_url }}
+          TITLE: ${{ github.event.pull_request.title }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            AUTHOR="test-author"
+            URL="https://github.com/${{ github.repository }}/pull/0"
+            TITLE="Test Slack PR creation notification"
+            PR_NUMBER="TEST"
+          fi
+
+          payload="$(jq -n \
+            --arg author "$AUTHOR" \
+            --arg url "$URL" \
+            --arg title "$TITLE" \
+            --arg pr_number "$PR_NUMBER" \
+            '{
+              author: $author,
+              url: $url,
+              title: $title,
+              pr_number: $pr_number
+            }'
+          )"
+
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Content-Type: application/json" \
+            --data "$payload" \
+            "$SLACK_PR_CREATION_NOTIFY_WEBHOOK"

@@ -4,6 +4,7 @@ import { ExternalLink, Shield, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { solscanTransactionUrl } from "@/lib/solana-explorer";
 
 interface ContributionProof {
   id: string;
@@ -67,7 +68,7 @@ const ContributionProofCard = ({ proof }: { proof: ContributionProof }) => {
 
       {proof.solana_signature ? (
         <a
-          href={`https://solscan.io/tx/${proof.solana_signature}`}
+          href={solscanTransactionUrl(proof.solana_signature)}
           target="_blank"
           rel="noopener noreferrer"
           className="shrink-0"

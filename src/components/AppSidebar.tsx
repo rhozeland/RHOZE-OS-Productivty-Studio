@@ -49,7 +49,7 @@ const useInboxUnread = () => {
       const sb: any = supabase;
       const [msgs, inq] = await Promise.all([
         sb.from("messages").select("id", { count: "exact", head: true })
-          .eq("recipient_id", user!.id).eq("read", false),
+          .eq("receiver_id", user!.id).eq("read", false),
         sb.from("listing_inquiries").select("id", { count: "exact", head: true })
           .eq("receiver_id", user!.id).eq("status", "pending"),
       ]);

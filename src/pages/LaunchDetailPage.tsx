@@ -44,6 +44,7 @@ import { deriveLaunchPda, isLaunchpadOnChainEnabled, LAUNCHPAD_NETWORK } from "@
 import MintAddressChip from "@/components/launchpad/MintAddressChip";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { solscanAccountUrl, solscanTokenUrl } from "@/lib/solana-explorer";
 
 // Trader-view toggle retired in v9.8 — the page is fan-first for everyone.
 // Creators still see their earnings + the demo banner.
@@ -628,8 +629,6 @@ const Stat = ({
   </div>
 );
 
-const solscanCluster = LAUNCHPAD_NETWORK === "devnet" ? "?cluster=devnet" : "";
-
 const AddressRow = ({
   label,
   address,
@@ -639,7 +638,7 @@ const AddressRow = ({
   address: string;
   kind: "account" | "token";
 }) => {
-  const url = `https://solscan.io/${kind}/${address}${solscanCluster}`;
+  const url = kind === "token" ? solscanTokenUrl(address) : solscanAccountUrl(address);
   const copy = (e: React.MouseEvent) => {
     e.preventDefault();
     navigator.clipboard.writeText(address);

@@ -7,6 +7,7 @@
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { solscanTransactionUrl } from "@/lib/solana-explorer";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import {
@@ -301,7 +302,7 @@ const TicketDetailPage = () => {
               </p>
             )}
             <a
-              href={`https://solscan.io/tx/${ticket.solana_signature}`}
+              href={solscanTransactionUrl(ticket.solana_signature)}
               target="_blank"
               rel="noreferrer"
               className="text-xs inline-flex items-center gap-1 text-primary hover:underline"

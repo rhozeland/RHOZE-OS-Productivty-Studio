@@ -8,8 +8,9 @@
  */
 import { Copy, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
-import { isLaunchpadOnChainEnabled, LAUNCHPAD_NETWORK } from "@/lib/launchpad-onchain";
+import { isLaunchpadOnChainEnabled } from "@/lib/launchpad-onchain";
 import { cn } from "@/lib/utils";
+import { solscanTokenUrl } from "@/lib/solana-explorer";
 
 interface Props {
   address: string | null | undefined;
@@ -20,8 +21,7 @@ interface Props {
 const MintAddressChip = ({ address, size = "sm", className }: Props) => {
   if (!address) return null;
   const onChain = isLaunchpadOnChainEnabled();
-  const cluster = LAUNCHPAD_NETWORK === "devnet" ? "?cluster=devnet" : "";
-  const url = onChain ? `https://solscan.io/token/${address}${cluster}` : null;
+  const url = onChain ? solscanTokenUrl(address) : null;
 
   const truncated = `${address.slice(0, 4)}…${address.slice(-6)}`; // shows the RHOZE suffix
 

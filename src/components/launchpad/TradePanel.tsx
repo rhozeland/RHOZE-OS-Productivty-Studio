@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import { solscanTransactionUrl } from "@/lib/solana-explorer";
 import {
   Loader2,
   ArrowDown,
@@ -183,8 +184,7 @@ const TradePanel = ({
     if (phase.kind === "idle" || phase.kind === "building" || phase.kind === "signing") return null;
     const sig = "signature" in phase ? phase.signature : undefined;
     if (!sig) return null;
-    const cluster = LAUNCHPAD_NETWORK === "devnet" ? "?cluster=devnet" : "";
-    return `https://solscan.io/tx/${sig}${cluster}`;
+    return solscanTransactionUrl(sig);
   }, [phase]);
 
   const submitSimulated = async () => {

@@ -6,17 +6,13 @@ import {
   getAssociatedTokenAddressSync,
   createTransferInstruction,
   createAssociatedTokenAccountInstruction,
-  TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { getConnection } from "@/lib/solana";
 import { toast } from "sonner";
 import { Loader2, Wallet, Coins } from "lucide-react";
-
-const RHOZE_MINT = new PublicKey("7khGn21aGKKAPi1LZF5EsdECdtyDcnYHtMKELrZDpump");
-const TREASURY = new PublicKey("6znjR2ttDJ5c6ScePsE4jU8e2g29dChX7cCVk6xjizr");
-const RHOZE_DECIMALS = 6;
+import { getSolanaConfig } from "@/lib/solana-config";
 
 interface PayWithRhozeButtonProps {
   tokenAmount: number;
@@ -29,7 +25,9 @@ interface PayWithRhozeButtonProps {
   type?: string;
   /** "subscription" tells the backend not to award credits (tier benefits applied separately). */
   intent?: "credits" | "subscription";
-  onSuccess?: (result?: { signature: string; payerWallet: string }) => void;
+  onSuccess?: (result?: { signature: string; payerWallet: string }) => void | Promise<void>;
+  onVerificationPending?: (signature: string) => void;
+  retrySignature?: string;
   label?: string;
   className?: string;
   variant?: "default" | "outline" | "secondary" | "ghost";
@@ -42,6 +40,8 @@ const PayWithRhozeButton = ({
   type = "purchase",
   intent = "credits",
   onSuccess,
+  onVerificationPending,
+  retrySignature,
   label,
   className,
   variant = "outline",
@@ -52,6 +52,38 @@ const PayWithRhozeButton = ({
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
 
+  const verifyPayment = async (signature: string) => {
+    const { data, error } = await supabase.functions.invoke("verify-rhoze-payment", {
+      body: {
+        signature,
+        expected_tokens: tokenAmount,
+        description,
+        type,
+        intent,
+      },
+    });
+
+    if (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.toLowerCase().includes("already processed") || (error as { status?: number }).status === 409) {
+        await onSuccess?.({ signature, payerWallet: publicKey?.toBase58() ?? "" });
+        return;
+      }
+      throw error;
+    }
+    if (data?.error) {
+      throw new Error(data.error);
+    }
+
+    const awarded = data?.credits_added ?? 0;
+    toast.success(
+      intent === "subscription"
+        ? `Paid ${tokenAmount} $RHOZE!`
+        : `Paid ${tokenAmount} $RHOZE! ${awarded} credits added.`
+    );
+    await onSuccess?.({ signature, payerWallet: publicKey?.toBase58() ?? "" });
+  };
+
   const handlePay = async () => {
     if (!publicKey) {
       toast.error("Connect your wallet first");
@@ -59,13 +91,42 @@ const PayWithRhozeButton = ({
     }
 
     setLoading(true);
+    let submittedSignature: string | null = null;
     try {
+      const config = getSolanaConfig();
+      if (!config.rhozePaymentsEnabled) {
+        toast.error("$RHOZE payments are disabled for this environment");
+        return;
+      }
+      if (retrySignature) {
+        setStatus("Retrying verification...");
+        await verifyPayment(retrySignature);
+        return;
+      }
+      const { data: profiles, error: profileError } = await supabase.rpc("get_my_private_profile_fields");
+      if (profileError) throw profileError;
+      if (profiles?.[0]?.wallet_address !== publicKey.toBase58()) {
+        throw new Error("Connect your account's bound wallet before paying.");
+      }
       setStatus("Building transaction...");
       const connection = getConnection();
-      const rawAmount = BigInt(Math.floor(tokenAmount * Math.pow(10, RHOZE_DECIMALS)));
+      const rhozeMint = new PublicKey(config.rhozeMint);
+      const treasury = new PublicKey(config.treasuryAddress);
+      const tokenProgramId = new PublicKey(config.tokenProgramId);
+      const rawAmount = BigInt(Math.floor(tokenAmount * Math.pow(10, config.rhozeDecimals)));
 
-      const senderATA = getAssociatedTokenAddressSync(RHOZE_MINT, publicKey);
-      const treasuryATA = getAssociatedTokenAddressSync(RHOZE_MINT, TREASURY);
+      const senderATA = getAssociatedTokenAddressSync(
+        rhozeMint,
+        publicKey,
+        false,
+        tokenProgramId,
+      );
+      const treasuryATA = getAssociatedTokenAddressSync(
+        rhozeMint,
+        treasury,
+        false,
+        tokenProgramId,
+      );
 
       const transaction = new Transaction();
 
@@ -73,12 +134,25 @@ const PayWithRhozeButton = ({
       const treasuryATAInfo = await connection.getAccountInfo(treasuryATA);
       if (!treasuryATAInfo) {
         transaction.add(
-          createAssociatedTokenAccountInstruction(publicKey, treasuryATA, TREASURY, RHOZE_MINT)
+          createAssociatedTokenAccountInstruction(
+            publicKey,
+            treasuryATA,
+            treasury,
+            rhozeMint,
+            tokenProgramId,
+          )
         );
       }
 
       transaction.add(
-        createTransferInstruction(senderATA, treasuryATA, publicKey, rawAmount)
+        createTransferInstruction(
+          senderATA,
+          treasuryATA,
+          publicKey,
+          rawAmount,
+          [],
+          tokenProgramId,
+        )
       );
 
       const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
@@ -88,36 +162,21 @@ const PayWithRhozeButton = ({
 
       setStatus("Confirm in wallet...");
       const signature = await sendTransaction(transaction, connection);
+      submittedSignature = signature;
 
       setStatus("Confirming...");
       await connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight });
 
       setStatus("Verifying...");
-      const { data, error } = await supabase.functions.invoke("verify-rhoze-payment", {
-        body: {
-          signature,
-          expected_tokens: tokenAmount,
-          description,
-          type,
-          intent,
-        },
-      });
-
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-
-      const awarded = data?.credits_added ?? 0;
-      toast.success(
-        intent === "subscription"
-          ? `Paid ${tokenAmount} $RHOZE!`
-          : `Paid ${tokenAmount} $RHOZE! ${awarded} credits added.`
-      );
-      onSuccess?.({ signature, payerWallet: publicKey.toBase58() });
-    } catch (error: any) {
-      const msg = error?.message || "Transaction failed";
+      await verifyPayment(signature);
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Transaction failed";
       if (msg.includes("User rejected")) {
         toast.error("Transaction cancelled");
       } else {
+        if (submittedSignature) {
+          onVerificationPending?.(submittedSignature);
+        }
         toast.error(msg);
       }
     } finally {

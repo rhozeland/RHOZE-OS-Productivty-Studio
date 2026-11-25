@@ -64,7 +64,7 @@ const CreatorPassUpgradeCta = ({ variant = "wide" }: Props) => {
         sb.from("works").select("id", { count: "exact", head: true }).eq("user_id", user!.id),
         sb.from("projects").select("id", { count: "exact", head: true }).eq("user_id", user!.id).eq("status", "completed"),
         sb.from("listings").select("id", { count: "exact", head: true }).eq("user_id", user!.id),
-        sb.from("events").select("id", { count: "exact", head: true }).eq("user_id", user!.id),
+        sb.from("events").select("id", { count: "exact", head: true }).eq("host_id", user!.id),
         sb.from("credit_transactions").select("id", { count: "exact", head: true }).eq("user_id", user!.id).eq("type", "reward"),
       ]);
       return {

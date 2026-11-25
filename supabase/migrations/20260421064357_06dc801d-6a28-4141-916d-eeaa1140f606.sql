@@ -13,7 +13,8 @@ CREATE POLICY "Authenticated users can view contribution proofs"
 -- Topics expected: 'messages:<userId>', 'notifications:<userId>', 'group:<groupId>', etc.
 -- We restrict subscriptions to authenticated users and require topic ownership.
 
-ALTER TABLE realtime.messages ENABLE ROW LEVEL SECURITY;
+-- Supabase already enables RLS on realtime.messages. Do not ALTER this
+-- internal table here; its owner is managed by Supabase.
 
 -- Drop any existing permissive policies (idempotent)
 DROP POLICY IF EXISTS "Authenticated users can read realtime messages" ON realtime.messages;

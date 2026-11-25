@@ -13,6 +13,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link, Navigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
+import { solscanTransactionUrl } from "@/lib/solana-explorer";
 import {
   ArrowLeft,
   Sparkles,
@@ -483,7 +484,7 @@ const EventManagePage = () => {
           </div>
           {ev.solana_signature && (
             <a
-              href={`https://solscan.io/tx/${ev.solana_signature}`}
+              href={solscanTransactionUrl(ev.solana_signature)}
               target="_blank"
               rel="noreferrer"
               className="text-xs inline-flex items-center gap-1 text-primary hover:underline"

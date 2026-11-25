@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { Download, ExternalLink, History } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import RhozeStreakBadge, { computeClaimStreak } from "@/components/RhozeStreakBadge";
+import { solscanTransactionUrl } from "@/lib/solana-explorer";
 
 interface ClaimRow {
   id: string;
@@ -14,8 +15,6 @@ interface ClaimRow {
   payment_reference: string | null;
   created_at: string;
 }
-
-const SOLSCAN_TX = "https://solscan.io/tx/";
 
 const RhozeClaimHistory = ({ className }: { className?: string }) => {
   const { user } = useAuth();
@@ -106,7 +105,7 @@ const RhozeClaimHistory = ({ className }: { className?: string }) => {
                 </div>
                 {sig ? (
                   <a
-                    href={`${SOLSCAN_TX}${sig}`}
+                    href={solscanTransactionUrl(sig)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="shrink-0 inline-flex items-center gap-1 text-[11px] font-body text-foreground hover:text-primary transition-colors px-2 py-1 rounded-md border border-border"

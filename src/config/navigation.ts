@@ -147,9 +147,8 @@ export const partitionDockIds = (
 //   • Otherwise (any other rewrite):
 //       Add `{ from: "/legacy", to: "/new-canonical" }` to EXTRA_ALIASES.
 //
-// That's it. The router (App.tsx) auto-mounts `<from>/*` for every entry,
-// REGISTERED_ROUTE_PATHS picks them up for the nav-link sanity check, and
-// `resolveAlias` handles suffix preservation. `LegacyAliasRedirect`
+// That's it. The router (app-routes.tsx) auto-mounts `<from>/*` for every
+// entry, and `resolveAlias` handles suffix preservation. `LegacyAliasRedirect`
 // re-attaches the original `?search` and `#hash` so deep links survive.
 
 export interface NavAlias {

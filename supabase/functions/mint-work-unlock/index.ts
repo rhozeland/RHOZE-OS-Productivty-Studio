@@ -14,12 +14,11 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
 import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2.95.0/cors";
 
-const RHOZE_MINT = "7khGn21aGKKAPi1LZF5EsdECdtyDcnYHtMKELrZDpump";
-const RHOZE_DECIMALS = 6;
-const RPC_URL = "https://api.mainnet-beta.solana.com";
+import { getSolanaConfig } from "../_shared/solana-config.ts";
 
-async function rpcCall(method: string, params: unknown[]) {
-  const res = await fetch(RPC_URL, {
+async function rpcCall(rpcUrl: string, method: string, params: unknown[]) {
+  const config = getSolanaConfig();
+  const res = await fetch(rpcUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
@@ -28,9 +27,10 @@ async function rpcCall(method: string, params: unknown[]) {
 }
 
 async function getRhozeBalance(wallet: string): Promise<number> {
-  const result = await rpcCall("getTokenAccountsByOwner", [
+  const config = getSolanaConfig();
+  const result = await rpcCall(config.rpcUrl, "getTokenAccountsByOwner", [
     wallet,
-    { mint: RHOZE_MINT },
+    { mint: config.rhozeMint },
     { encoding: "jsonParsed" },
   ]);
   const accounts = result?.result?.value ?? [];
@@ -39,7 +39,7 @@ async function getRhozeBalance(wallet: string): Promise<number> {
     const amt = a?.account?.data?.parsed?.info?.tokenAmount?.amount;
     if (amt) total += Number(amt);
   }
-  return total / Math.pow(10, RHOZE_DECIMALS);
+  return total / Math.pow(10, config.rhozeDecimals);
 }
 
 Deno.serve(async (req) => {

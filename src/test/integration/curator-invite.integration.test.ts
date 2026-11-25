@@ -4,16 +4,15 @@
  * Exercises the full invite handshake against the real Lovable Cloud
  * backend:
  *
- *   1. Inviter creates a revenue_split_configs row with curator_pct > 0
- *      and curator_id = NULL.
+ *   1. Inviter creates a revenue_split_configs row and seeds the lead's
+ *      collaborator share.
  *   2. Inviter inserts a curator_invites row targeting the invitee.
  *   3. Invitee fetches the pending invite via RLS (proves invitee can
  *      see their own invites — what powers /inquiries' CuratorInvitesInbox).
  *   4. Invitee UPDATEs status → 'accepted'.
- *   5. Server-side trigger handle_curator_invite_response:
- *        - sets revenue_split_configs.curator_id = invitee
- *        - stamps responded_at
- *        - emits notifications to both parties
+ *   5. Server-side triggers transfer the offered share to
+ *      revenue_split_collaborators, preserve the legacy curator_id
+ *      projection, stamp responded_at, and emit notifications.
  *   6. We assert all of the above.
  *
  * Skipped unless ALL of the following env vars are set:
@@ -26,18 +25,17 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { getSupabaseTestConfig } from "./supabase-test-config";
 
 // ── Env-gate ─────────────────────────────────────────────────────────────
-const URL =
-  process.env.SUPABASE_TEST_URL ?? process.env.VITE_SUPABASE_URL ?? "";
-const ANON =
-  process.env.SUPABASE_TEST_ANON_KEY ??
-  process.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
-  "";
-const SERVICE = process.env.SUPABASE_TEST_SERVICE_ROLE_KEY ?? "";
+const testConfig = getSupabaseTestConfig("RUN_CURATOR_INVITE_INTEGRATION");
+const {
+  url: URL,
+  anonKey: ANON,
+  serviceRoleKey: SERVICE,
+  enabled: ENABLED,
+} = testConfig;
 const OPT_IN = process.env.RUN_CURATOR_INVITE_INTEGRATION === "1";
-
-const ENABLED = Boolean(URL && ANON && SERVICE && OPT_IN);
 const skipMessage = !OPT_IN
   ? "skipped: set RUN_CURATOR_INVITE_INTEGRATION=1 to enable"
   : "skipped: missing SUPABASE_TEST_URL / SUPABASE_TEST_ANON_KEY / SUPABASE_TEST_SERVICE_ROLE_KEY";
@@ -55,6 +53,8 @@ describeIntegration(`Curator Invite flow — live backend (${skipMessage})`, () 
   let inviteeId: string;
   let splitConfigId: string;
   let inviteId: string;
+  const leadPct = 90;
+  const invitePct = 10;
 
   // Track every row we create so afterAll can clean up reliably.
   const createdNotificationOwners: string[] = [];
@@ -90,11 +90,12 @@ describeIntegration(`Curator Invite flow — live backend (${skipMessage})`, () 
 
     createdNotificationOwners.push(inviterId, inviteeId);
 
-    // Profiles for friendly names in trigger-emitted notifications.
-    await admin.from("profiles").insert([
-      { user_id: inviterId, username: `inviter_${RUN_TAG}`, display_name: "Test Inviter" },
-      { user_id: inviteeId, username: `invitee_${RUN_TAG}`, display_name: "Test Invitee" },
+    // Profiles for friendly, run-scoped names in trigger-emitted notifications.
+    const { error: profileErr } = await admin.from("profiles").insert([
+      { user_id: inviterId, username: `inviter_${RUN_TAG}`, display_name: `Test Inviter ${RUN_TAG}` },
+      { user_id: inviteeId, username: `invitee_${RUN_TAG}`, display_name: `Test Invitee ${RUN_TAG}` },
     ]);
+    if (profileErr) throw new Error(`Profile seed failed: ${profileErr.message}`);
 
     // ── Sign in as both ───────────────────────────────────────────────
     inviterClient = createClient(URL, ANON, {
@@ -117,23 +118,31 @@ describeIntegration(`Curator Invite flow — live backend (${skipMessage})`, () 
   }, 60_000);
 
   afterAll(async () => {
-    try {
-      // Order matters — invites cascade-delete with the config, but
-      // notifications are independent.
-      if (splitConfigId) {
-        await admin.from("revenue_split_configs").delete().eq("id", splitConfigId);
-      }
-      if (createdNotificationOwners.length) {
-        await admin
-          .from("notifications")
-          .delete()
-          .in("user_id", createdNotificationOwners);
-      }
-      await admin.from("profiles").delete().in("user_id", [inviterId, inviteeId].filter(Boolean));
-      if (inviterId) await admin.auth.admin.deleteUser(inviterId);
-      if (inviteeId) await admin.auth.admin.deleteUser(inviteeId);
-    } catch {
-      // Best-effort cleanup — never mask the real assertion failure.
+    const cleanupErrors: string[] = [];
+    // Invites and collaborators cascade-delete with the config.
+    if (splitConfigId) {
+      const { error } = await admin.from("revenue_split_configs").delete().eq("id", splitConfigId);
+      if (error) cleanupErrors.push(`revenue_split_configs: ${error.message}`);
+    }
+    if (createdNotificationOwners.length) {
+      const { error } = await admin.from("notifications").delete().in("user_id", createdNotificationOwners);
+      if (error) cleanupErrors.push(`notifications: ${error.message}`);
+    }
+    const profileIds = [inviterId, inviteeId].filter(Boolean);
+    if (profileIds.length > 0) {
+      const { error } = await admin.from("profiles").delete().in("user_id", profileIds);
+      if (error) cleanupErrors.push(`profiles: ${error.message}`);
+    }
+    if (inviterId) {
+      const { error } = await admin.auth.admin.deleteUser(inviterId);
+      if (error) cleanupErrors.push(`inviter auth user: ${error.message}`);
+    }
+    if (inviteeId) {
+      const { error } = await admin.auth.admin.deleteUser(inviteeId);
+      if (error) cleanupErrors.push(`invitee auth user: ${error.message}`);
+    }
+    if (cleanupErrors.length > 0) {
+      throw new Error(`Integration cleanup failed: ${cleanupErrors.join("; ")}`);
     }
   }, 30_000);
 
@@ -154,6 +163,11 @@ describeIntegration(`Curator Invite flow — live backend (${skipMessage})`, () 
     expect(data).toBeTruthy();
     expect(data!.curator_id).toBeNull();
     splitConfigId = data!.id;
+
+    const { error: collaboratorErr } = await inviterClient
+      .from("revenue_split_collaborators")
+      .insert({ config_id: splitConfigId, user_id: inviterId, pct: leadPct });
+    expect(collaboratorErr).toBeNull();
   });
 
   it("inviter can insert a curator_invites row targeting the invitee", async () => {
@@ -164,6 +178,7 @@ describeIntegration(`Curator Invite flow — live backend (${skipMessage})`, () 
         inviter_id: inviterId,
         invitee_id: inviteeId,
         message: `Join me on ${RUN_TAG}`,
+        pct: invitePct,
       })
       .select("id, status")
       .single();
@@ -188,7 +203,7 @@ describeIntegration(`Curator Invite flow — live backend (${skipMessage})`, () 
     expect(data!.message).toContain(RUN_TAG);
   });
 
-  it("invitee accepts → trigger sets revenue_split_configs.curator_id", async () => {
+  it("invitee accepts → trigger transfers the collaborator share", async () => {
     const { error: updateErr } = await inviteeClient
       .from("curator_invites")
       .update({ status: "accepted" })
@@ -204,8 +219,21 @@ describeIntegration(`Curator Invite flow — live backend (${skipMessage})`, () 
     expect(invite?.status).toBe("accepted");
     expect(invite?.responded_at).toBeTruthy();
 
-    // Verify the trigger attached the curator. Use admin so we don't
-    // depend on the curator's own SELECT policy on revenue_split_configs.
+    const { data: collaborators, error: collaboratorsErr } = await admin
+      .from("revenue_split_collaborators")
+      .select("user_id, pct")
+      .eq("config_id", splitConfigId)
+      .in("user_id", [inviterId, inviteeId]);
+    expect(collaboratorsErr).toBeNull();
+    expect(collaborators).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ user_id: inviterId, pct: leadPct - invitePct }),
+        expect.objectContaining({ user_id: inviteeId, pct: invitePct }),
+      ]),
+    );
+
+    // The legacy projection remains part of the deployed schema while
+    // clients migrate to the collaborator table.
     const { data: config, error: cfgErr } = await admin
       .from("revenue_split_configs")
       .select("curator_id, creator_pct, curator_pct")
@@ -225,6 +253,7 @@ describeIntegration(`Curator Invite flow — live backend (${skipMessage})`, () 
       .select("type, title")
       .eq("user_id", inviterId)
       .eq("type", "curator_accepted")
+      .ilike("title", `%${RUN_TAG}%`)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -233,9 +262,10 @@ describeIntegration(`Curator Invite flow — live backend (${skipMessage})`, () 
 
     const { data: inviteeNotif } = await inviteeClient
       .from("notifications")
-      .select("type, title")
+      .select("type, title, body")
       .eq("user_id", inviteeId)
       .eq("type", "curator_role")
+      .ilike("body", `%${RUN_TAG}%`)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -262,7 +292,11 @@ describeIntegration(`Curator Invite flow — live backend (${skipMessage})`, () 
       const stranger = createClient(URL, ANON, {
         auth: { persistSession: false, autoRefreshToken: false },
       });
-      await stranger.auth.signInWithPassword({ email: strangerEmail, password });
+      const { error: signInErr } = await stranger.auth.signInWithPassword({
+        email: strangerEmail,
+        password,
+      });
+      expect(signInErr).toBeNull();
 
       const { data, error } = await stranger
         .from("curator_invites")

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Coins } from "lucide-react";
 import confetti from "canvas-confetti";
+import { solscanTransactionUrl } from "@/lib/solana-explorer";
 
 interface RhozeClaimCelebrationProps {
   open: boolean;
@@ -182,7 +183,7 @@ const RhozeClaimCelebration = ({ open, amount, signature, onClose }: RhozeClaimC
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.9 }}
-                href={`https://solscan.io/tx/${signature}`}
+                href={solscanTransactionUrl(signature)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-4 inline-block text-xs font-mono text-primary hover:underline"

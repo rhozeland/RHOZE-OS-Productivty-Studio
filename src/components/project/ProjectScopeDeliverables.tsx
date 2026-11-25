@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { solscanTransactionUrl } from "@/lib/solana-explorer";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -539,7 +540,7 @@ const ProjectScopeDeliverables = ({
                       {/* Anchored badge + Solscan link */}
                       {d.solana_signature && (
                         <a
-                          href={`https://solscan.io/tx/${d.solana_signature}`}
+                          href={solscanTransactionUrl(d.solana_signature)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 font-mono text-primary hover:bg-primary/20 transition-colors"

@@ -1,0 +1,117 @@
+import { PublicKey } from "@solana/web3.js";
+import {
+  resolveSolanaConnectionConfig,
+  resolveSolanaConfig,
+  SolanaConfigError,
+} from "./solana-config";
+
+const validInput = {
+  rhozeMint: PublicKey.unique().toBase58(),
+  tokenProgramId: PublicKey.unique().toBase58(),
+  treasuryAddress: PublicKey.unique().toBase58(),
+  payoutAddress: PublicKey.unique().toBase58(),
+};
+
+describe("resolveSolanaConfig", () => {
+  it("resolves the wallet connection without requiring transaction assets", () => {
+    expect(
+      resolveSolanaConnectionConfig({
+        environment: "devnet",
+        rpcUrl: "https://api.devnet.solana.com",
+      }),
+    ).toEqual({
+      environment: "devnet",
+      cluster: "devnet",
+      rpcUrl: "https://api.devnet.solana.com",
+    });
+  });
+
+  it("defaults non-production builds to a disabled Devnet profile", () => {
+    expect(resolveSolanaConfig(validInput)).toMatchObject({
+      environment: "devnet",
+      cluster: "devnet",
+      solPaymentsEnabled: false,
+      rhozePaymentsEnabled: false,
+      claimsEnabled: false,
+      anchoringEnabled: false,
+    });
+  });
+
+  it("requires production builds to explicitly select and configure Mainnet", () => {
+    expect(() => resolveSolanaConfig(validInput, "production")).toThrow(
+      SolanaConfigError,
+    );
+    expect(() =>
+      resolveSolanaConfig(
+        { ...validInput, environment: "mainnet" },
+        "production",
+      ),
+    ).toThrow(/mainnet requires an explicit rpcUrl/);
+  });
+
+  it("rejects a Devnet profile pointing at Mainnet", () => {
+    expect(() =>
+      resolveSolanaConfig({
+        ...validInput,
+        environment: "devnet",
+        rpcUrl: "https://api.mainnet-beta.solana.com",
+      }),
+    ).toThrow(/devnet cannot use a mainnet RPC URL/);
+  });
+
+  it("rejects invalid public keys and unsupported environments", () => {
+    expect(() =>
+      resolveSolanaConfig({
+        ...validInput,
+        environment: "testnet",
+        treasuryAddress: "not-a-public-key",
+      }),
+    ).toThrow(/environment must be "devnet" or "mainnet"/);
+
+    expect(() =>
+      resolveSolanaConfig({
+        ...validInput,
+        treasuryAddress: "not-a-public-key",
+      }),
+    ).toThrow(/treasuryAddress must be a valid Solana public key/);
+  });
+
+  it("parses feature flags and normalizes public keys", () => {
+    const config = resolveSolanaConfig({
+      ...validInput,
+      environment: "devnet",
+      solPaymentsEnabled: "true",
+      rhozePaymentsEnabled: false,
+      claimsEnabled: true,
+      anchoringEnabled: "false",
+      rhozeDecimals: "9",
+    });
+
+    expect(config).toMatchObject({
+      solPaymentsEnabled: true,
+      rhozePaymentsEnabled: false,
+      claimsEnabled: true,
+      anchoringEnabled: false,
+      rhozeDecimals: 9,
+    });
+  });
+
+  it("allows each payment flag to override the legacy shared flag", () => {
+    expect(resolveSolanaConfig({
+      ...validInput,
+      solPaymentsEnabled: "true",
+      rhozePaymentsEnabled: "false",
+      paymentsEnabled: true,
+    })).toMatchObject({
+      solPaymentsEnabled: true,
+      rhozePaymentsEnabled: false,
+    });
+  });
+
+  it("uses the legacy shared flag when individual payment flags are absent", () => {
+    expect(resolveSolanaConfig({ ...validInput, paymentsEnabled: true })).toMatchObject({
+      solPaymentsEnabled: true,
+      rhozePaymentsEnabled: true,
+    });
+  });
+});

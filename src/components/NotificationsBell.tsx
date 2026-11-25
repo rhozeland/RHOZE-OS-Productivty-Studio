@@ -85,7 +85,7 @@ const NotificationsBell = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("project_cheers")
-        .select("project_id, projects(id, name, owner_id, public_slug)")
+        .select("project_id, projects(id, name:title, owner_id:user_id, public_slug)")
         .eq("user_id", user!.id);
       return (data as any[]) ?? [];
     },
@@ -116,8 +116,8 @@ const NotificationsBell = () => {
       const sb = supabase as any;
       const { data: ownedProjects } = await sb
         .from("projects")
-        .select("id, name, public_slug")
-        .eq("owner_id", user!.id)
+        .select("id, name:title, public_slug")
+        .eq("user_id", user!.id)
         .limit(50);
       const ownedIds = ((ownedProjects as any[]) ?? []).map((p: any) => p.id);
       const allProjectIds = Array.from(new Set([...backedProjectIds, ...ownedIds]));
@@ -133,7 +133,7 @@ const NotificationsBell = () => {
 
       const { data: projectRows } = await sb
         .from("projects")
-        .select("id, name, public_slug")
+        .select("id, name:title, public_slug")
         .in("id", allProjectIds);
       const projectMap = new Map(
         ((projectRows as any[]) ?? []).map((p: any) => [p.id, p]),
