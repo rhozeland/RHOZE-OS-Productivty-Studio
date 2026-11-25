@@ -26,6 +26,22 @@ describe("resolveSolanaConfig", () => {
     });
   });
 
+  it("routes an explicitly configured production profile to Mainnet", () => {
+    expect(
+      resolveSolanaConnectionConfig(
+        {
+          environment: "mainnet",
+          rpcUrl: "https://rpc.example.test/mainnet",
+        },
+        "production",
+      ),
+    ).toEqual({
+      environment: "mainnet",
+      cluster: "mainnet-beta",
+      rpcUrl: "https://rpc.example.test/mainnet",
+    });
+  });
+
   it("defaults non-production builds to a disabled Devnet profile", () => {
     expect(resolveSolanaConfig(validInput)).toMatchObject({
       environment: "devnet",
