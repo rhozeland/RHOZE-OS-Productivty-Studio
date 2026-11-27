@@ -458,4 +458,126 @@ describeIntegration(`Linked-wallet locking — live backend (${skipMessage})`, (
       .eq("user_id", userA);
     expect(count).toBe(0);
   });
+
+  const challengeVerifiedAt = async (challengeId: string) => {
+    const { data, error } = await admin
+      .from("wallet_verification_challenges")
+      .select("verified_at")
+      .eq("id", challengeId)
+      .single();
+    if (error) throw error;
+    return data.verified_at as string | null;
+  };
+
+  const pendingRequests = async (userId: string) => {
+    const { data, error } = await admin
+      .from("wallet_change_requests")
+      .select("id, verification_id")
+      .eq("user_id", userId)
+      .eq("status", "pending");
+    if (error) throw error;
+    return data;
+  };
+
+  it("a verified change records the request and its proof together", async () => {
+    const signed = await signChange(clientA, replacement);
+    const res = await call(clientA, signed);
+    expect(res.status).toBe(200);
+
+    expect(await pendingRequests(userA)).toEqual([
+      { id: expect.any(String), verification_id: signed.challengeId },
+    ]);
+    expect(await challengeVerifiedAt(signed.challengeId)).not.toBeNull();
+  });
+
+  it("a change that can't be filed leaves no proof behind", async () => {
+    // Signed while nothing was pending; another request lands before verify.
+    const signed = await signChange(clientA, replacement);
+    const { data: other, error: otherErr } = await admin
+      .from("wallet_change_requests")
+      .insert({
+        user_id: userA,
+        current_wallet: walletA.address,
+        requested_wallet: stranger.address,
+        status: "pending",
+      })
+      .select("id")
+      .single();
+    if (otherErr) throw otherErr;
+
+    const res = await call(clientA, signed);
+    expect(res.status).toBe(409);
+    expect(res.body?.code).toBe("change_pending");
+    expect(await challengeVerifiedAt(signed.challengeId)).toBeNull();
+    expect(await pendingRequests(userA)).toEqual([
+      { id: other.id, verification_id: null },
+    ]);
+  });
+
+  it("users cannot file a change request through file_wallet_change_request", async () => {
+    const challenge = await call(clientA, {
+      action: "challenge",
+      walletAddress: replacement.address,
+      intent: "change",
+    });
+    const challengeId = String(challenge.body?.challengeId);
+    await admin
+      .from("wallet_verification_challenges")
+      .update({ consumed_at: new Date().toISOString() })
+      .eq("id", challengeId);
+
+    const { error } = await clientA.rpc("file_wallet_change_request", {
+      _user_id: userA,
+      _challenge_id: challengeId,
+    });
+    expect(error).not.toBeNull();
+    expect(await pendingRequests(userA)).toEqual([]);
+    expect(await challengeVerifiedAt(challengeId)).toBeNull();
+  });
+
+  it("a challenge can back only one change request", async () => {
+    const signed = await signChange(clientA, replacement);
+    expect((await call(clientA, signed)).status).toBe(200);
+    await admin.from("wallet_change_requests").delete().eq("user_id", userA);
+
+    const { error } = await admin.rpc("file_wallet_change_request", {
+      _user_id: userA,
+      _challenge_id: signed.challengeId,
+    });
+    expect(error?.message).toContain("wallet_change_invalid_challenge");
+    expect(await pendingRequests(userA)).toEqual([]);
+  });
+
+  it("users can see their own pending change, but not another user's", async () => {
+    const requestId = await requestChange(clientA, userA, replacement);
+    // The query usePendingWalletChange runs.
+    const pendingFor = (client: SupabaseClient) =>
+      client
+        .from("wallet_change_requests")
+        .select("id, requested_wallet, created_at")
+        .eq("user_id", userA)
+        .eq("status", "pending")
+        .maybeSingle();
+
+    const own = await pendingFor(clientA);
+    expect(own.error).toBeNull();
+    expect(own.data).toMatchObject({ id: requestId, requested_wallet: replacement.address });
+
+    const other = await pendingFor(clientB);
+    expect(other.error).toBeNull();
+    expect(other.data).toBeNull();
+  });
+
+  it("rejecting a pending request lets the user file a new one", async () => {
+    const first = await requestChange(clientA, userA, replacement);
+    const { error } = await clientAdmin.rpc("process_wallet_change", {
+      _request_id: first,
+      _approve: false,
+      _note: "Wrong wallet",
+    });
+    expect(error).toBeNull();
+
+    const second = await requestChange(clientA, userA, replacement);
+    expect(second).not.toBe(first);
+  });
 });

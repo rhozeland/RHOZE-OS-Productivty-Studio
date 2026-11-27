@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Separator } from "@/components/ui/separator";
 import ClaimLimitsControl from "@/components/settings/ClaimLimitsControl";
 import WalletButton from "@/components/WalletButton";
+import PendingWalletChangeNotice from "@/components/wallet/PendingWalletChangeNotice";
 
 /**
  * Self-contained wallet info panel — reused inside the Vault "Wallet" lightbox.
@@ -31,9 +32,12 @@ const WalletInfoPanel = () => {
           One wallet per account, locked once verified. To switch, connect the new wallet and choose “Request wallet change” from the Wallet menu.
         </p>
         {profile?.wallet_address ? (
-          <code className="block text-xs font-mono bg-muted px-3 py-2 rounded-lg truncate">
-            {profile.wallet_address}
-          </code>
+          <>
+            <code className="block text-xs font-mono bg-muted px-3 py-2 rounded-lg truncate">
+              {profile.wallet_address}
+            </code>
+            <PendingWalletChangeNotice />
+          </>
         ) : (
           <div className="rounded-lg border border-dashed border-border bg-muted/20 p-4 space-y-3">
             <p className="text-sm text-foreground font-medium">No wallet connected</p>

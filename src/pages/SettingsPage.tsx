@@ -23,6 +23,7 @@ import { useArtistVerification } from "@/hooks/useArtistVerification";
 import VerifiedArtistBadge from "@/components/profile/VerifiedArtistBadge";
 import LogoCustomizer from "@/components/onboarding/LogoCustomizer";
 import ClaimLimitsControl from "@/components/settings/ClaimLimitsControl";
+import PendingWalletChangeNotice from "@/components/wallet/PendingWalletChangeNotice";
 import SettingsSubNav, {
   useActiveSettingsSection,
 } from "@/components/settings/SettingsSubNav";
@@ -945,9 +946,13 @@ const SettingsPage = () => {
             <code className="block text-sm font-mono bg-muted px-3 py-2 rounded-lg truncate">
               {(profile as any).wallet_address}
             </code>
-            <p className="text-xs text-muted-foreground">
-              This wallet is locked to your account. To switch, connect the new wallet and choose “Request wallet change” from the Wallet menu.
-            </p>
+            <PendingWalletChangeNotice
+              fallback={
+                <p className="text-xs text-muted-foreground">
+                  This wallet is locked to your account. To switch, connect the new wallet and choose “Request wallet change” from the Wallet menu.
+                </p>
+              }
+            />
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">No wallet connected. Connect your wallet using the button in the header to link it to your profile.</p>

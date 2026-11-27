@@ -6244,6 +6244,10 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      file_wallet_change_request: {
+        Args: { _challenge_id: string; _user_id: string }
+        Returns: string
+      }
       generate_rhoze_vanity_address: { Args: never; Returns: string }
       get_active_underwriting_rules: {
         Args: never
@@ -6421,6 +6425,10 @@ export type Database = {
         Returns: boolean
       }
       is_verified_artist: { Args: { _user_id: string }; Returns: boolean }
+      link_verified_wallet: {
+        Args: { _challenge_id: string; _user_id: string }
+        Returns: string
+      }
       list_my_buddies: {
         Args: never
         Returns: {

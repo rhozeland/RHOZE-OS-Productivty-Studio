@@ -153,6 +153,17 @@ describeIntegration(
       return data.consumed_at as string | null;
     };
 
+    // Set only when the signature was applied (the wallet got linked).
+    const verifiedAt = async (challengeId: string) => {
+      const { data, error } = await admin
+        .from("wallet_verification_challenges")
+        .select("verified_at")
+        .eq("id", challengeId)
+        .single();
+      if (error) throw error;
+      return data.verified_at as string | null;
+    };
+
     beforeAll(async () => {
       admin = createClient(URL, SERVICE, {
         auth: { persistSession: false, autoRefreshToken: false },
@@ -265,6 +276,7 @@ describeIntegration(
         wallet_locked: true,
       });
       expect(await consumedAt(challengeId)).not.toBeNull();
+      expect(await verifiedAt(challengeId)).not.toBeNull();
     });
 
     it("rejects a wrong signature", async () => {
@@ -476,13 +488,15 @@ describeIntegration(
       const first = await submit(clientA, await signedLink(clientA, walletA));
       expect(first.status).toBe(200);
 
-      const res = await submit(clientB, await signedLink(clientB, walletA));
+      const signedB = await signedLink(clientB, walletA);
+      const res = await submit(clientB, signedB);
       expect(res.status).toBe(409);
       expect(res.body?.code).toBe("wallet_already_in_use");
       expect(await linkedWallet(userB)).toEqual({
         wallet_address: null,
         wallet_locked: false,
       });
+      expect(await verifiedAt(signedB.challengeId)).toBeNull();
       expect((await linkedWallet(userA)).wallet_address).toBe(walletA.address);
 
       // The owning account still gets already_linked.
@@ -517,6 +531,51 @@ describeIntegration(
         wallet_address: null,
         wallet_locked: false,
       });
+    });
+
+    it("accepts the same wallet verified again from another tab", async () => {
+      // Both issued while nothing was linked.
+      const firstTab = await signedLink(clientA, walletA);
+      const secondTab = await signedLink(clientA, walletA);
+
+      expect((await submit(clientA, firstTab)).status).toBe(200);
+      const res = await submit(clientA, secondTab);
+      expect(res).toEqual({
+        status: 200,
+        body: { verified: true, walletAddress: walletA.address },
+      });
+      expect((await linkedWallet(userA)).wallet_address).toBe(walletA.address);
+      expect(await verifiedAt(secondTab.challengeId)).not.toBeNull();
+    });
+
+    it("does not link, or record proof, when a different wallet was linked meanwhile", async () => {
+      const signed = await signedLink(clientA, walletA);
+      await admin
+        .from("profiles")
+        .update({ wallet_address: walletB.address, wallet_locked: true })
+        .eq("user_id", userA);
+
+      const res = await submit(clientA, signed);
+      expect(res.status).toBe(409);
+      expect(res.body?.code).toBe("wallet_already_linked");
+      expect((await linkedWallet(userA)).wallet_address).toBe(walletB.address);
+      expect(await verifiedAt(signed.challengeId)).toBeNull();
+    });
+
+    it("does not let users call link_verified_wallet themselves", async () => {
+      const { challengeId } = await requestChallenge(clientA, walletA);
+      await admin
+        .from("wallet_verification_challenges")
+        .update({ consumed_at: new Date().toISOString() })
+        .eq("id", challengeId);
+
+      const { error } = await clientA.rpc("link_verified_wallet", {
+        _user_id: userA,
+        _challenge_id: challengeId,
+      });
+      expect(error).not.toBeNull();
+      expect((await linkedWallet(userA)).wallet_address).toBeNull();
+      expect(await verifiedAt(challengeId)).toBeNull();
     });
 
     it("caps outstanding challenges per user", async () => {

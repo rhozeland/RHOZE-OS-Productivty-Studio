@@ -10,6 +10,10 @@ import {
   runWalletVerificationOnce,
   verifyWalletOwnership,
 } from "@/lib/wallet-verification";
+import {
+  PENDING_WALLET_CHANGE_QUERY_KEY,
+  usePendingWalletChange,
+} from "@/hooks/usePendingWalletChange";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -23,6 +27,7 @@ import {
   ChevronDown,
   ShieldCheck,
   ArrowLeftRight,
+  Clock,
 } from "lucide-react";
 
 type WalletBinding = { walletAddress: string | null; walletLocked: boolean };
@@ -69,6 +74,11 @@ const WalletButton = () => {
   const storedWallet = binding?.walletAddress ?? null;
   const walletLocked = binding?.walletLocked ?? false;
   const connectedAddress = connected && publicKey ? publicKey.toBase58() : null;
+
+  // A change can only be pending while a wallet is linked.
+  const pendingQuery = usePendingWalletChange({ enabled: !!storedWallet });
+  const pendingWallet = pendingQuery.data?.requestedWallet ?? null;
+  const pendingSettled = pendingQuery.isSuccess || pendingQuery.isError;
 
   // Links the wallet only after the backend has verified a fresh signed
   // challenge — this component never writes profiles.wallet_address itself.
@@ -149,10 +159,14 @@ const WalletButton = () => {
           },
         );
       } finally {
+        // Picks up the new request, or the one that blocked this attempt.
+        queryClient.invalidateQueries({
+          queryKey: [PENDING_WALLET_CHANGE_QUERY_KEY, user.id],
+        });
         setVerifying(false);
       }
     },
-    [user, signMessage],
+    [user, signMessage, queryClient],
   );
 
   // When the wallet disconnects or switches, allow a fresh auto-prompt for
@@ -178,9 +192,19 @@ const WalletButton = () => {
     if (!user || !connectedAddress || !bindingLoaded) return;
 
     if (storedWallet) {
-      if (walletLocked && storedWallet !== connectedAddress) {
+      // The wallet a pending change asks for needs no warning: the user
+      // already requested it, and the status shows it's under review.
+      if (
+        walletLocked &&
+        storedWallet !== connectedAddress &&
+        pendingSettled &&
+        pendingWallet !== connectedAddress
+      ) {
+        const bound = `${storedWallet.slice(0, 6)}...${storedWallet.slice(-4)}`;
         toast.error(
-          `Your account is bound to wallet ${storedWallet.slice(0, 6)}...${storedWallet.slice(-4)}. To switch, choose “Request wallet change” in the Wallet menu.`,
+          pendingWallet
+            ? `Your account is bound to wallet ${bound}. A change to another wallet is waiting for admin review.`
+            : `Your account is bound to wallet ${bound}. To switch, choose “Request wallet change” in the Wallet menu.`,
           { id: "wallet-bound-mismatch" },
         );
       }
@@ -197,6 +221,8 @@ const WalletButton = () => {
     bindingLoaded,
     storedWallet,
     walletLocked,
+    pendingSettled,
+    pendingWallet,
     verifyWallet,
   ]);
 
@@ -211,13 +237,17 @@ const WalletButton = () => {
       bindingLoaded &&
       !!storedWallet &&
       !linked &&
+      pendingSettled &&
+      !pendingWallet &&
       !!signMessage &&
       !verifying;
     const statusLabel = linked
       ? "Wallet linked to your account"
       : verifying
         ? "Verifying wallet…"
-        : "Wallet not verified";
+        : pendingWallet === address
+          ? "Wallet change pending admin review"
+          : "Wallet not verified";
 
     return (
       <DropdownMenu>
@@ -249,6 +279,12 @@ const WalletButton = () => {
             <DropdownMenuItem onClick={() => void requestWalletChange(address)}>
               <ArrowLeftRight className="h-3.5 w-3.5 mr-2" />
               Request wallet change
+            </DropdownMenuItem>
+          )}
+          {pendingWallet && (
+            <DropdownMenuItem disabled>
+              <Clock className="h-3.5 w-3.5 mr-2" />
+              Change pending review
             </DropdownMenuItem>
           )}
           <DropdownMenuItem

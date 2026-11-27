@@ -17,7 +17,8 @@ import type { ReactNode } from "react";
  * profiles.wallet_address. Each test uses its own wallet address because the
  * component remembers (until the wallet disconnects) which user:wallet pairs
  * it has already auto-prompted for. The dropdown is rendered inline so its
- * menu items can be clicked.
+ * menu items can be clicked. The only table it may read is
+ * wallet_change_requests, for the user's pending change.
  */
 
 const mocks = vi.hoisted(() => ({
@@ -30,6 +31,11 @@ const mocks = vi.hoisted(() => ({
   auth: { user: { id: "user-1" } as { id: string } | null },
   rpc: vi.fn(),
   from: vi.fn(),
+  pendingChange: null as null | {
+    id: string;
+    requested_wallet: string;
+    created_at: string;
+  },
   verifyWalletOwnership: vi.fn(),
   toast: { success: vi.fn(), error: vi.fn() },
 }));
@@ -116,11 +122,34 @@ const declined = () =>
 
 const flush = () => act(() => new Promise<void>((r) => setTimeout(r, 20)));
 
+// supabase.from("wallet_change_requests") read of the pending change.
+const pendingChangeQuery = () => {
+  const query = {
+    select: () => query,
+    eq: () => query,
+    maybeSingle: () =>
+      Promise.resolve({ data: mocks.pendingChange, error: null }),
+  };
+  return query;
+};
+
+const pendingRow = (requestedWallet: string) => ({
+  id: "request-1",
+  requested_wallet: requestedWallet,
+  created_at: "2026-11-18T00:00:00.000Z",
+});
+
+const LINKED = "LinkedWa11etxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+
 describe("WalletButton wallet verification", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.wallet.connected = true;
     mocks.auth.user = { id: "user-1" };
+    mocks.pendingChange = null;
+    mocks.from.mockImplementation((table: string) =>
+      table === "wallet_change_requests" ? pendingChangeQuery() : undefined,
+    );
   });
   afterEach(() => cleanup());
 
@@ -184,7 +213,7 @@ describe("WalletButton wallet verification", () => {
 
     finish(mocks.wallet.publicKey!.toBase58());
     await waitFor(() => expect(mocks.toast.success).toHaveBeenCalledTimes(1));
-    expect(mocks.from).not.toHaveBeenCalled();
+    expect(mocks.from).not.toHaveBeenCalledWith("profiles");
   });
 
   it("disconnect still works and never triggers verification", async () => {
@@ -201,7 +230,7 @@ describe("WalletButton wallet verification", () => {
     );
     expect(mocks.wallet.disconnect).toHaveBeenCalledTimes(1);
     expect(mocks.verifyWalletOwnership).not.toHaveBeenCalled();
-    expect(mocks.from).not.toHaveBeenCalled();
+    expect(mocks.from).not.toHaveBeenCalledWith("profiles");
   });
 
   it("reports a failed disconnect", async () => {
@@ -320,8 +349,11 @@ describe("WalletButton wallet verification", () => {
 
   it("offers 'Request wallet change' when a different wallet is connected, without writing the profile", async () => {
     const address = connectWallet();
-    mocks.rpc.mockResolvedValue(profileRow("LinkedWa11etxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"));
-    mocks.verifyWalletOwnership.mockResolvedValue(address);
+    mocks.rpc.mockResolvedValue(profileRow(LINKED));
+    mocks.verifyWalletOwnership.mockImplementation(async () => {
+      mocks.pendingChange = pendingRow(address);
+      return address;
+    });
 
     renderWithClient(<WalletButton />);
     await waitFor(() => expect(mocks.toast.error).toHaveBeenCalled());
@@ -338,10 +370,84 @@ describe("WalletButton wallet verification", () => {
       signMessage: mocks.wallet.signMessage,
       intent: "change",
     });
-    expect(screen.getByTitle("Wallet not verified")).toBeInTheDocument();
+    // The wallet stays unlinked until an admin approves; the menu now shows
+    // the pending request instead of offering a second one.
+    await waitFor(() =>
+      expect(
+        screen.getByTitle("Wallet change pending admin review"),
+      ).toBeInTheDocument(),
+    );
     expect(screen.queryByTitle("Wallet linked to your account")).not.toBeInTheDocument();
-    expect(screen.getByText("Request wallet change")).toBeInTheDocument();
-    expect(mocks.from).not.toHaveBeenCalled();
+    expect(screen.queryByText("Request wallet change")).not.toBeInTheDocument();
+    expect(screen.getByText("Change pending review")).toBeInTheDocument();
+    // Only the first mismatch warning; none for the wallet just requested.
+    expect(mocks.toast.error).toHaveBeenCalledTimes(1);
+    expect(mocks.from).not.toHaveBeenCalledWith("profiles");
+  });
+
+  it("shows the requested wallet as pending review, without a mismatch warning", async () => {
+    const address = connectWallet();
+    mocks.rpc.mockResolvedValue(profileRow(LINKED));
+    mocks.pendingChange = pendingRow(address);
+
+    renderWithClient(<WalletButton />);
+    await waitFor(() =>
+      expect(
+        screen.getByTitle("Wallet change pending admin review"),
+      ).toBeInTheDocument(),
+    );
+    await flush();
+    expect(screen.getByText("Change pending review")).toBeInTheDocument();
+    expect(screen.queryByText("Request wallet change")).not.toBeInTheDocument();
+    expect(mocks.toast.error).not.toHaveBeenCalled();
+    expect(mocks.verifyWalletOwnership).not.toHaveBeenCalled();
+  });
+
+  it("doesn't offer another change while one is pending for a different wallet", async () => {
+    connectWallet();
+    mocks.rpc.mockResolvedValue(profileRow(LINKED));
+    mocks.pendingChange = pendingRow("RequestedWa11etxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+
+    renderWithClient(<WalletButton />);
+    await waitFor(() =>
+      expect(mocks.toast.error).toHaveBeenCalledWith(
+        expect.stringContaining("waiting for admin review"),
+        expect.anything(),
+      ),
+    );
+    expect(mocks.toast.error).not.toHaveBeenCalledWith(
+      expect.stringContaining("Request wallet change"),
+      expect.anything(),
+    );
+    expect(screen.getByTitle("Wallet not verified")).toBeInTheDocument();
+    expect(screen.getByText("Change pending review")).toBeInTheDocument();
+    expect(screen.queryByText("Request wallet change")).not.toBeInTheDocument();
+  });
+
+  it("picks up a pending change the backend reports, so the request isn't offered again", async () => {
+    const address = connectWallet();
+    mocks.rpc.mockResolvedValue(profileRow(LINKED));
+    mocks.verifyWalletOwnership.mockImplementation(async () => {
+      // Filed from another tab or device since this page loaded.
+      mocks.pendingChange = pendingRow(address);
+      throw new WalletVerificationError(
+        "rejected",
+        "You already have a wallet change waiting for review.",
+        "change_pending",
+      );
+    });
+
+    renderWithClient(<WalletButton />);
+    fireEvent.click(await screen.findByText("Request wallet change"));
+
+    await waitFor(() =>
+      expect(screen.getByText("Change pending review")).toBeInTheDocument(),
+    );
+    expect(mocks.toast.error).toHaveBeenCalledWith(
+      "You already have a wallet change waiting for review.",
+      expect.anything(),
+    );
+    expect(screen.queryByText("Request wallet change")).not.toBeInTheDocument();
   });
 
   it("does nothing while no wallet is connected", async () => {
@@ -352,6 +458,6 @@ describe("WalletButton wallet verification", () => {
     renderWithClient(<WalletButton />);
     await flush();
     expect(mocks.verifyWalletOwnership).not.toHaveBeenCalled();
-    expect(mocks.from).not.toHaveBeenCalled();
+    expect(mocks.from).not.toHaveBeenCalledWith("profiles");
   });
 });

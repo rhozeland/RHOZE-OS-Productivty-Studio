@@ -1,7 +1,7 @@
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { Navigate, useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, Users, Award, Building2, Coins, AlertTriangle, Wallet, Eye, Sliders, ShieldCheck, Percent, Film, Wand2 } from "lucide-react";
+import { BarChart3, Users, Award, Building2, Coins, AlertTriangle, Wallet, Eye, Sliders, ShieldCheck, Percent, Film, Wand2, ArrowLeftRight } from "lucide-react";
 import AdminOverview from "@/components/admin/AdminOverview";
 import AdminUsers from "@/components/admin/AdminUsers";
 import AdminBadges from "@/components/admin/AdminBadges";
@@ -20,10 +20,11 @@ import AdminPlatformFees from "@/components/admin/AdminPlatformFees";
 import AdminConciergeRequests from "@/components/admin/AdminConciergeRequests";
 import ConciergeProgramDashboard from "@/components/concierge/ConciergeProgramDashboard";
 import AdminTokenSubmissions from "@/components/admin/AdminTokenSubmissions";
+import AdminWalletChangeRequests from "@/components/admin/AdminWalletChangeRequests";
 
 const VALID_TABS = new Set([
   "overview", "rewards", "caps", "users", "badges", "studios", "ip",
-  "artists", "disputes", "withdrawals", "moderation", "flow", "capital", "fees", "concierge", "tokens",
+  "artists", "disputes", "withdrawals", "wallets", "moderation", "flow", "capital", "fees", "concierge", "tokens",
 ]);
 
 const AdminPage = () => {
@@ -99,6 +100,9 @@ const AdminPage = () => {
           <TabsTrigger value="withdrawals" className="gap-1.5 text-xs shrink-0">
             <Wallet className="h-3.5 w-3.5" /> Withdrawals
           </TabsTrigger>
+          <TabsTrigger value="wallets" className="gap-1.5 text-xs shrink-0">
+            <ArrowLeftRight className="h-3.5 w-3.5" /> Wallet Changes
+          </TabsTrigger>
           <TabsTrigger value="moderation" className="gap-1.5 text-xs shrink-0">
             <Eye className="h-3.5 w-3.5" /> Content
           </TabsTrigger>
@@ -129,6 +133,7 @@ const AdminPage = () => {
         <TabsContent value="artists"><AdminArtistVerifications /></TabsContent>
         <TabsContent value="disputes"><AdminDisputes /></TabsContent>
         <TabsContent value="withdrawals"><AdminWithdrawals /></TabsContent>
+        <TabsContent value="wallets"><AdminWalletChangeRequests /></TabsContent>
         <TabsContent value="moderation"><AdminContentModeration /></TabsContent>
         <TabsContent value="flow"><AdminFlowModeration /></TabsContent>
         <TabsContent value="capital" className="space-y-4">

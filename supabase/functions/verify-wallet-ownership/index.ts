@@ -17,6 +17,9 @@
  *       issued text, verifies the base58 ed25519 signature with tweetnacl, and
  *       only then either writes profiles.wallet_address (link) or files a
  *       pending wallet_change_requests row for an admin to approve (change).
+ *       The database functions link_verified_wallet and
+ *       file_wallet_change_request make that write and record the proof
+ *       (verified_at) in one transaction.
  *
  * A challenge gets exactly one verify attempt: a bad signature or an edited
  * message burns it, and the client must request a new one. The cap on open
@@ -169,6 +172,12 @@ const WALLET_IN_USE_INDEX = "profiles_wallet_address_key";
 const isWalletInUseError = (
   error: { code?: string; message?: string } | null,
 ) => error?.code === "23505" && !!error.message?.includes(WALLET_IN_USE_INDEX);
+
+const CHANGE_PENDING_INDEX = "wallet_change_requests_one_pending_key";
+const isChangePendingError = (
+  error: { code?: string; message?: string } | null,
+) =>
+  error?.code === "23505" && !!error.message?.includes(CHANGE_PENDING_INDEX);
 
 // Earlier, friendlier refusal only; profiles_wallet_address_key stays the
 // final check.
@@ -340,54 +349,34 @@ async function verifyChallenge(
     return await fileWalletChange(admin, userId, walletAddress, challenge);
   }
 
-  // 4. Only now link the wallet — and only if the account has none yet. If
-  //    another account holds it (or links it concurrently), the unique index
-  //    rejects the write.
-  const { data: linked, error: linkErr } = await admin
-    .from("profiles")
-    .update({ wallet_address: walletAddress, wallet_locked: true })
-    .eq("user_id", userId)
-    .or('wallet_address.is.null,wallet_address.eq.""')
-    .select("wallet_address")
-    .maybeSingle();
+  // 4. Only now link the wallet — and only if the account has none yet.
+  //    link_verified_wallet writes it and records the proof in one
+  //    transaction. If another account holds the wallet (or links it
+  //    concurrently), the unique index rejects the write.
+  const { data: outcome, error: linkErr } = await admin.rpc(
+    "link_verified_wallet",
+    { _user_id: userId, _challenge_id: challenge.id },
+  );
   if (isWalletInUseError(linkErr)) {
     return fail(409, "wallet_already_in_use", WALLET_IN_USE);
   }
   if (linkErr) throw linkErr;
 
-  if (!linked) {
-    // Nothing updated: either the profile is gone or a wallet was linked in
-    // the meantime (e.g. the same wallet verified from another tab).
-    const { data: profile, error: profileErr } = await admin
-      .from("profiles")
-      .select("wallet_address")
-      .eq("user_id", userId)
-      .maybeSingle();
-    if (profileErr) throw profileErr;
-    if (!profile) {
+  switch (outcome) {
+    case "linked":
+      // Also when the same wallet was linked meanwhile, e.g. from another tab.
+      return json(200, { verified: true, walletAddress });
+    case "wallet_already_linked":
+      return fail(409, "wallet_already_linked", WALLET_ALREADY_LINKED);
+    case "profile_not_found":
       return fail(
         404,
         "profile_not_found",
         "Finish setting up your profile before linking a wallet.",
       );
-    }
-    if (profile.wallet_address !== walletAddress) {
-      return fail(409, "wallet_already_linked", WALLET_ALREADY_LINKED);
-    }
+    default:
+      throw new Error(`link_verified_wallet returned ${String(outcome)}`);
   }
-
-  await markVerified(admin, challenge.id);
-
-  return json(200, { verified: true, walletAddress });
-}
-
-// Recorded only on success; process_wallet_change requires it.
-async function markVerified(admin: SupabaseClient, challengeId: string) {
-  const { error } = await admin
-    .from("wallet_verification_challenges")
-    .update({ verified_at: new Date().toISOString() })
-    .eq("id", challengeId);
-  if (error) throw error;
 }
 
 // The replacement only takes effect once an admin approves it.
@@ -429,22 +418,16 @@ async function fileWalletChange(
     return fail(409, "wallet_already_in_use", WALLET_IN_USE);
   }
 
-  const { error: insertErr } = await admin
-    .from("wallet_change_requests")
-    .insert({
-      user_id: userId,
-      current_wallet: challenge.replaces_wallet,
-      requested_wallet: walletAddress,
-      verification_id: challenge.id,
-      status: "pending",
-    });
-  // wallet_change_requests_one_pending_key
-  if (insertErr?.code === "23505") {
+  // Files the request and records the proof in one transaction, so a failure
+  // can't leave a pending request that process_wallet_change would refuse.
+  const { error: fileErr } = await admin.rpc("file_wallet_change_request", {
+    _user_id: userId,
+    _challenge_id: challenge.id,
+  });
+  if (isChangePendingError(fileErr)) {
     return fail(409, "change_pending", CHANGE_PENDING);
   }
-  if (insertErr) throw insertErr;
-
-  await markVerified(admin, challenge.id);
+  if (fileErr) throw fileErr;
 
   return json(200, { verified: true, walletAddress, changeRequested: true });
 }
