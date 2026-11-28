@@ -10,6 +10,7 @@ and selected production request handlers. Suites are skipped by default.
 | `external-mint-attachment.integration.test.ts` | `RUN_EXTERNAL_MINT_ATTACHMENT_INTEGRATION=1` | Supabase only; seeds persistence challenges |
 | `external-mint-challenge-expiry-lock.integration.test.ts` | `RUN_EXTERNAL_MINT_CHALLENGE_LOCK_INTEGRATION=1` | Local Supabase only; tests the database trust boundary and opens two PostgreSQL sessions |
 | `approved-token-attachment.integration.test.ts` | `RUN_APPROVED_TOKEN_ATTACHMENT_INTEGRATION=1` | Supabase only |
+| `creator-token-mint-uniqueness.integration.test.ts` | `RUN_CREATOR_TOKEN_MINT_UNIQUENESS_INTEGRATION=1` | Local Supabase only; exercises RLS submissions, PostgreSQL uniqueness rules, and approved-token attachment by ID for Projects and Works |
 | `external-mint-attachment-workflow.integration.test.ts` | `RUN_EXTERNAL_MINT_ATTACHMENT_WORKFLOW_INTEGRATION=1` | Supabase plus mocked Solana RPC and pump.fun responses |
 
 ## Safe Supabase target
@@ -63,6 +64,15 @@ external-attachment marker, and opens separate PostgreSQL sessions for the
 target-row lock and attachment RPC. Run it with
 `RUN_EXTERNAL_MINT_CHALLENGE_LOCK_INTEGRATION=1` and
 `npm test -- src/test/integration/external-mint-challenge-expiry-lock.integration.test.ts`.
+
+The creator-token mint uniqueness suite is also local-only. It uses the same
+loopback database URL safeguard, requires migration `20261127120000` to already
+be applied, and runs each case in a rolled-back PostgreSQL transaction. Its
+privileged fixture writes isolate database constraints from the future
+ownership-verification workflow; the suite does not exercise creator-wallet
+verification or application retry behavior. Run it with
+`RUN_CREATOR_TOKEN_MINT_UNIQUENESS_INTEGRATION=1` and
+`npm test -- src/test/integration/creator-token-mint-uniqueness.integration.test.ts`.
 
 ## Running
 
